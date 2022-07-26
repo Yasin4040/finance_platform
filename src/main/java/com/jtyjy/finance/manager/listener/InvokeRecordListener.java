@@ -35,9 +35,8 @@ public class InvokeRecordListener {
     @Order
     @EventListener(InvokeRecordEvent.class)
     public void saveInvokeRecord(InvokeRecordEvent event) {
-        System.out.println("测试事件监听");
         BudgetBankAccount record = (BudgetBankAccount) event.getSource();
-        long id = record.getId();
+        Long id = record.getId();
         String preBody = "";
         String postBody = JSON.toJSONString(record);
         if(!Objects.isNull(id)){

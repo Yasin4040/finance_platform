@@ -108,8 +108,8 @@ public class BudgetBankAccountService extends DefaultBaseService<BudgetBankAccou
             bankAcc.setAccountname(bankAcc.getPname());
         }
         bankAcc.setBankaccount(newCardNO);
-        applicationEventPublisher.publishEvent(new InvokeRecordEvent(bankAcc,wbUser));
         this.save(bankAcc);
+        applicationEventPublisher.publishEvent(new InvokeRecordEvent(bankAcc,wbUser));
         return errMsg;
     }
 	

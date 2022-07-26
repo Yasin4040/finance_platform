@@ -176,7 +176,6 @@ public class BudgetBankAccountController extends BaseController<BudgetAgentExecu
 
     @ApiOperation(value = "查看操作日志", httpMethod = "GET")
     @ApiImplicitParams(value = {
-            @ApiImplicitParam(value = "主键", name = "id", dataType = "Long", required = true),
             @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
     })
     @GetMapping("queryLog")
