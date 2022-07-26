@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetMonthEndUnitMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetMonthEndUnit">
+        <id column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <id column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <id column="monthid" jdbcType="BIGINT" property="monthid"/>
+        <result column="syncagentflag" jdbcType="BIT" property="syncagentflag"/>
+        <result column="submitflag" jdbcType="BIT" property="submitflag"/>
+        <result column="updateagentflag" jdbcType="BIT" property="updateagentflag"/>
+        <result column="calculatesubjectflag" jdbcType="BIT" property="calculatesubjectflag"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+        <result column="submittime" jdbcType="TIMESTAMP" property="submittime"/>
+        <result column="submitorid" jdbcType="VARCHAR" property="submitorid"/>
+        <result column="submitorname" jdbcType="VARCHAR" property="submitorname"/>
+        <result column="requeststatus" jdbcType="INTEGER" property="requeststatus"/>
+        <result column="verifytime" jdbcType="TIMESTAMP" property="verifytime"/>
+        <result column="verifystr" jdbcType="VARCHAR" property="verifystr"/>
+        <result column="verifyorid" jdbcType="VARCHAR" property="verifyorid"/>
+        <result column="verifyorname" jdbcType="VARCHAR" property="verifyorname"/>
+        <result column="monthendflag" jdbcType="BIT" property="monthendflag"/>
+        <result column="monthendtime" jdbcType="TIMESTAMP" property="monthendtime"/>
+        <result column="premonthendtime" jdbcType="TIMESTAMP" property="premonthendtime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        yearid
+        , unitid, monthid, syncagentflag, submitflag, updateagentflag, calculatesubjectflag,
+    updatetime, submittime, submitorid, submitorname, requeststatus, verifytime, verifystr, 
+    verifyorid, verifyorname, monthendflag, monthendtime, premonthendtime
+    </sql>
+    
+    <select id = "getUnitMonthEndTime" resultType = "com.jtyjy.finance.manager.vo.BudgetUnitVO">
+		SELECT bu.id, bu.name, bu.parentid parentId, me.monthendtime monthEndTime, me.monthendflag monthEndFlag
+		FROM budget_unit bu LEFT JOIN budget_month_end_unit me ON bu.id = me.unitid 
+		WHERE bu.yearid = #{yearId} AND me.monthid = #{monthId} AND me.requeststatus = 2
+	</select>
+	
+	<select id = "getUnitGroup" resultType = "java.lang.String">
+		SELECT GROUP_CONCAT(id) allunitids FROM budget_unit WHERE yearid = #{yearId} GROUP BY yearid 
+	</select>
+
+    <select id="listMonthAuditPage" resultType="com.jtyjy.finance.manager.bean.BudgetMonthEndUnit">
+        SELECT concat(endunit.unitid, '-', endunit.monthid) AS id,
+               yearperiod.period  AS yearPeriod,
+               monthperiod.period AS monthPeriod,
+               unit.`name`        AS budgetUnitName,
+               endunit.yearid,
+               endunit.unitid,
+               endunit.monthid,
+               endunit.submitorid,
+               endunit.submitorname,
+               endunit.submittime,
+               endunit.submitflag,
+               endunit.verifyorid,
+               endunit.verifyorname,
+               endunit.verifytime,
+               endunit.verifystr,
+               endunit.requeststatus
+        FROM budget_month_end_unit AS endunit
+                 INNER JOIN budget_year_period AS yearperiod ON endunit.yearid = yearperiod.id
+                 INNER JOIN budget_month_period AS monthperiod ON endunit.monthid = monthperiod.id
+                 INNER JOIN budget_unit AS unit ON unit.yearid = yearperiod.id AND endunit.unitid = unit.id
+        WHERE endunit.submitflag = 1
+        <if test="paramMap.yearId != null">
+            and endunit.yearid = #{paramMap.yearId}
+        </if>
+        <if test="paramMap.budgetUnitId != null">
+            and endunit.unitid = #{paramMap.budgetUnitId}
+        </if>
+        <if test="paramMap.name != null and paramMap.name != ''">
+            and unit.name LIKE CONCAT('%', #{paramMap.name}, '%')
+        </if>
+        <if test="paramMap.monthId != null">
+            and endunit.monthid = #{paramMap.monthId}
+        </if>
+    </select>
+</mapper>

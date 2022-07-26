@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetYearPeriodMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetYearPeriod">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="period" jdbcType="VARCHAR" property="period"/>
+        <result column="startdate" jdbcType="DATE" property="startdate"/>
+        <result column="enddate" jdbcType="DATE" property="enddate"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="currentflag" jdbcType="BIT" property="currentflag"/>
+        <result column="code" jdbcType="VARCHAR" property="code"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , period, startdate, enddate, createtime, currentflag, code
+    </sql>
+    
+    <select id = 'getCurrentPeriod' resultMap = 'BaseResultMap'>
+    	select yp.*
+		from 
+		budget_year_period yp 
+		where currentflag = 1
+		order by code desc
+    </select>
+    
+    <select id = 'getNewestPeriod' resultMap = 'BaseResultMap'>
+    	select yp.*
+		from 
+		budget_year_period yp 
+		order by code desc
+    </select>
+    
+    <select id = 'getYearPeriod' resultType = 'map'>
+    	select yp.id yid, yp.code ycode, yp.period yname, if(yp.currentflag, '1', '0') ycurrent, DATE_FORMAT(yp.startdate, '%Y-%m-%d') startdate, DATE_FORMAT(yp.enddate, '%Y-%m-%d') enddate, if(ys.startbudgetflag, '1', '0') startbudgetflag
+		from budget_year_period yp left join budget_year_startup ys 
+		on ys.yearid = yp.id
+		order by yp.code desc
+    </select>
+    
+    <select id = 'getMonthPeriod' resultType = 'map'>
+    	select ms.id mid, mp.code mcode, mp.period mname, if(mp.currentflag, '1', '0') mcurrent, if(ms.startbudgetflag, '1', '0') startbudgetflag, if(ms.endbudgeteditflag, '1', '0') endbudgeteditflag
+		from 
+		budget_month_period mp left join budget_month_startup ms
+		on ms.monthid = mp.id
+		where ms.yearid = #{yearId}
+		order by orderno
+    </select>
+</mapper>

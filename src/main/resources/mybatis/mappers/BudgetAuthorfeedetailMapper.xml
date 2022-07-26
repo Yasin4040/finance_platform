@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetAuthorfeedetailMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetAuthorfeedetail">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="yearperiod" jdbcType="VARCHAR" property="yearperiod"/>
+        <result column="monthid" jdbcType="BIGINT" property="monthid"/>
+        <result column="feemonth" jdbcType="VARCHAR" property="feemonth"/>
+        <result column="status" jdbcType="INTEGER" property="status"/>
+        <result column="authorfeesumid" jdbcType="BIGINT" property="authorfeesumid"/>
+        <result column="authormergeid" jdbcType="BIGINT" property="authormergeid"/>
+        <result column="authortype" jdbcType="BIT" property="authortype"/>
+        <result column="authorid" jdbcType="BIGINT" property="authorid"/>
+        <result column="authorname" jdbcType="VARCHAR" property="authorname"/>
+        <result column="authoridnumber" jdbcType="VARCHAR" property="authoridnumber"/>
+        <result column="taxpayeridnumber" jdbcType="VARCHAR" property="taxpayeridnumber"/>
+        <result column="authorcompany" jdbcType="VARCHAR" property="authorcompany"/>
+        <result column="authorprovince" jdbcType="VARCHAR" property="authorprovince"/>
+        <result column="authorcity" jdbcType="VARCHAR" property="authorcity"/>
+        <result column="bankaccount" jdbcType="VARCHAR" property="bankaccount"/>
+        <result column="bankaccountbranchcode" jdbcType="VARCHAR" property="bankaccountbranchcode"/>
+        <result column="bankaccountbranchname" jdbcType="VARCHAR" property="bankaccountbranchname"/>
+        <result column="feestandard" jdbcType="DECIMAL" property="feestandard"/>
+        <result column="copefee" jdbcType="DECIMAL" property="copefee"/>
+        <result column="taxtype" jdbcType="BIT" property="taxtype"/>
+        <result column="tax" jdbcType="DECIMAL" property="tax"/>
+        <result column="times" jdbcType="INTEGER" property="times"/>
+        <result column="agentid" jdbcType="BIGINT" property="agentid"/>
+        <result column="agentname" jdbcType="VARCHAR" property="agentname"/>
+        <result column="subjectid" jdbcType="BIGINT" property="subjectid"/>
+        <result column="reimbursesubject" jdbcType="VARCHAR" property="reimbursesubject"/>
+        <result column="producttype" jdbcType="VARCHAR" property="producttype"/>
+        <result column="productbgtcls" jdbcType="VARCHAR" property="productbgtcls"/>
+        <result column="empid" jdbcType="VARCHAR" property="empid"/>
+        <result column="empno" jdbcType="VARCHAR" property="empno"/>
+        <result column="empname" jdbcType="VARCHAR" property="empname"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="subject" jdbcType="VARCHAR" property="subject"/>
+        <result column="context" jdbcType="VARCHAR" property="context"/>
+        <result column="paperquality" jdbcType="VARCHAR" property="paperquality"/>
+        <result column="pageorcopy" jdbcType="VARCHAR" property="pageorcopy"/>
+        <result column="feebdgdeptid" jdbcType="BIGINT" property="feebdgdeptid"/>
+        <result column="feebdgdept" jdbcType="VARCHAR" property="feebdgdept"/>
+        <result column="businessgroup" jdbcType="VARCHAR" property="businessgroup"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , yearperiod, monthid, feemonth, status, authorfeesumid, authormergeid, authortype,
+    authorid, authorname, authoridnumber, taxpayeridnumber, authorcompany, authorprovince, 
+    authorcity, bankaccount, bankaccountbranchcode, bankaccountbranchname, feestandard, 
+    copefee, taxtype, tax, times, agentid, agentname, subjectid, reimbursesubject, producttype, 
+    productbgtcls, empid, empno, empname, createtime, subject, context, paperquality, 
+    pageorcopy, feebdgdeptid, feebdgdept, businessgroup
+    </sql>
+</mapper>

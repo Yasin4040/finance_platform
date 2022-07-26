@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetRepaymoneyDetailMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetRepaymoneyDetail">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="repaymoneyid" jdbcType="BIGINT" property="repaymoneyid"/>
+        <result column="lendmoneyid" jdbcType="BIGINT" property="lendmoneyid"/>
+        <result column="curlendmoney" jdbcType="DECIMAL" property="curlendmoney"/>
+        <result column="repaymoney" jdbcType="DECIMAL" property="repaymoney"/>
+        <result column="interestmoney" jdbcType="DECIMAL" property="interestmoney"/>
+        <result column="nowlendmoney" jdbcType="DECIMAL" property="nowlendmoney"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , repaymoneyid, lendmoneyid, curlendmoney, repaymoney, interestmoney, nowlendmoney,
+    createtime
+    </sql>
+</mapper>

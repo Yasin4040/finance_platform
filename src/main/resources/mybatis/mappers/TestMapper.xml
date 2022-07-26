@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.TestMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.Test">
+        <id column="wer" jdbcType="VARCHAR" property="wer"/>
+        <id column="ty" jdbcType="VARCHAR" property="ty"/>
+        <result column="str" jdbcType="VARCHAR" property="str"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        wer
+        , ty, str
+    </sql>
+</mapper>

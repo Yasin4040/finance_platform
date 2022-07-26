@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetUnitReimbursementReportMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetUnitReimbursementReport">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="yearname" jdbcType="VARCHAR" property="yearname"/>
+        <result column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <result column="unitname" jdbcType="VARCHAR" property="unitname"/>
+        <result column="monthid" jdbcType="BIGINT" property="monthid"/>
+        <result column="patch" jdbcType="INTEGER" property="patch"/>
+        <result column="reimcode" jdbcType="VARCHAR" property="reimcode"/>
+        <result column="submittime" jdbcType="TIMESTAMP" property="submittime"/>
+        <result column="parverifyreceivetime" jdbcType="TIMESTAMP" property="parverifyreceivetime"/>
+        <result column="parverifyverifytime" jdbcType="TIMESTAMP" property="parverifyverifytime"/>
+        <result column="budgetverifytime" jdbcType="TIMESTAMP" property="budgetverifytime"/>
+        <result column="splitordertime" jdbcType="TIMESTAMP" property="splitordertime"/>
+        <result column="bunitname" jdbcType="VARCHAR" property="bunitname"/>
+        <result column="splitorderensuretime" jdbcType="TIMESTAMP" property="splitorderensuretime"/>
+        <result column="cashierpaymentreceivetime" jdbcType="TIMESTAMP" property="cashierpaymentreceivetime"/>
+        <result column="cashierpaymenttime" jdbcType="TIMESTAMP" property="cashierpaymenttime"/>
+        <result column="hour1" jdbcType="DECIMAL" property="hour1"/>
+        <result column="hour2" jdbcType="DECIMAL" property="hour2"/>
+        <result column="hour3" jdbcType="DECIMAL" property="hour3"/>
+        <result column="hour4" jdbcType="DECIMAL" property="hour4"/>
+        <result column="hour5" jdbcType="DECIMAL" property="hour5"/>
+        <result column="hour6" jdbcType="DECIMAL" property="hour6"/>
+        <result column="hour7" jdbcType="DECIMAL" property="hour7"/>
+        <result column="backpapercount" jdbcType="BIGINT" property="backpapercount"/>
+        <result column="allbackcount" jdbcType="BIGINT" property="allbackcount"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , yearid, yearname, unitid, unitname, monthid, patch, reimcode, submittime, parverifyreceivetime,
+    parverifyverifytime, budgetverifytime, splitordertime, bunitname, splitorderensuretime, 
+    cashierpaymentreceivetime, cashierpaymenttime, hour1, hour2, hour3, hour4, hour5, 
+    hour6, hour7, backpapercount, allbackcount, createtime, updatetime
+    </sql>
+</mapper>

@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetReimbursementorderMapper">
+   <!-- 获取年度动因金额 -->
+   <select id="getYearAgentValidateMoney" resultType="ReimbursementValidateMoney">
+		select
+		t.name,
+		t.total,
+		t.id agentId,
+		t.addmoney,
+		t.lendinmoney,
+		t.lendoutmoney,
+		(select ifnull(sum(d.reimmoney),0) from budget_reimbursementorder_detail d,budget_reimbursementorder o,budget_month_agent m,budget_year_agent y where o.id = d.reimbursementid and d.reimflag = 1 and d.monthagentid = m.id and o.id &lt;&gt; #{bean.orderId} and m.yearagentid = y.id and y.id = t.id and o.reuqeststatus = 2 and o.yearid = t.yearid and o.unitid = t.unitid
+	) as bxmoney,
+		(select ifnull(sum(d.reimmoney),0) from budget_reimbursementorder_detail d,budget_reimbursementorder o,budget_month_agent m,budget_year_agent y where o.id = d.reimbursementid and d.reimflag = 1 and d.monthagentid = m.id and o.id &lt;&gt; #{bean.orderId}  and m.yearagentid = y.id and y.id = t.id and o.reuqeststatus = 1 and o.yearid = t.yearid and o.unitid = t.unitid) as sdmoney,
+		(select ifnull(sum(a.allocatedmoney),0) from budget_reimbursementorder_allocated a,budget_reimbursementorder o,budget_month_agent m,budget_year_agent y where o.id = a.reimbursementid and a.reimflag = 1 and a.monthagentid = m.id and o.id &lt;&gt; #{bean.orderId}  and m.yearagentid = y.id and y.id = t.id  and o.reuqeststatus = 2 and o.yearid = t.yearid and a.unitid = t.unitid) as hbmoney,
+		(select ifnull(sum(a.allocatedmoney),0) from budget_reimbursementorder_allocated a,budget_reimbursementorder o,budget_month_agent m,budget_year_agent y where o.id = a.reimbursementid and a.reimflag = 1 and a.monthagentid = m.id and o.id &lt;&gt; #{bean.orderId}  and m.yearagentid = y.id and y.id = t.id and o.reuqeststatus = 1 and o.yearid = t.yearid and a.unitid = t.unitid) as hbsdmoney
+		from budget_year_agent t,budget_month_agent m
+		where
+		t.yearid = #{bean.yearId}
+		and t.unitid = #{bean.unitId}
+		and m.yearagentid = t.id
+		and m.id in(${ids})
+   </select>
+   
+   <!-- 获取月度科目金额 -->
+   <select id="getMonthCourseValidateMoney" resultType="ReimbursementValidateMoney">
+	   	select
+	   	unitid unitId,
+	   	subjectid subjectId,
+		sum(t.total) as total,
+		sum(t.addmoney) as addmoney,
+		sum(t.lendinmoney) as lendinmoney,
+		sum(t.lendoutmoney) as lendoutmoney,
+		(select ifnull(sum(dd.reimmoney),0) from budget_reimbursementorder_detail dd,budget_month_agent tt,budget_reimbursementorder o where o.id = dd.reimbursementid and o.yearid = t.yearid and o.unitid = t.unitid and o.monthid = t.monthid and dd.reimflag = 1 and o.reuqeststatus = 2 and o.id &lt;&gt; #{bean.orderId} and tt.subjectid = t.subjectid and tt.yearid = t.yearid and tt.unitid = t.unitid and tt.monthid = t.monthid and dd.monthagentid = tt.id) as bxmoney,
+		(select ifnull(sum(dd.reimmoney),0)  from budget_reimbursementorder_detail dd,budget_month_agent tt,budget_reimbursementorder o where o.id = dd.reimbursementid and o.yearid = t.yearid and o.unitid = t.unitid and o.monthid = t.monthid and dd.reimflag = 1 and o.reuqeststatus = 1 and o.id &lt;&gt; #{bean.orderId} and tt.subjectid = t.subjectid and tt.yearid = t.yearid and tt.unitid = t.unitid and tt.monthid = t.monthid and dd.monthagentid = tt.id) as sdmoney,
+		(select ifnull(sum(dd.allocatedmoney),0) from budget_reimbursementorder_allocated dd,budget_month_agent tt,budget_reimbursementorder o where o.id = dd.reimbursementid and o.yearid = t.yearid and dd.unitid = t.unitid and o.monthid = t.monthid and dd.reimflag = 1 and o.reuqeststatus = 2 and o.id &lt;&gt; #{bean.orderId} and tt.subjectid = t.subjectid and tt.yearid = t.yearid and dd.unitid = t.unitid and tt.monthid = t.monthid and dd.monthagentid = tt.id) as hbmoney,
+		(select ifnull(sum(dd.allocatedmoney),0) from budget_reimbursementorder_allocated dd,budget_month_agent tt,budget_reimbursementorder o where o.id = dd.reimbursementid and o.yearid = t.yearid and dd.unitid = t.unitid and o.monthid = t.monthid and dd.reimflag = 1 and o.reuqeststatus = 1 and o.id &lt;&gt; #{bean.orderId} and tt.subjectid = t.subjectid and tt.yearid = t.yearid and dd.unitid = t.unitid and tt.monthid = t.monthid and dd.monthagentid = tt.id) as hbsdmoney
+		from budget_month_agent t
+		where 
+		t.yearid = #{bean.yearId}  
+		and t.unitid = #{bean.unitId}
+		and t.monthid =  #{bean.monthId}
+		and t.subjectid in (select ag.subjectid from budget_month_agent ag where ag.id in (${ids}) and ag.yearid = t.yearid and ag.unitid = t.unitid)
+		group by t.unitid,t.subjectid
+   </select>
+   
+   <!-- 获取年度科目金额 -->
+   <select id="getYearCourseValidateMoney" resultType="ReimbursementValidateMoney">
+  		select 
+  		unitid unitId,
+  		subjectid subjectId,
+		sum(t.total) as total,
+		sum(t.addmoney) as addmoney,
+		sum(t.lendinmoney) as lendinmoney,
+		sum(t.lendoutmoney) as lendoutmoney,
+		(select ifnull(sum(dd.reimmoney),0) from budget_reimbursementorder_detail dd,budget_month_agent tt,budget_reimbursementorder o where o.id = dd.reimbursementid and o.yearid = t.yearid and o.unitid = t.unitid  and dd.reimflag = 1 and o.reuqeststatus = 2 and o.id &lt;&gt; #{bean.orderId} and tt.subjectid = t.subjectid and tt.yearid = t.yearid and tt.unitid = t.unitid  and dd.monthagentid = tt.id) as bxmoney,
+		(select ifnull(sum(dd.reimmoney),0) from budget_reimbursementorder_detail dd,budget_month_agent tt,budget_reimbursementorder o where o.id = dd.reimbursementid and o.yearid = t.yearid and o.unitid = t.unitid  and dd.reimflag = 1 and o.reuqeststatus = 1 and o.id &lt;&gt; #{bean.orderId} and tt.subjectid = t.subjectid and tt.yearid = t.yearid and tt.unitid = t.unitid  and dd.monthagentid = tt.id) as sdmoney,
+		(select ifnull(sum(dd.allocatedmoney),0) from budget_reimbursementorder_allocated dd,budget_month_agent tt,budget_reimbursementorder o where o.id = dd.reimbursementid and o.yearid = t.yearid and dd.unitid = t.unitid  and dd.reimflag = 1 and o.reuqeststatus = 2 and o.id &lt;&gt; #{bean.orderId} and tt.subjectid = t.subjectid and tt.yearid = t.yearid and dd.unitid = t.unitid and dd.monthagentid = tt.id) as hbmoney,
+		(select ifnull(sum(dd.allocatedmoney),0) from budget_reimbursementorder_allocated dd,budget_month_agent tt,budget_reimbursementorder o where o.id = dd.reimbursementid and o.yearid = t.yearid and dd.unitid = t.unitid  and dd.reimflag = 1 and o.reuqeststatus = 1 and o.id &lt;&gt; #{bean.orderId} and tt.subjectid = t.subjectid and tt.yearid = t.yearid and dd.unitid = t.unitid and dd.monthagentid = tt.id) as hbsdmoney
+		from budget_year_agent t
+		where 
+		t.yearid = #{bean.yearId}  
+		and t.unitid = #{bean.unitId} 
+		and t.subjectid in (select ag.subjectid from budget_month_agent ag where ag.id in (${ids}) and ag.yearid = t.yearid and ag.unitid = t.unitid)
+		group by t.unitid,t.subjectid
+   </select>
+   
+   <select id = 'getReimbursementPageInfo' resultType = 'com.jtyjy.finance.manager.vo.ReimbursementInfoVO'>
+       SELECT ttt.* 
+       FROM
+       ( 
+       SELECT `order`.qrcodebase64str qrcode, `order`.id, `order`.reimcode, order.reuqeststatus , order.reuqeststatus reuqeststatus_dictname, `order`.yearid,  myyear.period AS `yearname`, `order`.unitid , budgetunit.name ysdw, `order`.monthid, mymonth.period AS `monthname`, `order`.reimperonsid, CONCAT(`order`.reimperonsname,'(', user.USER_NAME, ')') 'bxr', DATE_FORMAT(`order`.reimdate,'%Y-%m-%d') bxrq, `order`.reimmoney bxje, `order`.nonreimmoney, `order`.paymentmoney czje, `order`.transmoney zzje, `order`.cashmoney xjje, `order`.othermoney, `order`.allocatedmoney hbje, `order`.attachcount fjzs, `order`.remark, budgetunit.baseunitid, `order`.createtime, `order`.updatetime, `order`.applicantid, `order`.bxtype, `order`.bxtype bxtype_dictname, `order`.applicantame, `order`.traveler, `order`.travelreason, `order`.curscanstatusname, `order`.curscanername, DATE_FORMAT(`order`.verifytime,'%Y-%m-%d %H:%i:%S') verifytime, DATE_FORMAT(`order`.submittime,'%Y-%m-%d %H:%i:%S') submittime, DATE_FORMAT(`order`.applicanttime,'%Y-%m-%d %H:%i:%S') applicanttime FROM budget_reimbursementorder AS `order` INNER JOIN budget_year_period AS myyear ON `order`.yearid = myyear.id INNER JOIN budget_month_period AS mymonth ON `order`.monthid = mymonth.id INNER JOIN budget_unit AS budgetunit ON budgetunit.yearid = myyear.id AND `order`.unitid = budgetunit.id  LEFT JOIN wb_user AS user ON `order`.reimperonsid = user.USER_ID 
+	   ) ttt
+	   WHERE 1 = 1
+	   <foreach collection="conditionMap" index="key" item="value">
+            <if test="key == 'applicantid'">
+                <if test="value != null and value != ''">
+					AND ttt.applicantid = #{value}
+                </if>
+            </if>
+            <if test="key == 'managers'">
+                <if test="value != null and value != ''">
+                	AND ( ttt.baseunitid IN (SELECT _unit.baseunitid FROM budget_unit _unit WHERE _unit.managers is NOT NULL AND CONCAT(',',_unit.managers,',') LIKE CONCAT('%,', #{value}, ',%') )             	
+                	<if test="authSql !=null and authSql !=''">
+				    	or (1=1 ${authSql})
+				    </if>
+				    )
+                </if>               
+            </if>
+            <if test="key == 'reuqeststatus'">
+                <if test="value != null">
+                    AND ttt.reuqeststatus = #{value}
+                </if>
+            </if>
+            <if test="key == 'reimcode'">
+                <if test="value !=null and value !=''">
+                    AND ttt.reimcode LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'yearid'">
+                <if test="value != null">
+                    AND ttt.yearid = #{value}
+                </if>
+            </if>
+            <if test="key == 'monthid'">
+                <if test="value != null">
+                    AND ttt.monthid = #{value}
+                </if>
+            </if>
+            <if test="key == 'bxr'">
+                <if test="value != null and value !=''">
+                    AND ttt.bxr LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'bxrq'">
+                <if test="value != null and value !=''">
+                    AND ttt.bxrq = #{value} 
+                </if>
+            </if>
+            <if test="key == 'bxje'">
+                <if test="value != null">
+                    AND ttt.bxje = #{value}  
+                </if>
+            </if>
+            <if test="key == 'czje'">
+                <if test="value != null">
+                    AND ttt.czje = #{value}
+                </if>
+            </if>
+            <if test="key == 'zzje'">
+                <if test="value != null">
+                    AND ttt.zzje = #{value} 
+                </if>
+            </if>
+            <if test="key == 'xjje'">
+                <if test="value != null">
+                    AND ttt.xjje = #{value} 
+                </if>
+            </if>
+            <if test="key == 'hbje'">
+                <if test="value != null">
+                    AND ttt.hbje = #{value} 
+                </if>
+            </if>  
+            <if test="key == 'othermoney'">
+                <if test="value != null">
+                    AND ttt.othermoney = #{value} 
+                </if>
+            </if>
+            <if test="key == 'ysdw'">
+                <if test="value != null and value !=''">
+                    AND ttt.ysdw LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'submittime'">
+                <if test="value != null and value !=''">
+                    AND ttt.submittime LIKE CONCAT(#{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'applicanttime'">
+                <if test="value != null and value !=''">
+                    AND ttt.applicanttime LIKE CONCAT(#{value}, '%')  
+                </if>
+            </if>
+		   <if test="key == 'bxTypes'">
+			   <if test="value != null and value.size()>0">
+				   AND ttt.bxtype in
+       				<foreach collection="value" item="bxtype" open="(" close=")" separator=",">
+						#{bxtype}
+					</foreach>
+			   </if>
+		   </if>
+        </foreach>
+		order by ttt.reimcode desc
+   </select>
+   
+   <select id = 'getErrorLendAndExtractList' resultType = 'map'>
+       SELECT bp.id paymoneyid,bl.empid,dept.PARENT_IDS pids FROM budget_lendmoney_new bl,wb_dept dept,budget_paymoney bp WHERE bl.deleteflag=0  AND bl.deptid = dept.DEPT_ID AND dept.`STATUS`=1 AND bp.paymoneyobjectid = bl.id AND bp.verifystatus = -1
+	   UNION ALL
+       SELECT bp.id paymoneyid,IFNULL(person.USER_ID,'') empid,dept.PARENT_IDS pids FROM budget_paymoney bp,budget_extractpayment bep,budget_extractpaydetail bepd,wb_person person,wb_dept dept WHERE bp.paymoneyobjectid = bep.id AND bep.budgetextractpaydetailid = bepd.id AND bepd.empno = person.PERSON_CODE AND person.DEPT_ID=dept.DEPT_ID AND bp.verifystatus = -1
+   </select>
+   
+   <select id = 'queryBxProgressPageInfo' resultType = 'com.jtyjy.finance.manager.vo.ReimbursementInfoVO'>
+     SELECT ttt.*
+		FROM
+		(
+		SELECT
+		`order`.id,
+		`order`.id orderid,
+		`order`.reimcode,
+		`order`.curscanstatusname,
+		`order`.curscanername,
+		`order`.yearid,
+		myyear.period yearname,
+		`order`.unitid,
+		budgetunit.name ysdw,
+		`order`.monthid ,
+		mymonth.period monthname,
+		`order`.reimperonsname bxr,
+		DATE_FORMAT(`order`.reimdate,'%Y-%m-%d') bxrq,
+		`order`.reimmoney bxje,
+		`order`.nonreimmoney,
+		`order`.paymentmoney czje,
+		`order`.transmoney zzje,
+		`order`.cashmoney xjje,
+		`order`.allocatedmoney hbje,
+		`order`.attachcount fjzs,
+		`order`.remark,
+		`order`.curscaner,
+		`order`.createtime,
+		`order`.updatetime,
+		`order`.applicantid,
+		`order`.bxtype,
+		`order`.bxtype bxtype_dictname,
+		`order`.applicantame,
+		`order`.traveler,
+		`order`.travelreason,
+		`order`.reuqeststatus,
+		order.receivestatus,
+		order.curscantime,
+		order.parverifystatus,
+		order.budgetverifystatus,
+		order.budgetverifyreceivestatus,
+		order.requestlevel,
+		order.fdstatus,
+		order.fdreceivestatus,
+		order.accountstatus,
+		order.accountreceivestatus,
+		order.parverifyreceivestatus,
+		order.cashierpaymentreceivestatus,
+		order.account1receivestatus,
+		order.voucherauditreceivestatus,
+		order.drawbillreceivestatus,
+		order.endreceivestatus,
+		order.financialmanagestatus,
+		order.financialmanagereceivestatus,
+		order.generalmanagestatus,
+		order.generalmanagereceivestatus,
+		DATE_FORMAT(order.curscantime ,'%Y-%m-%d %H:%i:%S') receivetime, 
+		DATE_FORMAT(`order`.applicanttime,'%Y-%m-%d') applicanttime, 
+		DATE_FORMAT(`order`.submittime,'%Y-%m-%d %H:%i:%S') submittime,
+		order.work_flow_step workFlowStep 
+		FROM
+		budget_reimbursementorder AS `order`
+		INNER JOIN budget_year_period AS myyear ON `order`.yearid = myyear.id
+		INNER JOIN budget_month_period AS mymonth ON `order`.monthid = mymonth.id
+		INNER JOIN budget_unit AS budgetunit ON budgetunit.yearid = myyear.id AND `order`.unitid = budgetunit.id 
+		) ttt 
+		WHERE ttt.reuqeststatus > 0
+		<if test="curscaner != null and curscaner != ''">
+	    	AND ttt.curscaner = #{curscaner}
+	    </if>
+		<if test="reimcode != null and reimcode != ''">
+	    	AND ttt.reimcode LIKE CONCAT('%', #{reimcode}, '%')
+	    </if>
+	    <if test="reimmoney != null">
+	    	AND ttt.bxje = #{reimmoney}
+	    </if>
+		<if test="whereSql != null and whereSql != ''">
+	    	${whereSql}
+	    </if>
+	    
+		ORDER BY ttt.requestlevel desc , ttt.submittime desc
+		<if test="authSql != null and authSql != ''">
+	    	${authSql}
+	    </if>
+   </select>
+      
+      <!-- OR _detail.planbunitid IN (
+		 SELECT _bunit.id FROM budget_billing_unit _bunit WHERE _bunit.accountants IS NOT NULL AND CONCAT(',',_bunit.accountants,',') LIKE CONCAT('%', #{userId}, '%')
+		 ) -->   
+   <select id = "getAccountTaskPageInfo" resultType = 'com.jtyjy.finance.manager.vo.MakeAccountTaskVO'>
+		 SELECT _detail.reimcode, _detail.fdername, _detail.fder, _detail.bunitname, _detail.planbunitname, _detail.receivername, _detail.accountstatus, _detail.accountername, _order.curscanername, DATE_FORMAT(_detail.fdtime, '%Y-%m-%d %H:%i:%S') fdtime, DATE_FORMAT(_detail.receivetime, '%Y-%m-%d %H:%i:%S') receivetime, DATE_FORMAT(_detail.accounttime, '%Y-%m-%d %H:%i:%S') accounttime
+		 FROM budget_reimbursementorder_fdtask_detail _detail
+		 LEFT JOIN budget_reimbursementorder _order ON _order.id = _detail.reimbursementid
+		 WHERE _detail.accountstatus = 0 AND ((_detail.planaccounters IS NOT NULL AND CONCAT(',',_detail.planaccounters,',') LIKE CONCAT('%', #{empNo}, '%')  ) 
+		 
+		 
+		  )
+		<if test="reimcode != null and reimcode != ''">
+	        AND _detail.reimcode LIKE CONCAT('%', #{reimcode}, '%')  
+	    </if>
+		 ORDER BY _detail.fdtime desc
+	   	<if test="authSql !=null and authSql !=''">
+        	${authSql}
+       	</if>
+   </select>
+
+   <select id = "getQrCodeByReimcode" resultType = 'map'>
+		SELECT reimcode, CONCAT(reimcode,' (报销人:',reimperonsname,', 报销金额:',ROUND(reimmoney, 2),')') text, qrcodebase64str FROM budget_reimbursementorder WHERE reimcode LIKE CONCAT('%', #{reimcode})
+   </select>
+   
+   <select id = "getBxReturnReason" resultType = "map">
+     SELECT byp.period, concat(bro.monthid,'月') monthName, bu.`name` unitName, convert(bro.reimmoney,decimal(10,2)) reimmoney, bro.reimcode, bro.reimperonsname, brv.verifyinfo, bro.id, bro.subjectNames
+	 FROM (
+	 SELECT ord.id, ord.reimcode, ord.reimperonsname, ord.yearid, ord.monthid, ord.unitid, GROUP_CONCAT(detail.subjectname) subjectNames, ord.reimmoney
+	 FROM 
+	 budget_reimbursementorder ord INNER JOIN budget_reimbursementorder_detail detail ON ord.id = detail.reimbursementid
+	 WHERE ord.reuqeststatus = 2
+	 <if test="yearId !=null">
+        AND ord.yearid = #{yearId}
+     </if>
+     <if test="monthId !=null">
+        AND ord.monthid = #{monthId}
+     </if>	
+	 GROUP BY ord.id
+	 ORDER BY ord.id
+	 )bro INNER JOIN budget_reimbursementorder_verifylog brv ON bro.id = brv.reimbursementid LEFT JOIN budget_year_period byp ON byp.id = bro.yearid LEFT JOIN budget_unit bu on bu.id = bro.unitid 
+	 WHERE brv.backtype IN (1, 2) 
+   </select>
+    <select id="listBackType" resultType="java.lang.String">
+		select back_type from charge_back_type
+	</select>
+</mapper>

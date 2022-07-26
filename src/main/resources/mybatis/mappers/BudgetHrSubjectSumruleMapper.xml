@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetHrSubjectSumruleMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetHrSubjectSumrule">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="year" jdbcType="VARCHAR" property="year"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="unitname" jdbcType="VARCHAR" property="unitname"/>
+        <result column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="deptids" jdbcType="VARCHAR" property="deptids"/>
+        <result column="deptanames" jdbcType="VARCHAR" property="deptanames"/>
+        <result column="userids" jdbcType="VARCHAR" property="userids"/>
+        <result column="usernames" jdbcType="VARCHAR" property="usernames"/>
+        <result column="createdate" jdbcType="TIMESTAMP" property="createdate"/>
+        <result column="budgetflag" jdbcType="BIT" property="budgetflag"/>
+        <result column="salaryflag" jdbcType="BIT" property="salaryflag"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , year, yearid, unitname, unitid, remark, deptids, deptanames, userids, usernames,
+    createdate, budgetflag, salaryflag
+    </sql>
+</mapper>

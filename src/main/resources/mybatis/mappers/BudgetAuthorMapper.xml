@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetAuthorMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetAuthor">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="code" jdbcType="VARCHAR" property="code"/>
+        <result column="author" jdbcType="VARCHAR" property="author"/>
+        <result column="authortype" jdbcType="BIT" property="authortype"/>
+        <result column="idnumber" jdbcType="VARCHAR" property="idnumber"/>
+        <result column="taxpayernumber" jdbcType="VARCHAR" property="taxpayernumber"/>
+        <result column="company" jdbcType="VARCHAR" property="company"/>
+        <result column="branchcode" jdbcType="VARCHAR" property="branchcode"/>
+        <result column="bankaccount" jdbcType="VARCHAR" property="bankaccount"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , code, author, authortype, idnumber, taxpayernumber, company, branchcode, bankaccount,
+    remark
+    </sql>
+    <!--查询作者相关信息-->
+    <select id="getAuthorInfo" resultType="java.util.Map">
+        SELECT ba.id, ba.code, ba.company, ba.bankaccount, wb.bank_name, wb.province, wb.city, wb.sub_branch_name, wb.sub_branch_code
+		FROM budget_author ba
+		LEFT JOIN wb_banks wb ON wb.sub_branch_code = ba.branchcode
+		WHERE ba.author = #{name} AND (ba.idnumber = #{numb} OR ba.taxpayernumber =#{numb} )
+    </select>
+    
+    <!-- 根据稿件作者查询银行信息 -->
+    <select id="getBankInfoByAuthorCode" resultType="BankInfo">
+    select 
+	a.code as authorCode,
+	a.author as accountName ,
+	a.bankaccount as bankAccount,
+	a.branchcode as bankCode,
+	b.bank_name as bankName,
+	b.sub_branch_name as openBank
+	from 
+	budget_author a,wb_banks b 
+	where a.branchcode = b.sub_branch_code 
+	and a.code in(${inSql})
+    </select>
+    
+    <!--分页查询稿费作者-->
+    <select id="queryAuthorPageInfo" resultType="com.jtyjy.finance.manager.vo.BudgetAuthorVO">
+        SELECT ba.id, ba.code, ba.author, ba.authortype, ba.idnumber, ba.taxpayernumber, ba.remark,
+        ba.company, ba.bankaccount, wb.bank_name banktype, wb.province, wb.city, wb.sub_branch_name bankname, ba.branchcode branchcode
+		FROM budget_author ba
+		LEFT JOIN wb_banks wb ON wb.sub_branch_code = ba.branchcode
+		WHERE 1 = 1
+		<foreach collection="conditionMap" index="key" item="value">
+            <if test="key == 'code'">
+                <if test="value !=null and value !=''">
+                    AND ba.code LIKE CONCAT('%', #{value}, '%')
+                </if>
+            </if>
+            <if test="key == 'authortype'">
+                <if test="value !=null">
+                    AND ba.authortype = #{value}
+                </if>
+            </if>
+            <if test="key == 'author'">
+                <if test="value !=null and value !=''">
+                    AND ba.author LIKE CONCAT('%', #{value}, '%')
+                </if>
+            </if>
+            <if test="key == 'idnumber'">
+                <if test="value !=null and value !=''">
+                    AND ba.idnumber like CONCAT('%', #{value}, '%')
+                </if>
+            </if>
+            <if test="key == 'taxpayernumber'">
+                <if test="value !=null and value !=''">
+                    AND ba.taxpayernumber like CONCAT('%', #{value}, '%')
+                </if>
+            </if>
+            <if test="key == 'banktype'">
+                <if test="value !=null and value !=''">
+                    AND wb.bank_name like CONCAT('%', #{value}, '%')
+                </if>
+            </if>
+        </foreach>
+        <if test="authSql !=null and authSql !=''">
+            ${authSql}
+        </if>
+    </select>
+</mapper>

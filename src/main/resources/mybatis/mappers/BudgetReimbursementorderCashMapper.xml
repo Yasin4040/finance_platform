@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetReimbursementorderCashMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetReimbursementorderCash">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="reimbursementid" jdbcType="BIGINT" property="reimbursementid"/>
+        <result column="payeecode" jdbcType="VARCHAR" property="payeecode"/>
+        <result column="payeename" jdbcType="VARCHAR" property="payeename"/>
+        <result column="cashmoney" jdbcType="DECIMAL" property="cashmoney"/>
+        <result column="olddraweeunitaccountid" jdbcType="BIGINT" property="olddraweeunitaccountid"/>
+        <result column="draweeunitaccountid" jdbcType="BIGINT" property="draweeunitaccountid"/>
+        <result column="draweeunitname" jdbcType="VARCHAR" property="draweeunitname"/>
+        <result column="draweebankaccount" jdbcType="VARCHAR" property="draweebankaccount"/>
+        <result column="draweebankname" jdbcType="VARCHAR" property="draweebankname"/>
+        <result column="paymoneyid" jdbcType="BIGINT" property="paymoneyid"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , reimbursementid, payeecode, payeename, cashmoney, olddraweeunitaccountid, draweeunitaccountid,
+    draweeunitname, draweebankaccount, draweebankname, paymoneyid
+    </sql>
+</mapper>

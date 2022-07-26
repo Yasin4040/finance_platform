@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.TabLinkLimitMapper">            
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.TabLinkLimit">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="procedure_id" jdbcType="BIGINT" property="procedureId"/>
+        <result column="subject_id" jdbcType="BIGINT" property="subjectId"/>
+        <result column="link_dm" jdbcType="VARCHAR" property="linkDm"/>
+        <result column="min_limit" jdbcType="DECIMAL" property="minLimit"/>
+        <result column="max_limit" jdbcType="DECIMAL" property="maxLimit"/>
+        <result column="is_active" jdbcType="VARCHAR" property="isActive"/>
+    </resultMap>
+
+    <select id="getLinkLimitInfo" resultType="com.jtyjy.finance.manager.bean.TabLinkLimit">
+    	select
+        ll.*, pd.procedure_name procedureName, sub.name subjectName, pd.yearid, yp.period yearName
+        from
+        tab_link_limit ll left join tab_procedure pd on ll.procedure_id = pd.id 
+        left join budget_subject sub on ll.subject_id = sub.id 
+        left join budget_year_period yp on pd.yearid = yp.id
+        where ll.procedure_id in
+        (select id from tab_procedure where is_active=1 and is_delete=0)
+        <if test="procedureId != null" >
+			and ll.procedure_id =  #{procedureId}
+		</if>
+        <if test="subjectId != null" >
+			and ll.subject_id =  #{subjectId}
+		</if>
+		<if test="linkDm != null and linkDm != ''" >
+		    and ll.link_dm like concat('%', #{linkDm}, '%')
+		</if>
+		<if test="subjectName != null and subjectName != ''" >
+		    and sub.name like concat('%', #{subjectName}, '%')
+		</if>
+		order by ll.link_dm, ll.id
+    </select>
+    <select id="list1" resultType="java.util.Map">
+        select a.`name`,a.max_limit,b.subject_id  from ( SELECT tll.id,tll.subject_id,bs.`name`,tll.max_limit from tab_link_limit tll left join budget_subject bs on tll.subject_id=bs.id where tll.procedure_id = 24 and tll.max_limit !=1000000000.0000 and tll.link_dm='financial_manage_check') a left join
+
+(SELECT tll.id,tll.subject_id,bs.`name`,tll.max_limit from tab_link_limit tll left join budget_subject bs on tll.subject_id=bs.id where tll.procedure_id = 25 and tll.max_limit =1000000000.0000 and tll.link_dm='financial_manage_check') b on a.`name` = b.`name`
+
+WHERE
+	a.max_limit != b.max_limit
+    </select>
+    <select id="list2" resultType="java.util.Map">
+select a.`name`,a.max_limit,b.subject_id from ( SELECT tll.id,tll.subject_id,bs.`name`,tll.max_limit from tab_link_limit tll left join budget_subject bs on tll.subject_id=bs.id where tll.procedure_id = 24 and tll.max_limit !=1000000000.0000 and tll.link_dm='general_manager_check') a left join
+
+(SELECT tll.id,tll.subject_id,bs.`name`,tll.max_limit from tab_link_limit tll left join budget_subject bs on tll.subject_id=bs.id where tll.procedure_id = 25 and tll.max_limit =1000000000.0000 and tll.link_dm='general_manager_check') b on a.`name` = b.`name`
+
+WHERE
+	a.max_limit != b.max_limit
+
+    </select>
+
+    <update id="updateLimit">
+        update tab_link_limit set max_limit=#{max_limit} where procedure_id=25 and subject_id=#{subject_id} and link_dm=#{financial_manage_check}
+    </update>
+</mapper>

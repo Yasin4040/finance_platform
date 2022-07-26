@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetProjectlendsumMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetProjectlendsum">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="projectid" jdbcType="BIGINT" property="projectid"/>
+        <result column="projectno" jdbcType="VARCHAR" property="projectno"/>
+        <result column="projectname" jdbcType="VARCHAR" property="projectname"/>
+        <result column="type" jdbcType="INTEGER" property="type"/>
+        <result column="verifyflag" jdbcType="INTEGER" property="verifyflag"/>
+        <result column="creator" jdbcType="VARCHAR" property="creator"/>
+        <result column="creatorname" jdbcType="VARCHAR" property="creatorname"/>
+        <result column="paymoneyunitid" jdbcType="BIGINT" property="paymoneyunitid"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="verifyorid" jdbcType="VARCHAR" property="verifyorid"/>
+        <result column="verifyname" jdbcType="VARCHAR" property="verifyname"/>
+        <result column="verifytime" jdbcType="TIMESTAMP" property="verifytime"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <result column="submitbxstatus" jdbcType="INTEGER" property="submitbxstatus"/>
+        <result column="bxuserid" jdbcType="VARCHAR" property="bxuserid"/>
+        <result column="bxusername" jdbcType="VARCHAR" property="bxusername"/>
+        <result column="bxorderid" jdbcType="BIGINT" property="bxorderid"/>
+        <result column="bxdate" jdbcType="TIMESTAMP" property="bxdate"/>
+        <result column="monthid" jdbcType="BIGINT" property="monthid"/>
+        <result column="submitorid" jdbcType="VARCHAR" property="submitorid"/>
+        <result column="submitorname" jdbcType="VARCHAR" property="submitorname"/>
+        <result column="cashmoney" jdbcType="DECIMAL" property="cashmoney"/>
+        <result column="transfermoney" jdbcType="DECIMAL" property="transfermoney"/>
+        <result column="giftmoney" jdbcType="DECIMAL" property="giftmoney"/>
+        <result column="total" jdbcType="DECIMAL" property="total"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , projectid, projectno, projectname, type, verifyflag, creator, creatorname, paymoneyunitid,
+    createtime, verifyorid, verifyname, verifytime, yearid, unitid, submitbxstatus, bxuserid, 
+    bxusername, bxorderid, bxdate, monthid, submitorid, submitorname, cashmoney, transfermoney, 
+    giftmoney, total
+    </sql>
+
+    <select id="listProjectLendPage" resultType="com.jtyjy.finance.manager.vo.BudgetProjectLendSumVO">
+        SELECT c.*,
+               o.reuqeststatus                           AS requestStatus,
+               pa.totalPaymentMoney                      AS paymentMoney,
+               pr.totalTransMoney                        AS transMoney
+        FROM (
+                 SELECT a.id,
+                        a.projectname   AS                                      projectName,
+                        a.projectno     AS                                      projectNo,
+                        a.yearid        AS                                      yearId,
+                        a.yearname      AS                                      yearName,
+                        a.unitid        AS                                      budgetUnitId,
+                        a.unitname      AS                                      budgetUnitName,
+                        a.baseunitid    AS                                      baseUnitId,
+                        a.type          AS                                      type,
+                        a.total         AS                                      totalLendMoney,
+                        a.cashmoney     AS                                      cashMoney,
+                        a.transfermoney AS                                      transferMoney,
+                        a.giftmoney     AS                                      giftMoney,
+                        a.bxuserid      AS                                      bxUserId,
+                        u.DISPLAY_NAME  AS                                      bxUserName,
+                        a.bxorderid     AS                                      bxOrderId,
+                        a.bxdate        AS                                      bxDate,
+                        a.submitbxstatus  AS                                    bxStatus,
+                        a.monthid       AS                                      monthId,
+                        a.createtime    AS                                      createTime,
+                        a.creatorname   AS                                      creatorName,
+                        a.verifyflag    AS                                      verifyFlag,
+                        a.verifyname    AS                                      verifyName,
+                        a.verifytime    AS                                      verifyTime,
+                        bunit.id        AS                                      bUnitId,
+                        bunit.`name`    AS                                      bUnitName,
+                        b.num           AS                                      lendCount,
+                        b.repaidmoney + b.repaidinter                           repaidMoney,
+                        (b.lendmoney - b.repaidmoney + b.inter - b.repaidinter) unRepaidMoney
+                 FROM (
+                          SELECT bpls.*,
+                                 byp.period yearname,
+                                 unit.NAME  unitname,
+                                 unit.baseunitid
+                          FROM budget_projectlendsum_new bpls,
+                               budget_year_period byp,
+                               budget_unit unit
+                          WHERE bpls.yearid = byp.id
+                            AND unit.id = bpls.unitid
+                      ) a
+                          LEFT JOIN budget_billing_unit bunit ON a.paymoneyunitid = bunit.id
+                          LEFT JOIN wb_user u ON u.USER_ID = a.bxuserid
+                          LEFT JOIN (
+                     SELECT bl.projectlendsumid         sumid,
+                            count(bl.id)                num,
+                            sum(bl.lendmoney)           lendmoney,
+                            sum(bl.repaidmoney)         repaidmoney,
+                            sum(bl.interestmoney)       inter,
+                            sum(bl.repaidinterestmoney) repaidinter
+                     FROM budget_projectlendsum_new bpls,
+                          budget_lendmoney_new bl
+                     WHERE bpls.id = bl.projectlendsumid
+                       AND bl.deleteflag = 0
+                     GROUP BY bl.projectlendsumid
+                 ) b ON a.id = b.sumid
+             ) c
+                 LEFT JOIN budget_reimbursementorder o ON c.bxorderid = o.id
+                 LEFT JOIN (
+            SELECT SUM(p.paymentmoney) AS totalPaymentMoney,
+                   p.projectlendsumid
+            FROM budget_projectlendbxpayment_new p
+            GROUP BY p.projectlendsumid
+        ) pa ON pa.projectlendsumid = c.id
+                 LEFT JOIN (
+            SELECT SUM(pr.transmoney) AS totalTransMoney,
+                   pr.projectlendsumid
+            FROM budget_projectlendbxtrans_new pr
+            GROUP BY pr.projectlendsumid
+        ) pr ON pr.projectlendsumid = c.id
+        <where>
+            <if test="paramMap.name != null and paramMap.name != ''">
+                and c.projectName like CONCAT('%', #{paramMap.name}, '%')
+            </if>
+            <if test="paramMap.type != null">
+                and c.type = #{paramMap.type}
+            </if>
+            <if test="paramMap.verifyFlag != null">
+                and c.verifyflag = #{paramMap.verifyFlag}
+            </if>
+            <if test="paramMap.unitName != null and paramMap.unitName != ''">
+                and c.budgetUnitName like CONCAT('%', #{paramMap.unitName}, '%')
+            </if>
+        </where>
+        ORDER BY c.createtime desc
+    </select>
+
+    <select id="listLendMoneyDetail" resultType="com.jtyjy.finance.manager.vo.BudgetProjectLendDetailVO">
+        SELECT a.*,
+               b.paymoneystatus
+        from (SELECT lm.id                                                                     AS lendMoneyId,
+                     bpls.id                                                                   AS projectLendSumId,
+                     lm.confirmflag                                                            AS confirmFlag,
+                     lm.empno                                                                  AS empNo,
+                     lm.empname                                                                AS empName,
+                     bpls.projectname                                                          AS projectName,
+                     bpls.projectno                                                            AS projectNo,
+                     lm.lendmoney                                                              AS lendMoney,
+                     lm.repaidmoney + lm.repaidinterestmoney                                   AS repaidMoney,
+                     lm.lendmoney - lm.repaidmoney + lm.interestmoney - lm.repaidinterestmoney AS unpaidMoney,
+                     lm.interestmoney                                                          AS interestMoney,
+                     lm.flushingflag                                                           AS flushingFlag,
+                     lm.chargebillflag                                                         AS chargeBillFlag,
+                     lm.lendmoneycode                                                          AS lendMoneyCode,
+                     lm.projectlendtype                                                        AS projectLendType,
+                     lm.lenddate                                                               AS lendDate,
+                     lm.planpaydate                                                            AS planPayDate,
+                     lm.createtime                                                             AS createDate,
+                     lm.remark
+              from budget_projectlendsum_new bpls,
+                   budget_lendmoney_new lm
+              WHERE bpls.id = lm.projectlendsumid
+                and lm.deleteflag = 0) a
+                 LEFT JOIN budget_paymoney b ON a.lendMoneyId = b.paymoneyobjectid
+        where projectLendSumId = #{id}
+        order by a.createDate desc
+    </select>
+
+    <select id="listRepayMoneyDetail" resultType="com.jtyjy.finance.manager.vo.BudgetProjectRepayDetailVO">
+        select brd.id,
+               bl.projectlendsumid                AS projectLendSumId,
+               brd.lendmoneyid                    AS lendMoneyId,
+               bl.lendmoneycode                   as lendMoneyCode,
+               br.repaymoneycode                  AS repayMoneyCode,
+               bl.empno                           AS empNo,
+               bl.empname                         AS empName,
+               brd.curlendmoney                   AS lendMoney,
+               brd.repaymoney + brd.interestmoney AS repaidMoney,
+               brd.nowlendmoney                   AS unpaidMoney,
+               brd.createtime                     AS createDate
+        from budget_lendmoney_new bl,
+             budget_repaymoney_detail_new brd,
+             budget_repaymoney_new br
+        where bl.id = brd.lendmoneyid
+          and brd.repaymoneyid = br.id
+          and bl.projectlendsumid = #{id}
+        ORDER BY createDate desc
+    </select>
+
+</mapper>

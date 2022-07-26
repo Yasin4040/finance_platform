@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetExtractquotaRuledetailMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetExtractquotaRuledetail">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="extractquotaruleid" jdbcType="BIGINT" property="extractquotaruleid"/>
+        <result column="minsalary" jdbcType="DECIMAL" property="minsalary"/>
+        <result column="maxsalary" jdbcType="DECIMAL" property="maxsalary"/>
+        <result column="quotamoney" jdbcType="DECIMAL" property="quotamoney"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , extractquotaruleid, minsalary, maxsalary, quotamoney, createtime, updatetime
+    </sql>
+</mapper>

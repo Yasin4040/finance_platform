@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.WbUserRoleMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.WbUserRole">
+        <result column="USER_ID" jdbcType="VARCHAR" property="userId"/>
+        <result column="ROLE_ID" jdbcType="VARCHAR" property="roleId"/>
+        <result column="ROLE_NAME" jdbcType="VARCHAR" property="roleName"/>
+        <result column="REMARK" jdbcType="VARCHAR" property="remark"/>
+        <result column="STATUS" jdbcType="DECIMAL" property="status"/>
+        <result column="PROJECTID" jdbcType="BIGINT" property="projectid"/>
+    </resultMap>
+</mapper>

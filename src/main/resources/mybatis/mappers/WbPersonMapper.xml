@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.WbPersonMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.WbPerson">
+        <id column="PERSON_ID" jdbcType="VARCHAR" property="personId"/>
+        <result column="USER_ID" jdbcType="VARCHAR" property="userId"/>
+        <result column="DEPT_ID" jdbcType="VARCHAR" property="deptId"/>
+        <result column="PERSON_CODE" jdbcType="VARCHAR" property="personCode"/>
+        <result column="PERSON_NAME" jdbcType="VARCHAR" property="personName"/>
+        <result column="SEX" jdbcType="VARCHAR" property="sex"/>
+        <result column="BIRTHDATE" jdbcType="TIMESTAMP" property="birthdate"/>
+        <result column="NATION" jdbcType="VARCHAR" property="nation"/>
+        <result column="EDU" jdbcType="VARCHAR" property="edu"/>
+        <result column="SCHOOL" jdbcType="VARCHAR" property="school"/>
+        <result column="MAJOR" jdbcType="VARCHAR" property="major"/>
+        <result column="MOBILE_PHONE" jdbcType="VARCHAR" property="mobilePhone"/>
+        <result column="ADDR" jdbcType="VARCHAR" property="addr"/>
+        <result column="REMARK" jdbcType="LONGVARCHAR" property="remark"/>
+        <result column="PIC" jdbcType="LONGVARBINARY" property="pic"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        PERSON_ID
+        , USER_ID, DEPT_ID, PERSON_CODE, PERSON_NAME, SEX, BIRTHDATE, NATION, EDU,
+    SCHOOL, MAJOR, MOBILE_PHONE, ADDR, REMARK, PIC
+    </sql>
+</mapper>

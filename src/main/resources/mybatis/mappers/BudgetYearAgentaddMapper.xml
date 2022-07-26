@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetYearAgentaddMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetYearAgentadd">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <result column="subjectid" jdbcType="BIGINT" property="subjectid"/>
+        <result column="yearagentid" jdbcType="BIGINT" property="yearagentid"/>
+        <result column="infoid" jdbcType="BIGINT" property="infoid"/>
+        <result column="type" jdbcType="INTEGER" property="type"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="agentmoney" jdbcType="DECIMAL" property="agentmoney"/>
+        <result column="agentaddmoney" jdbcType="DECIMAL" property="agentaddmoney"/>
+        <result column="agentlendoutmoney" jdbcType="DECIMAL" property="agentlendoutmoney"/>
+        <result column="agentlendinmoney" jdbcType="DECIMAL" property="agentlendinmoney"/>
+        <result column="agentexcutemoney" jdbcType="DECIMAL" property="agentexcutemoney"/>
+        <result column="total" jdbcType="DECIMAL" property="total"/>
+        <result column="m1" jdbcType="DECIMAL" property="m1"/>
+        <result column="m2" jdbcType="DECIMAL" property="m2"/>
+        <result column="m3" jdbcType="DECIMAL" property="m3"/>
+        <result column="m4" jdbcType="DECIMAL" property="m4"/>
+        <result column="m5" jdbcType="DECIMAL" property="m5"/>
+        <result column="m6" jdbcType="DECIMAL" property="m6"/>
+        <result column="m7" jdbcType="DECIMAL" property="m7"/>
+        <result column="m8" jdbcType="DECIMAL" property="m8"/>
+        <result column="m9" jdbcType="DECIMAL" property="m9"/>
+        <result column="m10" jdbcType="DECIMAL" property="m10"/>
+        <result column="m11" jdbcType="DECIMAL" property="m11"/>
+        <result column="m12" jdbcType="DECIMAL" property="m12"/>
+        <result column="curmonthmoney" jdbcType="DECIMAL" property="curmonthmoney"/>
+        <result column="curmonthid" jdbcType="BIGINT" property="curmonthid"/>
+        <result column="monthagentid" jdbcType="BIGINT" property="monthagentid"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , yearid, unitid, subjectid, yearagentid, infoid, type, updatetime, createtime,
+    agentmoney, agentaddmoney, agentlendoutmoney, agentlendinmoney, agentexcutemoney, 
+    total, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, curmonthmoney, curmonthid, 
+    monthagentid, remark, name
+    </sql>
+
+    <select id="listCanAddAgents" resultType="com.jtyjy.finance.manager.bean.BudgetYearAgent">
+        SELECT yearagent.id,
+               yearagent.name
+        FROM budget_year_agent AS yearagent
+                 INNER JOIN budget_unit AS unit ON yearagent.yearid = unit.yearid AND unit.id = yearagent.unitid
+        WHERE unit.requeststatus = 2
+          AND yearagent.unitid = #{budgetUnitId}
+          AND yearagent.subjectid = #{budgetSubjectId}
+    </select>
+
+</mapper>

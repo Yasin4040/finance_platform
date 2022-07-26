@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetPaymoneyMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetPaymoney">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="paybatchid" jdbcType="BIGINT" property="paybatchid"/>
+        <result column="paymoneycode" jdbcType="VARCHAR" property="paymoneycode"/>
+        <result column="paymoneytype" jdbcType="INTEGER" property="paymoneytype"/>
+        <result column="paymoneyobjectcode" jdbcType="VARCHAR" property="paymoneyobjectcode"/>
+        <result column="paymoneyobjectid" jdbcType="BIGINT" property="paymoneyobjectid"/>
+        <result column="paymoney" jdbcType="DECIMAL" property="paymoney"/>
+        <result column="paytype" jdbcType="INTEGER" property="paytype"/>
+        <result column="paymoneystatus" jdbcType="INTEGER" property="paymoneystatus"/>
+        <result column="lendtype" jdbcType="INTEGER" property="lendtype"/>
+        <result column="paytime" jdbcType="TIMESTAMP" property="paytime"/>
+        <result column="verifystatus" jdbcType="INTEGER" property="verifystatus"/>
+        <result column="verifytime" jdbcType="TIMESTAMP" property="verifytime"/>
+        <result column="verifyer" jdbcType="VARCHAR" property="verifyer"/>
+        <result column="verifyername" jdbcType="VARCHAR" property="verifyername"/>
+        <result column="verifyremark" jdbcType="VARCHAR" property="verifyremark"/>
+        <result column="receivetime" jdbcType="TIMESTAMP" property="receivetime"/>
+        <result column="receiver" jdbcType="VARCHAR" property="receiver"/>
+        <result column="receivername" jdbcType="VARCHAR" property="receivername"/>
+        <result column="month" jdbcType="VARCHAR" property="month"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="bunitname" jdbcType="VARCHAR" property="bunitname"/>
+        <result column="bunitbankaccount" jdbcType="VARCHAR" property="bunitbankaccount"/>
+        <result column="bunitaccountbranchcode" jdbcType="VARCHAR" property="bunitaccountbranchcode"/>
+        <result column="bunitaccountbranchname" jdbcType="VARCHAR" property="bunitaccountbranchname"/>
+        <result column="bankaccountname" jdbcType="VARCHAR" property="bankaccountname"/>
+        <result column="bankaccount" jdbcType="VARCHAR" property="bankaccount"/>
+        <result column="bankaccountbranchcode" jdbcType="VARCHAR" property="bankaccountbranchcode"/>
+        <result column="bankaccountbranchname" jdbcType="VARCHAR" property="bankaccountbranchname"/>
+        <result column="openbank" jdbcType="VARCHAR" property="openbank"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , paybatchid, paymoneycode, paymoneytype, paymoneyobjectcode, paymoneyobjectid,
+    paymoney, paytype, paymoneystatus, lendtype, paytime, verifystatus, verifytime, verifyer, 
+    verifyername, verifyremark, receivetime, receiver, receivername, month, createtime, 
+    bunitname, bunitbankaccount, bunitaccountbranchcode, bunitaccountbranchname, bankaccountname, 
+    bankaccount, bankaccountbranchcode, bankaccountbranchname, openbank, remark
+    </sql>
+    
+    <insert id="batchSavePaymoney" parameterType="java.util.List">
+    	<selectKey resultType ="java.lang.Integer" keyProperty= "id" order= "AFTER">
+                 SELECT LAST_INSERT_ID()
+        </selectKey >
+    	insert into budget_paymoney
+		    	(paymoneycode,
+		    	 paymoneytype,
+		    	 paymoneyobjectcode,
+		    	 paymoneyobjectid,
+		    	 paymoney,
+		    	 paytype,
+		    	 paymoneystatus,
+		    	 createtime,
+		    	 bunitname,
+		    	 bunitbankaccount,
+		    	 bunitaccountbranchcode,
+		    	 bunitaccountbranchname,
+		    	 bankaccountname,
+		    	 bankaccount,
+		    	 bankaccountbranchcode,
+		    	 bankaccountbranchname,
+		    	 openbank,
+		    	 remark)
+		values
+    		<foreach collection ="paymoneyList" item="pm" index= "index" separator =",">
+                (
+                #{pm.paymoneycode}, 
+                #{pm.paymoneytype},
+                #{pm.paymoneyobjectcode},
+                #{pm.paymoneyobjectid},
+                #{pm.paymoney}, 
+                #{pm.paytype},
+                #{pm.paymoneystatus},
+                #{pm.createtime},
+                #{pm.bunitname},
+                #{pm.bunitbankaccount},
+                #{pm.bunitaccountbranchcode},
+                #{pm.bunitaccountbranchname},
+                #{pm.bankaccountname},
+                #{pm.bankaccount},
+                #{pm.bankaccountbranchcode},
+                #{pm.bankaccountbranchname},
+                #{pm.openbank},
+                #{pm.remark}
+                )
+            </foreach>
+    </insert>  
+    
+    <select id = 'getBxPaymoneyPageInfo' resultType = 'com.jtyjy.finance.manager.bean.BudgetPaymoney'>
+	    SELECT pm.*, DATE_FORMAT(pm.paytime,'%Y-%m-%d %H:%i:%S') paytimeStr, pb.paybatchcode 
+		FROM budget_paymoney pm LEFT JOIN budget_paybatch pb on pm.paybatchid = pb.id
+		WHERE pm.paymoneytype = 1
+		<foreach collection="conditionMap" index="key" item="value">
+            <if test="key == 'paymoneystatus'">
+                <if test="value != null">
+                    AND pm.paymoneystatus = #{value}
+                </if>
+            </if>
+            <if test="key == 'paybatchcode'">
+                <if test="value !=null and value !=''">
+                    AND pb.paybatchcode LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'paymoney'">
+                <if test="value != null">
+                    AND pm.paymoney = #{value}
+                </if>
+            </if>
+            <if test="key == 'paymoneyobjectcode'">
+                <if test="value != null and value !=''">
+                    AND pm.paymoneyobjectcode LIKE CONCAT('%', #{value}, '%')
+                </if>
+            </if>
+            <if test="key == 'bunitname'">
+                <if test="value != null and value !=''">
+                    AND pm.bunitname LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'bunitaccountbranchname'">
+                <if test="value != null and value !=''">
+                    AND pm.bunitaccountbranchname = #{value}  
+                </if>
+            </if>
+            <if test="key == 'bankaccountname'">
+                <if test="value != null">
+                    AND pm.bankaccountname LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'paytime'">
+                <if test="value != null and value !=''">
+                    AND pm.paytime LIKE CONCAT(#{value}, '%')  
+                </if>
+            </if>
+        </foreach>
+		ORDER BY pm.paytime desc
+		<if test="authSql != null and authSql != ''">
+            ${authSql}
+        </if>
+    </select>
+    
+    <select id = 'getErrorPaymoneyPageInfo' resultType = 'com.jtyjy.finance.manager.bean.BudgetPaymoney'>
+    	SELECT bp.*, pb.paybatchcode, DATE_FORMAT(bp.paytime,'%Y-%m-%d %H:%i:%S') paytimeStr, DATE_FORMAT(bp.receivetime,'%Y-%m-%d %H:%i:%S') receivetimeStr 
+    	FROM budget_paymoney bp,budget_paybatch pb
+    	WHERE bp.verifystatus = -1 AND bp.id IN (${conditionMap.ids}) AND bp.paybatchid = pb.id
+    	<foreach collection="conditionMap" index="key" item="value">
+
+            <if test="key == 'paymoneycode'">
+                <if test="value !=null and value !=''">
+                    AND bp.paymoneycode LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'paymoneyobjectcode'">
+                <if test="value != null and value !=''">
+                    AND bp.paymoneyobjectcode LIKE CONCAT('%', #{value}, '%')
+                </if>
+            </if>
+            <if test="key == 'bankaccountname'">
+                <if test="value != null and value !=''">
+                    AND bp.bankaccountname LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+        </foreach>
+    	<if test = "authSql != null and authSql != ''">
+            ${authSql}
+        </if>
+    </select>
+    
+    <select id = 'getCashPayMoneyPageInfo' resultType = 'com.jtyjy.finance.manager.bean.BudgetPaymoney'>
+    	SELECT _pay.*, _paybatch.paybatchcode, DATE_FORMAT(_pay.paytime,'%Y-%m-%d %H:%i:%S') paytimeStr, DATE_FORMAT(_pay.receivetime,'%Y-%m-%d %H:%i:%S') receivetimeStr
+    	FROM budget_paymoney _pay LEFT JOIN budget_paybatch  _paybatch ON _paybatch.id = _pay.paybatchid
+    	WHERE _pay.paymoneytype != 2  
+    	<foreach collection="conditionMap" index="key" item="value">
+    		<if test="key == 'paymoneyobjectcode'">
+                <if test="value != null and value !=''">
+    				AND _pay.paymoneyobjectcode LIKE CONCAT('%', #{value} ,'%')
+    			</if>
+            </if>
+            <if test="key == 'paymoneycode'">
+                <if test="value != null and value !=''">
+    				AND _pay.paymoneycode LIKE CONCAT('%', #{value} ,'%')
+    			</if>
+            </if>
+            <if test="key == 'bankaccountname'">
+                <if test="value != null and value !=''">
+                    AND _pay.bankaccountname LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+    		<if test="key == 'bankaccountbranchname'">
+                <if test="value != null and value !=''">
+    				AND _pay.bankaccountbranchname LIKE CONCAT('%', #{value} ,'%')
+    			</if>
+            </if>
+            <if test="key == 'bunitname'">
+                <if test="value != null and value !=''">
+    				AND _pay.bunitname LIKE CONCAT('%', #{value} ,'%')
+    			</if>
+            </if>
+            <if test="key == 'paybatchcode'">
+                <if test="value != null and value !=''">
+    				AND _paybatch.paybatchcode LIKE CONCAT('%', #{value} ,'%')
+    			</if>
+            </if>
+            <if test="key == 'paymoneystatus'">
+                <if test="value != null">
+    				AND _pay.paymoneystatus = #{value}
+    			</if>
+            </if>
+            <if test="key == 'paymoneytype'">
+                <if test="value != null">
+    				AND _pay.paymoneytype = #{value}
+    			</if>
+            </if>
+            <if test="key == 'paytype'">
+                <if test="value != null">
+    				AND _pay.paytype = #{value}
+    			</if>
+            </if>
+            <if test="key == 'sourceType'">
+
+                <if test="value != null and value == 1">
+                    AND _pay.paymoneytype in (1,2)
+                </if>
+                <if test="value != null and value == 2">
+                    AND _pay.paymoneytype = 3
+                </if>
+            </if>
+    	</foreach>
+    	ORDER BY _pay.paymoneystatus , _pay.receivetime desc , _pay.paymoneycode desc
+		<if test="authSql != null and authSql != ''">
+            ${authSql}
+        </if>
+    </select>
+    
+    <select id = 'getNaturalPayPageInfo' resultType = 'com.jtyjy.finance.manager.bean.BudgetPaymoney'>
+	    SELECT _pay.*, _paybatch.paybatchcode, DATE_FORMAT(_pay.paytime,'%Y-%m-%d %H:%i:%S') paytimeStr, DATE_FORMAT(_pay.receivetime,'%Y-%m-%d %H:%i:%S') receivetimeStr
+		FROM budget_paymoney _pay LEFT JOIN budget_paybatch  _paybatch ON _paybatch.id = _pay.paybatchid
+		WHERE _pay.paymoneystatus = 3 AND _pay.verifystatus = 0  AND _pay.paytype=1
+    	<foreach collection="conditionMap" index="key" item="value">
+    	    <if test="key == 'paymoneyobjectcode'">
+                <if test="value != null and value !=''">
+    				AND _pay.paymoneyobjectcode LIKE CONCAT('%', #{value} ,'%')
+    			</if>
+            </if>
+            <if test="key == 'paymoneycode'">
+                <if test="value != null and value !=''">
+    				AND _pay.paymoneycode LIKE CONCAT('%', #{value} ,'%')
+    			</if>
+            </if>
+            <if test="key == 'bankaccountname'">
+                <if test="value != null and value !=''">
+                    AND _pay.bankaccountname LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+    	</foreach>
+    	ORDER BY  _pay.receivetime desc , _pay.paymoneycode desc
+		<if test="authSql != null and authSql != ''">
+            ${authSql}
+        </if>
+    </select>
+    
+    <select id = 'getReimcodePage' resultType = 'map'>
+    	SELECT ttt.* 
+    	FROM ( 
+    		SELECT  reimcode,CONCAT(_order.reimcode,' (报销人:',_order.reimperonsname,', 报销金额:',ROUND(_order.reimmoney, 2),')') query,CONCAT(_order.reimcode,' (报销人:',_order.reimperonsname,', 报销金额:',_order.reimmoney,')') text,reimcode value
+    		FROM budget_reimbursementorder _order) ttt 
+    		WHERE 1=1 AND ttt.reimcode IN (SELECT paymoneyobjectcode FROM budget_paymoney _pay WHERE _pay.paymoneytype=1 AND _pay.paymoneystatus = 1)
+	    	<if test="condition != null and condition !=''">
+	    		AND ttt.query LIKE CONCAT('%', #{condition} ,'%') 
+	    	</if>
+    	ORDER BY reimcode desc
+    	<if test="authSql != null and authSql != ''">
+            ${authSql}
+        </if>
+    </select>
+    
+    <select id = 'getTccodePage' resultType = 'String'>
+    	SELECT DISTINCT _pay.paymoneyobjectcode tccode
+		FROM budget_paymoney _pay
+		WHERE _pay.paymoneytype = 2 AND _pay.paymoneystatus = 1 
+		<if test="condition != null and condition !=''">
+			AND _pay.paymoneyobjectcode LIKE CONCAT('%', #{condition} ,'%')
+		</if>
+		ORDER BY tccode DESC
+		<if test="authSql != null and authSql != ''">
+            ${authSql}
+        </if>
+    </select>
+    
+    <select id = 'getXmcodePage' resultType = 'map'>   
+		SELECT ttt.* 
+		FROM(  
+			SELECT DISTINCT _pay.paymoneyobjectcode xmcode, CONCAT(_projectsum.projectname,'(',_projectsum.projectno,')') query 
+			FROM budget_paymoney _pay INNER JOIN budget_projectlendsum_new _projectsum ON _pay.paymoneyobjectcode = _projectsum.projectno
+			WHERE _pay.paymoneytype=6 AND _pay.paymoneystatus = 1) ttt 
+		WHERE 1=1 
+	    <if test="condition != null and condition !=''">
+	    	AND ttt.query LIKE CONCAT('%', #{condition} ,'%') 
+	    </if>
+	    ORDER BY xmcode DESC
+	    <if test="authSql != null and authSql != ''">
+            ${authSql}
+        </if>
+    </select>
+    
+    <select id = 'getCanPayMoneyByPmtype' resultType = 'com.jtyjy.finance.manager.bean.BudgetPaymoney'>
+    	SELECT _pay.*, DATE_FORMAT(_pay.paytime,'%Y-%m-%d %H:%i:%S') paytimeStr, DATE_FORMAT(_pay.receivetime,'%Y-%m-%d %H:%i:%S') receivetimeStr
+    	FROM budget_paymoney _pay
+		WHERE _pay.paymoneystatus > 0  AND _pay.paymoneytype = #{paymoneytype} 
+		<if test="objectcode != null and objectcode !=''">
+			AND _pay.paymoneyobjectcode = #{objectcode}
+		</if>
+		<if test="paytype !=null">
+			and _pay.paytype = #{paytype}
+		</if>
+		ORDER BY _pay.receivetime DESC
+    </select>
+    
+    <select id = 'getCanPayMoneyByFkType' resultType = 'com.jtyjy.finance.manager.bean.BudgetPaymoney'>
+    	SELECT _pay.*, DATE_FORMAT(_pay.paytime,'%Y-%m-%d %H:%i:%S') paytimeStr, DATE_FORMAT(_pay.receivetime,'%Y-%m-%d %H:%i:%S') receivetimeStr
+    	FROM budget_paymoney _pay
+    	WHERE _pay.paymoneystatus = 1 AND _pay.verifystatus = 0 AND _pay.paytype = #{paytype}  
+    	<if test="objectcode != null and objectcode !=''">
+			 AND _pay.paymoneyobjectcode LIKE CONCAT('%', #{objectcode}, '%')
+		</if>
+		<if test="bankaccountname != null and bankaccountname !=''">
+			 AND _pay.bankaccountname LIKE CONCAT('%', #{bankaccountname}, '%')
+		</if>
+		<if test="ids != null and ids !=''">
+			 AND _pay.id IN (${ids})
+		</if>
+		ORDER BY _pay.receivetime DESC 
+    </select>
+    
+    <select id = 'otherAddQuery' resultType = 'com.jtyjy.finance.manager.bean.BudgetPaymoney'>
+    	SELECT _pay.*, DATE_FORMAT(_pay.paytime,'%Y-%m-%d %H:%i:%S') paytimeStr, DATE_FORMAT(_pay.receivetime,'%Y-%m-%d %H:%i:%S') receivetimeStr
+    	FROM budget_paymoney _pay
+    	WHERE _pay.paymoneystatus = 1 AND _pay.paytype = 1 and _pay.paymoneytype != 2  AND _pay.verifystatus = 0  	
+    	<foreach collection="conditionMap" index="key" item="value">
+    	    <if test="key == 'ids'">
+                <if test="value != null and value !=''">
+    				 AND _pay.id NOT IN (${value})
+    			</if>
+            </if>
+            <if test="key == 'paymoneyobjectcode'">
+                <if test="value != null and value !=''">
+    				AND _pay.paymoneyobjectcode LIKE CONCAT('%', #{value} ,'%')
+    			</if>
+            </if>
+            <if test="key == 'bankaccountname'">
+                <if test="value != null and value !=''">
+                    AND _pay.bankaccountname LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'bankaccountbranchname'">
+                <if test="value != null and value !=''">
+                    AND _pay.bankaccountbranchname LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'bunitname'">
+                <if test="value != null and value !=''">
+                    AND _pay.bunitname LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'paymoneytype'">
+                <if test="value != null">
+                    AND _pay.paymoneytype = #{value}  
+                </if>
+            </if>
+            <if test="key == 'sourceType'">
+                <if test="value != null and value == 1">
+                    AND _pay.paymoneytype in (1,2)
+                </if>
+                <if test="value != null and value == 2">
+                    AND _pay.paymoneytype = 3
+                </if>
+            </if>
+    	</foreach>
+    	<if test="authSql != null and authSql != ''">
+            ${authSql}
+        </if>
+    	ORDER BY _pay.receivetime DESC 
+    </select>
+</mapper>

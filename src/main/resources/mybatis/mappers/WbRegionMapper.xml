@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.WbRegionMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.WbRegion">
+        <result column="region_code" jdbcType="VARCHAR" property="regionCode"/>
+        <result column="region_name" jdbcType="VARCHAR" property="regionName"/>
+        <result column="region_leve" jdbcType="INTEGER" property="regionLeve"/>
+        <result column="region_pcode" jdbcType="VARCHAR" property="regionPcode"/>
+    </resultMap>
+</mapper>

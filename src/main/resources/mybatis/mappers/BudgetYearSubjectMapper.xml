@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetYearSubjectMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetYearSubject">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <result column="m6" jdbcType="DECIMAL" property="m6"/>
+        <result column="m7" jdbcType="DECIMAL" property="m7"/>
+        <result column="m8" jdbcType="DECIMAL" property="m8"/>
+        <result column="m9" jdbcType="DECIMAL" property="m9"/>
+        <result column="m10" jdbcType="DECIMAL" property="m10"/>
+        <result column="m11" jdbcType="DECIMAL" property="m11"/>
+        <result column="m12" jdbcType="DECIMAL" property="m12"/>
+        <result column="m1" jdbcType="DECIMAL" property="m1"/>
+        <result column="m2" jdbcType="DECIMAL" property="m2"/>
+        <result column="m3" jdbcType="DECIMAL" property="m3"/>
+        <result column="m4" jdbcType="DECIMAL" property="m4"/>
+        <result column="m5" jdbcType="DECIMAL" property="m5"/>
+        <result column="total" jdbcType="DECIMAL" property="total"/>
+        <result column="pretotal" jdbcType="DECIMAL" property="pretotal"/>
+        <result column="preestimate" jdbcType="DECIMAL" property="preestimate"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+        <result column="subjectid" jdbcType="BIGINT" property="subjectid"/>
+        <result column="revenueformula" jdbcType="DECIMAL" property="revenueformula"/>
+        <result column="ccratioformula" jdbcType="DECIMAL" property="ccratioformula"/>
+        <result column="prerevenueformula" jdbcType="DECIMAL" property="prerevenueformula"/>
+        <result column="preccratioformula" jdbcType="DECIMAL" property="preccratioformula"/>
+        <result column="revenueformulastr" jdbcType="VARCHAR" property="revenueformulastr"/>
+        <result column="ccratioformulastr" jdbcType="VARCHAR" property="ccratioformulastr"/>
+        <result column="preccratioformulastr" jdbcType="VARCHAR" property="preccratioformulastr"/>
+        <result column="formula" jdbcType="VARCHAR" property="formula"/>
+        <result column="addmoney" jdbcType="DECIMAL" property="addmoney"/>
+        <result column="lendoutmoney" jdbcType="DECIMAL" property="lendoutmoney"/>
+        <result column="lendinmoney" jdbcType="DECIMAL" property="lendinmoney"/>
+        <result column="executemoney" jdbcType="DECIMAL" property="executemoney"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , yearid, unitid, m6, m7, m8, m9, m10, m11, m12, m1, m2, m3, m4, m5, total, pretotal,
+    preestimate, createtime, updatetime, subjectid, revenueformula, ccratioformula, prerevenueformula, 
+    preccratioformula, revenueformulastr, ccratioformulastr, preccratioformulastr, formula, 
+    addmoney, lendoutmoney, lendinmoney, executemoney
+    </sql>
+
+    <select id="listYearSubjectByUnitId" resultType="com.jtyjy.finance.manager.vo.BudgetYearSubjectVO">
+        SELECT yearsubject.id                   as primaryKeyId,
+               yearsubject.pretotal             as preTotal,
+               yearsubject.preestimate          as preEstimate,
+               yearsubject.preccratioformula    as preCcRatioFormula,
+               yearsubject.preccratioformulastr as preCcRatioFormulaStr,
+               yearsubject.prerevenueformula    as preRevenueFormula,
+               yearsubject.total                as total,
+               yearsubject.ccratioformula       as ccRatioFormula,
+               yearsubject.ccratioformulastr    as ccRatioFormulaStr,
+               yearsubject.revenueformula       as revenueFormula,
+               yearsubject.revenueformulastr    as revenueFormulaStr,
+               yearsubject.formula,
+               subject.id                       AS id,
+               subject.parentid                 AS parentId,
+               subject.`name`                   AS budgetSubjectName,
+               subject.code                     AS budgetSubjectCode,
+               subject.leafflag                 AS leaf,
+               basesubject.id                   as baseSubjectId,
+               basesubject.`name`               as baseSubjectName
+        FROM budget_year_subject AS yearsubject
+                 INNER JOIN budget_subject AS subject
+                            ON yearsubject.subjectId = subject.id AND yearsubject.yearId = subject.yearId
+                 INNER JOIN budget_base_subject basesubject ON subject.subjectId = basesubject.id
+        WHERE yearsubject.unitId = #{budgetUnitId}
+        ORDER BY subject.formulaorderno
+    </select>
+
+    <select id="listTotalByUnitId" resultType="java.util.Map">
+        SELECT
+            _basesubject.name,
+            _yearsubject.total
+        FROM budget_year_subject _yearsubject
+            INNER JOIN budget_subject _subject
+        ON _subject.id = _yearsubject.subjectId AND _subject.yearId = _yearsubject.yearId
+            INNER JOIN budget_base_subject _basesubject ON _basesubject.id = _subject.subjectId
+        WHERE _yearsubject.unitId = #{budgetUnitId}
+    </select>
+</mapper>

@@ -1,0 +1,124 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.jtyjy</groupId>
+		<artifactId>parent</artifactId>
+		<version>2.2.6.RELEASE</version>
+	</parent>
+	<artifactId>finance_platform</artifactId>
+	<name>finance_platform</name>
+	<description>这是一个财务系统</description>
+
+
+	<dependencies>
+		<dependency>
+			<groupId>com.jtyjy</groupId>
+			<artifactId>core</artifactId>
+			<version>5.0.6</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.apache.poi</groupId>
+					<artifactId>poi</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.poi</groupId>
+					<artifactId>poi-ooxml</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.poi</groupId>
+					<artifactId>poi-ooxml-schemas</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<!-- 引入easyexcel -->
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>easyexcel</artifactId>
+			<version>2.2.3</version>
+		</dependency>
+		<dependency>
+			<groupId>com.jtyjy</groupId>
+			<artifactId>easy-excel</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>com.jtyjy.ecology</groupId>
+			<artifactId>jtyjy-ecology-webservice-client</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.jtyjy.ecology</groupId>
+			<artifactId>jtyjy-ecology-sdk</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.jtyjy.ecology</groupId>
+			<artifactId>jtyjy-ecology-core</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.jtyjy.api</groupId>
+			<artifactId>jtyjy-api-webservice-client</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk15on</artifactId>
+			<version>1.60</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/wsdl4j/wsdl4j -->
+		<dependency>
+			<groupId>wsdl4j</groupId>
+			<artifactId>wsdl4j</artifactId>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/commons-discovery/commons-discovery -->
+		<dependency>
+			<groupId>commons-discovery</groupId>
+			<artifactId>commons-discovery</artifactId>
+			<version>0.2</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.apache.axis/axis -->
+		<dependency>
+			<groupId>org.apache.axis</groupId>
+			<artifactId>axis</artifactId>
+			<version>1.4</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.apache.axis/axis-jaxrpc -->
+		<dependency>
+			<groupId>org.apache.axis</groupId>
+			<artifactId>axis-jaxrpc</artifactId>
+			<version>1.4</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>com.iamxiongx</groupId>
+			<artifactId>iamxiongx-util-message</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.klcwqy</groupId>
+			<artifactId>easy-queue</artifactId>
+			<version>2.0.0</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

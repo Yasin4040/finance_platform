@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetReimbursementexecuteMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetReimbursementexecute">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="reimbursementid" jdbcType="BIGINT" property="reimbursementid"/>
+        <result column="type" jdbcType="INTEGER" property="type"/>
+        <result column="monthagentid" jdbcType="BIGINT" property="monthagentid"/>
+        <result column="executemoney" jdbcType="DECIMAL" property="executemoney"/>
+        <result column="reimflag" jdbcType="BIT" property="reimflag"/>
+        <result column="handleflag" jdbcType="BIT" property="handleflag"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , reimbursementid, type, monthagentid, executemoney, reimflag, handleflag, createtime,
+    updatetime
+    </sql>
+</mapper>

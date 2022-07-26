@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetYearAgentErpLendViewMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetYearAgentErpLendView">
+        <result column="requeststatus" jdbcType="INTEGER" property="requeststatus"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="baseunitid" jdbcType="BIGINT" property="baseunitid"/>
+        <result column="unitpids" jdbcType="VARCHAR" property="unitpids"/>
+        <result column="unitpid" jdbcType="BIGINT" property="unitpid"/>
+        <result column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <result column="outbasesubjectid" jdbcType="BIGINT" property="outbasesubjectid"/>
+        <result column="outsubjectpids" jdbcType="VARCHAR" property="outsubjectpids"/>
+        <result column="outsubjectpid" jdbcType="BIGINT" property="outsubjectpid"/>
+        <result column="outsubjectid" jdbcType="BIGINT" property="outsubjectid"/>
+        <result column="outyearagentname" jdbcType="VARCHAR" property="outyearagentname"/>
+        <result column="outyearagentid" jdbcType="BIGINT" property="outyearagentid"/>
+        <result column="inbasesubjectid" jdbcType="BIGINT" property="inbasesubjectid"/>
+        <result column="insubjectpids" jdbcType="VARCHAR" property="insubjectpids"/>
+        <result column="insubjectpid" jdbcType="BIGINT" property="insubjectpid"/>
+        <result column="insubjectid" jdbcType="BIGINT" property="insubjectid"/>
+        <result column="inyearagentid" jdbcType="BIGINT" property="inyearagentid"/>
+        <result column="inyearagentname" jdbcType="VARCHAR" property="inyearagentname"/>
+        <result column="lendmoney" jdbcType="DECIMAL" property="lendmoney"/>
+        <result column="audittime" jdbcType="VARCHAR" property="audittime"/>
+        <result column="createtime" jdbcType="VARCHAR" property="createtime"/>
+    </resultMap>
+</mapper>

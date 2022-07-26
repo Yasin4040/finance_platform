@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetBillingUnitMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetBillingUnit">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="code" jdbcType="VARCHAR" property="code"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="billingunittype" jdbcType="VARCHAR" property="billingunittype"/>
+        <result column="corporation" jdbcType="BIT" property="corporation"/>
+        <result column="ownflag" jdbcType="BIT" property="ownflag"/>
+        <result column="stopflag" jdbcType="BIT" property="stopflag"/>
+        <result column="orderno" jdbcType="INTEGER" property="orderno"/>
+        <result column="budgeters" jdbcType="VARCHAR" property="budgeters"/>
+        <result column="accountants" jdbcType="VARCHAR" property="accountants"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="firstspell" jdbcType="VARCHAR" property="firstspell"/>
+        <result column="fullspell" jdbcType="VARCHAR" property="fullspell"/>
+        <result column="outkey" jdbcType="VARCHAR" property="outkey"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , code, name, billingunittype, corporation, ownflag, stopflag, orderno, budgeters,
+    accountants, remark, firstspell, fullspell, outkey
+    </sql>
+    
+    <select id="getBillUnitPageList" resultType="com.jtyjy.finance.manager.vo.BillingUnitVO">
+        select bu.id, bu.code, bu.name, bu.billingunittype as billingUnitType, bu.corporation, bu.ownflag as ownFlag, bu.stopflag as stopFlag,
+        bu.budgeters, bu.accountants, bu.remark, bu.firstspell as firstSpell, bu.fullspell as fullSpell,bu.outkey as outKey, bu.orderno as orderNo
+        from
+        budget_billing_unit bu
+        where
+        1 = 1
+        <foreach collection="conditionMap" index="key" item="value">
+            <if test="key == 'name'">
+                <if test="value !=null and value !=''">
+                    and bu.name like CONCAT('%',#{value},'%')
+                </if>
+            </if>
+            <if test="key == 'billingUnitType'">
+                <if test="value !=null and value !=''">
+                    and bu.billingunittype = #{value}
+                </if>
+            </if>
+            <if test="key == 'corporation'">
+                <if test="value !=null">
+                    and bu.corporation = #{value}
+                </if>
+            </if>
+            <if test="key == 'ownflag'">
+                <if test="value !=null">
+                    and bu.ownflag = #{value}
+                </if>
+            </if>
+            <if test="key == 'stopflag'">
+                <if test="value !=null">
+                    and bu.stopflag = #{value}
+                </if>
+            </if>
+        </foreach>
+        order by bu.orderno 
+        <if test="authSql !=null and authSql !=''">
+            ${authSql}
+        </if>
+    </select>
+    <select id="curUserPaymentUnitAccount" resultType="com.jtyjy.finance.manager.vo.PaymentUnitVO">
+        SELECT bunit.id AS bUnitId,
+               bunitaccount.id AS unitAccountId,
+               bunit.`name` AS unitName,
+               bunitaccount.bankaccount AS bankAccount,
+               banks.sub_branch_name    AS bankName
+        FROM budget_billing_unit_account AS bunitaccount
+                 INNER JOIN budget_billing_unit AS bunit ON bunitaccount.billingunitid = bunit.id
+                 INNER JOIN wb_banks AS banks ON bunitaccount.branchcode = banks.sub_branch_code
+        WHERE bunitaccount.stopflag = 0
+          AND bunit.stopflag = 0
+          AND bunit.id in (${ids})
+    </select>
+</mapper>

@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetBankAccountMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetBankAccount">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="code" jdbcType="VARCHAR" property="code"/>
+        <result column="pname" jdbcType="VARCHAR" property="pname"/>
+        <result column="accountname" jdbcType="VARCHAR" property="accountname"/>
+        <result column="accounttype" jdbcType="INTEGER" property="accounttype"/>
+        <result column="bankaccount" jdbcType="VARCHAR" property="bankaccount"/>
+        <result column="wagesflag" jdbcType="BIT" property="wagesflag"/>
+        <result column="branchcode" jdbcType="VARCHAR" property="branchcode"/>
+        <result column="stopflag" jdbcType="BIT" property="stopflag"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="outkey" jdbcType="VARCHAR" property="outkey"/>
+        <result column="orderno" jdbcType="INTEGER" property="orderno"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , code, pname, accountname, accounttype, bankaccount, wagesflag, branchcode, stopflag,
+    remark, outkey, orderno
+    </sql>
+    
+    <select id = 'getBankAccountPageInfo' resultType = "com.jtyjy.finance.manager.vo.BankAccountVO">
+    	SELECT ba.id, ba.code, ba.pname pname, ba.accountname accountName, ba.accounttype accountType, ba.bankaccount bankAccount, ba.wagesflag wagesFlag, ba.branchcode branchCode, ba.orderno orderNo,
+    	ba.stopflag stopFlag, ba.remark, ba.outKey, wb.province, wb.city, wb.bank_name bankName, wb.sub_branch_name branchName, wp.DEPT_ID deptId, ba.update_time, ba.update_by
+    	FROM budget_bank_account ba LEFT JOIN wb_banks wb ON ba.branchcode = wb.sub_branch_code LEFT JOIN wb_person wp ON ba.code = wp.PERSON_CODE
+    	WHERE 1 = 1
+    	<foreach collection="conditionMap" index="key" item="value">
+            <if test="key == 'code'">
+                <if test="value != null and value != ''">
+                    and ba.code like CONCAT ('%', #{value}, '%')
+                </if>
+            </if>
+            <if test="key == 'deptId'">
+                <if test="value != null and value != ''">
+                    and wp.DEPT_ID in (${value})
+                </if>
+            </if>
+            <if test="key == 'pname'">
+                <if test="value != null and value != ''">
+                    and ba.pname like CONCAT ('%', #{value}, '%')
+                </if>
+            </if>
+            <if test="key == 'accountType'">
+                <if test="value != null">
+                    and ba.accounttype = #{value}
+                </if>
+            </if>
+            <if test="key == 'bankAccount'">
+                <if test="value != null and value != ''">
+                    and ba.bankaccount like CONCAT ('%', #{value}, '%')
+                </if>
+            </if>
+            <if test="key == 'wagesFlag'">
+                <if test="value != null">
+                    and ba.wagesflag = #{value}
+                </if>
+            </if>
+            <if test="key == 'branchCode'">
+                <if test="value != null and value != ''">
+                    and ba.branchcode = #{value}
+                </if>
+            </if>
+           	<if test="key == 'stopFlag'">
+                <if test="value != null">
+                    and ba.stopflag = #{value}
+                </if>
+            </if>
+            <if test="key == 'queryText'">
+                <if test="value != null and value != ''">
+                    and (ba.accountname LIKE CONCAT('%', #{value}, '%') or ba.code LIKE CONCAT('%', #{value}, '%') or ba.bankaccount LIKE CONCAT('%', #{value}, '%'))
+                </if>
+            </if>
+        </foreach>
+        order by ba.orderno
+    	<if test="authSql !=null and authSql !=''">
+            ${authSql}
+        </if>
+    </select>
+    
+    <!-- 根据个人银行账号查询银行信息 -->
+    <select id="getBankInfoByAccounts" resultType="BankInfo">
+	    SELECT 
+		a.accountname  as accountName,
+		a.bankaccount as bankAccount,
+		a.branchcode as bankCode,
+		b.bank_name as bankName,
+		b.sub_branch_name as openBank
+		FROM 
+		budget_bank_account a ,wb_banks b 
+		where a.branchcode = b.sub_branch_code and a.stopflag = 0
+     	and a.bankaccount in (${inSql})
+    </select>
+    
+    <select id = 'getBankAccountExcelInfo' resultType = "com.jtyjy.finance.manager.easyexcel.BankAccountExcelData">
+    	SELECT ba.code, ba.pname pname, ba.accountname accountName, ba.bankaccount bankAccount, wb.bank_name bankName, wp.DEPT_ID deptId,wb.province,wb.city,wb.sub_branch_name subBranchName
+    	FROM budget_bank_account ba LEFT JOIN wb_banks wb ON ba.branchcode = wb.sub_branch_code LEFT JOIN wb_person wp ON ba.code = wp.PERSON_CODE
+    	WHERE 1 = 1
+    	<foreach collection="conditionMap" index="key" item="value">
+            <if test="key == 'code'">
+                <if test="value !=null and value !=''">
+                    AND ba.code like CONCAT ('%', #{value}, '%')
+                </if>
+            </if>
+            <if test="key == 'deptId'">
+                <if test="value !=null and value !=''">
+                    AND wp.DEPT_ID in (${value})
+                </if>
+            </if>
+            <if test="key == 'pname'">
+                <if test="value !=null and value !=''">
+                    AND ba.pname LIKE CONCAT ('%', #{value}, '%')
+                </if>
+            </if>
+            <if test="key == 'accountType'">
+                <if test="value !=null">
+                    AND ba.accounttype = #{value}
+                </if>
+            </if>
+            <if test="key == 'bankAccount'">
+                <if test="value !=null and value !=''">
+                    AND ba.bankaccount LIKE CONCAT ('%', #{value}, '%')
+                </if>
+            </if>
+            <if test="key == 'wagesFlag'">
+                <if test="value !=null">
+                    AND ba.wagesflag = #{value}
+                </if>
+            </if>
+            <if test="key == 'branchCode'">
+                <if test="value !=null and value !=''">
+                    AND ba.branchcode = #{value}
+                </if>
+            </if>
+           	<if test="key == 'stopFlag'">
+                <if test="value !=null">
+                    AND ba.stopflag = #{value}
+                </if>
+            </if>
+        </foreach>
+        ORDER BY ba.orderno
+    </select>
+    
+    <select id = 'getBankAccountByAccount' resultType = "com.jtyjy.finance.manager.vo.BankAccountVO">
+    	SELECT ba.id, ba.code, ba.pname pname, ba.accountname accountName, ba.accounttype accountType, ba.bankaccount bankAccount, ba.wagesflag wagesFlag, ba.branchcode branchCode, ba.orderno orderNo,
+    	ba.stopflag stopFlag, ba.remark, ba.outKey, wb.province, wb.city, wb.bank_name bankName, wb.sub_branch_name branchName, wp.DEPT_ID deptId
+    	FROM budget_bank_account ba LEFT JOIN wb_banks wb ON ba.branchcode = wb.sub_branch_code LEFT JOIN wb_person wp ON ba.code = wp.PERSON_CODE
+    	WHERE 1 = 1
+    	<if test="bankaccount != null and bankaccount != ''">
+        	AND ba.bankaccount = #{bankaccount}
+        </if>
+        <if test="accountname != null and accountname != ''">
+        	AND ba.pname = #{accountname}
+        </if>
+    </select>
+ 
+</mapper>

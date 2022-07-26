@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetReimburmentTimedetailMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetReimburmentTimedetail">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="reimcode" jdbcType="VARCHAR" property="reimcode"/>
+        <result column="empno" jdbcType="VARCHAR" property="empno"/>
+        <result column="starttime" jdbcType="TIMESTAMP" property="starttime"/>
+        <result column="endtime" jdbcType="TIMESTAMP" property="endtime"/>
+        <result column="days" jdbcType="DECIMAL" property="days"/>
+        <result column="type" jdbcType="INTEGER" property="type"/>
+        <result column="iseffective" jdbcType="INTEGER" property="iseffective"/>
+        <result column="creattime" jdbcType="TIMESTAMP" property="creattime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , reimcode, empno, starttime, endtime, days, type, iseffective, creattime
+    </sql>
+    
+    <select id = "getTimeDetail" resultType = "com.jtyjy.finance.manager.bean.BudgetReimburmentTimedetail">
+    	SELECT time.*, ord.id orderId, ROUND(ord.reimmoney, 2) reimMoney, unit.name unitName, ord.submittime submitTime, fdtask.bunitname fdUnitName
+		FROM budget_reimbursementorder ord INNER JOIN budget_reimburment_timedetail time ON ord.reimcode = time.reimcode INNER JOIN budget_unit unit ON ord.unitid = unit.id LEFT JOIN budget_reimbursementorder_fdtask fdtask ON ord.id = fdtask.reimbursementid
+		WHERE ord.reuqeststatus > 0 
+		<if test="yearId != null">
+        	AND ord.yearid = #{yearId}
+        </if>
+        <if test="monthId != null">
+        	AND ord.monthid = #{monthId}
+        </if>
+        <if test="authSql !=null and authSql !=''">
+			${authSql}
+		</if>
+		ORDER BY ord.id, time.type
+	</select>
+</mapper>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetProjectlendbxtransMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetProjectlendbxtrans">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="projectlendsumid" jdbcType="BIGINT" property="projectlendsumid"/>
+        <result column="payeecode" jdbcType="VARCHAR" property="payeecode"/>
+        <result column="payeename" jdbcType="VARCHAR" property="payeename"/>
+        <result column="payeebankaccount" jdbcType="VARCHAR" property="payeebankaccount"/>
+        <result column="payeebankname" jdbcType="VARCHAR" property="payeebankname"/>
+        <result column="transmoney" jdbcType="DECIMAL" property="transmoney"/>
+        <result column="draweeunitaccountid" jdbcType="BIGINT" property="draweeunitaccountid"/>
+        <result column="draweeunitname" jdbcType="VARCHAR" property="draweeunitname"/>
+        <result column="draweebankaccount" jdbcType="VARCHAR" property="draweebankaccount"/>
+        <result column="draweebankname" jdbcType="VARCHAR" property="draweebankname"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , projectlendsumid, payeecode, payeename, payeebankaccount, payeebankname, transmoney,
+    draweeunitaccountid, draweeunitname, draweebankaccount, draweebankname
+    </sql>
+</mapper>

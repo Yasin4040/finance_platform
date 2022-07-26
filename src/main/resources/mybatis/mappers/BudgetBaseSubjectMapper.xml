@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetBaseSubjectMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetBaseSubject">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="code" jdbcType="VARCHAR" property="code"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="stopflag" jdbcType="BIT" property="stopflag"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="orderno" jdbcType="INTEGER" property="orderno"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="fullspell" jdbcType="VARCHAR" property="fullspell"/>
+        <result column="firstspell" jdbcType="VARCHAR" property="firstspell"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , code, name, stopflag, createtime, orderno, remark, fullspell, firstspell, updatetime
+    </sql>
+    
+    <select id = 'getBaseSubjectPageList' resultMap = 'BaseResultMap'>
+    	select bs.*
+    	from
+    	budget_base_subject bs
+    	WHERE 1 = 1
+    	<if test="name != null and name != ''" >
+            and bs.name like CONCAT('%', #{name}, '%')
+        </if>
+        <if test="stopflag != null">
+            and bs.stopflag = #{stopflag}
+        </if>
+     	order by bs.orderno
+        <if test="authSql !=null and authSql !=''">
+            ${authSql}
+        </if>
+    </select>
+</mapper>

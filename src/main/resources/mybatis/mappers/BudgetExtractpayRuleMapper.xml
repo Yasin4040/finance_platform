@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetExtractpayRuleMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetExtractpayRule">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="billunitids" jdbcType="VARCHAR" property="billunitids"/>
+        <result column="endflag" jdbcType="BIT" property="endflag"/>
+        <result column="effectdate" jdbcType="DATE" property="effectdate"/>
+        <result column="je" jdbcType="DECIMAL" property="je"/>
+        <result column="personunitid" jdbcType="BIGINT" property="personunitid"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="salarypayunitnames" jdbcType="VARCHAR" property="salarypayunitnames"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , name, billunitids, endflag, effectdate, je, personunitid, updatetime, createtime,
+    remark, salarypayunitnames
+    </sql>
+</mapper>

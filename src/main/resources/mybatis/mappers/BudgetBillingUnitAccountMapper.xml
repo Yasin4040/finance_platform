@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetBillingUnitAccountMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetBillingUnitAccount">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="billingunitid" jdbcType="BIGINT" property="billingunitid"/>
+        <result column="branchcode" jdbcType="VARCHAR" property="branchcode"/>
+        <result column="orderno" jdbcType="INTEGER" property="orderno"/>
+        <result column="stopflag" jdbcType="BIT" property="stopflag"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="bankaccount" jdbcType="VARCHAR" property="bankaccount"/>
+        <result column="defaultflag" jdbcType="BIT" property="defaultflag"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , billingunitid, branchcode, orderno, stopflag, remark, bankaccount, defaultflag
+    </sql>
+    
+    <select id="getUnitAccountPageList" resultType="com.jtyjy.finance.manager.vo.BillingUnitAccountVO">
+     select ua.id, bu.id as billlingUnitId, bu.name as billingUnitName, ua.stopflag as stopFlag, ua.remark, ua.bankaccount as bankAccount, ua.defaultflag as defaultFlag, ua.orderno as orderNo, 
+        bk.sub_branch_code as branchCode, bk.sub_branch_name as branchName, bk.province as province, bk.city as city, bk.bank_name as bankName
+        from
+        budget_billing_unit_account ua left join budget_billing_unit bu on ua.billingunitid = bu.id left join wb_banks bk on ua.branchcode = bk.sub_branch_code 
+        where 1 = 1
+        <if test="billingUnitId != null and billingUnitId != ''">
+            and ua.billingunitid in (${billingUnitId})
+        </if>
+        <if test="unitName != null and unitName != ''">
+            and bu.name like CONCAT('%', #{unitName}, '%')
+        </if>
+        <if test="stopFlag != null">
+            and ua.stopflag = #{stopFlag}
+        </if>
+        order by ua.orderno 
+        <if test="authSql !=null and authSql !=''">
+            ${authSql}
+        </if>
+    </select>
+    
+    <select id="getBankInfoPageList" resultType="com.jtyjy.finance.manager.bean.WbBanks">
+     select bk.*
+        from
+        wb_banks bk 
+        where 1 = 1
+        <if test="bankName != null and bankName != ''">
+            and (bk.sub_branch_name like CONCAT('%', #{bankName}, '%')
+            or bk.sub_branch_code like CONCAT('%', #{bankName}, '%')
+            )
+        </if>
+        order by bk.sub_branch_code  
+        <if test="authSql !=null and authSql !=''">
+            ${authSql}
+        </if>
+    </select>
+    
+    <!-- 根据银行账户查询银行信息 -->
+    <select id="getBankInfoByAccounts" resultType="BankInfo">
+    	select 
+		u.name as accountName ,
+		a.bankaccount as bankAccount,
+		a.branchcode as bankCode,
+		b.bank_name as bankName,
+		b.sub_branch_name as openBank
+		from budget_billing_unit_account a,budget_billing_unit u,wb_banks b
+		where 
+		u.id = a.billingunitid and a.branchcode = b.sub_branch_code
+		and a.stopflag = 0
+		and a.bankaccount in (${inSql})
+    </select>
+</mapper>

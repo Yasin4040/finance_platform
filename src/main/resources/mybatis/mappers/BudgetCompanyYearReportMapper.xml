@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetCompanyYearReportMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetCompanyYearReport">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="yearname" jdbcType="VARCHAR" property="yearname"/>
+        <result column="subjectid" jdbcType="BIGINT" property="subjectid"/>
+        <result column="subjectname" jdbcType="VARCHAR" property="subjectname"/>
+        <result column="yearmoney" jdbcType="DECIMAL" property="yearmoney"/>
+        <result column="yearaddmoney" jdbcType="DECIMAL" property="yearaddmoney"/>
+        <result column="yearaddcount" jdbcType="BIGINT" property="yearaddcount"/>
+        <result column="yearlendinmoney" jdbcType="DECIMAL" property="yearlendinmoney"/>
+        <result column="yearlendincount" jdbcType="BIGINT" property="yearlendincount"/>
+        <result column="yearlendoutmoney" jdbcType="DECIMAL" property="yearlendoutmoney"/>
+        <result column="yearlendoutcount" jdbcType="BIGINT" property="yearlendoutcount"/>
+        <result column="yearexecutemoney" jdbcType="DECIMAL" property="yearexecutemoney"/>
+        <result column="yearexecutecount" jdbcType="BIGINT" property="yearexecutecount"/>
+        <result column="yearrevenueshare" jdbcType="DECIMAL" property="yearrevenueshare"/>
+        <result column="yearcodeoceanshare" jdbcType="DECIMAL" property="yearcodeoceanshare"/>
+        <result column="_yearmoney" jdbcType="DECIMAL" property="yearmoney"/>
+        <result column="_yearaddmoney" jdbcType="DECIMAL" property="yearaddmoney"/>
+        <result column="_yearaddcount" jdbcType="BIGINT" property="yearaddcount"/>
+        <result column="_yearlendinmoney" jdbcType="DECIMAL" property="yearlendinmoney"/>
+        <result column="_yearlendincount" jdbcType="BIGINT" property="yearlendincount"/>
+        <result column="_yearlendoutmoney" jdbcType="DECIMAL" property="yearlendoutmoney"/>
+        <result column="_yearlendoutcount" jdbcType="BIGINT" property="yearlendoutcount"/>
+        <result column="_yearexecutemoney" jdbcType="DECIMAL" property="yearexecutemoney"/>
+        <result column="_yearexecutecount" jdbcType="BIGINT" property="yearexecutecount"/>
+        <result column="_yearrevenueshare" jdbcType="DECIMAL" property="yearrevenueshare"/>
+        <result column="_yearcodeoceanshare" jdbcType="DECIMAL" property="yearcodeoceanshare"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , yearid, yearname, subjectid, subjectname, yearmoney, yearaddmoney, yearaddcount,
+    yearlendinmoney, yearlendincount, yearlendoutmoney, yearlendoutcount, yearexecutemoney, 
+    yearexecutecount, yearrevenueshare, yearcodeoceanshare, _yearmoney, _yearaddmoney, 
+    _yearaddcount, _yearlendinmoney, _yearlendincount, _yearlendoutmoney, _yearlendoutcount, 
+    _yearexecutemoney, _yearexecutecount, _yearrevenueshare, _yearcodeoceanshare, createtime, 
+    updatetime
+    </sql>
+</mapper>

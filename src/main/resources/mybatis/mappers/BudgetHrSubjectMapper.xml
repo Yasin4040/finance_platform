@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetHrSubjectMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetHrSubject">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="empid" jdbcType="VARCHAR" property="empid"/>
+        <result column="empno" jdbcType="VARCHAR" property="empno"/>
+        <result column="empname" jdbcType="VARCHAR" property="empname"/>
+        <result column="deptid" jdbcType="VARCHAR" property="deptid"/>
+        <result column="deptname" jdbcType="VARCHAR" property="deptname"/>
+        <result column="deptpids" jdbcType="VARCHAR" property="deptpids"/>
+        <result column="fulldeptname" jdbcType="VARCHAR" property="fulldeptname"/>
+        <result column="topdeptname" jdbcType="VARCHAR" property="topdeptname"/>
+        <result column="bunitid" jdbcType="BIGINT" property="bunitid"/>
+        <result column="bunitname" jdbcType="VARCHAR" property="bunitname"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="monthid" jdbcType="BIGINT" property="monthid"/>
+        <result column="month" jdbcType="VARCHAR" property="month"/>
+        <result column="createdate" jdbcType="TIMESTAMP" property="createdate"/>
+        <result column="valuestr" jdbcType="LONGVARCHAR" property="valuestr"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , empid, empno, empname, deptid, deptname, deptpids, fulldeptname, topdeptname,
+    bunitid, bunitname, yearid, monthid, month, createdate, valuestr
+    </sql>
+</mapper>

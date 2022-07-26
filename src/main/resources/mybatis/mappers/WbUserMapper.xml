@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.WbUserMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.WbUser">
+        <id column="USER_ID" jdbcType="VARCHAR" property="userId"/>
+        <result column="USER_NAME" jdbcType="VARCHAR" property="userName"/>
+        <result column="DISPLAY_NAME" jdbcType="VARCHAR" property="displayName"/>
+        <result column="ID_NUMBER" jdbcType="VARCHAR" property="idNumber"/>
+        <result column="PASSWORD" jdbcType="VARCHAR" property="password"/>
+        <result column="STATUS" jdbcType="DECIMAL" property="status"/>
+        <result column="CREATE_DATE" jdbcType="TIMESTAMP" property="createDate"/>
+        <result column="LOGIN_TIMES" jdbcType="DECIMAL" property="loginTimes"/>
+        <result column="EMAIL" jdbcType="VARCHAR" property="email"/>
+        <result column="USE_LANG" jdbcType="VARCHAR" property="useLang"/>
+        <result column="LAST_LOGIN" jdbcType="TIMESTAMP" property="lastLogin"/>
+        <result column="OUTKEY" jdbcType="VARCHAR" property="outkey"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        USER_ID
+        , USER_NAME, DISPLAY_NAME, ID_NUMBER, PASSWORD, STATUS, CREATE_DATE, LOGIN_TIMES,
+    EMAIL, USE_LANG, LAST_LOGIN, OUTKEY
+    </sql>
+    
+    <select id = "getUserPageInfo" resultMap = "BaseResultMap">
+    	SELECT USER_ID, USER_NAME, DISPLAY_NAME, ID_NUMBER
+    	FROM wb_user
+    	WHERE STATUS = 1
+        <if test="displayName !=null and displayName !=''">
+           and (DISPLAY_NAME like CONCAT('%', #{displayName}, '%') OR USER_NAME like CONCAT('%', #{displayName}, '%'))
+       	</if>
+    	ORDER BY USER_NAME
+    	<if test="authSql !=null and authSql !=''">
+            ${authSql}
+        </if>
+    </select>
+    
+    <select id = "getUserPageInfoByUnit" resultMap = "BaseResultMap">
+    	SELECT wu.USER_ID, wu.USER_NAME, wu.DISPLAY_NAME, wu.ID_NUMBER
+    	FROM wb_user wu LEFT JOIN wb_person wp on wu.USER_ID = wp.USER_ID
+    	WHERE wu.STATUS = 1
+        AND (wp.DEPT_ID IN (${deptIds}) OR wu.USER_ID IN (${userIds}))     	
+        <if test="displayName !=null and displayName !=''">
+           AND (wu.DISPLAY_NAME like CONCAT('%', #{displayName}, '%') OR wu.USER_NAME like CONCAT('%', #{displayName}, '%'))
+       	</if>
+	 
+    	ORDER BY USER_NAME
+    	<if test="authSql !=null and authSql !=''">
+            ${authSql}
+        </if>
+    </select>
+
+    <select id="selectUserByEmpNo" resultType="com.jtyjy.finance.manager.bean.WbUser">
+        SELECT wu.USER_ID       AS userId,
+               wu.USER_NAME     AS userName,
+               wu.DISPLAY_NAME  AS displayName,
+               wd.DEPT_ID       AS deptId,
+               wd.DEPT_NAME     AS deptName,
+               wd.DEPT_FULLNAME AS deptFullName
+        FROM wb_person wp
+                 LEFT JOIN wb_user wu ON wp.USER_ID = wu.USER_ID
+                 LEFT JOIN wb_dept wd ON wd.DEPT_ID = wp.DEPT_ID
+        WHERE wu.USER_NAME = #{empNo}
+    </select>
+</mapper>

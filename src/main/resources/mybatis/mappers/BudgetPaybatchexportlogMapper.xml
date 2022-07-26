@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetPaybatchexportlogMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetPaybatchexportlog">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="paybatchid" jdbcType="BIGINT" property="paybatchid"/>
+        <result column="exportor" jdbcType="VARCHAR" property="exportor"/>
+        <result column="exportname" jdbcType="VARCHAR" property="exportname"/>
+        <result column="exporttime" jdbcType="TIMESTAMP" property="exporttime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , paybatchid, exportor, exportname, exporttime
+    </sql>
+</mapper>

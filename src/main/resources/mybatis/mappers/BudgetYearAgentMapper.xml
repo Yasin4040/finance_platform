@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetYearAgentMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetYearAgent">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <result column="m6" jdbcType="DECIMAL" property="m6"/>
+        <result column="m7" jdbcType="DECIMAL" property="m7"/>
+        <result column="m8" jdbcType="DECIMAL" property="m8"/>
+        <result column="m9" jdbcType="DECIMAL" property="m9"/>
+        <result column="m10" jdbcType="DECIMAL" property="m10"/>
+        <result column="m11" jdbcType="DECIMAL" property="m11"/>
+        <result column="m12" jdbcType="DECIMAL" property="m12"/>
+        <result column="m1" jdbcType="DECIMAL" property="m1"/>
+        <result column="m2" jdbcType="DECIMAL" property="m2"/>
+        <result column="m3" jdbcType="DECIMAL" property="m3"/>
+        <result column="m4" jdbcType="DECIMAL" property="m4"/>
+        <result column="m5" jdbcType="DECIMAL" property="m5"/>
+        <result column="total" jdbcType="DECIMAL" property="total"/>
+        <result column="pretotal" jdbcType="DECIMAL" property="pretotal"/>
+        <result column="preestimate" jdbcType="DECIMAL" property="preestimate"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+        <result column="subjectid" jdbcType="BIGINT" property="subjectid"/>
+        <result column="agenttype" jdbcType="INTEGER" property="agenttype"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="happencount" jdbcType="VARCHAR" property="happencount"/>
+        <result column="elasticflag" jdbcType="BIT" property="elasticflag"/>
+        <result column="elasticmax" jdbcType="DECIMAL" property="elasticmax"/>
+        <result column="elasticratio" jdbcType="DECIMAL" property="elasticratio"/>
+        <result column="budgetsubjectid" jdbcType="BIGINT" property="budgetsubjectid"/>
+        <result column="productid" jdbcType="BIGINT" property="productid"/>
+        <result column="addmoney" jdbcType="DECIMAL" property="addmoney"/>
+        <result column="lendoutmoney" jdbcType="DECIMAL" property="lendoutmoney"/>
+        <result column="lendinmoney" jdbcType="DECIMAL" property="lendinmoney"/>
+        <result column="executemoney" jdbcType="DECIMAL" property="executemoney"/>
+        <result column="computingprocess" jdbcType="LONGVARCHAR" property="computingprocess"/>
+        <result column="remark" jdbcType="LONGVARCHAR" property="remark"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , yearid, unitid, m6, m7, m8, m9, m10, m11, m12, m1, m2, m3, m4, m5, total, pretotal,
+    preestimate, createtime, updatetime, subjectid, agenttype, name, happencount, elasticflag, 
+    elasticmax, elasticratio, budgetsubjectid, productid, addmoney, lendoutmoney, lendinmoney, 
+    executemoney, computingprocess, remark
+    </sql>
+
+    <select id="yearAgentPage" resultType="com.jtyjy.finance.manager.vo.BudgetYearAgentVO">
+        SELECT
+        agent.*,
+        _unit.requeststatus AS requestStatus ,
+        _unit.name AS unitName ,
+        product.name AS productName,
+        budget_product_category.name AS catename,
+        basesubject.id AS baseSubjectId ,
+        basesubject.name AS baseSubjectName
+        FROM budget_year_agent AS agent
+        INNER JOIN budget_unit AS _unit ON _unit.yearid = agent.yearid AND _unit.id = agent.unitid
+        INNER JOIN budget_subject AS mysubject ON mysubject.id = agent.subjectid
+        LEFT JOIN budget_product AS product ON product.id = agent.productid
+        LEFT JOIN budget_product_category ON product.procategoryid = budget_product_category.id
+        LEFT JOIN budget_base_subject basesubject ON basesubject.id = agent.budgetsubjectid
+        WHERE mysubject.id = #{budgetSubjectId}
+        <if test="budgetUnitId != null and budgetUnitId !=''">
+            AND agent.unitid = #{budgetUnitId}
+        </if>
+        <if test="name != null and name !=''">
+            AND agent.name LIKE concat('%',#{name},'%')
+        </if>
+        order by agent.createtime desc
+    </select>
+
+    <select id="countNotDeleteByIds" resultType="java.lang.Integer">
+        SELECT
+        count(0)
+        FROM budget_year_agent AS _agent
+        INNER JOIN budget_subject AS _subject ON _agent.subjectid = _subject.id AND _agent.yearid = _subject.yearid
+        WHERE _subject.jointproductflag = 1
+        AND _subject.costsplitflag = 1
+        AND _agent.id IN
+        <foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="listYearAgentByUnitId" resultType="com.jtyjy.finance.manager.bean.BudgetYearAgent">
+        SELECT y.*
+        FROM budget_year_agent y
+                 INNER JOIN budget_unit _unit ON _unit.yearId = y.yearId AND _unit.id = y.unitId
+        WHERE _unit.yearId = #{yearId}
+          AND (_unit.id = #{budgetUnitId}
+           or _unit.parentid = #{budgetUnitId})
+    </select>
+    
+    <select id = 'countYearSubject' resultType = 'java.lang.Integer'>
+	   select count(*) 
+	   FROM  budget_year_agent _agent INNER JOIN budget_unit _unit ON _agent.yearid = _unit.yearid AND _agent.unitid = _unit.id
+	   where _agent.yearid = #{yearId} 
+	   and _agent.subjectid = #{subjectId}
+	   <if test="productId != null and productId !=''">
+	   and _agent.productid = #{productId}
+	   </if> 
+	   and _unit.requeststatus > 0
+    </select>
+
+    <select id="getYearAgentByMonthAgentId" resultType="com.jtyjy.finance.manager.bean.BudgetYearAgent">
+        select ya.*
+        from budget_year_agent ya,
+             budget_month_agent ma
+        where ma.yearagentid = ya.id
+          and ma.id = #{monthAgentId}
+    </select>
+</mapper>

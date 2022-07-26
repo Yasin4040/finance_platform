@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetExtractArrearsMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetExtractArrears">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="month" jdbcType="VARCHAR" property="month"/>
+        <result column="idnumber" jdbcType="VARCHAR" property="idnumber"/>
+        <result column="empno" jdbcType="VARCHAR" property="empno"/>
+        <result column="empname" jdbcType="VARCHAR" property="empname"/>
+        <result column="salary" jdbcType="DECIMAL" property="salary"/>
+        <result column="salarylj" jdbcType="DECIMAL" property="salarylj"/>
+        <result column="specialdeductionlj" jdbcType="DECIMAL" property="specialdeductionlj"/>
+        <result column="fiveriskonefund" jdbcType="DECIMAL" property="fiveriskonefund"/>
+        <result column="fiveriskonefundlj" jdbcType="DECIMAL" property="fiveriskonefundlj"/>
+        <result column="thresholdlj" jdbcType="DECIMAL" property="thresholdlj"/>
+        <result column="incorporatedcompanylj" jdbcType="DECIMAL" property="incorporatedcompanylj"/>
+        <result column="realextract" jdbcType="DECIMAL" property="realextract"/>
+        <result column="sfdtje" jdbcType="DECIMAL" property="sfdtje"/>
+        <result column="payabletaxs" jdbcType="DECIMAL" property="payabletaxs"/>
+        <result column="bunitid" jdbcType="BIGINT" property="bunitid"/>
+        <result column="bunitname" jdbcType="VARCHAR" property="bunitname"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , month, idnumber, empno, empname, salary, salarylj, specialdeductionlj, fiveriskonefund,
+    fiveriskonefundlj, thresholdlj, incorporatedcompanylj, realextract, sfdtje, payabletaxs, 
+    bunitid, bunitname
+    </sql>
+</mapper>

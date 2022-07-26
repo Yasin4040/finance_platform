@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetSysMapper">
+	<select id="getSplitSubjectData" resultType="java.util.Map">
+		SELECT
+		  	_unit_subject.unitid,
+			_subject.id subjectid,
+			_subject.`name`,
+			_unit_subject.splitflag 
+		FROM
+			budget_subject _subject
+			LEFT JOIN budget_unit_subject _unit_subject ON _unit_subject.subjectid = _subject.id 
+		WHERE
+			_subject.costsplitflag = 1 
+			AND _subject.yearid = #{yearid}
+	</select>
+	
+	<select id="getNewSplitYearAgent" resultType="java.util.Map">
+		SELECT
+			_subject.id subjectid,
+			_subject.`name` subjectname,
+			IFNULL( _unit_subject.revenueformula, _unit.revenueformula ) revenueformula,
+			IFNULL( _unit_subject.preccratioformula, _unit.preccratioformula ) preccratioformula,
+			IFNULL( _unit_subject.ccratioformula, _unit.ccratioformula ) ccratioformula 
+		FROM
+			budget_subject AS _subject
+			INNER JOIN budget_unit_subject AS _unit_subject ON _unit_subject.subjectid = _subject.id
+			INNER JOIN budget_unit AS _unit ON _unit_subject.unitid = _unit.id 
+			AND _unit.yearid = _subject.yearid 
+		WHERE
+			_subject.leafflag = 1 
+			AND _subject.costsplitflag = 1 
+			AND _unit.id = #{unitId} 
+			AND ( _unit.id, _subject.id ) NOT IN ( SELECT _agent.unitid, _agent.subjectid FROM budget_year_agent _agent WHERE _unit.id = #{unitId} )	
+	</select>
+	
+	<select id="getCheckedUnitProductList" resultType="java.util.Map">
+		SELECT
+			_product.`name` productname,
+			_unitproduct.productid,
+			_cate.pids 
+		FROM
+			budget_unit_product _unitproduct
+			INNER JOIN budget_product _product ON _unitproduct.productid = _product.id
+			INNER JOIN budget_product_category _cate ON _product.procategoryid = _cate.id 
+		WHERE
+			_unitproduct.unitid = #{unitId}
+	</select>
+	<select id="getCurUnitProductSubjectList" resultType="java.util.Map">
+		SELECT
+			_subject.procategoryid,
+			_subject.id subjectid 
+		FROM
+			budget_subject _subject
+			INNER JOIN budget_unit_subject _unitsubject ON _unitsubject.subjectid = _subject.id 
+		WHERE
+			_subject.jointproductflag = 1 
+			AND _subject.leafflag = 1 
+			AND _subject.procategoryid IS NOT NULL 
+			AND _unitsubject.unitid = #{unitId}			
+	</select>
+	
+	<select id="getAllSubjects" resultType="java.util.Map">
+		SELECT DISTINCT
+		IF
+			( length( _unit_subject.formula )> 0, _unit_subject.formula, _subject.formula ) AS formula,
+		IF
+			( length( _unit_subject.revenueformula )> 0, _unit_subject.revenueformula, _unit.revenueformula ) AS revenueformula,
+		IF
+			( length( _unit_subject.preccratioformula )> 0, _unit_subject.preccratioformula, _unit.preccratioformula ) AS preccratioformula,
+		IF
+			( length( _unit_subject.ccratioformula )> 0, _unit_subject.ccratioformula, _unit.ccratioformula ) AS ccratioformula,
+			_subject.id subjectid,
+			_subject.parentid,
+			_subject.leafflag,
+			_subject.formulaflag,
+			_subject.formulaorderno,
+			_subject.upsumflag 
+		FROM
+			budget_subject AS _subject
+			INNER JOIN budget_unit_subject AS _unit_subject ON _unit_subject.subjectid = _subject.id
+			INNER JOIN budget_unit AS _unit ON _unit_subject.unitid = _unit.id 
+		WHERE
+			_subject.yearid = #{yearid} 
+			AND (
+			_unit.id = #{unitId}		
+			OR _unit.parentid = #{unitId})	
+	</select>
+	
+	<update id="clearYearSubject">
+		update budget_year_subject set total=0,pretotal=0,preestimate=0 where yearid=#{yearId} and unitid=#{unitId}
+	</update>
+
+	<update id="clearYearSubjectHis">
+		update budget_year_subject_his set total=0 where yearid=#{yearId} and unitid=#{unitId}
+	</update>
+
+	<select id="getYearSubectList" resultType="java.util.Map">
+		SELECT
+			yearsubject_.preccratioformulastr,
+			yearsubject_.ccratioformulastr,
+			yearsubject_.revenueformulastr,
+			yearsubject_.preccratioformula,
+			yearsubject_.ccratioformula,
+			yearsubject_.revenueformula,
+			yearsubject_.preestimate,
+			yearsubject_.pretotal,
+			yearsubject_.total,
+			yearsubject_.id,
+			yearsubject_.formula,
+			_basesubject.`name`,
+			subject_.subjectid,
+			subject_.id unitsubjectid 
+		FROM
+			budget_year_subject AS yearsubject_
+			INNER JOIN budget_subject AS subject_ ON yearsubject_.subjectid = subject_.id 
+			AND yearsubject_.yearid = subject_.yearid
+			INNER JOIN budget_base_subject _basesubject ON subject_.subjectid = _basesubject.id 
+		WHERE
+			yearsubject_.yearid = #{yearid} 
+			AND yearsubject_.unitid = #{unitId} 
+		ORDER BY
+			subject_.formulaorderno	
+	</select>
+	
+	<select id="getParentUnitSubjectDataList" resultType="java.util.Map">
+		SELECT
+			_basesubject.`name`,
+			_yearsubject.total 
+		FROM
+			budget_year_subject _yearsubject
+			INNER JOIN budget_subject _subject ON _subject.id = _yearsubject.subjectid 
+			AND _subject.yearid = _yearsubject.yearid
+			INNER JOIN budget_base_subject _basesubject ON _basesubject.id = _subject.subjectid 
+		WHERE
+			_yearsubject.unitid = #{unitId} 	
+	</select>
+	<update id="resetMonthStartFlag">
+		update budget_month_period set currentflag=0
+	</update>
+	<update id="clearHisMonthData">
+		update budget_month_subject_his set total=0 WHERE unitid=#{unitId} AND monthid=#{monthid};
+	</update>
+	<update id="clearMonthData">
+		update budget_month_subject set total=0 WHERE unitid=#{unitId} AND monthid=#{monthid};
+	</update>
+	<select id="getExecuteData" resultType="java.util.Map">
+		SELECT
+			_view.subjectpids,
+			_view.executemoney,
+			_view.yearagentid 
+		FROM
+			budget_agent_execute_view _view 
+		WHERE
+			CONCAT( '-', _view.unitpids, '-' ) LIKE concat('%-',#{unitId},'-%')
+			AND _view.monthid IN (${monthids}) 
+			AND _view.reimflag = 1 
+			AND _view.reuqeststatus = #{bxStatus}	
+	</select>
+	<select id="getYearAddData" resultType="java.util.Map">
+		SELECT
+			_view.subjectpids,
+			_view.addmoney,
+			_view.yearagentid 
+		FROM
+			budget_year_agent_add_view _view 
+		WHERE
+			CONCAT( '-', _view.unitpids, '-' ) LIKE concat('%-',#{unitId},'-%')
+			AND _view.audittime &lt;= #{enddate} 
+			AND _view.requeststatus = 2		
+	</select>
+	
+	<select id="getYearLendingData" resultType="java.util.Map">
+		SELECT
+			_view.inyearagentid,
+			_view.insubjectpids,
+			_view.lendmoney 
+		FROM
+			budget_year_agent_lend_view _view 
+		WHERE
+			CONCAT( '-', _view.inunitpids, '-' ) LIKE concat('%-',#{unitId},'-%')
+			AND _view.audittime &lt;= #{enddate} 
+			AND _view.requeststatus = 2	
+	</select>
+	<select id="getERPLendData" resultType="java.util.Map">
+		SELECT
+			_view.outyearagentid,
+			_view.inyearagentid,
+			_view.outsubjectpids,
+			_view.insubjectpids,
+			_view.lendmoney 
+		FROM
+			budget_year_agent_erp_lend_view _view 
+		WHERE
+			CONCAT( '-', _view.unitpids, '-' ) LIKE concat('%-',#{unitId},'-%')
+			AND _view.audittime &lt;= #{enddate}
+			AND _view.requeststatus = 2	
+	</select>
+	
+	<select id="getYearLendoutData" resultType="java.util.Map">
+		SELECT
+			_view.outyearagentid,
+			_view.outsubjectpids,
+			_view.lendmoney 
+		FROM
+			budget_year_agent_lend_view _view 
+		WHERE
+			CONCAT( '-', _view.outunitpids, '-' ) LIKE concat('%-',#{unitId},'-%')
+			AND _view.audittime &lt;= #{enddate}
+			AND _view.requeststatus = 2
+	</select>
+	<select id="getYearLendoutData" resultType="java.util.Map">
+		SELECT
+			_view.outyearagentid,
+			_view.inyearagentid,
+			_view.outsubjectpids,
+			_view.insubjectpids,
+			_view.lendmoney 
+		FROM
+			budget_year_agent_erp_lend_view _view 
+		WHERE
+			CONCAT( '-', _view.unitpids, '-' ) LIKE concat('%-',#{unitId},'-%') 
+			AND _view.audittime &lt;= #{enddate}
+			AND _view.requeststatus = 2
+	</select>
+	<select id="getYearSubjectMap" resultType="java.util.Map">
+		SELECT
+			yearsubject_.executemoney,
+			subject_.leafflag,
+			yearsubject_.preccratioformulastr,
+			yearsubject_.ccratioformulastr,
+			yearsubject_.revenueformulastr,
+			yearsubject_.preccratioformula,
+			yearsubject_.ccratioformula,
+			yearsubject_.revenueformula,
+			yearsubject_.preestimate,
+			yearsubject_.pretotal,(
+				yearsubject_.total + yearsubject_.addmoney + yearsubject_.lendinmoney - yearsubject_.lendoutmoney - yearsubject_.lendoutmoney 
+			) total,
+			yearsubject_.id,
+			subject_.formula,
+			subject_.`name`,
+			subject_.subjectid,
+			bbs.`name` bbsname 
+		FROM
+			budget_year_subject AS yearsubject_
+			INNER JOIN budget_subject AS subject_ ON yearsubject_.subjectid = subject_.id 
+			AND yearsubject_.yearid = subject_.yearid
+			INNER JOIN budget_base_subject bbs ON bbs.id = subject_.subjectid 
+		WHERE
+			yearsubject_.unitid = #{unitId}		
+	</select>
+	<select id="getAllAgents" resultType="com.jtyjy.finance.manager.bean.BudgetMonthAgent">
+	SELECT _agent.* FROM budget_month_agent _agent INNER JOIN budget_unit _unit ON _unit.yearid = _agent.yearid AND _unit.id = _agent.unitid  WHERE _agent.yearid =#{yearid} AND (_agent.unitid =#{unitId} OR _unit.parentid=#{unitId}) AND _agent.monthid = #{monthid} 	
+	</select>
+	<update id="setMonthBusiness">
+		update budget_month_subject 
+		<if test="monthbusiness == null || monthbusiness == ''">
+			set monthbusiness=null 
+		</if>
+		<if test="monthbusiness != null and monthbusiness != ''">
+			set monthbusiness=#{monthbusiness}
+		</if>
+		where yearid=#{yearid} AND unitid=#{unitId} AND monthid=#{monthid}
+		<if test="subjectid !=null">
+			and subjectid=#{subjectid}
+		</if>
+	</update>
+	<select id="getMonthBussinessList" resultType="java.util.Map">
+		SELECT
+			_agent.yearid,
+			_agent.unitid,
+			_agent.monthid,
+			_agent.subjectid,
+			GROUP_CONCAT( CONCAT( _agent.monthbusiness, '(金额：', TRUNCATE ( _agent.total, 2 ), ')' ) ORDER BY _agent.createtime SEPARATOR ' ； ' ) monthbusiness 
+		FROM
+			budget_month_agent _agent
+			INNER JOIN budget_unit _unit ON _unit.yearid = _agent.yearid 
+			AND _unit.id = _agent.unitid 
+		WHERE
+			_agent.total > 0 
+			AND _agent.yearid =#{yearid} 
+			AND (
+				_agent.unitid =#{unitId} 
+			OR _unit.parentid =#{unitId}) 
+			AND _agent.monthid =#{monthid}
+		GROUP BY
+			_agent.yearid,
+			_agent.unitid,
+			_agent.monthid,
+			_agent.subjectid	
+	</select>
+	<select id="getMonthSubjectMaps" resultType="java.util.Map">
+	SELECT
+		monthsubject_.total,
+		monthsubject_.id,
+		yearsubject_.formula,
+		_basesubject.`name`,
+		subject_.subjectid,
+		subject_.id unitsubjectid 
+	FROM
+		budget_month_subject AS monthsubject_
+		INNER JOIN budget_year_subject AS yearsubject_ ON yearsubject_.yearid = monthsubject_.yearid 
+		AND yearsubject_.unitid = monthsubject_.unitid 
+		AND yearsubject_.subjectid = monthsubject_.subjectid
+		INNER JOIN budget_subject AS subject_ ON monthsubject_.subjectid = subject_.id 
+		AND monthsubject_.yearid = subject_.yearid
+		INNER JOIN budget_base_subject AS _basesubject ON _basesubject.id = subject_.subjectid 
+	WHERE
+		yearsubject_.yearid =#{yearid}  
+		AND monthsubject_.unitid =#{unitId} 
+		AND monthsubject_.monthid =#{monthid}
+	ORDER BY
+		subject_.formulaorderno	
+	</select>
+	<select id="getPsubjectList" resultType="java.util.Map">
+	SELECT
+		_basesubject.`name`,
+		_yearsubject.total 
+	FROM
+		budget_month_subject _yearsubject
+		INNER JOIN budget_subject _subject ON _subject.id = _yearsubject.subjectid 
+		AND _subject.yearid = _yearsubject.yearid
+		INNER JOIN budget_base_subject _basesubject ON _basesubject.id = _subject.subjectid 
+	WHERE
+		_yearsubject.unitid =#{unitId}  
+		AND _yearsubject.monthid =#{monthid}	
+	</select>
+	<update id="refreshTotal">
+		update budget_year_subject_his set total=#{total} 
+		where id in 
+		<foreach collection="ids" item="id" separator="," open="(" close=")">
+			#{id}
+		</foreach>
+	</update>
+	<update id="modifyUpdateflagOfunitmonth">	
+	update budget_month_end_unit set updateagentflag=0,calculatesubjectflag=1,updatetime=#{date} where unitid=#{unitid} and monthid=#{monthid}	
+	</update>
+	<select id="getUnitExecuteData" resultType="java.util.Map">
+		select * from budget_agent_execute_view where reuqeststatus=#{status} and reimflag=1 and unitid=#{unitId}
+	</select>
+	<select id="getUnitYearAddData" resultType="java.util.Map">
+		select * from budget_year_agent_add_view where requeststatus=2 and unitid=#{unitId}
+	</select>
+	<select id="getUnitMonthAddData" resultType="java.util.Map">
+		select * from budget_month_agent_add_view where requeststatus=2 and unitid=#{unitId} and monthid=#{monthId}
+	</select>
+	<select id="getUnitYearMonthAddData" resultType="java.util.Map">
+		select * from budget_year_add_month_agent_add_view where requeststatus=2 and unitid=#{unitId} and monthid=#{monthId}
+	</select>
+	<select id="getUnitYearLendData" resultType="java.util.Map">
+		select * from budget_year_agent_lend_view where requeststatus=2 and (inunitid=#{unitId} or outunitid=#{unitId} )
+	</select>
+</mapper>

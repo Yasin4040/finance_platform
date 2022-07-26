@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetRepaymoneyMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetRepaymoney">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="empid" jdbcType="VARCHAR" property="empid"/>
+        <result column="empno" jdbcType="VARCHAR" property="empno"/>
+        <result column="empname" jdbcType="VARCHAR" property="empname"/>
+        <result column="repaymoneycode" jdbcType="VARCHAR" property="repaymoneycode"/>
+        <result column="repaymoney" jdbcType="DECIMAL" property="repaymoney"/>
+        <result column="repaytype" jdbcType="INTEGER" property="repaytype"/>
+        <result column="effectflag" jdbcType="BIT" property="effectflag"/>
+        <result column="repaytypeid" jdbcType="VARCHAR" property="repaytypeid"/>
+        <result column="phonepaytype" jdbcType="INTEGER" property="phonepaytype"/>
+        <result column="phonepaystatus" jdbcType="INTEGER" property="phonepaystatus"/>
+        <result column="phonepaytime" jdbcType="TIMESTAMP" property="phonepaytime"/>
+        <result column="repaydate" jdbcType="DATE" property="repaydate"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="nowrepaymoney" jdbcType="DECIMAL" property="nowrepaymoney"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , empid, empno, empname, repaymoneycode, repaymoney, repaytype, effectflag, repaytypeid,
+    phonepaytype, phonepaystatus, phonepaytime, repaydate, createtime, nowrepaymoney
+    </sql>
+</mapper>

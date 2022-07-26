@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetUnitSubjectMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetUnitSubject">
+        <id column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <id column="subjectid" jdbcType="BIGINT" property="subjectid"/>
+        <result column="hidden" jdbcType="BIT" property="hidden"/>
+        <result column="yearcontrolflag" jdbcType="BIT" property="yearcontrolflag"/>
+        <result column="monthcontrolflag" jdbcType="BIT" property="monthcontrolflag"/>
+        <result column="yearsubjectcontrolflag" jdbcType="BIT" property="yearsubjectcontrolflag"/>
+        <result column="procategoryid" jdbcType="VARCHAR" property="procategoryid"/>
+        <result column="addflag" jdbcType="BIT" property="addflag"/>
+        <result column="lendflag" jdbcType="BIT" property="lendflag"/>
+        <result column="splitflag" jdbcType="BIT" property="splitflag"/>
+        <result column="ccratioformula" jdbcType="VARCHAR" property="ccratioformula"/>
+        <result column="preccratioformula" jdbcType="VARCHAR" property="preccratioformula"/>
+        <result column="revenueformula" jdbcType="VARCHAR" property="revenueformula"/>
+        <result column="formula" jdbcType="VARCHAR" property="formula"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        unitid
+        , subjectid, hidden, yearcontrolflag, monthcontrolflag, yearsubjectcontrolflag,
+    procategoryid, addflag, lendflag, splitflag, ccratioformula, preccratioformula, revenueformula, 
+    formula
+    </sql>
+    
+    <select id = 'getUnitNameBySubId' resultType = 'java.lang.String'>
+	    select unit.name unitname 
+	    from budget_unit_subject subject, budget_unit unit 
+	    WHERE subject.subjectid = #{subjectId} 
+	    and subject.splitflag = 1 
+	    and subject.unitid=unit.id 
+    </select>
+    
+    <select id = "countYearAgent" resultType = "map">    
+ 		SELECT count(0) sum, GROUP_CONCAT(name) agentNames
+ 		FROM budget_year_agent AS _agent INNER JOIN budget_unit_subject AS _unit_subject ON _unit_subject.subjectid = _agent.subjectid AND _unit_subject.unitid = _agent.unitid  
+ 		WHERE _agent.subjectid IN (${subjectIds}) 
+ 		AND _agent.yearid = #{yearId} AND _agent.unitid = #{unitId} 
+    </select>
+        
+    <select id = "getUnitIdsBySubjectId" resultType = "java.lang.Long">    
+ 		SELECT unitid 
+ 		FROM budget_unit_subject 
+ 		WHERE subjectid = #{subjectId} 
+    </select>
+    
+</mapper>

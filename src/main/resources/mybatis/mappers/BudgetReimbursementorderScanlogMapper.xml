@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetReimbursementorderScanlogMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetReimbursementorderScanlog">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="reimbursementid" jdbcType="BIGINT" property="reimbursementid"/>
+        <result column="reimcode" jdbcType="VARCHAR" property="reimcode"/>
+        <result column="scantime" jdbcType="TIMESTAMP" property="scantime"/>
+        <result column="scanername" jdbcType="VARCHAR" property="scanername"/>
+        <result column="scaner" jdbcType="VARCHAR" property="scaner"/>
+        <result column="scanflag" jdbcType="BIT" property="scanflag"/>
+        <result column="scantype" jdbcType="INTEGER" property="scantype"/>
+        <result column="operateflag" jdbcType="BIT" property="operateflag"/>
+        <result column="scaninfo" jdbcType="VARCHAR" property="scaninfo"/>
+        <result column="scanresult" jdbcType="VARCHAR" property="scanresult"/>
+        <result column="receivestatus" jdbcType="INTEGER" property="receivestatus"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , reimbursementid, reimcode, scantime, scanername, scaner, scanflag, scantype,
+    operateflag, scaninfo, scanresult, receivestatus
+    </sql>
+    
+    <select id = "getLzPageInfo" resultType = 'com.jtyjy.finance.manager.vo.BxLiuZhuanVO'>
+		<![CDATA[ SELECT mytable.*  FROM 
+		(SELECT ttt.reimbursementid,ttt.reimcode,ttt.scanername,DATE_FORMAT(ttt.scantime,'%Y-%m-%d %H:%i:%S') scantime, 
+		CASE scantype  WHEN 1 THEN '票面审核' WHEN 2 THEN '预算审核' WHEN 3 THEN '扫描分单' WHEN 4 THEN '分单确认' WHEN 5 THEN '出纳付款' WHEN 6 THEN '会计做账'  WHEN 7 THEN '凭证审核'  WHEN 8 THEN '法人公司抽单' WHEN 9 then '会计做账--结束流转' when 10 then '财务总监审核' when 11 then '总经理审核'  ELSE '' END AS scantype, '单据接收' verifyflag     ,ttt.scanresult    FROM budget_reimbursementorder_scanlog ttt    WHERE ttt.reimcode = #{reimcode}
+		UNION ALL    
+		SELECT tttt.reimbursementid,tttt.reimcode,tttt.verifyername scanername,DATE_FORMAT(tttt.verifytime,'%Y-%m-%d %H:%i:%S') scantime,    CASE tttt.verifytype WHEN 0 THEN '报销审核'  WHEN 1 THEN '票面审核' WHEN 2 THEN '预算审核' WHEN 3 THEN '扫描分单' WHEN 4 THEN '分单确认' WHEN 5 THEN '出纳付款' WHEN 6 THEN '会计做账'  WHEN 7 THEN '凭证审核'  WHEN 8 THEN '法人公司抽单' WHEN 9 then '会计做账--结束流转' when 10 then '财务总监审核' when 11 then '总经理审核' ELSE '' END AS scantype,IF(tttt.verifyflag = 0,IF(1 = tttt.backtype,'<span style=color:#F56C6C;>退回纸质</span>','<span style=\"color:#F56C6C;\">全部退回</span>'),IF(4 = tttt.verifytype,'<span style=\"color:#409EFF;\">完成做账</span>',IF(3 = tttt.verifytype , '<span style=\"color:#409EFF;\">完成分单</span>','<span style=\"color:#409EFF;\">审核通过</span>'))) verifyflag   ,tttt.verifyinfo scanresult    FROM budget_reimbursementorder_verifylog tttt  WHERE tttt.reimcode = #{reimcode}) AS mytable 
+		]]>		
+		ORDER BY mytable.scantime desc 		       	
+    </select>
+</mapper>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetYearErpprojectDetailMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetYearErpprojectDetail">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="budgeterpproejctid" jdbcType="BIGINT" property="budgeterpproejctid"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <result column="subjectid" jdbcType="BIGINT" property="subjectid"/>
+        <result column="yearagentid" jdbcType="BIGINT" property="yearagentid"/>
+        <result column="newyearagentid" jdbcType="BIGINT" property="newyearagentid"/>
+        <result column="total" jdbcType="DECIMAL" property="total"/>
+        <result column="m1" jdbcType="DECIMAL" property="m1"/>
+        <result column="m2" jdbcType="DECIMAL" property="m2"/>
+        <result column="m3" jdbcType="DECIMAL" property="m3"/>
+        <result column="m4" jdbcType="DECIMAL" property="m4"/>
+        <result column="m5" jdbcType="DECIMAL" property="m5"/>
+        <result column="m6" jdbcType="DECIMAL" property="m6"/>
+        <result column="m7" jdbcType="DECIMAL" property="m7"/>
+        <result column="m8" jdbcType="DECIMAL" property="m8"/>
+        <result column="m9" jdbcType="DECIMAL" property="m9"/>
+        <result column="m10" jdbcType="DECIMAL" property="m10"/>
+        <result column="m11" jdbcType="DECIMAL" property="m11"/>
+        <result column="m12" jdbcType="DECIMAL" property="m12"/>
+        <result column="curmonthid" jdbcType="BIGINT" property="curmonthid"/>
+        <result column="curmonthmoney" jdbcType="DECIMAL" property="curmonthmoney"/>
+        <result column="monthagentid" jdbcType="BIGINT" property="monthagentid"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="yearagentmoney" jdbcType="DECIMAL" property="yearagentmoney"/>
+        <result column="yearagentaddmoney" jdbcType="DECIMAL" property="yearagentaddmoney"/>
+        <result column="yearagentlendoutmoney" jdbcType="DECIMAL" property="yearagentlendoutmoney"/>
+        <result column="yearagentlendinmoney" jdbcType="DECIMAL" property="yearagentlendinmoney"/>
+        <result column="yearagentexecutemoney" jdbcType="DECIMAL" property="yearagentexecutemoney"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , budgeterpproejctid, yearid, unitid, subjectid, yearagentid, newyearagentid, total,
+    m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, curmonthid, curmonthmoney, monthagentid, 
+    remark, yearagentmoney, yearagentaddmoney, yearagentlendoutmoney, yearagentlendinmoney, 
+    yearagentexecutemoney
+    </sql>
+</mapper>

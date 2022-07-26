@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetExtractdetailMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetExtractdetail">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="repaymoneyid" jdbcType="BIGINT" property="repaymoneyid"/>
+        <result column="extractsumid" jdbcType="BIGINT" property="extractsumid"/>
+        <result column="empid" jdbcType="VARCHAR" property="empid"/>
+        <result column="empno" jdbcType="VARCHAR" property="empno"/>
+        <result column="empname" jdbcType="VARCHAR" property="empname"/>
+        <result column="idnumber" jdbcType="VARCHAR" property="idnumber"/>
+        <result column="copeextract" jdbcType="DECIMAL" property="copeextract"/>
+        <result column="consotax" jdbcType="DECIMAL" property="consotax"/>
+        <result column="subsidytax" jdbcType="DECIMAL" property="subsidytax"/>
+        <result column="subsidytaxstatus" jdbcType="INTEGER" property="subsidytaxstatus"/>
+        <result column="requestid" jdbcType="VARCHAR" property="requestid"/>
+        <result column="withholdmoney" jdbcType="DECIMAL" property="withholdmoney"/>
+        <result column="realextract" jdbcType="DECIMAL" property="realextract"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+        <result column="deleteflag" jdbcType="INTEGER" property="deleteflag"/>
+        <result column="iscompanyemp" jdbcType="BIT" property="iscompanyemp"/>
+        <result column="excesstype" jdbcType="INTEGER" property="excesstype"/>
+        <result column="excessmoney" jdbcType="DECIMAL" property="excessmoney"/>
+        <result column="handleflag" jdbcType="BIT" property="handleflag"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , repaymoneyid, extractsumid, empid, empno, empname, idnumber, copeextract, consotax,
+    subsidytax, subsidytaxstatus, requestid, withholdmoney, realextract, createtime, 
+    updatetime, deleteflag, iscompanyemp, excesstype, excessmoney, handleflag
+    </sql>
+</mapper>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.WbJstormMsgMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.WbJstormMsg">
+        <result column="id" jdbcType="BIGINT" property="id"/>
+        <result column="topic" jdbcType="VARCHAR" property="topic"/>
+        <result column="status" jdbcType="TINYINT" property="status"/>
+        <result column="msgcontents" jdbcType="VARCHAR" property="msgcontents"/>
+        <result column="sendnum" jdbcType="INTEGER" property="sendnum"/>
+        <result column="firstsendtime" jdbcType="TIMESTAMP" property="firstsendtime"/>
+        <result column="lastsendtime" jdbcType="TIMESTAMP" property="lastsendtime"/>
+        <result column="allowerrornum" jdbcType="INTEGER" property="allowerrornum"/>
+        <result column="errornum" jdbcType="INTEGER" property="errornum"/>
+        <result column="lasterrortime" jdbcType="TIMESTAMP" property="lasterrortime"/>
+        <result column="errormsg" jdbcType="VARCHAR" property="errormsg"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="groupname" jdbcType="VARCHAR" property="groupname"/>
+    </resultMap>
+</mapper>

@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetYearAgentlendMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetYearAgentlend">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="ordernumber" jdbcType="VARCHAR" property="ordernumber"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="inunitid" jdbcType="BIGINT" property="inunitid"/>
+        <result column="outunitid" jdbcType="BIGINT" property="outunitid"/>
+        <result column="outsubjectname" jdbcType="VARCHAR" property="outsubjectname"/>
+        <result column="outsubjectid" jdbcType="BIGINT" property="outsubjectid"/>
+        <result column="insubjectname" jdbcType="VARCHAR" property="insubjectname"/>
+        <result column="insubjectid" jdbcType="BIGINT" property="insubjectid"/>
+        <result column="outyearagentid" jdbcType="BIGINT" property="outyearagentid"/>
+        <result column="outname" jdbcType="VARCHAR" property="outname"/>
+        <result column="inyearagentid" jdbcType="BIGINT" property="inyearagentid"/>
+        <result column="inname" jdbcType="VARCHAR" property="inname"/>
+        <result column="total" jdbcType="DECIMAL" property="total"/>
+        <result column="oacreatorid" jdbcType="VARCHAR" property="oacreatorid"/>
+        <result column="requestid" jdbcType="VARCHAR" property="requestid"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="requeststatus" jdbcType="INTEGER" property="requeststatus"/>
+        <result column="creatorid" jdbcType="VARCHAR" property="creatorid"/>
+        <result column="creatorname" jdbcType="VARCHAR" property="creatorname"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="outagentmoney" jdbcType="DECIMAL" property="outagentmoney"/>
+        <result column="outagentaddmoney" jdbcType="DECIMAL" property="outagentaddmoney"/>
+        <result column="outagentlendoutmoney" jdbcType="DECIMAL" property="outagentlendoutmoney"/>
+        <result column="outagentlendinmoney" jdbcType="DECIMAL" property="outagentlendinmoney"/>
+        <result column="outagentexcutemoney" jdbcType="DECIMAL" property="outagentexcutemoney"/>
+        <result column="inagentmoney" jdbcType="DECIMAL" property="inagentmoney"/>
+        <result column="inagentaddmoney" jdbcType="DECIMAL" property="inagentaddmoney"/>
+        <result column="inagentlendoutmoney" jdbcType="DECIMAL" property="inagentlendoutmoney"/>
+        <result column="inagentlendinmoney" jdbcType="DECIMAL" property="inagentlendinmoney"/>
+        <result column="inagentexcutemoney" jdbcType="DECIMAL" property="inagentexcutemoney"/>
+        <result column="audittime" jdbcType="TIMESTAMP" property="audittime"/>
+        <result column="handleflag" jdbcType="BIT" property="handleflag"/>
+        <result column="deleteflag" jdbcType="BIT" property="deleteflag"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , ordernumber, yearid, inunitid, outunitid, outsubjectname, outsubjectid, insubjectname,
+    insubjectid, outyearagentid, outname, inyearagentid, inname, total, oacreatorid, 
+    requestid, remark, requeststatus, creatorid, creatorname, updatetime, createtime, 
+    outagentmoney, outagentaddmoney, outagentlendoutmoney, outagentlendinmoney, outagentexcutemoney, 
+    inagentmoney, inagentaddmoney, inagentlendoutmoney, inagentlendinmoney, inagentexcutemoney, 
+    audittime, handleflag, deleteflag
+    </sql>
+
+    <select id="listYearAgentLendPage" resultType="com.jtyjy.finance.manager.vo.BudgetYearAgentLendVO">
+        SELECT bya.id,
+               bya.requeststatus                    AS requestStatus,
+               bya.ordernumber                      AS orderNumber,
+               bya.yearid                           AS yearId,
+               period.period                        AS yearPeriod,
+               inUnit.id                            AS inBudgetUnitId,
+               inUnit.name                          AS inBudgetUnitName,
+               inUnit.baseunitid                    AS inBaseUnitId,
+               outUnit.id                           AS outBudgetUnitId,
+               outUnit.name                         AS outBudgetUnitName,
+               outUnit.baseunitid                   AS outBaseUnitId,
+               bya.total,
+               bya.insubjectid                      AS inSubjectId,
+               bya.insubjectname                    AS inSubjectName,
+               bya.inyearagentid                    AS inAgentId,
+               bya.inname                           AS inAgentName,
+               bya.inagentmoney                     AS inYearTotal,
+               bya.inagentlendinmoney               AS inAgentLendInMoney,
+               bya.inagentlendoutmoney              AS inAgentLendOutMoney,
+               bya.inagentexcutemoney               AS inYearExecute,
+               (bya.inagentmoney + bya.inagentaddmoney - bya.inagentlendoutmoney + bya.inagentlendinmoney -
+                bya.inagentexcutemoney + bya.total) AS inYearBalance,
+               bya.outsubjectid                     AS outSubjectId,
+               bya.outsubjectname                   AS outSubjectName,
+               bya.outyearagentid                   AS outAgentId,
+               bya.outname                          AS outAgentName,
+               bya.outagentmoney                    AS outYearTotal,
+               bya.outagentlendinmoney              AS outAgentLendInMoney,
+               bya.outagentlendoutmoney             AS outAgentLendOutMoney,
+               bya.outagentexcutemoney              AS outYearExecute,
+               (bya.outagentmoney + bya.outagentaddmoney - bya.outagentlendoutmoney + bya.outagentlendinmoney -
+                outagentexcutemoney - bya.total)    AS outYearBalance,
+               bya.remark,
+               bya.creatorname                      AS creatorName,
+               bya.fileurl                          AS fileUrl,
+               bya.fileoriginname                   AS fileOriginName,
+               bya.oapassword                       AS oaPassword,
+               bya.createtime                       AS createTime,
+               bya.audittime                        AS auditTime,
+                bya.is_exempt_fine as isExemptFine,
+               bya.exempt_fine_reason as exemptFineReason
+        FROM budget_year_agentlend bya
+                 LEFT JOIN budget_year_period period ON period.id = bya.yearid
+                 LEFT JOIN budget_unit inUnit ON inUnit.id = bya.inunitid
+                 LEFT JOIN budget_unit outUnit ON outUnit.id = bya.outunitid
+        WHERE bya.deleteflag = 0
+        <if test="!paramMap.isAcross">
+            AND bya.outunitid = bya.inunitid
+        </if>
+        <if test="paramMap.isAcross">
+            AND bya.outunitid != bya.inunitid
+        </if>
+        <if test="!paramMap.isAcross and paramMap.baseUnitIds != null ">
+            AND ( inUnit.baseunitid IN (SELECT _unit.baseunitid FROM budget_unit _unit WHERE _unit.managers is NOT NULL AND CONCAT(',',_unit.managers,',') LIKE CONCAT('%,', #{paramMap.userId}, ',%') )
+                or inUnit.baseunitid in (${paramMap.baseUnitIds}) )
+        </if>
+        <if test="paramMap.isAcross and paramMap.baseUnitIds != null ">
+            AND ( inUnit.baseunitid IN (SELECT _unit.baseunitid FROM budget_unit _unit WHERE _unit.managers is NOT NULL AND CONCAT(',',_unit.managers,',') LIKE CONCAT('%,', #{paramMap.userId}, ',%') )
+            or inUnit.baseunitid in (${paramMap.baseUnitIds}) )
+
+            AND ( outUnit.baseunitid IN (SELECT _unit.baseunitid FROM budget_unit _unit WHERE _unit.managers is NOT NULL AND CONCAT(',',_unit.managers,',') LIKE CONCAT('%,', #{paramMap.userId}, ',%') )
+            or outUnit.baseunitid in (${paramMap.baseUnitIds}) )
+        </if>
+        <if test="paramMap.yearId != null">
+            AND bya.yearid = #{paramMap.yearId}
+        </if>
+        <if test="paramMap.orderNumber != null and paramMap.orderNumber != null">
+            AND bya.ordernumber like concat('%',#{paramMap.orderNumber},'%')
+        </if>
+        <if test="paramMap.requestStatus != null">
+            AND bya.requeststatus = #{paramMap.requestStatus}
+        </if>
+        <if test="!paramMap.isAcross and paramMap.name != null and paramMap.name != ''">
+            AND inUnit.name like concat('%',#{paramMap.name},'%')
+        </if>
+        <if test="paramMap.isAcross and paramMap.name != null and paramMap.name != ''">
+            AND (inUnit.name like concat('%',#{paramMap.name},'%')
+            or outUnit.name like concat('%',#{paramMap.name},'%')
+            )
+        </if>
+        order by bya.createtime desc
+    </select>
+</mapper>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetReimbursementorderAllocatedMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetReimbursementorderAllocated">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="reimbursementid" jdbcType="BIGINT" property="reimbursementid"/>
+        <result column="monthagentid" jdbcType="BIGINT" property="monthagentid"/>
+        <result column="monthagentname" jdbcType="VARCHAR" property="monthagentname"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="subjectname" jdbcType="VARCHAR" property="subjectname"/>
+        <result column="unitname" jdbcType="VARCHAR" property="unitname"/>
+        <result column="monthname" jdbcType="VARCHAR" property="monthname"/>
+        <result column="allocatedmoney" jdbcType="DECIMAL" property="allocatedmoney"/>
+        <result column="reimflag" jdbcType="BIT" property="reimflag"/>
+        <result column="monthagentmoney" jdbcType="DECIMAL" property="monthagentmoney"/>
+        <result column="monthagentunmoney" jdbcType="DECIMAL" property="monthagentunmoney"/>
+        <result column="yearagentmoney" jdbcType="DECIMAL" property="yearagentmoney"/>
+        <result column="yearagentunmoney" jdbcType="DECIMAL" property="yearagentunmoney"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , reimbursementid, monthagentid, monthagentname, remark, subjectname, unitname,
+    monthname, allocatedmoney, reimflag, monthagentmoney, monthagentunmoney, yearagentmoney, 
+    yearagentunmoney
+    </sql>
+
+    <select id="listDetailByYearAgentId" resultType="com.jtyjy.finance.manager.bean.BudgetReimbursementorderAllocated">
+        SELECT detail_.*
+        FROM budget_reimbursementorder_allocated detail_
+                 INNER JOIN budget_reimbursementorder order_ ON detail_.reimbursementid = order_.id
+        WHERE detail_.monthagentid IN (SELECT id FROM budget_month_agent WHERE yearagentid = #{yearAgentId})
+          AND order_.reuqeststatus = 1
+    </select>
+
+    <select id="listDetailByMonthId" resultType="com.jtyjy.finance.manager.bean.BudgetReimbursementorderAllocated">
+        SELECT detail_.*
+        FROM budget_reimbursementorder_allocated detail_
+        INNER JOIN budget_reimbursementorder order_ ON detail_.reimbursementid = order_.id
+        WHERE detail_.monthagentid IN (SELECT id
+        FROM budget_month_agent
+        WHERE unitid = #{unitId}
+        AND subjectid = #{subjectId}
+        <if test="monthId != null">
+            AND monthid = #{monthId}
+        </if>
+        )
+        AND order_.reuqeststatus = 1
+    </select>
+</mapper>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetBaseUnitMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetBaseUnit">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="firstspell" jdbcType="VARCHAR" property="firstspell"/>
+        <result column="fullspell" jdbcType="VARCHAR" property="fullspell"/>
+        <result column="stopflag" jdbcType="INTEGER" property="stopflag"/>
+        <result column="orderno" jdbcType="INTEGER" property="orderno"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , name, firstspell, fullspell, stopflag, orderno, createtime, remark, updatetime
+    </sql>
+</mapper>

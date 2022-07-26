@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.TabProcedureMapper">            
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.TabProcedure">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="procedure_type" jdbcType="BIGINT" property="procedureType"/>
+        <result column="procedure_name" jdbcType="VARCHAR" property="procedureName"/>
+        <result column="procedure_link_order" jdbcType="VARCHAR" property="procedureLinkOrder"/>
+        <result column="is_active" jdbcType="VARCHAR" property="isActive"/>
+        <result column="is_delete" jdbcType="VARCHAR" property="isDelete"/>
+    </resultMap>
+    <select id = "getProcedureInfo" resultType = "com.jtyjy.finance.manager.bean.TabProcedure">
+    	select
+        pd.*, yp.period yearName
+        from
+        tab_procedure pd
+        left join budget_year_period yp on pd.yearid = yp.id
+        where pd.is_delete = '0'
+        <if test="isActive != null and isActive != ''" >
+		    and pd.is_active = #{isActive}
+		</if>
+		<if test="procedureType != null and procedureType != ''" >
+		    and pd.procedure_type = #{procedureType}
+		</if>
+		<if test="linkOrder != null and linkOrder != ''" >
+		    and pd.procedure_link_order like CONCAT ('%', #{linkOrder}, '%')
+		</if>
+		<if test="yearId != null" >
+		    and pd.yearid = #{yearId}
+		</if>
+		<if test="name != null and name != ''" >
+		    and pd.procedure_name like CONCAT ('%', #{name}, '%')
+		</if>
+        order by pd.yearid desc
+    </select>
+</mapper>

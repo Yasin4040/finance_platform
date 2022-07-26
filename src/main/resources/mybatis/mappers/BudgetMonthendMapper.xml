@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetMonthendMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetMonthend">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="monthid" jdbcType="BIGINT" property="monthid"/>
+        <result column="endflag" jdbcType="BIT" property="endflag"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , yearid, monthid, endflag, createtime
+    </sql>
+</mapper>

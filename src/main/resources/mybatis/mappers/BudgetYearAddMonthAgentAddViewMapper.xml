@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetYearAddMonthAgentAddViewMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetYearAddMonthAgentAddView">
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="monthid" jdbcType="BIGINT" property="monthid"/>
+        <result column="baseunitid" jdbcType="BIGINT" property="baseunitid"/>
+        <result column="unitpids" jdbcType="VARCHAR" property="unitpids"/>
+        <result column="unitpid" jdbcType="BIGINT" property="unitpid"/>
+        <result column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <result column="basesubjectid" jdbcType="BIGINT" property="basesubjectid"/>
+        <result column="subjectpids" jdbcType="VARCHAR" property="subjectpids"/>
+        <result column="subjectpid" jdbcType="BIGINT" property="subjectpid"/>
+        <result column="subjectid" jdbcType="BIGINT" property="subjectid"/>
+        <result column="yearagentid" jdbcType="BIGINT" property="yearagentid"/>
+        <result column="monthagentid" jdbcType="BIGINT" property="monthagentid"/>
+        <result column="yearagentname" jdbcType="VARCHAR" property="yearagentname"/>
+        <result column="monthagentname" jdbcType="VARCHAR" property="monthagentname"/>
+        <result column="yearagentmoney" jdbcType="DECIMAL" property="yearagentmoney"/>
+        <result column="monthagentmoney" jdbcType="DECIMAL" property="monthagentmoney"/>
+        <result column="addmoney" jdbcType="DECIMAL" property="addmoney"/>
+        <result column="requeststatus" jdbcType="INTEGER" property="requeststatus"/>
+        <result column="audittime" jdbcType="VARCHAR" property="audittime"/>
+        <result column="createtime" jdbcType="VARCHAR" property="createtime"/>
+    </resultMap>
+</mapper>

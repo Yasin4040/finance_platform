@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetReimbursementorderTransCopyMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetReimbursementorderTransCopy">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="transid" jdbcType="BIGINT" property="transid"/>
+        <result column="reimbursementid" jdbcType="BIGINT" property="reimbursementid"/>
+        <result column="payeecode" jdbcType="VARCHAR" property="payeecode"/>
+        <result column="payeename" jdbcType="VARCHAR" property="payeename"/>
+        <result column="payeebankaccount" jdbcType="VARCHAR" property="payeebankaccount"/>
+        <result column="payeebankname" jdbcType="VARCHAR" property="payeebankname"/>
+        <result column="transmoney" jdbcType="DECIMAL" property="transmoney"/>
+        <result column="tax" jdbcType="DECIMAL" property="tax"/>
+        <result column="olddraweeunitaccountid" jdbcType="BIGINT" property="olddraweeunitaccountid"/>
+        <result column="draweeunitaccountid" jdbcType="BIGINT" property="draweeunitaccountid"/>
+        <result column="draweeunitname" jdbcType="VARCHAR" property="draweeunitname"/>
+        <result column="draweebankaccount" jdbcType="VARCHAR" property="draweebankaccount"/>
+        <result column="draweebankname" jdbcType="VARCHAR" property="draweebankname"/>
+        <result column="paymoneyid" jdbcType="BIGINT" property="paymoneyid"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , transid, reimbursementid, payeecode, payeename, payeebankaccount, payeebankname,
+    transmoney, tax, olddraweeunitaccountid, draweeunitaccountid, draweeunitname, draweebankaccount, 
+    draweebankname, paymoneyid, createtime
+    </sql>
+</mapper>

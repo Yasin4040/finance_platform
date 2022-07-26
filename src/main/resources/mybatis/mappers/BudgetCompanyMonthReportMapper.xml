@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetCompanyMonthReportMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetCompanyMonthReport">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="yearname" jdbcType="VARCHAR" property="yearname"/>
+        <result column="monthid" jdbcType="BIGINT" property="monthid"/>
+        <result column="monthname" jdbcType="VARCHAR" property="monthname"/>
+        <result column="subjectid" jdbcType="BIGINT" property="subjectid"/>
+        <result column="subjectname" jdbcType="VARCHAR" property="subjectname"/>
+        <result column="yearmoney" jdbcType="DECIMAL" property="yearmoney"/>
+        <result column="yearaddmoney" jdbcType="DECIMAL" property="yearaddmoney"/>
+        <result column="yearaddsmoney" jdbcType="DECIMAL" property="yearaddsmoney"/>
+        <result column="yearlendinmoney" jdbcType="DECIMAL" property="yearlendinmoney"/>
+        <result column="yearlendinsmoney" jdbcType="DECIMAL" property="yearlendinsmoney"/>
+        <result column="yearlendoutmoney" jdbcType="DECIMAL" property="yearlendoutmoney"/>
+        <result column="yearlendoutsmoney" jdbcType="DECIMAL" property="yearlendoutsmoney"/>
+        <result column="yearexecutesmoney" jdbcType="DECIMAL" property="yearexecutesmoney"/>
+        <result column="yearrevenueshare" jdbcType="DECIMAL" property="yearrevenueshare"/>
+        <result column="monthmoney" jdbcType="DECIMAL" property="monthmoney"/>
+        <result column="monthaddmoney" jdbcType="DECIMAL" property="monthaddmoney"/>
+        <result column="monthaddcount" jdbcType="BIGINT" property="monthaddcount"/>
+        <result column="monthaddsmoney" jdbcType="DECIMAL" property="monthaddsmoney"/>
+        <result column="monthaddscount" jdbcType="BIGINT" property="monthaddscount"/>
+        <result column="prepaidmoney" jdbcType="DECIMAL" property="prepaidmoney"/>
+        <result column="monthexecutemoney" jdbcType="DECIMAL" property="monthexecutemoney"/>
+        <result column="monthexecutecount" jdbcType="BIGINT" property="monthexecutecount"/>
+        <result column="monthexecuterevenueshare" jdbcType="DECIMAL" property="monthexecuterevenueshare"/>
+        <result column="monthexecutesmoney" jdbcType="DECIMAL" property="monthexecutesmoney"/>
+        <result column="monthwithholdingmoney" jdbcType="DECIMAL" property="monthwithholdingmoney"/>
+        <result column="monthwithholdingsmoney" jdbcType="DECIMAL" property="monthwithholdingsmoney"/>
+        <result column="monthkingdeemoney" jdbcType="DECIMAL" property="monthkingdeemoney"/>
+        <result column="monthkingdeesmoney" jdbcType="DECIMAL" property="monthkingdeesmoney"/>
+        <result column="monthexecutescount" jdbcType="BIGINT" property="monthexecutescount"/>
+        <result column="monthexecutesrevenueshare" jdbcType="DECIMAL" property="monthexecutesrevenueshare"/>
+        <result column="_yearmoney" jdbcType="DECIMAL" property="yearmoney"/>
+        <result column="_yearaddmoney" jdbcType="DECIMAL" property="yearaddmoney"/>
+        <result column="_yearaddsmoney" jdbcType="DECIMAL" property="yearaddsmoney"/>
+        <result column="_yearlendinmoney" jdbcType="DECIMAL" property="yearlendinmoney"/>
+        <result column="_yearlendinsmoney" jdbcType="DECIMAL" property="yearlendinsmoney"/>
+        <result column="_yearlendoutmoney" jdbcType="DECIMAL" property="yearlendoutmoney"/>
+        <result column="_yearlendoutsmoney" jdbcType="DECIMAL" property="yearlendoutsmoney"/>
+        <result column="_yearexecutesmoney" jdbcType="DECIMAL" property="yearexecutesmoney"/>
+        <result column="_monthmoney" jdbcType="DECIMAL" property="monthmoney"/>
+        <result column="_monthaddmoney" jdbcType="DECIMAL" property="monthaddmoney"/>
+        <result column="_monthaddcount" jdbcType="BIGINT" property="monthaddcount"/>
+        <result column="_monthaddsmoney" jdbcType="DECIMAL" property="monthaddsmoney"/>
+        <result column="_monthaddscount" jdbcType="BIGINT" property="monthaddscount"/>
+        <result column="_prepaidmoney" jdbcType="DECIMAL" property="prepaidmoney"/>
+        <result column="_monthexecutemoney" jdbcType="DECIMAL" property="monthexecutemoney"/>
+        <result column="_monthexecutecount" jdbcType="BIGINT" property="monthexecutecount"/>
+        <result column="_monthexecuterevenueshare" jdbcType="DECIMAL" property="monthexecuterevenueshare"/>
+        <result column="_monthexecutesmoney" jdbcType="DECIMAL" property="monthexecutesmoney"/>
+        <result column="_monthwithholdingmoney" jdbcType="DECIMAL" property="monthwithholdingmoney"/>
+        <result column="_monthwithholdingsmoney" jdbcType="DECIMAL" property="monthwithholdingsmoney"/>
+        <result column="_monthkingdeesmoney" jdbcType="DECIMAL" property="monthkingdeesmoney"/>
+        <result column="_monthkingdeemoney" jdbcType="DECIMAL" property="monthkingdeemoney"/>
+        <result column="_monthexecutescount" jdbcType="BIGINT" property="monthexecutescount"/>
+        <result column="_monthexecutesrevenueshare" jdbcType="DECIMAL" property="monthexecutesrevenueshare"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+        <result column="level" jdbcType="INTEGER" property="level"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , yearid, yearname, monthid, monthname, subjectid, subjectname, yearmoney, yearaddmoney,
+    yearaddsmoney, yearlendinmoney, yearlendinsmoney, yearlendoutmoney, yearlendoutsmoney, 
+    yearexecutesmoney, yearrevenueshare, monthmoney, monthaddmoney, monthaddcount, monthaddsmoney, 
+    monthaddscount, prepaidmoney, monthexecutemoney, monthexecutecount, monthexecuterevenueshare, 
+    monthexecutesmoney, monthwithholdingmoney, monthwithholdingsmoney, monthkingdeemoney, 
+    monthkingdeesmoney, monthexecutescount, monthexecutesrevenueshare, _yearmoney, _yearaddmoney, 
+    _yearaddsmoney, _yearlendinmoney, _yearlendinsmoney, _yearlendoutmoney, _yearlendoutsmoney, 
+    _yearexecutesmoney, _monthmoney, _monthaddmoney, _monthaddcount, _monthaddsmoney, 
+    _monthaddscount, _prepaidmoney, _monthexecutemoney, _monthexecutecount, _monthexecuterevenueshare, 
+    _monthexecutesmoney, _monthwithholdingmoney, _monthwithholdingsmoney, _monthkingdeesmoney, 
+    _monthkingdeemoney, _monthexecutescount, _monthexecutesrevenueshare, createtime, 
+    updatetime, level
+    </sql>
+</mapper>

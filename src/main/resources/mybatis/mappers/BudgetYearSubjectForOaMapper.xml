@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetYearSubjectForOaMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetYearSubjectForOa">
+        <result column="id" jdbcType="BIGINT" property="id"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <result column="m6" jdbcType="DECIMAL" property="m6"/>
+        <result column="m7" jdbcType="DECIMAL" property="m7"/>
+        <result column="m8" jdbcType="DECIMAL" property="m8"/>
+        <result column="m9" jdbcType="DECIMAL" property="m9"/>
+        <result column="m10" jdbcType="DECIMAL" property="m10"/>
+        <result column="m11" jdbcType="DECIMAL" property="m11"/>
+        <result column="m12" jdbcType="DECIMAL" property="m12"/>
+        <result column="m1" jdbcType="DECIMAL" property="m1"/>
+        <result column="m2" jdbcType="DECIMAL" property="m2"/>
+        <result column="m3" jdbcType="DECIMAL" property="m3"/>
+        <result column="m4" jdbcType="DECIMAL" property="m4"/>
+        <result column="m5" jdbcType="DECIMAL" property="m5"/>
+        <result column="total" jdbcType="DECIMAL" property="total"/>
+        <result column="pretotal" jdbcType="DECIMAL" property="pretotal"/>
+        <result column="preestimate" jdbcType="DECIMAL" property="preestimate"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+        <result column="subjectid" jdbcType="BIGINT" property="subjectid"/>
+        <result column="revenueformula" jdbcType="DECIMAL" property="revenueformula"/>
+        <result column="ccratioformula" jdbcType="DECIMAL" property="ccratioformula"/>
+        <result column="preccratioformula" jdbcType="DECIMAL" property="preccratioformula"/>
+        <result column="revenueformulastr" jdbcType="VARCHAR" property="revenueformulastr"/>
+        <result column="ccratioformulastr" jdbcType="VARCHAR" property="ccratioformulastr"/>
+        <result column="preccratioformulastr" jdbcType="VARCHAR" property="preccratioformulastr"/>
+        <result column="formula" jdbcType="VARCHAR" property="formula"/>
+        <result column="addmoney" jdbcType="DECIMAL" property="addmoney"/>
+        <result column="lendoutmoney" jdbcType="DECIMAL" property="lendoutmoney"/>
+        <result column="lendinmoney" jdbcType="DECIMAL" property="lendinmoney"/>
+        <result column="executemoney" jdbcType="DECIMAL" property="executemoney"/>
+        <result column="yizhixingmoney" jdbcType="DECIMAL" property="yizhixingmoney"/>
+    </resultMap>
+</mapper>

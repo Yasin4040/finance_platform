@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetAuthorfeedtlMergeMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetAuthorfeedtlMerge">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="reportid" jdbcType="BIGINT" property="reportid"/>
+        <result column="yearperiod" jdbcType="VARCHAR" property="yearperiod"/>
+        <result column="monthid" jdbcType="BIGINT" property="monthid"/>
+        <result column="feemonth" jdbcType="VARCHAR" property="feemonth"/>
+        <result column="status" jdbcType="INTEGER" property="status"/>
+        <result column="authorid" jdbcType="BIGINT" property="authorid"/>
+        <result column="authorname" jdbcType="VARCHAR" property="authorname"/>
+        <result column="authortype" jdbcType="BIT" property="authortype"/>
+        <result column="authoridnumber" jdbcType="VARCHAR" property="authoridnumber"/>
+        <result column="taxpayeridnumber" jdbcType="VARCHAR" property="taxpayeridnumber"/>
+        <result column="taxtype" jdbcType="BIT" property="taxtype"/>
+        <result column="tax" jdbcType="DECIMAL" property="tax"/>
+        <result column="times" jdbcType="INTEGER" property="times"/>
+        <result column="payflag" jdbcType="BIT" property="payflag"/>
+        <result column="svefeeflag" jdbcType="BIT" property="svefeeflag"/>
+        <result column="edupubflag" jdbcType="BIT" property="edupubflag"/>
+        <result column="prlautflag" jdbcType="BIT" property="prlautflag"/>
+        <result column="servicefee" jdbcType="DECIMAL" property="servicefee"/>
+        <result column="copefee" jdbcType="DECIMAL" property="copefee"/>
+        <result column="scdcopefee" jdbcType="DECIMAL" property="scdcopefee"/>
+        <result column="realfee" jdbcType="DECIMAL" property="realfee"/>
+        <result column="reimbursesubject" jdbcType="VARCHAR" property="reimbursesubject"/>
+        <result column="feebdgdept" jdbcType="VARCHAR" property="feebdgdept"/>
+        <result column="salaryunit" jdbcType="VARCHAR" property="salaryunit"/>
+        <result column="companystoretax" jdbcType="DECIMAL" property="companystoretax"/>
+        <result column="businessgroup" jdbcType="VARCHAR" property="businessgroup"/>
+        <result column="gathercode" jdbcType="VARCHAR" property="gathercode"/>
+        <result column="gatherunit" jdbcType="VARCHAR" property="gatherunit"/>
+        <result column="gatherbank" jdbcType="VARCHAR" property="gatherbank"/>
+        <result column="gatherbanktype" jdbcType="VARCHAR" property="gatherbanktype"/>
+        <result column="gatherauthoraccount" jdbcType="VARCHAR" property="gatherauthoraccount"/>
+        <result column="gatherbankaccount" jdbcType="VARCHAR" property="gatherbankaccount"/>
+        <result column="payunitaccountid" jdbcType="BIGINT" property="payunitaccountid"/>
+        <result column="payunitid" jdbcType="BIGINT" property="payunitid"/>
+        <result column="payunit" jdbcType="VARCHAR" property="payunit"/>
+        <result column="paybank" jdbcType="VARCHAR" property="paybank"/>
+        <result column="paybankaccount" jdbcType="VARCHAR" property="paybankaccount"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , reportid, yearperiod, monthid, feemonth, status, authorid, authorname, authortype,
+    authoridnumber, taxpayeridnumber, taxtype, tax, times, payflag, svefeeflag, edupubflag, 
+    prlautflag, servicefee, copefee, scdcopefee, realfee, reimbursesubject, feebdgdept, 
+    salaryunit, companystoretax, businessgroup, gathercode, gatherunit, gatherbank, gatherbanktype, 
+    gatherauthoraccount, gatherbankaccount, payunitaccountid, payunitid, payunit, paybank, 
+    paybankaccount, createtime
+    </sql>
+</mapper>

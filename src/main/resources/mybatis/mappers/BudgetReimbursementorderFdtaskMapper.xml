@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetReimbursementorderFdtaskMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetReimbursementorderFdtask">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="reimcode" jdbcType="VARCHAR" property="reimcode"/>
+        <result column="reimbursementid" jdbcType="BIGINT" property="reimbursementid"/>
+        <result column="fder" jdbcType="VARCHAR" property="fder"/>
+        <result column="fdername" jdbcType="VARCHAR" property="fdername"/>
+        <result column="fdtime" jdbcType="TIMESTAMP" property="fdtime"/>
+        <result column="bunitid" jdbcType="BIGINT" property="bunitid"/>
+        <result column="bunitname" jdbcType="VARCHAR" property="bunitname"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , reimcode, reimbursementid, fder, fdername, fdtime, bunitid, bunitname, createtime
+    </sql>
+</mapper>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetExtractImportdetailMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetExtractImportdetail">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="extractsumid" jdbcType="BIGINT" property="extractsumid"/>
+        <result column="extractdetailid" jdbcType="BIGINT" property="extractdetailid"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="iscompanyemp" jdbcType="BIT" property="iscompanyemp"/>
+        <result column="isbaddebt" jdbcType="BIT" property="isbaddebt"/>
+        <result column="empid" jdbcType="VARCHAR" property="empid"/>
+        <result column="idnumber" jdbcType="VARCHAR" property="idnumber"/>
+        <result column="empno" jdbcType="VARCHAR" property="empno"/>
+        <result column="empname" jdbcType="VARCHAR" property="empname"/>
+        <result column="copeextract" jdbcType="DECIMAL" property="copeextract"/>
+        <result column="consotax" jdbcType="DECIMAL" property="consotax"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , extractsumid, extractdetailid, yearid, iscompanyemp, isbaddebt, empid, idnumber,
+    empno, empname, copeextract, consotax, createtime, updatetime
+    </sql>
+    
+    <update id="clearExtractDetail" parameterType="java.lang.String">
+    	update budget_extract_importdetail set extractdetailid=null where extractsumid in (${ids})
+    </update>
+    
+    <select id="getExtractImportDetails" resultType="com.jtyjy.finance.manager.vo.ExtractImportDetailVO">
+    SELECT
+    	  bei.id,
+		  bei.yearid,
+		  byp.period,
+		  bei.iscompanyemp,
+		  bei.isbaddebt,
+		  bei.empid,
+		  bei.empno,
+		  bei.empname,
+		  bei.idnumber,
+		  bei.copeextract,
+		  bei.consotax,
+		  bei.extract_type extractType,
+		  ifnull(bei.should_send_extract,0) shouldSendExtract,
+		  ifnull(bei.tax,0) tax,
+		  ifnull(bei.tax_reduction,0) taxReduction,
+		  ifnull(bei.invoice_excess_tax,0) invoiceExcessTax,
+		  ifnull(bei.invoice_excess_tax_reduction,0) invoiceExcessTaxReduction
+		FROM
+			budget_extract_importdetail bei
+			LEFT JOIN budget_year_period byp ON bei.yearid = byp.id
+    <where>
+    	extractsumid = #{params.sumId}
+    	<if test="params.yearid != null">
+    		and bei.yearid = #{params.yearid}
+    	</if>
+    	<if test="params.iscompanyemp != null">
+    		and bei.iscompanyemp = #{params.iscompanyemp}
+    	</if>
+    	<if test="params.isbaddebt != null">
+    		and bei.isbaddebt = #{params.isbaddebt}
+    	</if>
+    	<if test="params.empno != null and params.empno != ''">
+    		and ( bei.empno like concat('%',#{params.empno},'%')
+    			or bei.empname like concat('%',#{params.empno},'%')
+    		)
+    	</if>
+    	<if test="params.idnumber != null and params.idnumber != ''">
+    		and bei.idnumber like concat('%',#{params.idnumber},'%')			
+    	</if>
+    	order by bei.updatetime desc 
+    </where>
+    
+    </select>
+</mapper>

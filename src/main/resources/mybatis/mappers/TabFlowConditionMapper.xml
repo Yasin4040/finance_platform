@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.TabFlowConditionMapper">            
+
+    <select id = "getConditionPageInfo" resultType = "com.jtyjy.finance.manager.bean.TabFlowCondition">
+    	SELECT
+        fc.*, tp.procedure_name procedureName, tp.yearid yearId, yp.period yearName
+        FROM
+        tab_flow_condition fc
+        LEFT JOIN tab_procedure tp ON fc.the_version = tp.id
+        LEFT JOIN budget_year_period yp ON tp.yearid = yp.id
+        WHERE 1 = 1
+        <if test="conditionBean.flowType != null and conditionBean.flowType !=''">
+			AND fc.flow_type = #{conditionBean.flowType}
+		</if>
+        <if test="conditionBean.stepDm != null and conditionBean.stepDm !=''">
+			AND fc.step_dm = #{conditionBean.stepDm}
+		</if>
+        <if test="conditionBean.conditionStepDm != null and conditionBean.conditionStepDm !=''">
+            AND fc.condition_step_dm LIKE CONCAT('%', #{conditionBean.conditionStepDm}, '%')
+        </if>
+        <if test="conditionBean.theCondition != null and conditionBean.theCondition !=''">
+			AND fc.the_condition = #{conditionBean.theCondition}
+		</if>
+        <if test="conditionBean.theVersion != null and conditionBean.theVersion !=''">
+			AND fc.the_version = #{conditionBean.theVersion}
+		</if>
+        order by fc.the_version desc, fc.id desc
+        <if test="authSql != null and authSql != ''">
+            ${authSql}
+        </if>
+    </select>
+</mapper>

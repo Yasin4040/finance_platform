@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetMonthAgentaddinfoMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetMonthAgentaddinfo">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="monthaddcode" jdbcType="VARCHAR" property="monthaddcode"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <result column="monthid" jdbcType="BIGINT" property="monthid"/>
+        <result column="subjectid" jdbcType="BIGINT" property="subjectid"/>
+        <result column="total" jdbcType="DECIMAL" property="total"/>
+        <result column="yearagentmoney" jdbcType="DECIMAL" property="yearagentmoney"/>
+        <result column="yearagentaddmoney" jdbcType="DECIMAL" property="yearagentaddmoney"/>
+        <result column="yearagentlendinmoney" jdbcType="DECIMAL" property="yearagentlendinmoney"/>
+        <result column="yearagentlendoutmoney" jdbcType="DECIMAL" property="yearagentlendoutmoney"/>
+        <result column="yearagentexcutemoney" jdbcType="DECIMAL" property="yearagentexcutemoney"/>
+        <result column="agentmoney" jdbcType="DECIMAL" property="agentmoney"/>
+        <result column="agentaddmoney" jdbcType="DECIMAL" property="agentaddmoney"/>
+        <result column="agentlendoutmoney" jdbcType="DECIMAL" property="agentlendoutmoney"/>
+        <result column="agentlendinmoney" jdbcType="DECIMAL" property="agentlendinmoney"/>
+        <result column="agentexcutemoney" jdbcType="DECIMAL" property="agentexcutemoney"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="oacreatorid" jdbcType="VARCHAR" property="oacreatorid"/>
+        <result column="requestid" jdbcType="VARCHAR" property="requestid"/>
+        <result column="requeststatus" jdbcType="INTEGER" property="requeststatus"/>
+        <result column="creatorid" jdbcType="VARCHAR" property="creatorid"/>
+        <result column="creatorname" jdbcType="VARCHAR" property="creatorname"/>
+        <result column="audittime" jdbcType="TIMESTAMP" property="audittime"/>
+        <result column="handleflag" jdbcType="BIT" property="handleflag"/>
+        <result column="fileurl" jdbcType="VARCHAR" property="fileurl"/>
+        <result column="fileoriginname" jdbcType="VARCHAR" property="fileoriginname"/>
+        <result column="oapassword" jdbcType="VARCHAR" property="oapassword"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , monthaddcode, yearid, unitid, monthid, subjectid, total, yearagentmoney, yearagentaddmoney,
+    yearagentlendinmoney, yearagentlendoutmoney, yearagentexcutemoney, agentmoney, agentaddmoney, 
+    agentlendoutmoney, agentlendinmoney, agentexcutemoney, updatetime, createtime, oacreatorid, 
+    requestid, requeststatus, creatorid, creatorname, audittime, handleflag, fileurl, 
+    fileoriginname, oapassword
+    </sql>
+
+    <select id="listMonthAgentAddInfoPage" resultType="com.jtyjy.finance.manager.vo.BudgetMonthAddInfoVO">
+        SELECT agentadd.id,
+               agentadd.requeststatus                                   AS requestStatus,
+               agentadd.monthaddcode                                    AS monthAddCode,
+               year_.id                                                 AS yearId,
+               year_.period                                             AS yearPeriod,
+               unit.id                                                  AS budgetUnitId,
+               unit.`name`                                              AS budgetUnitName,
+               month_.id                                                AS monthId,
+               month_.period                                            AS monthPeriod,
+               agentadd.total                                           AS addMoney,
+               agentadd.creatorname                                     AS creatorName,
+               agentadd.fileoriginname                                  AS fileOriginName,
+               agentadd.fileurl                                         AS fileUrl,
+               agentadd.oapassword                                      AS oaPassword,
+               agentadd.createtime                                      AS createDate
+        FROM budget_month_agentaddinfo AS agentadd
+                 INNER JOIN budget_year_period AS year_ ON agentadd.yearid = year_.id
+                 INNER JOIN budget_month_period AS month_ ON agentadd.monthid = month_.id
+                 INNER JOIN budget_unit AS unit ON unit.yearid = year_.id AND agentadd.unitid = unit.id
+        <where>
+            <if test="map.yearId != null">
+                and agentadd.yearid = #{map.yearId}
+            </if>
+            <if test="map.name != null">
+                and unit.`name` like concat('%',#{map.name},'%')
+            </if>
+            <if test="map.monthAddCode != null and map.monthAddCode != ''">
+                and agentadd.monthaddcode like concat('%',#{map.monthAddCode},'%')
+            </if>
+            <if test="map.requestStatus != null">
+                and agentadd.requeststatus = #{map.requestStatus}
+            </if>
+            <if test="map.monthId != null">
+                and month_.id = #{map.monthId}
+            </if>
+            AND ( unit.baseunitid IN (SELECT _unit.baseunitid FROM budget_unit _unit WHERE _unit.managers is NOT NULL AND CONCAT(',',_unit.managers,',') LIKE CONCAT('%,', #{map.userId}, ',%') )
+            <if test="map.authSql !=null and map.authSql !=''">
+                or (1=1 ${map.authSql})
+            </if>
+            )
+        </where>
+        order by agentadd.createtime desc
+    </select>
+
+    <select id="listMonthAgentAddInfoByMap" resultType="com.jtyjy.finance.manager.bean.BudgetMonthAgentaddinfo">
+        select
+            addinfo.*,
+            period.period,
+            unit.`name` as unitName
+        from budget_month_agentaddinfo addinfo
+            INNER JOIN budget_year_period AS period ON addinfo.yearid = period.id
+            INNER JOIN budget_unit AS unit ON unit.yearid = period.id AND addinfo.unitid = unit.id
+        <where>
+            <if test="yearId != null">
+                and addinfo.yearid = #{yearId}
+            </if>
+            <if test="name != null and name != ''">
+                and unit.`name` like concat('%', #{name}, '%')
+            </if>
+            <if test="monthAddCode != null and monthAddCode != ''">
+                and addinfo.monthaddcode like concat('%',#{monthAddCode},'%')
+            </if>
+            <if test="requestStatus != null">
+                and addinfo.requeststatus = #{requestStatus}
+            </if>
+            <if test="monthId != null">
+                and addinfo.monthid = #{monthId}
+            </if>
+            AND ( unit.baseunitid IN (SELECT _unit.baseunitid FROM budget_unit _unit WHERE _unit.managers is NOT NULL AND CONCAT(',',_unit.managers,',') LIKE CONCAT('%,', #{userId}, ',%') )
+            <if test="authSql !=null and authSql !=''">
+                or (1=1 ${authSql})
+            </if>
+            )
+        </where>
+        ORDER BY addinfo.createtime desc
+    </select>
+</mapper>

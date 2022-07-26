@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetOtherlendsumMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetOtherlendsum">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="importbatchnumber" jdbcType="VARCHAR" property="importbatchnumber"/>
+        <result column="status" jdbcType="INTEGER" property="status"/>
+        <result column="importtime" jdbcType="TIMESTAMP" property="importtime"/>
+        <result column="importor" jdbcType="VARCHAR" property="importor"/>
+        <result column="importorname" jdbcType="VARCHAR" property="importorname"/>
+        <result column="verifyor" jdbcType="VARCHAR" property="verifyor"/>
+        <result column="verifyname" jdbcType="VARCHAR" property="verifyname"/>
+        <result column="verifytime" jdbcType="TIMESTAMP" property="verifytime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , importbatchnumber, status, importtime, importor, importorname, verifyor, verifyname,
+    verifytime
+    </sql>
+    <select id="listOtherLendPage" resultType="com.jtyjy.finance.manager.vo.BudgetOtherLendSumVO">
+        SELECT os.id,
+               os.status,
+               os.importbatchnumber                   AS importBatchNumber,
+               lm.totalLendMoney,
+               lm.totalRepayMoney,
+               lm.totalLendMoney - lm.totalRepayMoney AS totalUnRepayMoney,
+               os.importorname                        AS importName,
+               os.importtime                          AS importTime,
+               os.verifyname                          AS verifyName,
+               os.verifytime                          AS verifyTime
+        from budget_otherlendsum os
+                 LEFT JOIN (SELECT sum(lendmoney)   totalLendMoney,
+                                   SUM(repaidmoney) totalRepayMoney,
+                                   lm.otherlendsumid
+                            from budget_lendmoney_new lm
+                            where lm.deleteflag = 0
+                            GROUP BY lm.otherlendsumid) lm on os.id = lm.otherlendsumid
+        <where>
+            <if test="paramMap.name != null and paramMap.name != ''">
+                and os.importbatchnumber like CONCAT('%', #{paramMap.name}, '%')
+            </if>
+            <if test="paramMap.status != null">
+                and os.status = #{paramMap.status}
+            </if>
+        </where>
+        order by os.importtime desc
+    </select>
+
+    <select id="listLendDetail" resultType="com.jtyjy.finance.manager.vo.BudgetLendMoneyVO">
+        SELECT lendmoney.id                                          AS id,
+               lendmoney.empid                                       AS empId,
+               lendmoney.empno                                       AS empNo,
+               lendmoney.empname                                     AS empName,
+               lendmoney.lendmoneycode                               AS lendMoneyCode,
+               lendmoney.isbyj                                       AS isbyj,
+               lendmoney.lendtype                                    AS lendType,
+               lendmoney.lendmoney                                   AS lendMoney,
+               lendmoney.lenddate                                    AS lendDate,
+               lendmoney.planpaydate                                 AS planPayDate,
+               lendmoney.interestmoney                               AS interestMoney,
+               lendmoney.createtime                                  AS createTime,
+               lendmoney.remark                                      AS remark,
+               lendmoney.requestid                                   AS requestId,
+               lendmoney.repaidmoney + lendmoney.repaidinterestmoney AS repaidmoney,
+               lendmoney.lendmoney - lendmoney.repaidmoney + lendmoney.interestmoney -
+               lendmoney.repaidinterestmoney                         AS unpaidmoney,
+               IF((lendmoney.lendmoney - lendmoney.repaidmoney + lendmoney.interestmoney -
+                   lendmoney.repaidinterestmoney) > 0, 0, 1)         AS paymentStatus
+        FROM budget_lendmoney_new lendmoney
+        where lendmoney.deleteflag = 0
+          and lendmoney.otherlendsumid = #{id}
+    </select>
+</mapper>

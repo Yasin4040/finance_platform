@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.hrmapper.HrSalaryYearTaxUserMapper">
+    <select id="getSalary" resultType="java.util.Map">
+		 SELECT
+			_user.empno,
+			_user.empname,
+			_spehist.monthperiod curmonth,
+			_spehist.freetax,
+			_spehist.freetaxs,
+			_spehist.salarycompanyid,
+			_spehist.realpretaxwages,
+			_spehist.realpretaxwage,
+			_spehist.sociinsurcharges,
+			_spehist.sociinsurcharge,
+			( _spehist.totalspecialtaxs - _spehist.specialtax ) specialtaxs,
+			_spehist.specialtax,
+			_spehist.startpoints,
+			_spehist.startpoint,
+			_spehist.realpersonalincometaxs,
+			_spehist.realpersonalincometax,
+			_spehist.salarys,
+			_spehist.salary 
+		FROM
+			hr_salary_specialtaxempgrosspayhis _spehist
+			INNER JOIN sys_user _user ON _spehist.empid = _user.empid
+			INNER JOIN sys_duty _duty ON _duty.dutyid = _user.dutyid
+			INNER JOIN sys_department _dept ON _dept.deptid = _duty.deptid 
+		WHERE
+			( _dept.treesign LIKE '1-3-%' ) 
+			AND _spehist.yearperiod = #{year} 
+			AND _spehist.monthperiod &lt;= #{salaryMonth}
+			<!-- 
+				AND _user.usestatus = 0 
+			 -->
+		ORDER BY
+			_spehist.monthperiod DESC   	
+    </select>
+    <select id="getTaxratelist" resultType="java.util.Map">
+    	SELECT _taxrate.hr_taxrate_point startpoint,_taxrate.companyids ,_taxrate.hr_taxrate_id id  FROM hr_taxrate _taxrate   
+    </select>
+    <select id="gettaxratedetaillist" resultType="java.util.Map">
+    	SELECT _taxrate.hr_taxrate_id taxrateid,_taxrate.hr_taxrate_lower lower ,_taxrate.hr_taxrate_up up,_taxrate.hr_taxrate taxrate,_taxrate.hr_cal_value val FROM hr_taxrate_detail _taxrate order by _taxrate.hr_taxrate_lower 
+    </select>
+    
+    <select id="getSalaryCompanyByMonth" resultType="java.util.Map">
+     SELECT _user.empno,_user.certifiCateNo cardno,_user.empname,_spehist.salarycompanyid, _dept.deptname salarycompanyname 
+	 FROM hr_salary_specialtaxempgrosspayhis _spehist 
+	 INNER JOIN sys_user _user ON _spehist.empid = _user.empid 
+	 INNER JOIN sys_department _dept ON _dept.deptid = _spehist.salarycompanyid 
+	 WHERE _spehist.monthperiod = #{month}
+    </select>
+    <select id="getSyncUserList" resultType="java.util.Map">
+		SELECT DISTINCT
+			`user_`.`empId` AS `id`,
+			`file_`.`empfileId` AS `empfileid`,
+			`user_`.`empNo` AS `workcode`,
+			`user_`.`empNo` AS `loginid`,
+			`user_`.`empName` AS `lastname`,
+			`duty_`.`deptId` AS `departmentid`,
+			`depart_`.`fullDeptName` AS `fullDeptName`,
+			cast(
+				substr(
+					substring_index( `dept_`.`treeSign`, '-', 3 ),(
+						length(
+						substring_index( `dept_`.`treeSign`, '-', 2 )) + 2 
+					)) AS signed 
+			) AS `top_departmentid`,
+			`dept_`.`treeSign` AS `treeSign`,
+			`duty_`.`dutyId` AS `jobtitle`,
+			`duty_`.`dutyName` AS `dutyName`,
+			upper( `user_`.`password` ) AS `password`,
+			cast( `user_`.`sex` AS CHAR ( 1 ) charset utf8 ) AS `sex`,
+			date_format( `file_`.`birthdate`, '%Y-%m-%d' ) AS `birthday`,
+			1 AS `systemlanguage`,
+			`file_`.`maritalStatus` AS `maritalstatus`,
+			`user_`.`mobileTel` AS `telephone`,
+			`user_`.`mobileTel` AS `mobile`,
+			`file_`.`email` AS `email`,
+			0 AS `locationid`,
+			'' AS `startdate`,
+			'' AS `enddate`,(
+			CASE
+					
+					WHEN ( `duty_`.`dutyLevel` = '1' ) THEN
+					10 
+					WHEN ( `duty_`.`dutyLevel` = '2' ) THEN
+					40 
+					WHEN ( `duty_`.`dutyLevel` = '3' ) THEN
+					60 
+					WHEN ( `duty_`.`dutyLevel` = '4' ) THEN
+					80 
+					WHEN ( `duty_`.`dutyLevel` = '5' ) THEN
+					90 ELSE 10 
+				END 
+				) AS `seclevel`,
+				upper( `user_`.`certifiCateNo` ) AS `certificatenum`,
+				ifnull( `np`.`name`, '' ) AS `nativeplace`,
+				`edu`.`education` AS `educationlevel`,
+				user_.`useStatus`  AS `status`,
+				`file_`.`familyAddress` AS `homeaddress`,
+				0 AS `dsporder`,
+				date_format( `file_`.`hireDate`, '%Y-%m-%d' ) AS `sartht`,
+				`nation`.`name` AS `folk`,
+				`file_`.`birthPlace` AS `birthPlace`,
+				`political`.`dicName` AS `policy`,
+				`degreedic`.`dicName` AS `degree`,
+				date_format( `yyy`.`mx`, '%Y-%m-%d' ) AS `separationDate`,
+				`yyy`.`isApprovalSX` AS `isApprovalSX`,
+				date_format( `file_`.`realFormalDate`, '%Y-%m-%d' ) AS `formalDate`,
+				`ttttt`.`managerid` AS `managerid` 
+			FROM
+				((((((((((((((
+																		`hr2020`.`sys_user` `user_`
+																		JOIN `hr2020`.`emp_employeefile` `file_` ON ((
+																				`user_`.`empId` = `file_`.`empId` 
+																			)))
+																	LEFT JOIN (
+																	SELECT
+																		max( `sep`.`separationDate` ) AS `mx`,
+																		`sep`.`isApprovalSX` AS `isApprovalSX`,
+																		`sep`.`empfileId` AS `empfileId` 
+																	FROM
+																		`hr2020`.`emp_empseparation` `sep` 
+																	GROUP BY
+																		`sep`.`empfileId`,
+																		`sep`.`isApprovalSX` 
+																		) `yyy` ON ((
+																			`yyy`.`empfileId` = `file_`.`empfileId` 
+																		)))
+																JOIN `hr2020`.`sys_duty` `duty_` ON ((
+																		`user_`.`dutyId` = `duty_`.`dutyId` 
+																	)))
+															JOIN `hr2020`.`sys_department` `depart_` ON (((
+																		`user_`.`deptId` = `depart_`.`deptId` 
+																		) 
+																AND ( `duty_`.`deptId` = `depart_`.`deptId` ))))
+														LEFT JOIN `hr2020`.`sys_nativeplace` `np` ON ((
+																`np`.`code` = `file_`.`nativePlace` 
+															)))
+													LEFT JOIN `hr2020`.`sys_dictionary` `maritaldic` ON ((
+															`maritaldic`.`dicId` = `file_`.`maritalStatus` 
+														)))
+												LEFT JOIN (
+												SELECT
+													`edu`.`empfileId` AS `empfileId`,
+													substring_index( group_concat( `edu`.`education` ORDER BY `edu`.`endDate` DESC SEPARATOR ',' ), ',', 1 ) AS `education`,
+													substring_index( group_concat( `edu`.`degree` ORDER BY `edu`.`endDate` DESC SEPARATOR ',' ), ',', 1 ) AS `degree` 
+												FROM
+													`hr2020`.`emp_education` `edu` 
+												WHERE
+													( `edu`.`empfileId` IS NOT NULL ) 
+												GROUP BY
+													`edu`.`empfileId` 
+													) `edu` ON ((
+														`file_`.`empfileId` = `edu`.`empfileId` 
+													)))
+											LEFT JOIN `hr2020`.`sys_dictionary` `edudic` ON ((
+													`edudic`.`dicId` = `edu`.`education` 
+												)))
+										LEFT JOIN `hr2020`.`sys_dictionary` `degreedic` ON ((
+												`degreedic`.`dicId` = `edu`.`degree` 
+											)))
+									LEFT JOIN `hr2020`.`sys_nationality` `nation` ON ((
+											`nation`.`id` = `file_`.`nationality` 
+										)))
+								LEFT JOIN `hr2020`.`sys_dictionary` `political` ON ((
+										`political`.`dicId` = `file_`.`politicalStatus` 
+									)))
+							LEFT JOIN `hr2020`.`hr_hrmresource_manager` `ttttt` ON (((
+										`duty_`.`dutyId` = `ttttt`.`dutyid` 
+										) 
+								AND ( `ttttt`.`dutyid` IS NOT NULL ))))
+						LEFT JOIN `hr2020`.`sys_department` `dept_` ON ((
+								`duty_`.`deptId` = `dept_`.`deptId` 
+							))) 
+				) 
+			WHERE
+				((
+						1 = 1 
+						) 
+					AND ((
+							`file_`.`entryStatus` IN ( 1, 2, 3, 4 )) 
+						OR ((
+								`file_`.`entryStatus` = 5 
+								) 
+						AND ( `yyy`.`mx` >= '2018-01-01' ))) 
+					AND (
+					`depart_`.`treeSign` LIKE concat( '1-3-', '%' )) 
+			AND ( `depart_`.`deptId` != 527 ))    
+    </select>
+    
+    <select id="getSyncBankAccountList" resultType="java.util.Map">
+	 SELECT
+		bb.*,
+		bbb.bankName,
+		bbb.city,
+		bbb.province,
+		bbb.unionPayNo,
+		sd.dicName 
+	FROM
+		budget_base_bankaccount bb
+		LEFT JOIN budget_base_bank bbb ON bb.bankId = bbb.id
+		LEFT JOIN sys_dictionary sd ON bbb.bankTypeId = sd.dicId   
+    </select>
+    <!--
+     update by minzhq
+    AND t.hr_busiTravel_cancle = 0
+    -->
+    <select id = "getTravelEmpPage" resultType = "java.util.Map">
+      SELECT empId, empNo, empName
+      FROM sys_user
+      WHERE empId IN(
+	    SELECT DISTINCT t.hr_emp_id FROM hr_busi_travel t WHERE t.hr_busi_travel_status = 2
+		AND t.hr_busi_travel_end >= ${date}
+
+	  )
+	  <if test="queryText != null and queryText != ''">
+        AND (empNo LIKE CONCAT('%', #{queryText}, '%') OR empName LIKE CONCAT('%', #{queryText}, '%')) 
+      </if>
+	   ORDER BY empNo
+	  <if test="authSql !=null and authSql !=''">
+        ${authSql}
+      </if>
+    </select>
+	<select id="getSyncDeptList" resultType="java.util.Map">
+		select * from sys_department where treeSign like '1-3-%' and deptId !=3
+	</select>
+	<select id="getHrUserList" resultType="java.util.Map">
+		select * from sys_user where companyId = 3
+	</select>
+</mapper>

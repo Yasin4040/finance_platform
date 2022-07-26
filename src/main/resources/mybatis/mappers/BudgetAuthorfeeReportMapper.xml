@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetAuthorfeeReportMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetAuthorfeeReport">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="yearperiod" jdbcType="VARCHAR" property="yearperiod"/>
+        <result column="monthid" jdbcType="BIGINT" property="monthid"/>
+        <result column="feemonth" jdbcType="VARCHAR" property="feemonth"/>
+        <result column="reportcode" jdbcType="VARCHAR" property="reportcode"/>
+        <result column="copefeesum" jdbcType="DECIMAL" property="copefeesum"/>
+        <result column="taxsum" jdbcType="DECIMAL" property="taxsum"/>
+        <result column="realfeesum" jdbcType="DECIMAL" property="realfeesum"/>
+        <result column="times" jdbcType="INTEGER" property="times"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , yearid, yearperiod, monthid, feemonth, reportcode, copefeesum, taxsum, realfeesum,
+    times, createtime
+    </sql>
+</mapper>

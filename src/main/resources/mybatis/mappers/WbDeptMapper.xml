@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.WbDeptMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.WbDept">
+        <id column="DEPT_ID" jdbcType="VARCHAR" property="deptId"/>
+        <result column="DEPT_NAME" jdbcType="VARCHAR" property="deptName"/>
+        <result column="PARENT_DEPT" jdbcType="VARCHAR" property="parentDept"/>
+        <result column="ORDER_INDEX" jdbcType="DECIMAL" property="orderIndex"/>
+        <result column="OUT_KEY" jdbcType="VARCHAR" property="outKey"/>
+        <result column="PARENT_IDS" jdbcType="VARCHAR" property="parentIds"/>
+        <result column="DEPT_FULLNAME" jdbcType="VARCHAR" property="deptFullname"/>
+        <result column="STATUS" jdbcType="DECIMAL" property="status"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        DEPT_ID
+        , DEPT_NAME, PARENT_DEPT, ORDER_INDEX, OUT_KEY, PARENT_IDS, DEPT_FULLNAME,
+    STATUS
+    </sql>
+    
+    <select id = "getDeptInfo" resultMap = "BaseResultMap">
+    	SELECT *
+    	FROM wb_dept
+    	WHERE STATUS = 1
+    	<if test="deptName != null and deptName != ''">
+        	AND DEPT_NAME LIKE CONCAT ('%', #{deptName}, '%')
+        </if>
+        ORDER BY PARENT_DEPT, ORDER_INDEX
+    </select>
+</mapper>

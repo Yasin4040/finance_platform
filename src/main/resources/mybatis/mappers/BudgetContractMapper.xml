@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetContractMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetContract">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="contractname" jdbcType="VARCHAR" property="contractname"/>
+        <result column="contractcode" jdbcType="VARCHAR" property="contractcode"/>
+        <result column="contractmoney" jdbcType="REAL" property="contractmoney"/>
+        <result column="chargedmoney" jdbcType="REAL" property="chargedmoney"/>
+        <result column="repaidmoney" jdbcType="REAL" property="repaidmoney"/>
+        <result column="signdate" jdbcType="DATE" property="signdate"/>
+        <result column="contractcopies" jdbcType="VARCHAR" property="contractcopies"/>
+        <result column="terminationflag" jdbcType="INTEGER" property="terminationflag"/>
+        <result column="terminationdate" jdbcType="DATE" property="terminationdate"/>
+        <result column="realterminationdate" jdbcType="DATE" property="realterminationdate"/>
+        <result column="agreesumtype" jdbcType="VARCHAR" property="agreesumtype"/>
+        <result column="contextdigest" jdbcType="VARCHAR" property="contextdigest"/>
+        <result column="otherpartyunit" jdbcType="VARCHAR" property="otherpartyunit"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="requestid" jdbcType="VARCHAR" property="requestid"/>
+        <result column="contracttype" jdbcType="VARCHAR" property="contracttype"/>
+        <result column="otherinfo" jdbcType="VARCHAR" property="otherinfo"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , contractname, contractcode, contractmoney, chargedmoney, repaidmoney, signdate,
+    contractcopies, terminationflag, terminationdate, realterminationdate, agreesumtype, 
+    contextdigest, otherpartyunit, createtime, requestid, contracttype, otherinfo
+    </sql>
+
+    <select id="listContractPage" resultType="com.jtyjy.finance.manager.vo.BudgetContractVO">
+        SELECT a.*,
+        b.repaidMoney,
+        b.unRepaidMoney,
+        c.paidMoney
+        FROM (
+        SELECT bc.id              AS id,
+        bc.terminationflag AS terminationFlag,
+        bc.contractname    AS contractName,
+        bc.contractcode    AS contractCode,
+        bc.contractmoney   AS contractMoney,
+        bc.createtime      AS createTime,
+        bc.otherpartyunit  AS otherPartyUnit,
+        bc.signdate        AS signDate,
+        bc.terminationdate AS terminationDate
+        FROM budget_contract bc
+        GROUP BY bc.id
+        ) AS a
+        LEFT JOIN (
+        SELECT bc.id                                AS id2,
+        sum(br.repaymoney)                   AS repaidMoney,
+        (contractmoney - sum(br.repaymoney)) AS unRepaidMoney
+        FROM budget_contract bc
+        INNER JOIN budget_lendmoney_new bl ON bl.contractid = bc.id
+        INNER JOIN budget_repaymoney_detail_new brd ON brd.lendmoneyid = bl.id
+        INNER JOIN budget_repaymoney_new br ON br.id = brd.repaymoneyid
+        GROUP BY bc.id
+        ) AS b ON a.id = b.id2
+        LEFT JOIN (
+        SELECT bc.id            AS id3,
+        sum(bp.paymoney) AS paidMoney
+        FROM budget_contract bc
+        left JOIN budget_lendmoney_new bl ON bl.contractid = bc.id
+        left JOIN budget_paymoney bp ON bp.paymoneyobjectid = bl.id
+        where bp.paymoneystatus = 3
+        GROUP BY bc.id
+        ) AS c ON a.id = c.id3
+        <where>
+            <if test="paramMap.name != null and paramMap.name != ''">
+                and a.contractName like CONCAT('%', #{paramMap.name}, '%')
+            </if>
+            <if test="paramMap.contractCode != null and paramMap.contractCode != ''">
+                and a.contractcode like CONCAT('%', #{paramMap.contractCode}, '%')
+            </if>
+            <if test="paramMap.otherPartyUnit != null and paramMap.otherPartyUnit != ''">
+                and a.otherpartyunit like CONCAT('%', #{paramMap.otherPartyUnit}, '%')
+            </if>
+            <if test="paramMap.signDate != null">
+                and a.signdate = #{paramMap.signDate}
+            </if>
+            <if test="paramMap.terminationDate != null">
+                and a.terminationdate = #{paramMap.terminationDate}
+            </if>
+        </where>
+        order by a.createtime desc
+    </select>
+
+    <select id="getStrikeMoneyDetail" resultType="com.jtyjy.finance.manager.vo.BudgetStrikeMoneyDetailVO">
+        SELECT bl.contractid,
+               br.repaymoneycode            AS orderCode,
+               (CASE br.repaytype
+                    WHEN 1 THEN '现金还款'
+                    WHEN 2 THEN '手机支付还款'
+                    WHEN 3 THEN '工资还款'
+                    WHEN 4 THEN '提成还款'
+                    WHEN 5 THEN '报销冲账还款'
+                    WHEN 6 THEN '项目借款抵消还款'
+                    WHEN 7 THEN '入库冲账' END) AS orderType,
+               br.repaymoney                AS orderMoney,
+               br.empname                   AS empName,
+               br.empno                     AS empNo,
+               br.repaydate                 AS orderDate
+        FROM budget_repaymoney_detail_new brd
+                 INNER JOIN budget_lendmoney_new bl ON bl.id = brd.lendmoneyid
+                 INNER JOIN budget_repaymoney_new br ON br.id = brd.repaymoneyid
+        where bl.contractid = #{id}
+        ORDER BY orderdate DESC
+    </select>
+
+    <select id="listContractLendPage" resultType="com.jtyjy.finance.manager.vo.BudgetContractLendVO">
+        SELECT blm.id,
+               blm.lendmoneycode                               AS lendMoneyCode,
+               blm.empno                                       AS empNo,
+               blm.empname                                     AS empName,
+               blm.lendtype                                    AS lendType,
+               IF(blm.lendtype = 15, '合同借款', '非合同借款')     AS lendTypeDesc,
+               blm.lendmoney                                   AS lendMoney,
+               blm.repaidmoney                                 AS repaidMoney,
+               (blm.lendmoney - blm.repaidmoney)               AS unRepaidMoney,
+               blm.lenddate                                    AS lendDate,
+               blm.planpaydate                                 AS payPlanDate,
+               blm.createtime                                  AS createDate,
+               blm.remark,
+               IF((blm.lendmoney - blm.repaidmoney) > 0, 0, 1) AS repaymentStatus,
+               bc.contractname                                 AS contractName,
+               bc.agreesumtype                                 AS agreeSumType,
+               bp.paymoneystatus                               AS payMoneyStatus,
+               bp.paytype                                      AS payType
+        FROM budget_lendmoney_new blm
+                 left JOIN budget_contract bc ON blm.contractid = bc.id
+                 left JOIN budget_paymoney bp ON blm.id = bp.paymoneyobjectid
+        WHERE blm.deleteflag = 0
+            <if test="paramMap.name != null and paramMap.name != ''">
+                and (blm.empname like CONCAT('%', #{paramMap.name}, '%')
+                    or blm.empno like CONCAT('%', #{paramMap.name}, '%'))
+            </if>
+            <if test="paramMap.repaymentStatus != null">
+                and IF((blm.lendmoney - blm.repaidmoney) > 0, 0, 1) = #{paramMap.repaymentStatus}
+            </if>
+            <if test="paramMap.payMoneyStatus != null">
+                and bp.paymoneystatus = #{paramMap.payMoneyStatus}
+            </if>
+            <if test="paramMap.lendDate != null">
+                and blm.lendDate = #{paramMap.lendDate}
+            </if>
+            <if test="paramMap.lendType != null">
+                and blm.lendtype = #{paramMap.lendType}
+            </if>
+            <if test="paramMap.lendType == null">
+                and (blm.lendtype = 15 or blm.lendtype = 16)
+            </if>
+        ORDER BY blm.createtime DESC
+    </select>
+</mapper>

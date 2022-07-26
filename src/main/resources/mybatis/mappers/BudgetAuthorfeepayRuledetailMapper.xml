@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetAuthorfeepayRuledetailMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetAuthorfeepayRuledetail">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="payruleid" jdbcType="BIGINT" property="payruleid"/>
+        <result column="min" jdbcType="DECIMAL" property="min"/>
+        <result column="max" jdbcType="DECIMAL" property="max"/>
+        <result column="banks" jdbcType="VARCHAR" property="banks"/>
+        <result column="isreplacesend" jdbcType="BIT" property="isreplacesend"/>
+        <result column="billunitid" jdbcType="BIGINT" property="billunitid"/>
+        <result column="billunitaccountid" jdbcType="BIGINT" property="billunitaccountid"/>
+        <result column="billunitaccount" jdbcType="VARCHAR" property="billunitaccount"/>
+        <result column="billunitname" jdbcType="VARCHAR" property="billunitname"/>
+        <result column="billunitopenbank" jdbcType="VARCHAR" property="billunitopenbank"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , payruleid, min, max, banks, isreplacesend, billunitid, billunitaccountid, billunitaccount,
+    billunitname, billunitopenbank
+    </sql>
+</mapper>

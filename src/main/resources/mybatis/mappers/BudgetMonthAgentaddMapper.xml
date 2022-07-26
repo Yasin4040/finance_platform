@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetMonthAgentaddMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetMonthAgentadd">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="subjectid" jdbcType="BIGINT" property="subjectid"/>
+        <result column="monthagentid" jdbcType="BIGINT" property="monthagentid"/>
+        <result column="infoid" jdbcType="BIGINT" property="infoid"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="yearagentmoney" jdbcType="DECIMAL" property="yearagentmoney"/>
+        <result column="yearagentaddmoney" jdbcType="DECIMAL" property="yearagentaddmoney"/>
+        <result column="yearagentlendoutmoney" jdbcType="DECIMAL" property="yearagentlendoutmoney"/>
+        <result column="yearagentlendinmoney" jdbcType="DECIMAL" property="yearagentlendinmoney"/>
+        <result column="yearagentexcutemoney" jdbcType="DECIMAL" property="yearagentexcutemoney"/>
+        <result column="agentmoney" jdbcType="DECIMAL" property="agentmoney"/>
+        <result column="agentaddmoney" jdbcType="DECIMAL" property="agentaddmoney"/>
+        <result column="agentlendoutmoney" jdbcType="DECIMAL" property="agentlendoutmoney"/>
+        <result column="agentlendinmoney" jdbcType="DECIMAL" property="agentlendinmoney"/>
+        <result column="agentexcutemoney" jdbcType="DECIMAL" property="agentexcutemoney"/>
+        <result column="total" jdbcType="DECIMAL" property="total"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , yearid, unitid, name, subjectid, monthagentid, infoid, updatetime, createtime,
+    yearagentmoney, yearagentaddmoney, yearagentlendoutmoney, yearagentlendinmoney, yearagentexcutemoney, 
+    agentmoney, agentaddmoney, agentlendoutmoney, agentlendinmoney, agentexcutemoney, 
+    total, remark
+    </sql>
+
+    <select id="listCanAddAgents" resultType="com.jtyjy.finance.manager.bean.BudgetMonthAgent">
+        SELECT monthagent.id,
+               monthagent.yearid,
+               monthagent.unitid,
+               monthagent.subjectid,
+               monthagent.`name`,
+               monthagent.total,
+               monthagent.addmoney,
+               monthagent.lendinmoney,
+               monthagent.lendoutmoney,
+               monthagent.executemoney,
+               yearagent.total        AS yearagentmoney,
+               yearagent.addmoney     AS yearaddmoney,
+               yearagent.lendinmoney  AS yearlendinmoney,
+               yearagent.lendoutmoney AS yearlendoutmoney,
+               yearagent.executemoney AS yearexecutemoney
+        FROM budget_month_agent AS monthagent
+                 INNER JOIN budget_month_end_unit AS montunit
+                            ON montunit.yearid = monthagent.yearid
+                                AND monthagent.unitid = montunit.unitid
+                                AND monthagent.monthid = montunit.monthid
+                 INNER JOIN budget_year_agent yearagent
+                            ON yearagent.yearid = monthagent.yearid
+                                AND yearagent.unitid = monthagent.unitid
+                                AND yearagent.subjectid = monthagent.subjectid
+                                AND yearagent.id = monthagent.yearagentid
+        WHERE montunit.requeststatus = 2
+          AND montunit.monthendflag = 0
+          AND monthagent.unitid = #{budgetUnitId}
+          AND monthagent.subjectid = #{budgetSubjectId}
+          AND monthagent.monthid = #{monthId}
+    </select>
+
+    <select id="listAddAgentByInfoId" resultType="com.jtyjy.finance.manager.vo.BudgetMonthAgentAddVO">
+        select id,
+               name,
+               monthagentid                                   AS monthAgentId,
+               subjectid                                      AS subjectId,
+               infoid                                         AS infoId,
+               total                                          AS addMoney,
+               remark                                         AS remark,
+               yearagentmoney                                 AS yearMoney,
+               (yearagentmoney + yearagentaddmoney + yearagentlendinmoney -
+                yearagentlendoutmoney - yearagentexcutemoney) AS yearBalance,
+               agentmoney                                     AS preMonthMoney,
+               (agentmoney + agentaddmoney + agentlendinmoney - agentlendoutmoney -
+                agentexcutemoney)                             AS preMonthBalance
+        from budget_month_agentadd a
+        where a.infoid = #{infoId}
+    </select>
+
+    <select id="listLockMoneyByMonthAgentId" resultType="java.math.BigDecimal">
+        select a.total
+        from budget_month_agentadd a
+                 left join budget_month_agentaddinfo b on a.infoid = b.id
+        where b.requeststatus = 1
+          and a.monthagentid = #{monthAgentId}
+    </select>
+</mapper>

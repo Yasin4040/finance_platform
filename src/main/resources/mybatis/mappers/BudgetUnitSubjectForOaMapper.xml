@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetUnitSubjectForOaMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetUnitSubjectForOa">
+        <result column="biename" jdbcType="VARCHAR" property="biename"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <result column="subjectid" jdbcType="BIGINT" property="subjectid"/>
+        <result column="hidden" jdbcType="BIT" property="hidden"/>
+        <result column="yearcontrolflag" jdbcType="BIT" property="yearcontrolflag"/>
+        <result column="monthcontrolflag" jdbcType="BIT" property="monthcontrolflag"/>
+        <result column="procategoryid" jdbcType="VARCHAR" property="procategoryid"/>
+        <result column="addflag" jdbcType="BIT" property="addflag"/>
+        <result column="lendflag" jdbcType="BIT" property="lendflag"/>
+        <result column="splitflag" jdbcType="BIT" property="splitflag"/>
+        <result column="ccratioformula" jdbcType="VARCHAR" property="ccratioformula"/>
+        <result column="preccratioformula" jdbcType="VARCHAR" property="preccratioformula"/>
+        <result column="revenueformula" jdbcType="VARCHAR" property="revenueformula"/>
+        <result column="formula" jdbcType="VARCHAR" property="formula"/>
+    </resultMap>
+</mapper>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetExtractpaydetailMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetExtractpaydetail">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="extractmonth" jdbcType="VARCHAR" property="extractmonth"/>
+        <result column="iscompanyemp" jdbcType="BIT" property="iscompanyemp"/>
+        <result column="idnumber" jdbcType="VARCHAR" property="idnumber"/>
+        <result column="empno" jdbcType="VARCHAR" property="empno"/>
+        <result column="empname" jdbcType="VARCHAR" property="empname"/>
+        <result column="salary" jdbcType="DECIMAL" property="salary"/>
+        <result column="salarylj" jdbcType="DECIMAL" property="salarylj"/>
+        <result column="salarytax" jdbcType="DECIMAL" property="salarytax"/>
+        <result column="salarytaxlj" jdbcType="DECIMAL" property="salarytaxlj"/>
+        <result column="copeextract" jdbcType="DECIMAL" property="copeextract"/>
+        <result column="copeextractlj" jdbcType="DECIMAL" property="copeextractlj"/>
+        <result column="consotax" jdbcType="DECIMAL" property="consotax"/>
+        <result column="consotaxlj" jdbcType="DECIMAL" property="consotaxlj"/>
+        <result column="realesalarytax" jdbcType="DECIMAL" property="realesalarytax"/>
+        <result column="realesalarytaxlj" jdbcType="DECIMAL" property="realesalarytaxlj"/>
+        <result column="fiveriskonefund" jdbcType="DECIMAL" property="fiveriskonefund"/>
+        <result column="fiveriskonefundlj" jdbcType="DECIMAL" property="fiveriskonefundlj"/>
+        <result column="specialdeduction" jdbcType="DECIMAL" property="specialdeduction"/>
+        <result column="specialdeductionlj" jdbcType="DECIMAL" property="specialdeductionlj"/>
+        <result column="threshold" jdbcType="DECIMAL" property="threshold"/>
+        <result column="thresholdlj" jdbcType="DECIMAL" property="thresholdlj"/>
+        <result column="dtje" jdbcType="DECIMAL" property="dtje"/>
+        <result column="renewableextract" jdbcType="DECIMAL" property="renewableextract"/>
+        <result column="criticalmoney" jdbcType="DECIMAL" property="criticalmoney"/>
+        <result column="criticalmoneylj" jdbcType="DECIMAL" property="criticalmoneylj"/>
+        <result column="renewableextract539" jdbcType="DECIMAL" property="renewableextract539"/>
+        <result column="companyableextract" jdbcType="DECIMAL" property="companyableextract"/>
+        <result column="incorporatedcompany" jdbcType="DECIMAL" property="incorporatedcompany"/>
+        <result column="incorporatedcompanylj" jdbcType="DECIMAL" property="incorporatedcompanylj"/>
+        <result column="aviodtax" jdbcType="DECIMAL" property="aviodtax"/>
+        <result column="realeextract" jdbcType="DECIMAL" property="realeextract"/>
+        <result column="realeextractsum" jdbcType="DECIMAL" property="realeextractsum"/>
+        <result column="sfdtje" jdbcType="DECIMAL" property="sfdtje"/>
+        <result column="payabletax" jdbcType="DECIMAL" property="payabletax"/>
+        <result column="payabletaxlj" jdbcType="DECIMAL" property="payabletaxlj"/>
+        <result column="taxdiffrence" jdbcType="DECIMAL" property="taxdiffrence"/>
+        <result column="releasepercent" jdbcType="DECIMAL" property="releasepercent"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="totalextract" jdbcType="DECIMAL" property="totalextract"/>
+        <result column="totalaviodtax" jdbcType="DECIMAL" property="totalaviodtax"/>
+        <result column="incorporatedcompanyfee" jdbcType="DECIMAL" property="incorporatedcompanyfee"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , extractmonth, iscompanyemp, idnumber, empno, empname, salary, salarylj, salarytax,
+    salarytaxlj, copeextract, copeextractlj, consotax, consotaxlj, realesalarytax, realesalarytaxlj, 
+    fiveriskonefund, fiveriskonefundlj, specialdeduction, specialdeductionlj, threshold, 
+    thresholdlj, dtje, renewableextract, criticalmoney, criticalmoneylj, renewableextract539, 
+    companyableextract, incorporatedcompany, incorporatedcompanylj, aviodtax, realeextract, 
+    realeextractsum, sfdtje, payabletax, payabletaxlj, taxdiffrence, releasepercent, 
+    createtime, totalextract, totalaviodtax, incorporatedcompanyfee
+    </sql>
+</mapper>

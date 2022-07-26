@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetYearAgentLendViewMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetYearAgentLendView">
+        <result column="requeststatus" jdbcType="INTEGER" property="requeststatus"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="inbaseunitid" jdbcType="BIGINT" property="inbaseunitid"/>
+        <result column="inunitpids" jdbcType="VARCHAR" property="inunitpids"/>
+        <result column="inunitpid" jdbcType="BIGINT" property="inunitpid"/>
+        <result column="inunitid" jdbcType="BIGINT" property="inunitid"/>
+        <result column="outbaseunitid" jdbcType="BIGINT" property="outbaseunitid"/>
+        <result column="outunitpids" jdbcType="VARCHAR" property="outunitpids"/>
+        <result column="outunitpid" jdbcType="BIGINT" property="outunitpid"/>
+        <result column="outunitid" jdbcType="BIGINT" property="outunitid"/>
+        <result column="outbasesubjectid" jdbcType="BIGINT" property="outbasesubjectid"/>
+        <result column="outsubjectpids" jdbcType="VARCHAR" property="outsubjectpids"/>
+        <result column="outsubjectpid" jdbcType="BIGINT" property="outsubjectpid"/>
+        <result column="outsubjectid" jdbcType="BIGINT" property="outsubjectid"/>
+        <result column="outyearagentid" jdbcType="BIGINT" property="outyearagentid"/>
+        <result column="outyearagentname" jdbcType="VARCHAR" property="outyearagentname"/>
+        <result column="inbasesubjectid" jdbcType="BIGINT" property="inbasesubjectid"/>
+        <result column="insubjectpids" jdbcType="VARCHAR" property="insubjectpids"/>
+        <result column="insubjectpid" jdbcType="BIGINT" property="insubjectpid"/>
+        <result column="insubjectid" jdbcType="BIGINT" property="insubjectid"/>
+        <result column="inyearagentid" jdbcType="BIGINT" property="inyearagentid"/>
+        <result column="inyearagentname" jdbcType="VARCHAR" property="inyearagentname"/>
+        <result column="lendmoney" jdbcType="DECIMAL" property="lendmoney"/>
+        <result column="audittime" jdbcType="VARCHAR" property="audittime"/>
+        <result column="createtime" jdbcType="VARCHAR" property="createtime"/>
+    </resultMap>
+</mapper>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetExtractpaymentMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetExtractpayment">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="extractdetailids" jdbcType="VARCHAR" property="extractdetailids"/>
+        <result column="budgetextractpaydetailid" jdbcType="BIGINT" property="budgetextractpaydetailid"/>
+        <result column="bunitid1" jdbcType="BIGINT" property="bunitid1"/>
+        <result column="bunitname1" jdbcType="VARCHAR" property="bunitname1"/>
+        <result column="bunitbankaccount1" jdbcType="VARCHAR" property="bunitbankaccount1"/>
+        <result column="bunitaccountbranchcode1" jdbcType="VARCHAR" property="bunitaccountbranchcode1"/>
+        <result column="bunitaccountbranchname1" jdbcType="VARCHAR" property="bunitaccountbranchname1"/>
+        <result column="paymoney1" jdbcType="DECIMAL" property="paymoney1"/>
+        <result column="payfee" jdbcType="DECIMAL" property="payfee"/>
+        <result column="bunitid2" jdbcType="BIGINT" property="bunitid2"/>
+        <result column="bunitname2" jdbcType="VARCHAR" property="bunitname2"/>
+        <result column="bunitbankaccount2" jdbcType="VARCHAR" property="bunitbankaccount2"/>
+        <result column="bunitaccountbranchcode2" jdbcType="VARCHAR" property="bunitaccountbranchcode2"/>
+        <result column="bunitaccountbranchname2" jdbcType="VARCHAR" property="bunitaccountbranchname2"/>
+        <result column="paymoney2" jdbcType="DECIMAL" property="paymoney2"/>
+        <result column="bunitname3" jdbcType="VARCHAR" property="bunitname3"/>
+        <result column="bunitbankaccount3" jdbcType="VARCHAR" property="bunitbankaccount3"/>
+        <result column="bunitaccountbranchcode3" jdbcType="VARCHAR" property="bunitaccountbranchcode3"/>
+        <result column="bunitaccountbranchname3" jdbcType="VARCHAR" property="bunitaccountbranchname3"/>
+        <result column="paymoney3" jdbcType="DECIMAL" property="paymoney3"/>
+        <result column="bunitname4" jdbcType="VARCHAR" property="bunitname4"/>
+        <result column="bunitbankaccount4" jdbcType="VARCHAR" property="bunitbankaccount4"/>
+        <result column="bunitaccountbranchcode4" jdbcType="VARCHAR" property="bunitaccountbranchcode4"/>
+        <result column="bunitaccountbranchname4" jdbcType="VARCHAR" property="bunitaccountbranchname4"/>
+        <result column="paymoney4" jdbcType="DECIMAL" property="paymoney4"/>
+        <result column="bunitname5" jdbcType="VARCHAR" property="bunitname5"/>
+        <result column="bunitbankaccount5" jdbcType="VARCHAR" property="bunitbankaccount5"/>
+        <result column="bunitaccountbranchcode5" jdbcType="VARCHAR" property="bunitaccountbranchcode5"/>
+        <result column="bunitaccountbranchname5" jdbcType="VARCHAR" property="bunitaccountbranchname5"/>
+        <result column="paymoney5" jdbcType="DECIMAL" property="paymoney5"/>
+        <result column="bankaccountname" jdbcType="VARCHAR" property="bankaccountname"/>
+        <result column="bankaccount" jdbcType="VARCHAR" property="bankaccount"/>
+        <result column="bankaccountbranchcode" jdbcType="VARCHAR" property="bankaccountbranchcode"/>
+        <result column="bankaccountbranchname" jdbcType="VARCHAR" property="bankaccountbranchname"/>
+        <result column="subsidytax" jdbcType="DECIMAL" property="subsidytax"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , extractdetailids, budgetextractpaydetailid, bunitid1, bunitname1, bunitbankaccount1,
+    bunitaccountbranchcode1, bunitaccountbranchname1, paymoney1, payfee, bunitid2, bunitname2, 
+    bunitbankaccount2, bunitaccountbranchcode2, bunitaccountbranchname2, paymoney2, bunitname3, 
+    bunitbankaccount3, bunitaccountbranchcode3, bunitaccountbranchname3, paymoney3, bunitname4, 
+    bunitbankaccount4, bunitaccountbranchcode4, bunitaccountbranchname4, paymoney4, bunitname5, 
+    bunitbankaccount5, bunitaccountbranchcode5, bunitaccountbranchname5, paymoney5, bankaccountname, 
+    bankaccount, bankaccountbranchcode, bankaccountbranchname, subsidytax, createtime
+    </sql>
+</mapper>

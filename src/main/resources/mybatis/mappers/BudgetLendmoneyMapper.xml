@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetLendmoneyMapper">
+    <!-- 获取借款单冲账信息 -->
+    <select id="getUseInfo" resultType="LendmoneyUseBean">
+        select t.id,
+               t.effectflag,
+               t.flushingflag,
+               t.repaidmoney,
+               t.lendmoney - t.repaidmoney + t.interestmoney - t.repaidinterestmoney unrepaymoney,
+               t.lendtype,
+               t.lendmoney,
+               (select count(1)
+                from budget_lendmoney_uselog_new l
+                where l.lendmoneyid = t.id and l.useflag = 1) as usecount
+        from budget_lendmoney_new t
+        where t.id in (${ids})
+    </select>
+
+    <select id="getArrearsDetails" resultType="com.jtyjy.finance.manager.vo.ArrearsDetailsVO">
+        SELECT ttt.*
+        FROM (
+                 SELECT blm.empno                  AS empNo,
+                        blm.empname                AS empName,
+                        blm.curmoney               AS curMoney,
+                        br.repaytype               AS orderType,
+                        brd.repaymoney * moneytype AS orderMoney,
+                        br.repaymoneycode          AS orderCode,
+                        brd.interestmoney * -1     AS orderInterest,
+                        blm.createtime             AS orderDate,
+                        blm.remark                 AS orderRemark
+                 FROM budget_lendandrepaymoney_new blm
+                          INNER JOIN budget_repaymoney_new br ON br.id = blm.repaymoneyid
+                          INNER JOIN budget_repaymoney_detail_new brd ON brd.repaymoneyid = br.id
+                 UNION
+                 SELECT bl.empno         AS empNo,
+                        bl.empname       AS empName,
+                        bl.lendmoney     AS curMoney,
+                        bl.lendtype      AS orderType,
+                        bl.lendmoney     AS orderMoney,
+                        bl.lendmoneycode AS orderCode,
+                        bl.interestmoney AS orderInterest,
+                        bl.createtime    AS orderDate,
+                        bl.remark        AS orderRemark
+                 FROM budget_lendmoney_new bl
+                 WHERE bl.deleteflag = 0
+             ) ttt
+        where empNo = #{empNo}
+        ORDER BY ttt.orderDate desc
+    </select>
+
+    <select id="listLendMoneyPage" resultType="com.jtyjy.finance.manager.vo.BudgetLendMoneyVO">
+        SELECT lendmoney.id AS id,
+        lendmoney.empid AS empId,
+        lendmoney.empno AS empNo,
+        lendmoney.empname AS empName,
+        lendmoney.lendmoneycode AS lendMoneyCode,
+        lendmoney.isbyj AS isbyj,
+        lendmoney.lendtype AS lendType,
+        lendmoney.lendmoney AS lendMoney,
+        lendmoney.lenddate AS lendDate,
+        lendmoney.planpaydate AS planPayDate,
+        lendmoney.interestmoney AS interestMoney,
+        lendmoney.createtime AS createTime,
+        lendmoney.remark AS remark,
+        lendmoney.requestid AS requestId,
+        lendmoney.repaidmoney + lendmoney.repaidinterestmoney AS repaidmoney,
+        lendmoney.lendmoney - lendmoney.repaidmoney + lendmoney.interestmoney -
+        lendmoney.repaidinterestmoney AS unpaidmoney,
+        IF((lendmoney.lendmoney - lendmoney.repaidmoney + lendmoney.interestmoney -
+        lendmoney.repaidinterestmoney) > 0, 0, 1) AS paymentStatus
+        FROM budget_lendmoney_new lendmoney
+        WHERE lendmoney.deleteflag = 0
+        <if test="paramMap.name != null and paramMap.name != ''">
+            and (lendmoney.empname like CONCAT('%', #{paramMap.name}, '%')
+            or lendmoney.empno like CONCAT('%', #{paramMap.name}, '%'))
+        </if>
+        <if test="paramMap.lendMoneyCode != null and paramMap.lendMoneyCode != ''">
+            and lendmoney.lendmoneycode like CONCAT('%', #{paramMap.lendMoneyCode}, '%')
+        </if>
+        <if test="paramMap.paymentStatus != null">
+            and IF((lendmoney.lendmoney - lendmoney.repaidmoney + lendmoney.interestmoney -
+            lendmoney.repaidinterestmoney) > 0, 0, 1) = #{paramMap.paymentStatus}
+        </if>
+        <if test="paramMap.lendType != null">
+            and lendmoney.lendtype = #{paramMap.lendType}
+        </if>
+        <if test="paramMap.lendDate != null">
+            and lendmoney.lenddate = #{paramMap.lendDate}
+        </if>
+        order by lendmoney.createtime desc
+    </select>
+
+    <select id="getRepayMoneyDetail" resultType="com.jtyjy.finance.manager.vo.BudgetRepayMoneyDetailVO">
+        select bl.lendmoneycode                   AS lendMoneyCode,
+               br.repaymoneycode                  AS repayMoneyCode,
+               brd.id,
+               brd.lendmoneyid                    AS lendMoneyId,
+               brd.curlendmoney                   AS curLendMoney,
+               brd.nowlendmoney                   AS nowLendMoney,
+               brd.createtime                     AS repayMoneyDate,
+               brd.repaymoney + brd.interestmoney AS repayMoney
+        from budget_lendmoney_new bl,
+             budget_repaymoney_new br,
+             budget_repaymoney_detail_new brd
+        where bl.id = brd.lendmoneyid
+          and brd.repaymoneyid = br.id
+          and bl.id = #{id}
+          order by brd.createtime desc
+    </select>
+
+    <select id="getPayMoneyDetail" resultType="com.jtyjy.finance.manager.vo.BudgetPayMoneyDetailVO">
+        select a.*,
+        bl.contractid AS contractId,
+        bl.requestcode AS requestCode
+        FROM (select bpb.paybatchcode AS payBatchCode,
+        bp.id AS id,
+        bp.paymoneystatus AS payMoneyStatus,
+        bp.paymoneycode AS payMoneyCode,
+        bp.paymoneyobjectid AS payMoneyObjectId,
+        bp.paymoneytype AS payMoneyType,
+        bp.paymoney AS payMoney,
+        bp.lendtype AS lendType,
+        bp.paytype AS payType,
+        bp.bunitname AS bUnitName,
+        unit.id AS bUnitId,
+        bp.bunitaccountbranchname AS bUnitAccountBranchName,
+        bp.bunitbankaccount AS bUnitBankAccount,
+        bp.bankaccountname AS bankAccountName,
+        bp.bankaccount AS bankAccount,
+        bp.bankaccountbranchname AS bankAccountBranchName,
+        bp.openbank AS openBank,
+        bp.bankaccountbranchcode AS bankAccountBranchCode,
+        bp.paytime AS payTime
+        from budget_paymoney bp
+        left join budget_paybatch bpb on bp.paybatchid = bpb.id
+        left join budget_billing_unit unit on bp.bunitname = unit.`name`
+        ) a
+        left join budget_lendmoney_new bl on a.paymoneyobjectid = bl.id
+        where 1 = 1
+        <if test="paramMap.lendMoneyId != null">
+            and bl.id = #{paramMap.lendMoneyId}
+        </if>
+        <if test="paramMap.contractId != null">
+            and bl.contractid = #{paramMap.contractId}
+        </if>
+        order by bl.createtime desc
+    </select>
+
+    <select id="getUserLendMoneyByBxr" resultType="com.jtyjy.finance.manager.vo.BudgetLendMoneyVO">
+        SELECT lendmoney.id                                          AS id,
+               lendmoney.empid                                       AS empId,
+               lendmoney.empno                                       AS empNo,
+               lendmoney.empname                                     AS empName,
+               lendmoney.lendmoneycode                               AS lendMoneyCode,
+               lendmoney.isbyj                                       AS isbyj,
+               lendmoney.lendtype                                    AS lendType,
+               lendmoney.lendmoney                                   AS lendMoney,
+               lendmoney.lenddate                                    AS lendDate,
+               lendmoney.planpaydate                                 AS planPayDate,
+               lendmoney.interestmoney                               AS interestMoney,
+               lendmoney.createtime                                  AS createTime,
+               lendmoney.remark                                      AS remark,
+               lendmoney.requestid                                   AS requestId,
+               lendmoney.repaidmoney + lendmoney.repaidinterestmoney AS repaidmoney,
+               lendmoney.lendmoney - lendmoney.repaidmoney + lendmoney.interestmoney -
+               lendmoney.repaidinterestmoney                         AS unpaidmoney
+        FROM budget_lendmoney_new lendmoney
+                 left join budget_contract contract on lendmoney.contractid = contract.id
+        WHERE lendmoney.deleteflag = 0
+          AND lendmoney.effectflag = 1
+          AND (
+                (lendmoney.lendtype = 13 and lendmoney.chargebillflag = 1 and lendmoney.flushingflag is null)
+                or (lendmoney.lendtype = 13 and !lendmoney.flushingflag)
+                or lendmoney.lendtype != 13
+              )
+          AND (lendmoney.lendmoney + lendmoney.interestmoney - lendmoney.repaidmoney - lendmoney.repaidinterestmoney) >
+              0
+          AND (lendmoney.empno like concat('%', #{name}, '%')
+            or lendmoney.empname like concat('%', #{name}, '%')
+            or lendmoney.lendmoneycode like concat('%', #{name}, '%')
+            or contract.otherpartyunit like concat('%', #{name}, '%')
+            )
+        ORDER BY lendmoney.planpaydate desc
+    </select>
+
+    <select id="getBudgetLendMoneyList" resultType="java.util.Map">
+        select
+            id,
+            round(lendmoney - repaidmoney + interestmoney - repaidinterestmoney, 2) unRepayMoney,
+            empno,
+            empname,
+            lendmoneycode,
+            lendtype,
+            round(lendmoney, 2) AS lendMoney,
+            round(repaidinterestmoney, 2) AS repaidInterestMoney,
+            round(repaidmoney, 2) AS repaidMoney,
+            date_format(lenddate, '%Y-%m-%d') AS lendDate,
+            date_format(planpaydate, '%Y-%m-%d') AS planPayDate,
+            round(interestmoney, 2) AS interestMoney,
+            remark,
+            chargebillflag
+        from budget_lendmoney_new
+        where effectflag = 1
+            and lendmoney > 0
+            and empno = #{paramMap.empno}
+        <if test="paramMap.isPayOff != null and paramMap.isPayOff == 1">
+            and lendmoney - repaidmoney + interestmoney - repaidinterestmoney &lt;= 0
+        </if>
+        <if test="paramMap.isPayOff != null and paramMap.isPayOff == 0">
+            and lendmoney - repaidmoney + interestmoney - repaidinterestmoney &gt; 0
+        </if>
+        order by planpaydate desc
+    </select>
+
+    <select id="getRepayMoneyList" resultType="java.util.Map">
+        select brd.id,
+               bl.lendmoneycode,
+               brd.curlendmoney,
+               brd.lendmoneyid,
+               br.empno,
+               br.empname,
+               brd.repaymoney + brd.interestmoney AS            repaymoney,
+               brd.nowlendmoney,
+               bl.lendmoney,
+               bl.interestmoney,
+               DATE_FORMAT(brd.createtime, '%Y-%m-%d %H:%i:%S') repaymoneydate,
+               br.repaymoneycode
+        from budget_lendmoney_new bl,
+             budget_repaymoney_detail_new brd,
+             budget_repaymoney_new br
+        where bl.id = brd.lendmoneyid
+          and brd.repaymoneyid = br.id
+        <if test="lendMoneyId != null">
+            and bl.id = #{lendMoneyId}
+        </if>
+        <if test="startDate != null">
+            and brd.createtime &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            and brd.createtime &lt;= #{endDate}
+        </if>
+        order by brd.createtime desc
+    </select>
+
+</mapper>

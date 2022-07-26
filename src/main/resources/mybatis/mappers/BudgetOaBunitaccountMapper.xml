@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetOaBunitaccountMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetOaBunitaccount">
+        <result column="id" jdbcType="BIGINT" property="id"/>
+        <result column="bunitname" jdbcType="VARCHAR" property="bunitname"/>
+        <result column="bunitaccount" jdbcType="VARCHAR" property="bunitaccount"/>
+        <result column="branchname" jdbcType="VARCHAR" property="branchname"/>
+        <result column="corporation" jdbcType="BIT" property="corporation"/>
+    </resultMap>
+</mapper>

@@ -1,0 +1,431 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetReimbursementorderDetailMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetReimbursementorderDetail">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="reimbursementid" jdbcType="BIGINT" property="reimbursementid"/>
+        <result column="reimmoney" jdbcType="DECIMAL" property="reimmoney"/>
+        <result column="monthagentid" jdbcType="BIGINT" property="monthagentid"/>
+        <result column="monthagentname" jdbcType="VARCHAR" property="monthagentname"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="subjectname" jdbcType="VARCHAR" property="subjectname"/>
+        <result column="bunitid" jdbcType="BIGINT" property="bunitid"/>
+        <result column="bunitname" jdbcType="VARCHAR" property="bunitname"/>
+        <result column="monthname" jdbcType="VARCHAR" property="monthname"/>
+        <result column="reimflag" jdbcType="BIT" property="reimflag"/>
+        <result column="monthagentmoney" jdbcType="DECIMAL" property="monthagentmoney"/>
+        <result column="monthagentunmoney" jdbcType="DECIMAL" property="monthagentunmoney"/>
+        <result column="yearagentmoney" jdbcType="DECIMAL" property="yearagentmoney"/>
+        <result column="yearagentunmoney" jdbcType="DECIMAL" property="yearagentunmoney"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id
+        , reimbursementid, reimmoney, monthagentid, monthagentname, remark, subjectname,
+    bunitid, bunitname, monthname, reimflag, monthagentmoney, monthagentunmoney, yearagentmoney, 
+    yearagentunmoney
+    </sql>
+
+    <select id="listDetailByYearAgentId" resultType="com.jtyjy.finance.manager.bean.BudgetReimbursementorderDetail">
+        SELECT detail_.*
+        FROM budget_reimbursementorder_detail detail_
+                 INNER JOIN budget_reimbursementorder order_ ON detail_.reimbursementid = order_.id
+        WHERE detail_.monthagentid IN (SELECT id FROM budget_month_agent WHERE yearagentid = #{yearAgentId})
+          AND detail_.reimflag = 1
+          AND order_.reuqeststatus = 1
+    </select>
+
+    <select id="listDetailByMonthId" resultType="com.jtyjy.finance.manager.bean.BudgetReimbursementorderDetail">
+        SELECT detail_.*
+        FROM budget_reimbursementorder_detail detail_
+        INNER JOIN budget_reimbursementorder order_ ON detail_.reimbursementid = order_.id
+        WHERE detail_.monthagentid IN (SELECT id
+        FROM budget_month_agent
+        WHERE unitid = #{unitId}
+        AND subjectid = #{subjectId}
+        <if test="monthId != null">
+            AND monthid = #{monthId}
+        </if>
+        )
+        AND detail_.reimflag = 1
+        AND order_.reuqeststatus = 1
+    </select>
+    
+    <select id="getBxDetailPageInfo" resultType="com.jtyjy.finance.manager.vo.BxDetailVO">
+		SELECT myttt.*
+		FROM 
+		(
+		SELECT
+		1unit_.name bxunitname,	
+		order_.applicantid,
+		order_.bxtype,
+		order_.reimcode,
+		order_.reuqeststatus ,
+		(CASE order_.reuqeststatus 
+	    WHEN -1 THEN "退回" 
+	    WHEN 0 THEN "草稿" 
+	    WHEN 1 THEN "审核中"
+	    WHEN 2 THEN "审核通过"
+	    ELSE order_.reuqeststatus
+	    END) AS reuqeststatusText,  
+		order_.reimperonsname bxr,
+		detail_.reimbursementid,
+		detail_.reimmoney,
+		detail_.monthagentname,
+		detail_.remark,
+		detail_.subjectname,
+		detail_.reimflag,
+		'报销'  reimflagtype,
+		unit_.baseunitid,
+		detail_.monthagentmoney,
+		detail_.monthagentunmoney,
+		detail_.yearagentmoney,
+		detail_.yearagentunmoney,
+		month_.id monthid,
+		month_.period monthname,
+		year_.id yearid,
+		year_.period yearname,
+		unit_.`name` unitname,
+		DATE_FORMAT(order_.applicanttime,'%Y-%m-%d') applicanttime
+		FROM
+		budget_reimbursementorder_detail AS detail_
+		INNER JOIN budget_reimbursementorder AS order_ ON detail_.reimbursementid = order_.id
+		INNER JOIN budget_month_agent _agent ON detail_.monthagentid = _agent.id
+		INNER JOIN budget_year_period AS year_ ON _agent.yearid = year_.id
+		INNER JOIN budget_month_period AS month_ ON _agent.monthid = month_.id
+		INNER JOIN budget_unit AS unit_ ON unit_.yearid = year_.id AND _agent.unitid = unit_.id
+		INNER JOIN budget_unit AS 1unit_ ON 1unit_.yearid = order_.yearid AND order_.unitid = 1unit_.id
+		union all
+		SELECT
+		1unit_.name bxunitname,	
+		order_.applicantid,
+		order_.bxtype,
+		order_.reimcode,
+		order_.reuqeststatus ,
+		(CASE order_.reuqeststatus 
+	    WHEN -1 THEN "退回" 
+	    WHEN 0 THEN "草稿" 
+	    WHEN 1 THEN "审核中"
+	    WHEN 2 THEN "审核通过"
+	    ELSE order_.reuqeststatus
+	    END) AS reuqeststatusText, 
+		order_.reimperonsname 'bxr',
+		detail_.reimbursementid,
+		detail_.allocatedmoney reimmoney,
+		detail_.monthagentname,
+		detail_.remark,
+		detail_.subjectname,
+		detail_.reimflag,
+		'划拨'  reimflagtype,
+		unit_.baseunitid,
+		detail_.monthagentmoney,
+		detail_.monthagentunmoney,
+		detail_.yearagentmoney,
+		detail_.yearagentunmoney,
+		month_.id AS monthid,
+		month_.period AS  monthname,
+		year_.id AS yearid,
+		year_.period AS yearname,
+		unit_.`name` AS unitname,
+		DATE_FORMAT(order_.applicanttime,'%Y-%m-%d') applicanttime
+		FROM budget_reimbursementorder_allocated AS detail_
+		INNER JOIN budget_reimbursementorder AS order_ ON detail_.reimbursementid = order_.id
+		INNER JOIN budget_month_agent _agent ON detail_.monthagentid = _agent.id
+		INNER JOIN budget_year_period AS year_ ON _agent.yearid = year_.id
+		INNER JOIN budget_month_period AS month_ ON _agent.monthid = month_.id
+		INNER JOIN budget_unit AS unit_ ON unit_.yearid = year_.id AND _agent.unitid = unit_.id
+		INNER JOIN budget_unit AS 1unit_ ON 1unit_.yearid = order_.yearid AND order_.unitid = 1unit_.id
+		) myttt WHERE 1=1
+		<foreach collection="conditionMap" index="key" item="value">
+            <if test="key == 'applicantid'">
+                <if test="value != null and value != ''">
+					AND myttt.applicantid = #{value}
+                </if>
+            </if>
+            <if test="key == 'managers'">
+                <if test="value != null and value != ''">
+					AND (myttt.baseunitid IN ( SELECT DISTINCT _unit.baseunitid FROM budget_unit _unit WHERE _unit.managers is NOT NULL AND CONCAT(",",_unit.managers,",") LIKE CONCAT('%', #{value}, '%') )
+					<if test="authSql !=null and authSql !=''">
+				    	or (1=1 ${authSql})
+				    </if>
+				    )
+                </if>
+            </if>
+            <if test="key == 'reuqeststatus'">
+                <if test="value != null and value.size()>0">
+                    AND myttt.reuqeststatus in
+                    <foreach collection="value" item="statusId" open="(" close=")" separator=",">
+                        #{statusId}
+                    </foreach>
+
+                </if>
+            </if>
+            <if test="key == 'reimcode'">
+                <if test="value !=null and value !=''">
+                    AND myttt.reimcode LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'yearid'">
+                <if test="value != null and value.size()>0">
+                    AND myttt.yearid in
+                    <foreach collection="value" item="year" open="(" close=")" separator=",">
+		                #{year}
+                    </foreach>
+
+                </if>
+            </if>
+            <if test="key == 'monthid'">
+                <if test="value != null and value.size()>0">
+                    AND myttt.monthid in
+		            <foreach collection="value" item="month" open="(" close=")" separator=",">
+                        #{month}
+                    </foreach>
+                </if>
+            </if>
+            <if test="key == 'bxr'">
+                <if test="value != null and value !=''">
+                    AND myttt.bxr LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'subjectname'">
+                <if test="value != null and value !=''">
+                    AND myttt.subjectname LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'reimmoney'">
+                <if test="value != null">
+                    AND myttt.reimmoney = #{value}  
+                </if>
+            </if>
+            <if test="key == 'reimflag'">
+                <if test="value != null">
+                    AND myttt.reimflag = #{value}
+                </if>
+            </if>
+            <if test="key == 'reimflagtype'">
+                <if test="value != null and value !=''">
+                    AND myttt.reimflagtype = #{value} 
+                </if>
+            </if>
+            <if test="key == 'bxunitname'">
+                <if test="value != null and value !=''">
+                    AND myttt.bxunitname LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'unitname'">
+                <if test="value != null and value !=''">
+                    AND myttt.unitname LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'monthagentname'">
+                <if test="value != null and value !=''">
+                    AND myttt.monthagentname LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'summary'">
+                <if test="value != null and value !=''">
+                    AND myttt.remark LIKE CONCAT('%', #{value}, '%')
+                </if>
+            </if>
+            <if test="key == 'bxMoneyStart'">
+                <if test="value != null ">
+                    AND myttt.reimmoney >= #{value}
+                </if>
+            </if>
+            <if test="key == 'bxMoneyEnd'">
+                <if test="value != null ">
+                    AND myttt.reimmoney &lt;= #{value}
+                </if>
+            </if>
+        </foreach>
+		ORDER BY myttt.reimcode desc
+    </select>
+    
+    <select id="getBxDetailNoPage" resultType="com.jtyjy.finance.manager.vo.BxDetailVO">
+		SELECT myttt.*
+		FROM 
+		(
+		SELECT
+		1unit_.name bxunitname,	
+		order_.applicantid,
+		order_.bxtype,
+		order_.reimcode,
+		order_.reuqeststatus ,
+		(CASE order_.reuqeststatus 
+	    WHEN -1 THEN "退回" 
+	    WHEN 0 THEN "草稿" 
+	    WHEN 1 THEN "审核中"
+	    WHEN 2 THEN "审核通过"
+	    ELSE order_.reuqeststatus
+	    END) 'reuqeststatusText',  
+		order_.reimperonsname bxr,
+		detail_.reimbursementid,
+		detail_.reimmoney,
+		detail_.monthagentname,
+		detail_.remark,
+		detail_.subjectname,
+		detail_.reimflag,
+		'报销'  reimflagtype,
+		unit_.baseunitid,
+		detail_.monthagentmoney,
+		detail_.monthagentunmoney,
+		detail_.yearagentmoney,
+		detail_.yearagentunmoney,
+		month_.id monthid,
+		month_.period monthname,
+		year_.id yearid,
+		year_.period yearname,
+		unit_.`name` unitname,
+        detail_.bunitname,
+        b.payunitname,
+		DATE_FORMAT(order_.applicanttime,'%Y-%m-%d') applicanttime
+		FROM
+		budget_reimbursementorder_detail AS detail_
+		INNER JOIN budget_reimbursementorder AS order_ ON detail_.reimbursementid = order_.id
+		INNER JOIN budget_month_agent _agent ON detail_.monthagentid = _agent.id
+		INNER JOIN budget_year_period AS year_ ON _agent.yearid = year_.id
+		INNER JOIN budget_month_period AS month_ ON _agent.monthid = month_.id
+		INNER JOIN budget_unit AS unit_ ON unit_.yearid = year_.id AND _agent.unitid = unit_.id
+		INNER JOIN budget_unit AS 1unit_ ON 1unit_.yearid = order_.yearid AND order_.unitid = 1unit_.id
+        left JOIN (select brt.reimbursementid,GROUP_CONCAT(brt.draweeunitname) payunitname from budget_reimbursementorder_trans brt GROUP BY brt.reimbursementid ) b on b.reimbursementid = order_.id
+        union all
+		SELECT
+		1unit_.name bxunitname,	
+		order_.applicantid,
+		order_.bxtype,
+		order_.reimcode,
+		order_.reuqeststatus ,
+		(CASE order_.reuqeststatus 
+	    WHEN -1 THEN "退回" 
+	    WHEN 0 THEN "草稿" 
+	    WHEN 1 THEN "审核中"
+	    WHEN 2 THEN "审核通过"
+	    ELSE order_.reuqeststatus
+	    END) 'reuqeststatusText', 
+		order_.reimperonsname 'bxr',
+		detail_.reimbursementid,
+		detail_.allocatedmoney reimmoney,
+		detail_.monthagentname,
+		detail_.remark,
+		detail_.subjectname,
+		detail_.reimflag,
+		'划拨'  reimflagtype,
+		unit_.baseunitid,
+		detail_.monthagentmoney,
+		detail_.monthagentunmoney,
+		detail_.yearagentmoney,
+		detail_.yearagentunmoney,
+		month_.id AS monthid,
+		month_.period AS  monthname,
+		year_.id AS yearid,
+		year_.period AS yearname,
+		unit_.`name` AS unitname,
+        '' bunitname,
+        b.payunitname,
+		DATE_FORMAT(order_.applicanttime,'%Y-%m-%d') applicanttime
+		FROM budget_reimbursementorder_allocated AS detail_
+		INNER JOIN budget_reimbursementorder AS order_ ON detail_.reimbursementid = order_.id
+		INNER JOIN budget_month_agent _agent ON detail_.monthagentid = _agent.id
+		INNER JOIN budget_year_period AS year_ ON _agent.yearid = year_.id
+		INNER JOIN budget_month_period AS month_ ON _agent.monthid = month_.id
+		INNER JOIN budget_unit AS unit_ ON unit_.yearid = year_.id AND _agent.unitid = unit_.id
+		INNER JOIN budget_unit AS 1unit_ ON 1unit_.yearid = order_.yearid AND order_.unitid = 1unit_.id
+        left JOIN (select brt.reimbursementid,GROUP_CONCAT(brt.draweeunitname) payunitname from budget_reimbursementorder_trans brt GROUP BY brt.reimbursementid ) b on b.reimbursementid = order_.id
+        ) myttt WHERE 1=1
+		<foreach collection="conditionMap" index="key" item="value">
+            <if test="key == 'applicantid'">
+                <if test="value != null and value != ''">
+					AND myttt.applicantid = #{value}
+                </if>
+            </if>
+            <if test="key == 'managers'">
+                <if test="value != null and value != ''">
+					AND (myttt.baseunitid IN ( SELECT DISTINCT _unit.baseunitid FROM budget_unit _unit WHERE _unit.managers is NOT NULL AND CONCAT(",",_unit.managers,",") LIKE CONCAT('%', #{value}, '%') )
+					<if test="authSql !=null and authSql !=''">
+				    	or (1=1 ${authSql})
+				    </if>
+				    )
+                </if>
+            </if>
+            <if test="key == 'reuqeststatus'">
+                <if test="value != null and value.size()>0">
+                    AND myttt.reuqeststatus in
+                    <foreach collection="value" item="statusId" open="(" close=")" separator=",">
+                        #{statusId}
+                    </foreach>
+                </if>
+            </if>
+            <if test="key == 'reimcode'">
+                <if test="value !=null and value !=''">
+                    AND myttt.reimcode LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'yearid'">
+                <if test="value != null and value.size()>0">
+                    AND myttt.yearid in
+                <foreach collection="value" item="year" open="(" close=")" separator=",">
+                    #{year}
+                </foreach>
+                </if>
+            </if>
+            <if test="key == 'monthid'">
+                <if test="value != null and value.size()>0">
+                    AND myttt.monthid in
+                    <foreach collection="value" item="month" open="(" close=")" separator=",">
+                        #{month}
+                    </foreach>
+                </if>
+            </if>
+            <if test="key == 'bxr'">
+                <if test="value != null and value !=''">
+                    AND myttt.bxr LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'subjectname'">
+                <if test="value != null and value !=''">
+                    AND myttt.subjectname LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'reimmoney'">
+                <if test="value != null">
+                    AND myttt.reimmoney = #{value}  
+                </if>
+            </if>
+            <if test="key == 'reimflag'">
+                <if test="value != null">
+                    AND myttt.reimflag = #{value}
+                </if>
+            </if>
+            <if test="key == 'reimflagtype'">
+                <if test="value != null and value !=''">
+                    AND myttt.reimflagtype = #{value} 
+                </if>
+            </if>
+            <if test="key == 'bxunitname'">
+                <if test="value != null and value !=''">
+                    AND myttt.bxunitname LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'unitname'">
+                <if test="value != null and value !=''">
+                    AND myttt.unitname LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'monthagentname'">
+                <if test="value != null and value !=''">
+                    AND myttt.monthagentname LIKE CONCAT('%', #{value}, '%')  
+                </if>
+            </if>
+            <if test="key == 'summary '">
+                <if test="value != null and value !=''">
+                    AND myttt.remark LIKE CONCAT('%', #{value}, '%')
+                </if>
+            </if>
+        </foreach>
+		ORDER BY myttt.reimcode desc
+    </select>
+    <select id="getByBxNum" resultType="com.jtyjy.finance.manager.bean.BudgetReimbursementorderDetail">
+        select t2.* from budget_reimbursementorder t1,budget_reimbursementorder_detail t2 where t1.id =t2.reimbursementid
+and t1.reimcode = #{bxNum}
+    </select>
+</mapper>

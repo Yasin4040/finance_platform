@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetProjectlendbxdetailMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetProjectlendbxdetail">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="projectlendsumid" jdbcType="BIGINT" property="projectlendsumid"/>
+        <result column="reimmoney" jdbcType="DECIMAL" property="reimmoney"/>
+        <result column="monthagentid" jdbcType="BIGINT" property="monthagentid"/>
+        <result column="monthagentname" jdbcType="VARCHAR" property="monthagentname"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="subjectname" jdbcType="VARCHAR" property="subjectname"/>
+        <result column="bunitid" jdbcType="BIGINT" property="bunitid"/>
+        <result column="bunitname" jdbcType="VARCHAR" property="bunitname"/>
+        <result column="monthagentmoney" jdbcType="DECIMAL" property="monthagentmoney"/>
+        <result column="monthagentunmoney" jdbcType="DECIMAL" property="monthagentunmoney"/>
+        <result column="yearagentmoney" jdbcType="DECIMAL" property="yearagentmoney"/>
+        <result column="yearagentunmoney" jdbcType="DECIMAL" property="yearagentunmoney"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , projectlendsumid, reimmoney, monthagentid, monthagentname, remark, subjectname,
+    bunitid, bunitname, monthagentmoney, monthagentunmoney, yearagentmoney, yearagentunmoney
+    </sql>
+</mapper>

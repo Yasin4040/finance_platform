@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetYearSubjectViewMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetYearSubjectView">
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="baseunitid" jdbcType="BIGINT" property="baseunitid"/>
+        <result column="unitpids" jdbcType="VARCHAR" property="unitpids"/>
+        <result column="unitpid" jdbcType="BIGINT" property="unitpid"/>
+        <result column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <result column="basesubjectid" jdbcType="BIGINT" property="basesubjectid"/>
+        <result column="subjectpids" jdbcType="VARCHAR" property="subjectpids"/>
+        <result column="subjectpid" jdbcType="BIGINT" property="subjectpid"/>
+        <result column="subjectid" jdbcType="BIGINT" property="subjectid"/>
+        <result column="yearagentmoney" jdbcType="DECIMAL" property="yearagentmoney"/>
+        <result column="yearaddmoney" jdbcType="DECIMAL" property="yearaddmoney"/>
+        <result column="yearexecutemoney" jdbcType="DECIMAL" property="yearexecutemoney"/>
+        <result column="yearlendinmoney" jdbcType="DECIMAL" property="yearlendinmoney"/>
+        <result column="yearlendoutmoney" jdbcType="DECIMAL" property="yearlendoutmoney"/>
+    </resultMap>
+</mapper>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetReportMonthsubjectsumMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetReportMonthsubjectsum">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="yearname" jdbcType="VARCHAR" property="yearname"/>
+        <result column="monthid" jdbcType="BIGINT" property="monthid"/>
+        <result column="month" jdbcType="VARCHAR" property="month"/>
+        <result column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <result column="unitname" jdbcType="VARCHAR" property="unitname"/>
+        <result column="subjectid" jdbcType="BIGINT" property="subjectid"/>
+        <result column="subjectname" jdbcType="VARCHAR" property="subjectname"/>
+        <result column="subjectcode" jdbcType="VARCHAR" property="subjectcode"/>
+        <result column="level" jdbcType="INTEGER" property="level"/>
+        <result column="addcount" jdbcType="INTEGER" property="addcount"/>
+        <result column="reimcount" jdbcType="INTEGER" property="reimcount"/>
+        <result column="addmoney" jdbcType="DECIMAL" property="addmoney"/>
+        <result column="executemoney" jdbcType="DECIMAL" property="executemoney"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , yearid, yearname, monthid, month, unitid, unitname, subjectid, subjectname, subjectcode,
+    level, addcount, reimcount, addmoney, executemoney, createtime, updatetime
+    </sql>
+</mapper>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetReimbursementorderFdtaskDetailMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetReimbursementorderFdtaskDetail">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="taskid" jdbcType="BIGINT" property="taskid"/>
+        <result column="reimcode" jdbcType="VARCHAR" property="reimcode"/>
+        <result column="reimbursementid" jdbcType="BIGINT" property="reimbursementid"/>
+        <result column="fder" jdbcType="VARCHAR" property="fder"/>
+        <result column="fdername" jdbcType="VARCHAR" property="fdername"/>
+        <result column="fdtime" jdbcType="TIMESTAMP" property="fdtime"/>
+        <result column="bunitid" jdbcType="BIGINT" property="bunitid"/>
+        <result column="bunitname" jdbcType="VARCHAR" property="bunitname"/>
+        <result column="planbunitid" jdbcType="BIGINT" property="planbunitid"/>
+        <result column="planbunitname" jdbcType="VARCHAR" property="planbunitname"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="tasktime" jdbcType="TIMESTAMP" property="tasktime"/>
+        <result column="planaccounters" jdbcType="VARCHAR" property="planaccounters"/>
+        <result column="planaccounternames" jdbcType="VARCHAR" property="planaccounternames"/>
+        <result column="receiver" jdbcType="VARCHAR" property="receiver"/>
+        <result column="receivername" jdbcType="VARCHAR" property="receivername"/>
+        <result column="receivetime" jdbcType="TIMESTAMP" property="receivetime"/>
+        <result column="accounttime" jdbcType="TIMESTAMP" property="accounttime"/>
+        <result column="accountstatus" jdbcType="BIT" property="accountstatus"/>
+        <result column="accounter" jdbcType="VARCHAR" property="accounter"/>
+        <result column="accountername" jdbcType="VARCHAR" property="accountername"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , taskid, reimcode, reimbursementid, fder, fdername, fdtime, bunitid, bunitname,
+    planbunitid, planbunitname, createtime, tasktime, planaccounters, planaccounternames, 
+    receiver, receivername, receivetime, accounttime, accountstatus, accounter, accountername
+    </sql>  
+     
+    <select id = 'getFdDetailPageInfo' resultType = 'com.jtyjy.finance.manager.vo.MakeAccountTaskVO'>
+        SELECT _detail.reimcode, _detail.fdername, _detail.fder, _detail.bunitname, _detail.planbunitname, _detail.receivername, _detail.accountstatus, _detail.accountername, _order.curscanername, DATE_FORMAT(_detail.fdtime, '%Y-%m-%d %H:%i:%S') fdtime, DATE_FORMAT(_detail.receivetime, '%Y-%m-%d %H:%i:%S') receivetime, DATE_FORMAT(_detail.accounttime, '%Y-%m-%d %H:%i:%S') accounttime
+        FROM budget_reimbursementorder_fdtask_detail _detail LEFT JOIN budget_reimbursementorder _order ON _order.id = _detail.reimbursementid 
+        WHERE 1=1
+        <if test="reimcode != null and reimcode != ''">
+	        AND _detail.reimcode LIKE CONCAT('%', #{reimcode}, '%')  
+	    </if>
+        ORDER BY _detail.accountstatus ,_detail.fdtime desc , _detail.receivetime
+    	<if test="authSql !=null and authSql !=''">
+        	${authSql}
+       	</if>
+    </select>
+</mapper>

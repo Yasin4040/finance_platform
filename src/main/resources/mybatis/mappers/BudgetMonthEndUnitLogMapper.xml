@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetMonthEndUnitLogMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetMonthEndUnitLog">
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="monthid" jdbcType="BIGINT" property="monthid"/>
+        <result column="unitids" jdbcType="VARCHAR" property="unitids"/>
+        <result column="allunitids" jdbcType="VARCHAR" property="allunitids"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="creater" jdbcType="VARCHAR" property="creater"/>
+        <result column="createname" jdbcType="VARCHAR" property="createname"/>
+    </resultMap>
+</mapper>

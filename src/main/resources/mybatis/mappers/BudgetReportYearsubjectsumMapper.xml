@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetReportYearsubjectsumMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetReportYearsubjectsum">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="yearname" jdbcType="VARCHAR" property="yearname"/>
+        <result column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <result column="unitname" jdbcType="VARCHAR" property="unitname"/>
+        <result column="subjectid" jdbcType="BIGINT" property="subjectid"/>
+        <result column="subjectname" jdbcType="VARCHAR" property="subjectname"/>
+        <result column="level" jdbcType="INTEGER" property="level"/>
+        <result column="addcount" jdbcType="INTEGER" property="addcount"/>
+        <result column="lendincount" jdbcType="INTEGER" property="lendincount"/>
+        <result column="lendoutcount" jdbcType="INTEGER" property="lendoutcount"/>
+        <result column="addmoney" jdbcType="DECIMAL" property="addmoney"/>
+        <result column="lendinmoney" jdbcType="DECIMAL" property="lendinmoney"/>
+        <result column="lendoutmoney" jdbcType="DECIMAL" property="lendoutmoney"/>
+        <result column="executemoney" jdbcType="DECIMAL" property="executemoney"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , yearid, yearname, unitid, unitname, subjectid, subjectname, level, addcount,
+    lendincount, lendoutcount, addmoney, lendinmoney, lendoutmoney, executemoney, createtime, 
+    updatetime
+    </sql>
+</mapper>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetLendmoneyUselogMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetLendmoneyUselog">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="lockedmoney" jdbcType="DECIMAL" property="lockedmoney"/>
+        <result column="lendmoneyid" jdbcType="BIGINT" property="lendmoneyid"/>
+        <result column="usetype" jdbcType="INTEGER" property="usetype"/>
+        <result column="useobjectid" jdbcType="VARCHAR" property="useobjectid"/>
+        <result column="usemark" jdbcType="VARCHAR" property="usemark"/>
+        <result column="useflag" jdbcType="BIT" property="useflag"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , lockedmoney, lendmoneyid, usetype, useobjectid, usemark, useflag, createtime
+    </sql>
+
+    <select id="lendByBxLocked" resultType="com.jtyjy.finance.manager.bean.BudgetLendmoneyUselog">
+        SELECT ul.*,
+               reim.reimcode
+        from budget_lendmoney_uselog_new ul,
+             budget_reimbursementorder reim
+        WHERE ul.useobjectid = reim.id
+          AND ul.usetype = 5
+          and ul.lendmoneyid = #{id}
+        ORDER BY createtime desc
+    </select>
+
+</mapper>

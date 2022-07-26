@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetReportHrTempMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetReportHrTemp">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="year" jdbcType="VARCHAR" property="year"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="deptname" jdbcType="VARCHAR" property="deptname"/>
+        <result column="deptid" jdbcType="VARCHAR" property="deptid"/>
+        <result column="empno" jdbcType="VARCHAR" property="empno"/>
+        <result column="empname" jdbcType="VARCHAR" property="empname"/>
+        <result column="createdate" jdbcType="TIMESTAMP" property="createdate"/>
+        <result column="month" jdbcType="VARCHAR" property="month"/>
+        <result column="shebaomoney" jdbcType="DECIMAL" property="shebaomoney"/>
+        <result column="gongjjmoney" jdbcType="DECIMAL" property="gongjjmoney"/>
+        <result column="shuimoney" jdbcType="DECIMAL" property="shuimoney"/>
+        <result column="shifamoney" jdbcType="DECIMAL" property="shifamoney"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , year, yearid, deptname, deptid, empno, empname, createdate, month, shebaomoney,
+    gongjjmoney, shuimoney, shifamoney
+    </sql>
+</mapper>

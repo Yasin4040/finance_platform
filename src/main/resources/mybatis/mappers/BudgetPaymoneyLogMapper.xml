@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetPaymoneyLogMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetPaymoneyLog">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="paymoneyid" jdbcType="BIGINT" property="paymoneyid"/>
+        <result column="paybatchid" jdbcType="BIGINT" property="paybatchid"/>
+        <result column="paymoneycode" jdbcType="VARCHAR" property="paymoneycode"/>
+        <result column="paymoneytype" jdbcType="INTEGER" property="paymoneytype"/>
+        <result column="paymoneyobjectcode" jdbcType="VARCHAR" property="paymoneyobjectcode"/>
+        <result column="paymoneyobjectid" jdbcType="BIGINT" property="paymoneyobjectid"/>
+        <result column="paymoney" jdbcType="DECIMAL" property="paymoney"/>
+        <result column="paytype" jdbcType="BIT" property="paytype"/>
+        <result column="paymoneystatus" jdbcType="INTEGER" property="paymoneystatus"/>
+        <result column="lendtype" jdbcType="INTEGER" property="lendtype"/>
+        <result column="paytime" jdbcType="TIMESTAMP" property="paytime"/>
+        <result column="month" jdbcType="VARCHAR" property="month"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="bunitname" jdbcType="VARCHAR" property="bunitname"/>
+        <result column="bunitbankaccount" jdbcType="VARCHAR" property="bunitbankaccount"/>
+        <result column="bunitaccountbranchcode" jdbcType="VARCHAR" property="bunitaccountbranchcode"/>
+        <result column="bunitaccountbranchname" jdbcType="VARCHAR" property="bunitaccountbranchname"/>
+        <result column="bankaccountname" jdbcType="VARCHAR" property="bankaccountname"/>
+        <result column="bankaccount" jdbcType="VARCHAR" property="bankaccount"/>
+        <result column="bankaccountbranchcode" jdbcType="VARCHAR" property="bankaccountbranchcode"/>
+        <result column="bankaccountbranchname" jdbcType="VARCHAR" property="bankaccountbranchname"/>
+        <result column="openbank" jdbcType="VARCHAR" property="openbank"/>
+        <result column="creater" jdbcType="VARCHAR" property="creater"/>
+        <result column="creatername" jdbcType="VARCHAR" property="creatername"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , paymoneyid, paybatchid, paymoneycode, paymoneytype, paymoneyobjectcode, paymoneyobjectid,
+    paymoney, paytype, paymoneystatus, lendtype, paytime, month, createtime, bunitname, 
+    bunitbankaccount, bunitaccountbranchcode, bunitaccountbranchname, bankaccountname, 
+    bankaccount, bankaccountbranchcode, bankaccountbranchname, openbank, creater, creatername
+    </sql>
+</mapper>

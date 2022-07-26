@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetReportMonthunitexecutecompareMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetReportMonthunitexecutecompare">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="yearname" jdbcType="VARCHAR" property="yearname"/>
+        <result column="monthid" jdbcType="BIGINT" property="monthid"/>
+        <result column="month" jdbcType="VARCHAR" property="month"/>
+        <result column="subjectid" jdbcType="BIGINT" property="subjectid"/>
+        <result column="subjectname" jdbcType="VARCHAR" property="subjectname"/>
+        <result column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <result column="unitname" jdbcType="VARCHAR" property="unitname"/>
+        <result column="budgetsum" jdbcType="DECIMAL" property="budgetsum"/>
+        <result column="budgetexe" jdbcType="DECIMAL" property="budgetexe"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , yearid, yearname, monthid, month, subjectid, subjectname, unitid, unitname, budgetsum,
+    budgetexe, updatetime, createtime
+    </sql>
+</mapper>

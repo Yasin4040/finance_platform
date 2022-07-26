@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetFundtransferMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetFundtransfer">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="empname" jdbcType="VARCHAR" property="empname"/>
+        <result column="requestnumber" jdbcType="VARCHAR" property="requestnumber"/>
+        <result column="dept" jdbcType="VARCHAR" property="dept"/>
+        <result column="fundtranstype" jdbcType="VARCHAR" property="fundtranstype"/>
+        <result column="applyreason" jdbcType="VARCHAR" property="applyreason"/>
+        <result column="applymoney" jdbcType="REAL" property="applymoney"/>
+        <result column="paytype" jdbcType="VARCHAR" property="paytype"/>
+        <result column="paybankaccount" jdbcType="VARCHAR" property="paybankaccount"/>
+        <result column="transtype" jdbcType="VARCHAR" property="transtype"/>
+        <result column="transbankaccount" jdbcType="VARCHAR" property="transbankaccount"/>
+        <result column="recetype" jdbcType="VARCHAR" property="recetype"/>
+        <result column="recebankaccount" jdbcType="VARCHAR" property="recebankaccount"/>
+        <result column="applydate" jdbcType="DATE" property="applydate"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="requestid" jdbcType="VARCHAR" property="requestid"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , empname, requestnumber, dept, fundtranstype, applyreason, applymoney, paytype,
+    paybankaccount, transtype, transbankaccount, recetype, recebankaccount, applydate, 
+    remark, requestid
+    </sql>
+</mapper>

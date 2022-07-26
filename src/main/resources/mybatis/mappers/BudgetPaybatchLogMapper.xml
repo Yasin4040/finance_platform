@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetPaybatchLogMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetPaybatchLog">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="paybatchcode" jdbcType="VARCHAR" property="paybatchcode"/>
+        <result column="paymoneyids" jdbcType="VARCHAR" property="paymoneyids"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="creatorname" jdbcType="VARCHAR" property="creatorname"/>
+        <result column="creator" jdbcType="VARCHAR" property="creator"/>
+        <result column="paytotalje" jdbcType="DECIMAL" property="paytotalje"/>
+        <result column="paytotalnum" jdbcType="INTEGER" property="paytotalnum"/>
+        <result column="payfailnum" jdbcType="INTEGER" property="payfailnum"/>
+        <result column="paysuccessnum" jdbcType="INTEGER" property="paysuccessnum"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="batchid" jdbcType="BIGINT" property="batchid"/>
+        <result column="creater" jdbcType="VARCHAR" property="creater"/>
+        <result column="creatername" jdbcType="VARCHAR" property="creatername"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , paybatchcode, paymoneyids, createtime, creatorname, creator, paytotalje, paytotalnum,
+    payfailnum, paysuccessnum, remark, batchid, creater, creatername
+    </sql>
+</mapper>

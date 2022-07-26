@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetMonthPeriodMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetMonthPeriod">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="period" jdbcType="VARCHAR" property="period"/>
+        <result column="code" jdbcType="VARCHAR" property="code"/>
+        <result column="orderno" jdbcType="INTEGER" property="orderno"/>
+        <result column="currentflag" jdbcType="BIT" property="currentflag"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , period, code, orderno, currentflag
+    </sql>
+</mapper>

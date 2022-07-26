@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetMonthStartupMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetMonthStartup">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="creator_id" jdbcType="VARCHAR" property="creatorId"/>
+        <result column="creator_name" jdbcType="VARCHAR" property="creatorName"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="monthid" jdbcType="BIGINT" property="monthid"/>
+        <result column="startbudgetflag" jdbcType="BIT" property="startbudgetflag"/>
+        <result column="endbudgeteditflag" jdbcType="BIT" property="endbudgeteditflag"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id, creator_id, creator_name, create_time, update_time, yearid, monthid, startbudgetflag, endbudgeteditflag
+    </sql>
+
+    <select id="getCurrentMonthStartUp" resultType="com.jtyjy.finance.manager.bean.BudgetMonthStartup">
+        SELECT startup.*
+        FROM budget_month_startup startup
+                 INNER JOIN budget_month_period period ON startup.monthid = period.id
+        WHERE startup.startbudgetflag = 1
+          and startup.yearid = #{yearId}
+        ORDER BY period.orderno desc
+        limit 1
+    </select>
+
+</mapper>

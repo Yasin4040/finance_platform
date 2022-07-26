@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetReimbursementorderVerifylogMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetReimbursementorderVerifylog">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="reimcode" jdbcType="VARCHAR" property="reimcode"/>
+        <result column="reimbursementid" jdbcType="BIGINT" property="reimbursementid"/>
+        <result column="verifytime" jdbcType="TIMESTAMP" property="verifytime"/>
+        <result column="verifyername" jdbcType="VARCHAR" property="verifyername"/>
+        <result column="verifyer" jdbcType="VARCHAR" property="verifyer"/>
+        <result column="verifytype" jdbcType="INTEGER" property="verifytype"/>
+        <result column="verifyflag" jdbcType="BIT" property="verifyflag"/>
+        <result column="backtype" jdbcType="INTEGER" property="backtype"/>
+        <result column="bstatus" jdbcType="INTEGER" property="bstatus"/>
+        <result column="astatus" jdbcType="INTEGER" property="astatus"/>
+        <result column="verifyinfo" jdbcType="LONGVARCHAR" property="verifyinfo"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , reimcode, reimbursementid, verifytime, verifyername, verifyer, verifytype, verifyflag,
+    backtype, bstatus, astatus, verifyinfo
+    </sql>
+</mapper>

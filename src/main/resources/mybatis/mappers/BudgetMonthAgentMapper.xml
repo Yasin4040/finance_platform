@@ -1,0 +1,499 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetMonthAgentMapper">
+
+    <!-- 获取受指定条件限制的月度动因主键 -->
+    <select id="getControlAgentId" resultType="java.lang.Long">
+        select t.id
+        from budget_month_agent t,
+             budget_unit_subject s
+        where t.unitid = s.unitid
+          and t.subjectid = s.subjectid
+          and t.id in (${ids})
+          and ${columnName} = 1
+    </select>
+
+    <sql id="monthAgentPage_Column">
+        monthagent
+        .
+        id
+        ,
+       monthagent.yearid,
+       monthagent.unitid,
+       monthagent.monthid,
+       monthagent.m,
+       monthagent.total,
+       monthagent.agenttype,
+       monthagent.subjectid,
+       monthagent.name,
+       monthagent.elasticflag,
+       monthagent.elasticmax,
+       monthagent.elasticratio,
+       monthagent.budgetsubjectid,
+       monthagent.remark,
+       monthagent.productid,
+       monthagent.addmoney,
+       monthagent.lendoutmoney,
+       monthagent.lendinmoney,
+       monthagent.executemoney,
+       monthagent.createtime,
+       monthagent.updatetime,
+       monthagent.yearagentid,
+       monthagent.monthbusiness,
+       yearAgent.total           as    yearagentmoney,
+       yearAgent.addmoney        as    yearaddmoney,
+       yearAgent.lendinmoney     as    yearlendinmoney,
+       yearAgent.lendoutmoney    as    yearlendoutmoney,
+       yearAgent.executemoney    as    yearexecutemoney,
+       (yearAgent.total + yearAgent.addmoney + yearAgent.lendinmoney - yearAgent.lendoutmoney - yearAgent.executemoney) AS unExecute,
+       (yearAgent.total + yearAgent.addmoney + yearAgent.lendinmoney)  AS yearMoneyTotal,
+    </sql>
+
+    <select id="monthAgentPage1" resultType="com.jtyjy.finance.manager.vo.BudgetMonthAgentVO">
+        SELECT
+        <include refid="monthAgentPage_Column"/>
+        month_.period as period,
+        _unitend.requeststatus as requestStatus
+        FROM budget_month_agent AS monthagent
+        INNER JOIN budget_month_end_unit _unitend ON monthagent.yearid = _unitend.yearid AND monthagent.unitid =
+        _unitend.unitid AND monthagent.monthid = _unitend.monthid
+        INNER JOIN budget_subject AS mysubject ON monthagent.subjectid = mysubject.id AND monthagent.yearid =
+        mysubject.yearid
+        INNER JOIN budget_month_period month_ ON month_.id = monthagent.monthid
+        INNER JOIN budget_year_agent yearAgent on monthagent.yearagentid = yearAgent.id
+        WHERE monthagent.unitid = #{budgetUnitId}
+        and monthagent.subjectid = #{budgetSubjectId}
+        and monthagent.monthid = #{monthId}
+        <if test="name != null and name != ''">
+            and monthagent.name like concat('%',#{name},'%')
+        </if>
+        order by monthagent.createtime desc
+    </select>
+
+    <select id="monthAgentPage2" resultType="com.jtyjy.finance.manager.vo.BudgetMonthAgentVO">
+        SELECT
+        <include refid="monthAgentPage_Column"/>
+        cate.name as productCate,
+        product.name as productName,
+        month_.period as period,
+        _unitend.requeststatus as requestStatus
+        FROM budget_month_agent AS monthagent
+        INNER JOIN budget_month_end_unit _unitend ON monthagent.yearid = _unitend.yearid AND monthagent.unitid =
+        _unitend.unitid AND monthagent.monthid = _unitend.monthid
+        INNER JOIN budget_subject AS mysubject ON monthagent.subjectid = mysubject.id AND monthagent.yearid =
+        mysubject.yearid
+        INNER JOIN budget_month_period month_ ON month_.id = monthagent.monthid
+        INNER JOIN budget_product product ON product.id = monthagent.productid
+        INNER JOIN budget_product_category cate ON product.procategoryid = cate.id
+        INNER JOIN budget_year_agent yearAgent on monthagent.yearagentid = yearAgent.id
+        WHERE monthagent.unitid = #{budgetUnitId}
+        and monthagent.subjectid = #{budgetSubjectId}
+        and monthagent.monthid = #{monthId}
+        <if test="name != null and name != ''">
+            and monthagent.name like concat('%',#{name},'%')
+        </if>
+        order by monthagent.createtime desc
+    </select>
+
+    <select id="monthAgentPage3" resultType="com.jtyjy.finance.manager.vo.BudgetMonthAgentVO">
+        SELECT
+        <include refid="monthAgentPage_Column"/>
+        month_.period as period,
+        unit_.name as unitName
+        FROM budget_month_agent AS monthagent
+        INNER JOIN budget_subject AS mysubject ON monthagent.subjectid = mysubject.id AND monthagent.yearid =
+        mysubject.yearid
+        INNER JOIN budget_month_period month_ ON month_.id = monthagent.monthid
+        INNER JOIN budget_unit unit_ ON unit_.id = monthagent.unitid
+        INNER JOIN budget_year_agent yearAgent on monthagent.yearagentid = yearAgent.id
+        WHERE monthagent.subjectid = #{budgetSubjectId}
+        and monthagent.monthid = #{monthId}
+        <if test="name != null and name != ''">
+            and monthagent.name like concat('%',#{name},'%')
+        </if>
+        order by monthagent.createtime desc
+    </select>
+
+    <select id="listExecuteAndAllocateByExcludeMonthId" resultType="java.util.Map">
+        select (select ifnull(sum(d.reimmoney), 0)
+                from budget_reimbursementorder_detail d,
+                     budget_reimbursementorder o
+                where o.id = d.reimbursementid
+                  and o.yearid = t.yearid
+                  and o.unitid = t.unitid
+                  and d.reimflag = 1
+                  and d.monthagentid = m.id
+                  and o.reuqeststatus > 0) as bxMoney,
+               (select ifnull(sum(a.allocatedmoney), 0)
+                from budget_reimbursementorder_allocated a,
+                     budget_reimbursementorder o
+                where o.id = a.reimbursementid
+                  and o.yearid = t.yearid
+                  and o.unitid = t.unitid
+                  and a.reimflag = 1
+                  and a.monthagentid = m.id
+                  and o.reuqeststatus > 0) as hbMoney
+        from budget_year_agent t
+                 left join budget_month_agent m on t.id = m.yearagentid
+        where t.id = #{yearAgentId}
+          and m.monthid != #{monthId}
+    </select>
+
+    <select id="listMonthAgentByUnitId" resultType="com.jtyjy.finance.manager.vo.BudgetMonthAgentVO">
+        SELECT _subject.name AS subjectName,
+        _monthagent.name,
+        _monthagent.total,
+        _monthagent.monthbusiness,
+        monthPeriod.period,
+        _yearagent.total + _yearagent.addmoney + _yearagent.lendinmoney - _yearagent.lendoutmoney -
+        _yearagent.executemoney AS unExecute
+        FROM budget_month_agent _monthagent
+        INNER JOIN budget_year_agent _yearagent
+        ON _yearagent.id = _monthagent.yearagentid
+        INNER JOIN budget_subject _subject
+        ON _subject.yearid = _monthagent.yearid ANd _subject.id = _monthagent.subjectid
+        INNER JOIN budget_month_period monthPeriod ON monthPeriod.id = _monthagent.monthid
+        WHERE _subject.leafflag = 1
+        AND _monthagent.unitid = #{budgetUnitId}
+        AND _monthagent.monthid = #{monthId}
+        <choose>
+            <when test="type == 1">
+                <!-- 一般科目 (非公式、非分解、非产品) -->
+                AND formulaflag != 1 AND costsplitflag != 1 AND jointproductflag != 1
+            </when>
+            <when test="type == 2">
+                <!-- 产品科目 (非公式、非分解) -->
+                AND formulaflag != 1 AND costsplitflag != 1 and jointproductflag = 1
+            </when>
+        </choose>
+    </select>
+
+    <select id="listCostSplitMonthAgent" resultType="com.jtyjy.finance.manager.vo.BudgetMonthAgentVO">
+        SELECT _subject.name                                                                              as subjectName,
+               _unit.name                                                                                 as unitName,
+               monthPeriod.period,
+               monthAgent.total,
+               monthAgent.monthbusiness,
+               yearAgent.total + yearAgent.addmoney + yearAgent.lendinmoney - yearAgent.lendoutmoney -
+               yearAgent.executemoney AS                                                                     unExecute
+        FROM budget_unit_subject _unitsubject
+            INNER
+                 JOIN budget_subject _subject ON _unitsubject.subjectid = _subject.id
+            INNER JOIN budget_unit _unit
+        ON _unit.id = _unitsubject.unitid AND _unit.yearid = _subject.yearid
+            INNER JOIN budget_month_agent monthAgent
+            ON monthAgent.yearid = _subject.yearid AND monthAgent.unitid = _unit.id AND monthAgent.subjectid = _subject.id
+            INNER JOIN budget_month_period monthPeriod ON monthPeriod.id = monthAgent.monthid
+            INNER JOIN budget_year_agent yearAgent ON yearAgent.id = monthAgent.yearagentid
+        WHERE _subject.id in (
+            SELECT _subject.id
+            FROM budget_unit_subject _unitsubject
+            INNER JOIN budget_subject _subject ON _unitsubject.subjectid = _subject.id
+            WHERE _subject.costsplitflag = 1
+          AND _unitsubject.splitflag = 1
+          AND _subject.leafflag = 1
+          AND _unitsubject.unitid = #{budgetUnitId})
+          AND monthAgent.monthid = #{monthId}
+    </select>
+
+    <!-- 获取年度动因金额 -->
+    <select id="getUnitYearAgentInfo" resultType="ReimbursementValidateMoney">
+         select t.name,
+               t.total,
+               t.addmoney,
+               t.lendinmoney,
+               t.lendoutmoney,
+               (select ifnull(sum(d.reimmoney), 0)
+                from budget_reimbursementorder_detail d,
+                     budget_reimbursementorder o,budget_month_agent bma,budget_year_agent bya
+                where o.id = d.reimbursementid
+                  and d.reimflag = 1
+                  and d.monthagentid = bma.id and bma.yearagentid = bya.id and bya.id = t.id
+                  and o.reuqeststatus = 2
+                  and o.yearid = t.yearid
+                  and o.unitid = t.unitid) as bxmoney,
+               (select ifnull(sum(d.reimmoney), 0)
+                from budget_reimbursementorder_detail d,
+                     budget_reimbursementorder o,budget_month_agent bma,budget_year_agent bya
+                where o.id = d.reimbursementid
+                  and d.reimflag = 1
+                  and d.monthagentid = bma.id and bma.yearagentid = bya.id and bya.id = t.id
+                  and o.reuqeststatus = 1
+                  and o.yearid = t.yearid
+                  and o.unitid = t.unitid) as sdmoney,
+               (select ifnull(sum(a.allocatedmoney), 0)
+                from budget_reimbursementorder_allocated a,
+                     budget_reimbursementorder o,budget_month_agent bma,budget_year_agent bya
+                where o.id = a.reimbursementid
+                  and a.reimflag = 1
+                  and a.monthagentid = bma.id and bma.yearagentid = bya.id and bya.id = t.id
+                  and o.reuqeststatus = 2
+                  and o.yearid = t.yearid
+                  and a.unitid = t.unitid) as hbmoney,
+               (select ifnull(sum(a.allocatedmoney), 0)
+                from budget_reimbursementorder_allocated a,
+                     budget_reimbursementorder o,budget_month_agent bma,budget_year_agent bya
+                where o.id = a.reimbursementid
+                  and a.reimflag = 1
+                  and a.monthagentid = bma.id and bma.yearagentid = bya.id and bya.id = t.id
+                  and o.reuqeststatus = 1
+                  and o.yearid = t.yearid
+                  and a.unitid = t.unitid) as hbsdmoney
+        from budget_year_agent t
+        where t.yearid = #{bean.yearId}
+          and t.unitid =  #{bean.unitId}
+          and t.id = (SELECT yearagentid from budget_month_agent where id = #{bean.monthAgentId})
+    </select>
+
+
+    <select id="getUnitYearAgentInfoByYearAgentId" resultType="ReimbursementValidateMoney">
+         select t.name,
+               t.total,
+               t.addmoney,
+               t.lendinmoney,
+               t.lendoutmoney,
+               (select ifnull(sum(d.reimmoney), 0)
+                from budget_reimbursementorder_detail d,
+                     budget_reimbursementorder o,budget_month_agent bma,budget_year_agent bya
+                where o.id = d.reimbursementid
+                  and d.reimflag = 1
+                  and d.monthagentid = bma.id and bma.yearagentid = bya.id and bya.id = t.id
+                  and o.reuqeststatus = 2
+                  and o.yearid = t.yearid
+                  and o.unitid = t.unitid) as bxmoney,
+               (select ifnull(sum(d.reimmoney), 0)
+                from budget_reimbursementorder_detail d,
+                     budget_reimbursementorder o,budget_month_agent bma,budget_year_agent bya
+                where o.id = d.reimbursementid
+                  and d.reimflag = 1
+                  and d.monthagentid = bma.id and bma.yearagentid = bya.id and bya.id = t.id
+                  and o.reuqeststatus = 1
+                  and o.yearid = t.yearid
+                  and o.unitid = t.unitid) as sdmoney,
+               (select ifnull(sum(a.allocatedmoney), 0)
+                from budget_reimbursementorder_allocated a,
+                     budget_reimbursementorder o,budget_month_agent bma,budget_year_agent bya
+                where o.id = a.reimbursementid
+                  and a.reimflag = 1
+                  and a.monthagentid = bma.id and bma.yearagentid = bya.id and bya.id = t.id
+                  and o.reuqeststatus = 2
+                  and o.yearid = t.yearid
+                  and a.unitid = t.unitid) as hbmoney,
+               (select ifnull(sum(a.allocatedmoney), 0)
+                from budget_reimbursementorder_allocated a,
+                     budget_reimbursementorder o,budget_month_agent bma,budget_year_agent bya
+                where o.id = a.reimbursementid
+                  and a.reimflag = 1
+                  and a.monthagentid = bma.id and bma.yearagentid = bya.id and bya.id = t.id
+                  and o.reuqeststatus = 1
+                  and o.yearid = t.yearid
+                  and a.unitid = t.unitid) as hbsdmoney
+        from budget_year_agent t
+        where t.yearid = #{bean.yearId}
+          and t.unitid =  #{bean.unitId}
+          and t.id =  #{bean.yearAgentId}
+    </select>
+
+    <!-- 获取月度科目金额 -->
+    <select id="getUnitMonthSubjectInfo" resultType="ReimbursementValidateMoney">
+select sum(t.total)                                              as total,
+               sum(t.addmoney)                                           as addmoney,
+               sum(t.lendinmoney)                                        as lendinmoney,
+               sum(t.lendoutmoney)                                       as lendoutmoney,
+               t.subjectid                                               as subjectId,
+                (select ifnull(sum(dd.reimmoney),0)
+                                         from budget_reimbursementorder_detail dd,
+                                              budget_month_agent tt,
+                                              budget_reimbursementorder o
+                                         where o.id = dd.reimbursementid
+                                           and o.yearid = t.yearid
+                                           and o.unitid = t.unitid
+                                           and o.monthid = t.monthid
+                                           and dd.reimflag = 1
+                                           and o.reuqeststatus = 2
+                                           and tt.subjectid = t.subjectid
+                                           and tt.yearid = t.yearid
+                                           and tt.unitid = t.unitid
+                                           and tt.monthid = t.monthid
+                                           and dd.monthagentid = tt.id) as bxmoney,
+               (select ifnull(sum(dd.reimmoney), 0)               
+                                         from budget_reimbursementorder_detail dd,
+                                              budget_month_agent tt,
+                                              budget_reimbursementorder o
+                                         where o.id = dd.reimbursementid
+                                           and o.yearid = t.yearid
+                                           and o.unitid = t.unitid
+                                           and o.monthid = t.monthid
+                                           and dd.reimflag = 1
+                                           and o.reuqeststatus = 1
+                                           and tt.subjectid = t.subjectid
+                                           and tt.yearid = t.yearid
+                                           and tt.unitid = t.unitid
+                                           and tt.monthid = t.monthid
+                                           and dd.monthagentid = tt.id) as sdmoney,
+               (select ifnull(sum(dd.allocatedmoney), 0)                
+                                         from budget_reimbursementorder_allocated dd,
+                                              budget_month_agent tt,
+                                              budget_reimbursementorder o
+                                         where o.id = dd.reimbursementid
+                                           and o.yearid = t.yearid
+                                           and dd.unitid = t.unitid
+                                           and o.monthid = t.monthid
+                                           and dd.reimflag = 1
+                                           and o.reuqeststatus = 2
+                                           and tt.subjectid = t.subjectid
+                                           and tt.yearid = t.yearid
+                                           and tt.unitid = t.unitid
+                                           and tt.monthid = t.monthid
+                                           and dd.monthagentid = tt.id) as hbmoney,
+               (select ifnull(sum(d.allocatedmoney), 0)
+                from budget_reimbursementorder_allocated d
+                where d.monthagentid in (select dd.monthagentid
+                                         from budget_reimbursementorder_allocated dd,
+                                              budget_month_agent tt,
+                                              budget_reimbursementorder o
+                                         where o.id = dd.reimbursementid
+                                           and o.yearid = t.yearid
+                                           and dd.unitid = t.unitid
+                                           and o.monthid = t.monthid
+                                           and dd.reimflag = 1
+                                           and o.reuqeststatus = 1
+                                           and tt.subjectid = t.subjectid
+                                           and tt.yearid = t.yearid
+                                           and tt.unitid = t.unitid
+                                           and tt.monthid = t.monthid
+                                           and dd.monthagentid = tt.id)) as hbsdmoney
+        from budget_month_agent t
+        where t.yearid = #{bean.yearId}
+          and t.unitid = #{bean.unitId}
+          and t.monthid = #{bean.monthId}
+          and t.subjectid in (select ag.subjectid
+                              from budget_month_agent ag
+                              where ag.id = #{bean.monthAgentId}
+                                and ag.yearid = t.yearid
+                                and ag.unitid = t.unitid)
+        group by t.subjectid
+    </select>
+
+    <select id="listSubjectMonthAgentByMap" resultType="com.jtyjy.finance.manager.vo.BudgetSubjectAgentVO">
+        SELECT unit.id AS unitId,
+        unit.name AS unitName,
+        subject.id AS subjectId,
+        subject.name AS subjectName,
+        bma.id AS agentId,
+        bma.name AS agentName
+        FROM budget_subject AS subject
+        INNER JOIN budget_unit_subject AS unitsubject ON unitsubject.subjectid = subject.id
+        INNER JOIN budget_unit unit ON unitsubject.unitid = unit.id
+        INNER JOIN budget_month_agent bma on unit.id = bma.unitid and bma.subjectid = subject.id
+        WHERE formulaflag != 1
+        and unit.yearId = #{map.yearId}
+        and bma.monthid = #{map.monthId}
+        <if test="map.budgetUnitId != null">
+            and unit.id = #{map.budgetUnitId}
+        </if>
+        <if test="map.budgetUnitId == null and map.authSql != null">
+            AND ( unit.baseunitid IN (SELECT _unit.baseunitid FROM budget_unit _unit WHERE _unit.managers is NOT NULL AND CONCAT(',',_unit.managers,',') LIKE CONCAT('%,', #{map.userId}, ',%') )
+                or (1=1 ${map.authSql})
+            )
+        </if>
+        <if test="map.budgetUnitId != null and map.name != null and map.name != '' ">
+            and (
+            subject.name like concat('%',#{map.name},'%')
+            OR
+            bma.name like concat('%',#{map.name},'%')
+            )
+        </if>
+        <if test="map.budgetUnitId == null and map.name != null and map.name != '' ">
+            and (
+            unit.name like concat('%',#{map.name},'%')
+            OR
+            subject.name like concat('%',#{map.name},'%')
+            OR
+            bma.name like concat('%',#{map.name},'%')
+            )
+        </if>
+        order by unit.id, subject.id, bma.id
+    </select>
+
+    <select id="listReimMoneyByYearAgentId" resultType="java.math.BigDecimal">
+        select brd.reimmoney
+        from budget_reimbursementorder bxorder,
+             budget_reimbursementorder_detail brd,
+             budget_month_agent ma
+        where brd.reimbursementid = bxorder.id
+          and bxorder.reuqeststatus = 1
+          and brd.reimflag = 1
+          and brd.monthagentid = ma.id
+          and ma.yearagentid = #{yearAgentId}
+    </select>
+
+    <select id="listAllocatedMoneyByYearAgentId" resultType="java.math.BigDecimal">
+        select brd.allocatedmoney
+        from budget_reimbursementorder bxorder,
+             budget_reimbursementorder_allocated brd,
+             budget_month_agent ma
+        where brd.reimbursementid = bxorder.id
+          and bxorder.reuqeststatus = 1
+          and brd.monthagentid = ma.id
+          and ma.yearagentid = #{yearAgentId}
+    </select>
+
+    <select id="getMonthAgentInfo" resultType="com.jtyjy.finance.manager.vo.BudgetMonthAgentAddVO">
+        select monthAgent.id             AS monthAgentId,
+               monthAgent.subjectid      AS subjectId,
+               monthAgent.name           AS name,
+               yearAgent.total           AS yearMoney,
+               monthAgent.total          AS monthMoney,
+               (yearAgent.total + yearAgent.addmoney + yearAgent.lendinmoney - yearAgent.lendoutmoney -
+                yearAgent.executemoney)  AS yearBalance,
+               monthAgent.total          AS preMonthMoney,
+               (monthAgent.total + monthAgent.addmoney + monthAgent.lendinmoney - monthAgent.lendoutmoney -
+                monthAgent.executemoney) AS preMonthBalance
+        from budget_month_agent monthAgent
+                 left join budget_year_agent yearAgent on monthAgent.yearagentid = yearAgent.id
+        where monthAgent.id = #{monthAgentId}
+    </select>
+
+    <select id="listMonthAgentByBx" resultType="com.jtyjy.finance.manager.vo.BxMonthAgentVO">
+        SELECT monthagent.id               AS agentId,
+               monthagent.`name`           AS agentName,
+               budgetsubject.`name`        AS subjectName,
+               monthsubject.total          AS monthMoney,
+               (monthsubject.total + monthsubject.addmoney + monthsubject.lendinmoney - monthsubject.lendoutmoney -
+                monthsubject.executemoney) AS monthBalance,
+               yearagent.total             AS yearMoney,
+               (yearagent.total + yearagent.addmoney + yearagent.lendinmoney - yearagent.lendoutmoney -
+                yearagent.executemoney)    AS yearBalance,
+               monthagent.remark           AS remark
+        FROM budget_month_agent AS monthagent
+                 INNER JOIN budget_subject AS budgetsubject
+                            ON monthagent.subjectid = budgetsubject.id AND monthagent.yearid = budgetsubject.yearid
+                 INNER JOIN budget_month_subject AS monthsubject
+                            ON monthsubject.unitid = monthagent.unitid AND monthsubject.subjectid = monthagent.subjectid AND
+                               monthsubject.monthid = monthagent.monthid
+                 INNER JOIN budget_year_agent AS yearagent
+                            ON yearagent.unitid = monthagent.unitid AND yearagent.subjectid = budgetsubject.id AND
+                               monthagent.yearagentid = yearagent.id AND monthagent.yearid = yearagent.yearid AND
+                               monthagent.unitid = yearagent.unitid
+                 INNER JOIN budget_month_end_unit endmonth
+                            ON monthagent.yearid = endmonth.yearid AND monthagent.unitid = endmonth.unitid AND
+                               monthagent.monthid = endmonth.monthid
+        WHERE endmonth.monthendflag = 0
+          AND budgetsubject.assistflag = 0
+          AND monthagent.yearid = #{yearId}
+          AND monthagent.unitid = #{budgetUnitId}
+          AND monthagent.monthid = #{monthId}
+          AND monthagent.`name` = '绩效奖'
+        ORDER BY budgetsubject.orderno
+    </select>
+
+    <select id="getMonthAgentInfoAsset" resultType="com.jtyjy.finance.manager.bean.BudgetMonthAgent">
+        SELECT id,name
+        FROM budget_month_agent
+        WHERE yearid = #{map.yearId} AND unitid = #{map.unitId} AND subjectid = #{map.subjectId} AND monthid = #{map.monthId}
+
+
+    </select>
+
+</mapper>

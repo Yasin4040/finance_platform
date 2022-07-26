@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetReimbursementorderEntertainMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetReimbursementorderEntertain">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="reimbursementid" jdbcType="BIGINT" property="reimbursementid"/>
+        <result column="mealsrs" jdbcType="INTEGER" property="mealsrs"/>
+        <result column="mealsbz" jdbcType="DECIMAL" property="mealsbz"/>
+        <result column="mealstotal" jdbcType="DECIMAL" property="mealstotal"/>
+        <result column="hotalrs" jdbcType="INTEGER" property="hotalrs"/>
+        <result column="hotalbz" jdbcType="DECIMAL" property="hotalbz"/>
+        <result column="hotaljs" jdbcType="INTEGER" property="hotaljs"/>
+        <result column="hotalts" jdbcType="INTEGER" property="hotalts"/>
+        <result column="hotaltotal" jdbcType="DECIMAL" property="hotaltotal"/>
+        <result column="total" jdbcType="DECIMAL" property="total"/>
+        <result column="date" jdbcType="DATE" property="date"/>
+        <result column="publicityexp" jdbcType="DECIMAL" property="publicityexp"/>
+        <result column="other" jdbcType="DECIMAL" property="other"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , reimbursementid, mealsrs, mealsbz, mealstotal, hotalrs, hotalbz, hotaljs, hotalts,
+    hotaltotal, total, date, publicityexp, other
+    </sql>
+    
+    <select id = "entertainSummaryByYear" resultType = "com.jtyjy.finance.manager.easyexcel.EntertainSumExcelData">
+    	SELECT maintab.*, DATE_FORMAT(entertain.date, '%Y-%m-%d' ) zdDate, entertain.mealsrs cfrs, ROUND(entertain.mealsbz, 2) cfbz, ROUND(entertain.mealstotal,2) cfje, entertain.hotalrs zsrs, ROUND(entertain.hotalbz,2) zsbz, entertain.hotaljs zsjs, ROUND(entertain.hotaltotal,2) zsje, ROUND(entertain.other,2) other, ROUND(entertain.publicityexp,2) xcpf
+		FROM 
+		(SELECT ord.id, ord.reimcode, unit.name unitName, CONCAT(ord.monthid, '月') bxMonth, ord.reimperonsname bxr, 
+		GROUP_CONCAT(detail.monthagentname) agentName, ord.remark 
+		FROM budget_reimbursementorder ord LEFT JOIN budget_unit unit ON ord.unitid = unit.id LEFT JOIN budget_reimbursementorder_detail detail ON ord.id = detail.reimbursementid
+		WHERE ord.reuqeststatus = 2 AND ord.bxtype = #{bxType} AND ord.yearid = #{yearId}
+		<if test="monthId !=null and monthId !=''">
+        	AND ord.monthid = #{monthId}
+        </if>
+		GROUP BY ord.id
+		ORDER BY ord.id
+		) maintab
+		LEFT JOIN budget_reimbursementorder_entertain entertain ON maintab.id = entertain.reimbursementid
+    </select>
+</mapper>

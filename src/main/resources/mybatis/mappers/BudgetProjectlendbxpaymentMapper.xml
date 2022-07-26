@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetProjectlendbxpaymentMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetProjectlendbxpayment">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="projectlendsumid" jdbcType="BIGINT" property="projectlendsumid"/>
+        <result column="lendmoneyid" jdbcType="BIGINT" property="lendmoneyid"/>
+        <result column="empno" jdbcType="VARCHAR" property="empno"/>
+        <result column="lendmoneyname" jdbcType="VARCHAR" property="lendmoneyname"/>
+        <result column="lendcode" jdbcType="VARCHAR" property="lendcode"/>
+        <result column="lendmoney" jdbcType="DECIMAL" property="lendmoney"/>
+        <result column="unrepaidmoney" jdbcType="DECIMAL" property="unrepaidmoney"/>
+        <result column="lendmoneyremark" jdbcType="VARCHAR" property="lendmoneyremark"/>
+        <result column="paymentmoney" jdbcType="DECIMAL" property="paymentmoney"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , projectlendsumid, lendmoneyid, empno, lendmoneyname, lendcode, lendmoney, unrepaidmoney,
+    lendmoneyremark, paymentmoney
+    </sql>
+</mapper>

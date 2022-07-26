@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetMonthSubjectMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetMonthSubject">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <result column="monthid" jdbcType="BIGINT" property="monthid"/>
+        <result column="yearagentmoney" jdbcType="DECIMAL" property="yearagentmoney"/>
+        <result column="yearaddmoney" jdbcType="DECIMAL" property="yearaddmoney"/>
+        <result column="yearlendoutmoney" jdbcType="DECIMAL" property="yearlendoutmoney"/>
+        <result column="yearlendinmoney" jdbcType="DECIMAL" property="yearlendinmoney"/>
+        <result column="yearexecutemoney" jdbcType="DECIMAL" property="yearexecutemoney"/>
+        <result column="m" jdbcType="DECIMAL" property="m"/>
+        <result column="total" jdbcType="DECIMAL" property="total"/>
+        <result column="subjectid" jdbcType="BIGINT" property="subjectid"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="addmoney" jdbcType="DECIMAL" property="addmoney"/>
+        <result column="lendoutmoney" jdbcType="DECIMAL" property="lendoutmoney"/>
+        <result column="lendinmoney" jdbcType="DECIMAL" property="lendinmoney"/>
+        <result column="executemoney" jdbcType="DECIMAL" property="executemoney"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+        <result column="revenueformula" jdbcType="DECIMAL" property="revenueformula"/>
+        <result column="ccratioformula" jdbcType="DECIMAL" property="ccratioformula"/>
+        <result column="monthbusiness" jdbcType="LONGVARCHAR" property="monthbusiness"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , yearid, unitid, monthid, yearagentmoney, yearaddmoney, yearlendoutmoney, yearlendinmoney,
+    yearexecutemoney, m, total, subjectid, remark, addmoney, lendoutmoney, lendinmoney, 
+    executemoney, createtime, updatetime, revenueformula, ccratioformula, monthbusiness
+    </sql>
+
+    <select id="listMonthSubjectByUnitId" resultType="com.jtyjy.finance.manager.vo.BudgetMonthSubjectVO">
+        SELECT subject.id                 AS id,
+               subject.parentid           AS parentId,
+               subject.code               AS subjectCode,
+               subject.leafflag           AS leaf,
+               subject.`name`             AS subjectName,
+               monthSubject.total         AS monthMoney,
+               monthSubject.monthbusiness AS monthBusiness,
+               yearSubject.total          AS yearMoney,
+               yearSubject.addmoney       AS yearAddMoney,
+               yearSubject.lendinmoney    AS yearLendInMoney,
+               yearSubject.lendoutmoney   AS yearLendOutMoney,
+               yearSubject.executemoney   AS yearExecuteMoney,
+               yearSubject.revenueformula AS yearRevenueFormula,
+               unit.id                    AS unitId,
+               unit.name                  AS unitName,
+               yearPeriod.period          AS yearPeriod,
+               yearPeriod.code            AS yearCode,
+               monthPeriod.id             AS monthId,
+               monthPeriod.period         AS monthPeriod
+        FROM budget_month_subject AS monthSubject
+                 INNER JOIN budget_subject subject ON monthSubject.subjectid = subject.id
+                 INNER JOIN budget_year_subject yearSubject ON yearSubject.unitid = monthSubject.unitid
+            and yearSubject.subjectid = monthSubject.subjectid
+                 INNER JOIN budget_unit unit ON unit.id = monthSubject.unitid
+                 INNER JOIN budget_year_period yearPeriod on yearPeriod.id = monthSubject.yearid
+                 INNER JOIN budget_month_period monthPeriod ON monthPeriod.id = monthSubject.monthid
+        where monthSubject.unitid = #{budgetUnitId}
+          and monthSubject.monthid = #{monthId}
+    </select>
+
+    <select id="exportCompanyMonthAgentCollect" resultType="com.jtyjy.finance.manager.vo.BudgetMonthSubjectVO">
+        select m.*,
+               subject.id       AS id,
+               subject.parentid AS parentId,
+               subject.`name`   AS subjectName,
+               subject.code     AS subjectCode
+        from (SELECT monthSubject.yearid,
+                     monthSubject.subjectid,
+                     monthSubject.monthid,
+                     SUM(yearSubject.total)                                   AS yearMoney,
+                     SUM(yearSubject.addmoney)                                AS yearAddMoney,
+                     SUM(yearSubject.lendinmoney)                             AS yearLendInMoney,
+                     SUM(yearSubject.lendoutmoney)                            AS yearLendOutMoney,
+                     SUM(yearSubject.executemoney)                            AS yearExecuteMoney,
+                     SUM(monthSubject.total)                                  AS monthMoney,
+                     SUM(monthSubject.revenueformula)                         AS yearRevenueFormula,
+                     GROUP_CONCAT(monthSubject.monthbusiness)                 AS monthBusiness
+              FROM budget_month_subject monthSubject
+                       INNER JOIN budget_unit bu ON monthSubject.unitid = bu.id
+                       INNER JOIN budget_year_subject yearSubject ON yearSubject.unitid = monthSubject.unitid
+                  and yearSubject.subjectid = monthSubject.subjectid
+              where bu.`name` != '直营总公司'
+        and monthsubject.id not in (
+          SELECT bms.id
+          from budget_month_subject bms
+                   left JOIN budget_unit bu on bms.unitid = bu.id
+          WHERE bu.`name` != '直营总公司'
+            and (bu.`name` LIKE '%省区' or bu.`name` in ('拓展部', '省区预留'))
+            and bms.yearid = #{yearId}
+            and bms.monthid = #{monthId}
+            and bms.subjectid in (select id
+                                  from budget_subject bs
+                                  WHERE bs.`name` in ('辅助性指标', '销售码洋', '试卷销售码洋', '图书销售码洋', '底价收入', '试卷收入', '图书收入')
+                                    and bs.yearid = #{yearId})
+      )
+              GROUP BY monthSubject.yearid, monthSubject.monthid, monthSubject.subjectid) m
+                 INNER JOIN budget_subject subject ON m.subjectid = subject.id
+        WHERE m.yearid = #{yearId}
+          and m.monthid = #{monthId}
+    </select>
+
+    <select id="listMonthSubjectBySubjectId" resultType="com.jtyjy.finance.manager.vo.BudgetMonthSubjectVO">
+        select bms.total          AS monthMoney,
+               bys.total          AS yearMoney,
+               bys.addmoney       AS yearAddMoney,
+               bys.lendinmoney    AS yearLendInMoney,
+               bys.lendoutmoney   AS yearLendOutMoney,
+               bys.executemoney   AS yearExecuteMoney,
+               bys.revenueformula AS yearRevenueFormula
+        from budget_month_subject bms
+                 left join budget_unit unit on unit.id = bms.unitid
+                 INNER JOIN budget_year_subject bys ON bys.unitid = bms.unitid
+            and bys.subjectid = bms.subjectid
+        where bms.subjectid = #{subjectId}
+          and bms.monthid = #{monthId}
+          and unit.name != '直营总公司' and unit.`name` != '供应中心'
+    </select>
+    <select id="listMonthSubjectByUnitIdAndMonth"
+            resultType="com.jtyjy.finance.manager.vo.BudgetMonthSubjectVO">
+        SELECT subject.id                 AS id,
+               subject.parentid           AS parentId,
+               subject.code               AS subjectCode,
+               subject.leafflag           AS leaf,
+               subject.`name`             AS subjectName,
+               monthSubject.total         AS monthMoney,
+               monthSubject.monthbusiness AS monthBusiness,
+               yearSubject.total          AS yearMoney,
+               monthSubject.addmoney+monthSubject.lendinmoney-monthSubject.lendoutmoney   AS yearAddMoney,
+               monthSubject.lendinmoney    AS yearLendInMoney,
+               monthSubject.lendoutmoney   AS yearLendOutMoney,
+               t.sumMoney                  AS yearExecuteMoney,
+               yearSubject.revenueformula AS yearRevenueFormula,
+               unit.id                    AS unitId,
+               unit.name                  AS unitName,
+               yearPeriod.period          AS yearPeriod,
+               yearPeriod.code            AS yearCode,
+               monthPeriod.id             AS monthId,
+               monthPeriod.period         AS monthPeriod
+        FROM budget_month_subject AS monthSubject
+                 INNER JOIN budget_subject subject ON monthSubject.subjectid = subject.id
+                 INNER JOIN budget_year_subject yearSubject ON yearSubject.unitid = monthSubject.unitid
+            and yearSubject.subjectid = monthSubject.subjectid
+                 INNER JOIN budget_unit unit ON unit.id = monthSubject.unitid
+                 INNER JOIN budget_year_period yearPeriod on yearPeriod.id = monthSubject.yearid
+                 INNER JOIN budget_month_period monthPeriod ON monthPeriod.id = monthSubject.monthid
+                inner join (select yearid,unitid,subjectid,sum(executemoney) sumMoney from budget_month_subject where
+            monthid in
+                <foreach collection="monthIds" item="id" open="(" close=")" separator=",">
+                    #{id}
+                </foreach>
+                group by yearid,unitid,subjectid) t on monthSubject.unitid = t.unitid and
+        monthSubject.yearid = t.yearid and monthSubject.subjectid = t.subjectid
+        where monthSubject.unitid = #{budgetUnitId}
+          and monthSubject.monthid = #{monthId}
+    </select>
+</mapper>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetProductCategoryMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetProductCategory">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="fullname" jdbcType="VARCHAR" property="fullname"/>
+        <result column="level" jdbcType="INTEGER" property="level"/>
+        <result column="pid" jdbcType="BIGINT" property="pid"/>
+        <result column="pids" jdbcType="VARCHAR" property="pids"/>
+        <result column="stopflag" jdbcType="BIT" property="stopflag"/>
+        <result column="orderno" jdbcType="INTEGER" property="orderno"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , name, fullname, level, pid, pids, stopflag, orderno, remark
+    </sql>
+    
+    <select id='getPdCategoryInfo' resultType = 'com.jtyjy.finance.manager.bean.BudgetProductCategory'>
+    	select pc.* 
+    	from
+    	budget_product_category pc
+    	where 1=1
+    	<if test="name != null and name != ''" >
+            and pc.name like CONCAT('%', #{name}, '%')
+        </if>
+        <if test="pids != null and pids != ''" >
+            and pc.id in (${pids})
+        </if>
+        <if test="stopflag != null">
+            and pc.stopflag = #{stopflag}
+        </if>
+    	order by pc.pid,pc.orderno
+    </select>
+    
+    <select id = 'getPidListByUnitId' resultType = 'String'>   
+		SELECT procategoryid 
+		FROM budget_subject 
+		WHERE jointproductflag = 1 and procategoryid IS NOT NULL 
+		AND id in (SELECT subjectid FROM budget_unit_subject WHERE unitid = #{unitId})
+    </select>
+    
+    <select id = 'getSubjectByPcId' resultType = 'map'>
+    	SELECT * FROM budget_subject subject WHERE subject.stopflag = 0 AND CONCAT (',', subject.procategoryid, ',') LIKE CONCAT('%,', #{pcId}, ',%');
+    </select>
+</mapper>

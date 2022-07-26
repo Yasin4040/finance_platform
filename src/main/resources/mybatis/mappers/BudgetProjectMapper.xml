@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetProjectMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetProject">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="projectno" jdbcType="VARCHAR" property="projectno"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="type" jdbcType="INTEGER" property="type"/>
+        <result column="stopflag" jdbcType="BIT" property="stopflag"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="unitids" jdbcType="VARCHAR" property="unitids"/>
+        <result column="unitnames" jdbcType="VARCHAR" property="unitnames"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="orderno" jdbcType="INTEGER" property="orderno"/>
+        <result column="confirmflag" jdbcType="INTEGER" property="confirmflag"/>
+        <result column="confirmtime" jdbcType="TIMESTAMP" property="confirmtime"/>
+        <result column="confirmer" jdbcType="VARCHAR" property="confirmer"/>
+        <result column="confirmername" jdbcType="VARCHAR" property="confirmername"/>
+        <result column="creater" jdbcType="VARCHAR" property="creater"/>
+        <result column="creatername" jdbcType="VARCHAR" property="creatername"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , projectno, name, type, stopflag, yearid, unitids, unitnames, remark, orderno,
+    confirmflag, confirmtime, confirmer, confirmername, creater, creatername, createtime
+    </sql>
+</mapper>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetExtractdetailLogMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetExtractdetailLog">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="extractdetailid" jdbcType="BIGINT" property="extractdetailid"/>
+        <result column="empno" jdbcType="VARCHAR" property="empno"/>
+        <result column="empname" jdbcType="VARCHAR" property="empname"/>
+        <result column="beforecopeetract" jdbcType="DECIMAL" property="beforecopeetract"/>
+        <result column="beforeconsotax" jdbcType="DECIMAL" property="beforeconsotax"/>
+        <result column="aftercopeetract" jdbcType="DECIMAL" property="aftercopeetract"/>
+        <result column="afterconsotax" jdbcType="DECIMAL" property="afterconsotax"/>
+        <result column="operator" jdbcType="VARCHAR" property="operator"/>
+        <result column="operatorname" jdbcType="VARCHAR" property="operatorname"/>
+        <result column="operatime" jdbcType="TIMESTAMP" property="operatime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , extractdetailid, empno, empname, beforecopeetract, beforeconsotax, aftercopeetract,
+    afterconsotax, operator, operatorname, operatime
+    </sql>
+</mapper>

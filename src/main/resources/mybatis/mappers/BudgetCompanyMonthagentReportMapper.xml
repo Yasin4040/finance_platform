@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetCompanyMonthagentReportMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetCompanyMonthagentReport">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="yearname" jdbcType="VARCHAR" property="yearname"/>
+        <result column="monthid" jdbcType="BIGINT" property="monthid"/>
+        <result column="monthname" jdbcType="VARCHAR" property="monthname"/>
+        <result column="leafsubjectid" jdbcType="BIGINT" property="leafsubjectid"/>
+        <result column="leafsubjectname" jdbcType="VARCHAR" property="leafsubjectname"/>
+        <result column="agentname" jdbcType="VARCHAR" property="agentname"/>
+        <result column="yearagentmoney" jdbcType="DECIMAL" property="yearagentmoney"/>
+        <result column="yearaddmoney" jdbcType="DECIMAL" property="yearaddmoney"/>
+        <result column="yearaddsmoney" jdbcType="DECIMAL" property="yearaddsmoney"/>
+        <result column="yearlendinmoney" jdbcType="DECIMAL" property="yearlendinmoney"/>
+        <result column="yearlendinsmoney" jdbcType="DECIMAL" property="yearlendinsmoney"/>
+        <result column="yearlendoutmoney" jdbcType="DECIMAL" property="yearlendoutmoney"/>
+        <result column="yearlendoutsmoney" jdbcType="DECIMAL" property="yearlendoutsmoney"/>
+        <result column="yearagentaddcount" jdbcType="INTEGER" property="yearagentaddcount"/>
+        <result column="yearagentaddscount" jdbcType="INTEGER" property="yearagentaddscount"/>
+        <result column="yearagentlendincount" jdbcType="INTEGER" property="yearagentlendincount"/>
+        <result column="yearagentlendinscount" jdbcType="INTEGER" property="yearagentlendinscount"/>
+        <result column="yearagentlendoutcount" jdbcType="INTEGER" property="yearagentlendoutcount"/>
+        <result column="yearagentlendoutscount" jdbcType="INTEGER" property="yearagentlendoutscount"/>
+        <result column="monthagentmoney" jdbcType="DECIMAL" property="monthagentmoney"/>
+        <result column="monthaddmoney" jdbcType="DECIMAL" property="monthaddmoney"/>
+        <result column="monthaddsmoney" jdbcType="DECIMAL" property="monthaddsmoney"/>
+        <result column="monthlendinmoney" jdbcType="DECIMAL" property="monthlendinmoney"/>
+        <result column="monthlendinsmoney" jdbcType="DECIMAL" property="monthlendinsmoney"/>
+        <result column="monthlendoutmoney" jdbcType="DECIMAL" property="monthlendoutmoney"/>
+        <result column="monthlendoutsmoney" jdbcType="DECIMAL" property="monthlendoutsmoney"/>
+        <result column="monthexecutemoney" jdbcType="DECIMAL" property="monthexecutemoney"/>
+        <result column="monthexecutesmoney" jdbcType="DECIMAL" property="monthexecutesmoney"/>
+        <result column="monthwithholdingmoney" jdbcType="DECIMAL" property="monthwithholdingmoney"/>
+        <result column="monthwithholdingsmoney" jdbcType="DECIMAL" property="monthwithholdingsmoney"/>
+        <result column="monthkingdeemoney" jdbcType="DECIMAL" property="monthkingdeemoney"/>
+        <result column="monthkingdeesmoney" jdbcType="DECIMAL" property="monthkingdeesmoney"/>
+        <result column="monthagentaddcount" jdbcType="INTEGER" property="monthagentaddcount"/>
+        <result column="monthagentaddscount" jdbcType="INTEGER" property="monthagentaddscount"/>
+        <result column="monthagentexecutecount" jdbcType="INTEGER" property="monthagentexecutecount"/>
+        <result column="monthagentexecutescount" jdbcType="INTEGER" property="monthagentexecutescount"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , yearid, yearname, monthid, monthname, leafsubjectid, leafsubjectname, agentname,
+    yearagentmoney, yearaddmoney, yearaddsmoney, yearlendinmoney, yearlendinsmoney, yearlendoutmoney, 
+    yearlendoutsmoney, yearagentaddcount, yearagentaddscount, yearagentlendincount, yearagentlendinscount, 
+    yearagentlendoutcount, yearagentlendoutscount, monthagentmoney, monthaddmoney, monthaddsmoney, 
+    monthlendinmoney, monthlendinsmoney, monthlendoutmoney, monthlendoutsmoney, monthexecutemoney, 
+    monthexecutesmoney, monthwithholdingmoney, monthwithholdingsmoney, monthkingdeemoney, 
+    monthkingdeesmoney, monthagentaddcount, monthagentaddscount, monthagentexecutecount, 
+    monthagentexecutescount, createtime, updatetime
+    </sql>
+</mapper>

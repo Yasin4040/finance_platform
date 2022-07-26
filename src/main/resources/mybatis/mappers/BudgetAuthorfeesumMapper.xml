@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetAuthorfeesumMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetAuthorfeesum">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="code" jdbcType="VARCHAR" property="code"/>
+        <result column="status" jdbcType="INTEGER" property="status"/>
+        <result column="reimid" jdbcType="VARCHAR" property="reimid"/>
+        <result column="reimno" jdbcType="VARCHAR" property="reimno"/>
+        <result column="reimname" jdbcType="VARCHAR" property="reimname"/>
+        <result column="feedeptid" jdbcType="BIGINT" property="feedeptid"/>
+        <result column="feedeptname" jdbcType="VARCHAR" property="feedeptname"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="yearperiod" jdbcType="VARCHAR" property="yearperiod"/>
+        <result column="monthid" jdbcType="BIGINT" property="monthid"/>
+        <result column="feemonth" jdbcType="VARCHAR" property="feemonth"/>
+        <result column="reimbursemonth" jdbcType="VARCHAR" property="reimbursemonth"/>
+        <result column="authorfeenum" jdbcType="INTEGER" property="authorfeenum"/>
+        <result column="contributionfee" jdbcType="DECIMAL" property="contributionfee"/>
+        <result column="externalauditfee" jdbcType="DECIMAL" property="externalauditfee"/>
+        <result column="needtaxtotal" jdbcType="DECIMAL" property="needtaxtotal"/>
+        <result column="noneedtaxtotal" jdbcType="DECIMAL" property="noneedtaxtotal"/>
+        <result column="reimburseflag" jdbcType="BIT" property="reimburseflag"/>
+        <result column="deleteflag" jdbcType="BIT" property="deleteflag"/>
+        <result column="times" jdbcType="INTEGER" property="times"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="creatorid" jdbcType="VARCHAR" property="creatorid"/>
+        <result column="creatorname" jdbcType="VARCHAR" property="creatorname"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , code, status, reimid, reimno, reimname, feedeptid, feedeptname, yearid, yearperiod,
+    monthid, feemonth, reimbursemonth, authorfeenum, contributionfee, externalauditfee, 
+    needtaxtotal, noneedtaxtotal, reimburseflag, deleteflag, times, createtime, creatorid, 
+    creatorname, updatetime, remark
+    </sql>
+    
+    <select id="getBudgetSubjectInUnit" resultType="java.util.Map">
+    SELECT bs.id,bs.name,bus.yearcontrolflag,monthcontrolflag,yearsubjectcontrolflag,bus.unitid from budget_unit_subject bus inner join budget_subject bs on bus.subjectid = bs.id
+	where 1=1
+		<if test="unitId !=null">
+			and bus.unitid = #{unitId}
+		</if>
+		<if test="subjectNameList != null and subjectNameList.size() >0">
+	 		and bs.name in 
+		    <foreach item="item" collection="subjectNameList" separator="," open="(" close=")" index="">
+      			#{item}
+    		</foreach>
+		</if>
+    </select>
+    
+    <select id="getAuthorSumList" parameterType="java.util.Map" resultType="com.jtyjy.finance.manager.vo.AuthorFeeMainVO">
+	 SELECT
+		id,
+		`code`,status,
+		yearperiod yearPeriod,
+		feemonth feeMonth,
+		feedeptname feeDeptName,
+		authorfeenum authorFeeNum,
+		contributionfee contributionFee,
+		externalauditfee externalauditFee,
+		contributionfeenext contributionFeeNext,
+		externalauditfeenext externalauditFeeNext,
+		needtaxtotal needTaxTotal,
+		noneedtaxtotal noneedTaxTotal,
+		creatorname creatorName,
+		DATE_FORMAT(createtime, '%Y-%m-%d %H:%i:%S')  createTime,
+		remark 
+	FROM
+		budget_authorfeesum
+	<where>
+		1=1
+		<if test="params.yearid !=null and params.yearid !=''">
+			and yearid = #{params.yearid}
+		</if>	
+		<if test="params.status !=null">
+			and status = #{params.status}
+		</if>
+		<if test="params.code !=null and params.code != ''">
+			and code like concat('%',#{params.code},'%')
+		</if>
+		<if test="params.feeDeptName !=null and params.feeDeptName !=''">
+			and feedeptname like concat('%',#{params.feeDeptName},'%')
+		</if>
+		<if test="params.feeMonth !=null and params.feeMonth !=''">
+			and feemonth like concat(#{params.feeMonth},'%') 
+		</if>
+	</where>
+	order by createtime desc
+    </select>
+    
+    <select id="getAuthorDetailList" resultType="com.jtyjy.finance.manager.vo.AuthorFeeDetailVO">
+		 SELECT
+			id,
+			taxtype taxType,
+			reimbursesubject reimburseSubject,
+			context,
+			productbgtcls monthAgentName,
+			authorname authorName,
+			authoridnumber authorIdnumber,
+			taxpayeridnumber taxpayerIdnumber,
+			authorcompany authorCompany,
+			IF( authortype = 1, '公司内部', '公司外部' ) authorType,
+			authorprovince authorProvince,
+			authorcity authorCity,
+			bankaccountbranchname openBank,
+			bankaccount bankAccount,
+			paperquality paperQuality,
+			pageorcopy pageOrCopy,
+			feestandard feeStandard,
+			copefee copeFee,
+			concat(empname,'(',empno,')') empname,
+			feebdgdept feebdgDept,
+			businessgroup businessGroup,
+			needzz
+		FROM
+			budget_authorfeedetail   	
+    	<where>
+    		authorfeesumid = #{params.feeSumId}
+    		<if test="params.taxType != null">
+    			and taxtype = #{params.taxType}
+    		</if>
+    		<if test="params.agentName != null and params.agentName != ''">
+    			and productbgtcls like concat('%',#{params.agentName},'%') 
+    		</if>
+    		<if test="params.authorType != null">
+    			and authortype = #{params.authorType}
+    		</if>
+    		<if test="params.author != null and params.author != ''">
+    			and (authorname like concat('%',#{params.author},'%') 
+    			)
+    		</if>
+    	</where>
+    	order by empno
+    </select>
+    <select id="getExecuteDatas" resultType="java.util.Map">
+    	select * from budget_agent_execute_view where yearid=#{yearid} and reimflag=1
+    	and reuqeststatus>0
+    </select>
+    <select id="getAuthorfeeReportList" resultType="com.jtyjy.finance.manager.vo.AuthorFeeReportVO">
+		SELECT
+			report.id,
+			report.yearperiod,
+			report.feemonth feeMonth,
+			report.reportcode,
+			report.copefeesum,
+			report.taxsum,
+			report.realfeesum,
+			DATE_FORMAT( report.createtime, '%Y-%m-%d %H:%i:%s' ) AS createtime 
+		FROM
+			budget_authorfee_report AS report 
+		<where>
+			1=1
+			<if test="yearid !=null">
+				and report.yearid = #{yearid}
+			</if>
+		</where>
+		ORDER BY
+			report.feemonth desc
+    </select>
+    
+    <select id="getAuthorFeeCalTaxDetailList" resultType="com.jtyjy.finance.manager.easyexcel.AuthorFeeCalTaxDetailExcelData">
+	SELECT
+		bam.id,
+		bam.yearperiod,
+		bam.feemonth,  
+		bam.reimbursesubject,
+		bam.authorname,
+		bam.authoridnumber,
+		bam.taxpayeridnumber,
+		bam.copefee,
+		bam.tax,
+		bam.realfee,
+		bam.gatherunit,
+		bam.gatherbankaccount,
+		bam.gatherbank,  
+		bam.payunit,
+		wb.province gatherbankProvince,
+		wb.city gatherbankCity,
+		bam.salaryunit,  
+		CONCAT(bam.payunit,'-',bam.paybankaccount) 'payBankAccount',
+		bam.paybank,
+		bam.feebdgdept,
+		DATE_FORMAT( bam.createtime, '%Y-%m-%d %H:%i:%s' ) AS createtime  
+		FROM budget_authorfeedtl_merge bam 
+		left join budget_author ba on bam.gatherbankaccount = ba.bankaccount
+		left join wb_banks wb on wb.sub_branch_code = ba.branchcode
+		left join budget_year_period byp on byp.period = bam.yearperiod 
+		<where>
+			1=1
+			<if test="params.reportid !=null">
+				and bam.reportid = #{params.reportid}
+			</if>
+			<if test="params.yearid !=null">
+				and byp.id = #{params.yearid}
+			</if>
+			<if test="params.feemonth !=null and params.feemonth != ''">
+				and bam.feemonth like concat('%',#{params.feemonth},'%')
+			</if>
+			<if test="params.authorname !=null and params.authorname != ''">
+				and bam.authorname like concat('%',#{params.authorname},'%')
+			</if>
+		</where>
+		order by bam.feemonth desc
+    </select>
+    <update id="setAuthormergeidIsNull">
+    	update budget_authorfeedetail set authormergeid=null 
+    	where id in 
+    	<foreach collection="detailIdList" item="detailId" separator="," open="(" close=")">
+    		#{detailId}
+    	</foreach>
+    </update>
+</mapper>

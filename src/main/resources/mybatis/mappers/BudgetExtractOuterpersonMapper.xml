@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetExtractOuterpersonMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetExtractOuterperson">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="idnumber" jdbcType="VARCHAR" property="idnumber"/>
+        <result column="empno" jdbcType="VARCHAR" property="empno"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="bankaccount" jdbcType="VARCHAR" property="bankaccount"/>
+        <result column="branchcode" jdbcType="VARCHAR" property="branchcode"/>
+        <result column="referidnumber" jdbcType="VARCHAR" property="referidnumber"/>
+        <result column="orderno" jdbcType="INTEGER" property="orderno"/>
+        <result column="stopflag" jdbcType="BIT" property="stopflag"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+        <result column="budgetbillingunitid" jdbcType="BIGINT" property="budgetbillingunitid"/>
+        <result column="remark" jdbcType="LONGVARCHAR" property="remark"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , idnumber, empno, name, bankaccount, branchcode, referidnumber, orderno, stopflag,
+    createtime, updatetime, budgetbillingunitid, remark
+    </sql>
+</mapper>

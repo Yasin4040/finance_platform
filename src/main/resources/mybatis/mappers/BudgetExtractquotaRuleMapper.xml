@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetExtractquotaRuleMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetExtractquotaRule">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="billunitids" jdbcType="VARCHAR" property="billunitids"/>
+        <result column="billunitnames" jdbcType="VARCHAR" property="billunitnames"/>
+        <result column="endflag" jdbcType="BIT" property="endflag"/>
+        <result column="effectdate" jdbcType="TIMESTAMP" property="effectdate"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , name, billunitids, billunitnames, endflag, effectdate, createtime, updatetime,
+    remark
+    </sql>
+</mapper>

@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetUnitMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetUnit">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="baseunitid" jdbcType="BIGINT" property="baseunitid"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="parentid" jdbcType="BIGINT" property="parentid"/>
+        <result column="budgetflag" jdbcType="BIT" property="budgetflag"/>
+        <result column="pids" jdbcType="VARCHAR" property="pids"/>
+        <result column="managers" jdbcType="VARCHAR" property="managers"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="budgetdepts" jdbcType="VARCHAR" property="budgetdepts"/>
+        <result column="budgetusers" jdbcType="VARCHAR" property="budgetusers"/>
+        <result column="orderno" jdbcType="INTEGER" property="orderno"/>
+        <result column="unittype" jdbcType="INTEGER" property="unittype"/>
+        <result column="ccratioformula" jdbcType="VARCHAR" property="ccratioformula"/>
+        <result column="preccratioformula" jdbcType="VARCHAR" property="preccratioformula"/>
+        <result column="revenueformula" jdbcType="VARCHAR" property="revenueformula"/>
+        <result column="updateagentflag" jdbcType="BIT" property="updateagentflag"/>
+        <result column="calculatesubjectflag" jdbcType="BIT" property="calculatesubjectflag"/>
+        <result column="submitflag" jdbcType="BIT" property="submitflag"/>
+        <result column="submittime" jdbcType="TIMESTAMP" property="submittime"/>
+        <result column="submitorid" jdbcType="VARCHAR" property="submitorid"/>
+        <result column="submitorname" jdbcType="VARCHAR" property="submitorname"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+        <result column="requeststatus" jdbcType="INTEGER" property="requeststatus"/>
+        <result column="verifytime" jdbcType="TIMESTAMP" property="verifytime"/>
+        <result column="verifystr" jdbcType="VARCHAR" property="verifystr"/>
+        <result column="verifyorid" jdbcType="VARCHAR" property="verifyorid"/>
+        <result column="verifyorname" jdbcType="VARCHAR" property="verifyorname"/>
+        <result column="remark" jdbcType="LONGVARCHAR" property="remark"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , baseunitid, name, yearid, parentid, budgetflag, pids, managers, createtime, budgetdepts,
+    budgetusers, orderno, unittype, ccratioformula, preccratioformula, revenueformula, 
+    updateagentflag, calculatesubjectflag, submitflag, submittime, submitorid, submitorname, 
+    updatetime, requeststatus, verifytime, verifystr, verifyorid, verifyorname, remark
+    </sql>
+    <select id="isProvinceUnit" resultType="java.lang.Integer">
+        SELECT count(0)
+        FROM budget_unit _sunit
+         INNER
+                 JOIN budget_unit _punit ON _punit.id = _sunit.parentid
+        WHERE _punit.baseunitid = #{baseUnitParentId}
+          AND _sunit.baseunitid != #{baseUnitId}
+          AND _sunit.id = #{unitId}
+    </select>
+    
+    <select id = "getBudgetUnit" resultType = "com.jtyjy.finance.manager.vo.BudgetUnitVO">
+    	SELECT bu.id id, bu.baseunitid baseUnitId, baseunit.name baseUnitName, bu.name, bu.yearid yearId, yp.period yearName,
+    	bu.parentid parentId, if(bu.budgetflag, 1, 0) budgetFlag, bu.pids, bu.managers, bu.budgetdepts budgetDepts,
+    	bu.budgetusers budgetUsers, bu.orderno orderNo, bu.unittype unitType, bu.remark, bu.ccratioformula ccratioFormula, bu.revenueformula revenueFormula 
+    	FROM budget_unit bu INNER JOIN budget_year_period yp ON bu.yearid = yp.id LEFT JOIN budget_base_unit baseunit ON bu.baseunitid = baseunit.id
+    	WHERE bu.yearid = #{yearId} 
+    	<if test="unitName != null and unitName != ''">
+            and bu.name LIKE CONCAT('%', #{unitName}, '%')
+        </if>
+        AND ( bu.baseunitid IN (SELECT _unit.baseunitid FROM budget_unit _unit WHERE _unit.managers is NOT NULL AND CONCAT(',',_unit.managers,',') LIKE CONCAT('%,', #{userId}, ',%') )             	
+        <if test="authSql !=null and authSql !=''">
+			or (1=1 ${authSql})
+		</if>
+			)       
+    	ORDER BY bu.orderno
+    </select>
+    
+    
+    <select id = "getBudgetUnitNoAuth" resultType = "com.jtyjy.finance.manager.vo.BudgetUnitVO">
+    	SELECT bu.id id, bu.baseunitid baseUnitId, baseunit.name baseUnitName, bu.name, bu.yearid yearId, yp.period yearName,
+    	bu.parentid parentId, if(bu.budgetflag, 1, 0) budgetFlag, bu.pids, bu.managers, bu.budgetdepts budgetDepts,
+    	bu.budgetusers budgetUsers, bu.orderno orderNo, bu.unittype unitType, bu.remark, bu.ccratioformula ccratioFormula, bu.revenueformula revenueFormula 
+    	FROM budget_unit bu INNER JOIN budget_year_period yp ON bu.yearid = yp.id LEFT JOIN budget_base_unit baseunit ON bu.baseunitid = baseunit.id
+    	WHERE bu.yearid = #{yearId} 
+    	<if test="unitName != null and unitName != ''">
+            and bu.name LIKE CONCAT('%', #{unitName}, '%')
+        </if>
+    	ORDER BY bu.orderno
+    </select>
+    
+	<!-- 查询所有人员名称放入map中 -->
+	<select id = "queryAllUserName" resultType = "java.util.Map" parameterType = "java.util.Map">
+		SELECT USER_ID, USER_NAME, DISPLAY_NAME FROM wb_user
+	</select>
+	
+	<!-- 查询所有部门名称放入map中 -->
+	<select id = "queryAllDeptName" resultType = "java.util.Map" parameterType = "java.util.Map">
+		SELECT DEPT_ID, DEPT_NAME, DEPT_FULLNAME FROM wb_dept
+	</select>
+	
+	<select id = "getUnitSubByUnit" resultType="map">
+		SELECT us.yearcontrolflag, us.lendflag, us.revenueformula, us.preccratioformula, us.ccratioformula, us.formula, us.subjectid, us.hidden, us.monthcontrolflag, us.yearsubjectcontrolflag, us.splitflag, us.addflag 
+		FROM budget_unit_subject AS us WHERE us.unitid = #{unitId};
+	</select>
+	
+	<select id = "getSubInfoByYear" resultType = "com.jtyjy.finance.manager.vo.BudgetUnitSubjectVO">
+		SELECT sub.name, sub.name text, sub.formula, sub.procategoryid, sub.id, sub.id subId, sub.costsplitflag, sub.costaddflag, sub.costaddflag addflag, sub.costlendflag, sub.costlendflag lendflag, sub.parentid, sub.jointproductflag productagentflag, cate.name catename, sub.formulaflag, sub.leafflag
+		FROM budget_subject sub  LEFT JOIN  budget_product_category cate ON sub.procategoryid = cate.id 
+		WHERE 1=1 AND sub.stopflag = 0 AND sub.yearid = #{yearId}
+		ORDER BY sub.orderno 
+	</select>
+
+    <select id="listYearAuditPage" resultType="com.jtyjy.finance.manager.bean.BudgetUnit">
+        SELECT  yearperiod.period AS yearPeriod,
+                unit.id,
+                unit.yearid,
+                unit.`name`,
+                unit.submittime,
+                unit.submitorid,
+                unit.submitorname,
+                unit.verifytime,
+                unit.verifyorid,
+                unit.verifyorname,
+                unit.verifystr,
+                unit.requeststatus,
+                unit.submitflag,
+                unit.baseunitid
+        FROM budget_unit unit
+                 INNER JOIN budget_year_period yearperiod ON unit.yearid = yearperiod.id
+        where unit.id not in (
+            select
+                distinct parentid
+            from budget_unit
+            where 1 = 1
+            <if test="paramMap.yearId != null">
+                and yearid = #{paramMap.yearId}
+            </if>
+            )
+        <if test="paramMap.yearId != null">
+            and unit.yearid = #{paramMap.yearId}
+        </if>
+        <if test="paramMap.name != null">
+            and unit.name LIKE CONCAT('%', #{paramMap.name}, '%')
+        </if>
+    </select>
+
+	<select id = "getSubProductByUnit" resultType="map">
+		SELECT _subject.*  FROM budget_subject _subject  WHERE _subject.id IN (SELECT _unitsubject.subjectid FROM budget_unit_subject _unitsubject  WHERE _unitsubject.unitid = #{unitId})  AND _subject.procategoryid IS NOT NULL
+	</select>
+
+	<select id = "getUnitSonSub" resultType="map">
+		SELECT DISTINCT _unitsubject.subjectid FROM budget_unit_subject _unitsubject INNER JOIN budget_unit _unit ON _unitsubject.unitid = _unit.id WHERE
+		(_unit.parentid = #{parentId}
+		<if test="unitId != null">
+            OR _unit.id = #{unitId}
+        </if>
+		) AND _unit.yearid = #{yearId}
+	</select>
+	
+	<select id = 'getProductByCid' resultType = 'com.jtyjy.finance.manager.bean.BudgetProduct'>
+		SELECT product.*, category.pids, category.fullname categoryname
+		FROM budget_product product  INNER JOIN  budget_product_category category ON product.procategoryid = category.id  
+		WHERE product.stopflag = 0
+        <if test="cid != null and cid != ''" >
+            and (category.id in (${cid}) or category.pid in (${cid}))
+        </if>
+		<if test="name != null and name != ''">
+            AND product.name LIKE CONCAT('%', #{name}, '%')
+        </if>
+	 	ORDER BY product.orderno 
+	</select>
+	
+	<select id = 'getUnitByUserId' resultMap = 'BaseResultMap'>
+		 SELECT * FROM budget_unit WHERE managers is not null 
+		 <if test="userId !=null and userId !=''">
+		 	AND CONCAT(',',managers,',') LIKE CONCAT('%,', #{userId}, ',%')
+		 </if>
+	</select>
+	
+	<select id = "getMapAllUnitByYearId"  resultType = "com.jtyjy.finance.manager.vo.BudgetUnitVO" parameterType = "java.util.Map">
+		SELECT bu.id id, bu.baseunitid baseUnitId, baseunit.name baseUnitName, bu.name, bu.yearid yearId, yp.period yearName,
+    	bu.parentid parentId, if(bu.budgetflag, 1, 0) budgetFlag, bu.pids, bu.managers, bu.budgetdepts budgetDepts,
+    	bu.budgetusers budgetUsers, bu.orderno orderNo, bu.unittype unitType, bu.remark, bu.ccratioformula ccratioFormula, bu.revenueformula revenueFormula 
+    	FROM budget_unit bu INNER JOIN budget_year_period yp ON bu.yearid = yp.id LEFT JOIN budget_base_unit baseunit ON bu.baseunitid = baseunit.id
+    	WHERE bu.yearid = #{yearId}
+		ORDER BY bu.parentid, bu.id	
+	</select>
+	
+	<select id = "queryAllUnitByYearId"  resultType = "com.jtyjy.finance.manager.vo.BudgetUnitVO">
+		SELECT bu.id id, bu.baseunitid baseUnitId, baseunit.name baseUnitName, bu.name, bu.yearid yearId, yp.period yearName,
+    	bu.parentid parentId, if(bu.budgetflag, 1, 0) budgetFlag, bu.pids, bu.managers, bu.budgetdepts budgetDepts,
+    	bu.budgetusers budgetUsers, bu.orderno orderNo, bu.unittype unitType, bu.remark, bu.ccratioformula ccratioFormula, bu.revenueformula revenueFormula 
+    	FROM budget_unit bu INNER JOIN budget_year_period yp ON bu.yearid = yp.id LEFT JOIN budget_base_unit baseunit ON bu.baseunitid = baseunit.id
+    	WHERE bu.yearid = #{yearId}
+		ORDER BY bu.parentid, bu.id	
+	</select>
+    <select id="getBudgetUnitForAsset" resultType="map">
+        SELECT id,name FROM budget_unit WHERE yearid = #{yearId}
+    </select>
+</mapper>

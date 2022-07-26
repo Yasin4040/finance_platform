@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetSubjectMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetSubject">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="subjectid" jdbcType="BIGINT" property="subjectid"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="parentid" jdbcType="BIGINT" property="parentid"/>
+        <result column="code" jdbcType="VARCHAR" property="code"/>
+        <result column="orderno" jdbcType="INTEGER" property="orderno"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="stopflag" jdbcType="BIT" property="stopflag"/>
+        <result column="pids" jdbcType="VARCHAR" property="pids"/>
+        <result column="firstspell" jdbcType="VARCHAR" property="firstspell"/>
+        <result column="fullspell" jdbcType="VARCHAR" property="fullspell"/>
+        <result column="assistflag" jdbcType="BIT" property="assistflag"/>
+        <result column="upsumflag" jdbcType="BIT" property="upsumflag"/>
+        <result column="costsplitflag" jdbcType="BIT" property="costsplitflag"/>
+        <result column="costaddflag" jdbcType="BIT" property="costaddflag"/>
+        <result column="costlendflag" jdbcType="BIT" property="costlendflag"/>
+        <result column="jointproductflag" jdbcType="BIT" property="jointproductflag"/>
+        <result column="yearplantype" jdbcType="INTEGER" property="yearplantype"/>
+        <result column="leafflag" jdbcType="BIT" property="leafflag"/>
+        <result column="formulaflag" jdbcType="BIT" property="formulaflag"/>
+        <result column="formula" jdbcType="VARCHAR" property="formula"/>
+        <result column="formulaorderno" jdbcType="INTEGER" property="formulaorderno"/>
+        <result column="level" jdbcType="INTEGER" property="level"/>
+        <result column="procategoryid" jdbcType="VARCHAR" property="procategoryid"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , subjectid, name, yearid, parentid, code, orderno, remark, stopflag, pids, firstspell,
+    fullspell, assistflag, upsumflag, costsplitflag, costaddflag, costlendflag, jointproductflag, 
+    yearplantype, leafflag, formulaflag, formula, formulaorderno, level, procategoryid
+    </sql>
+
+    <select id="listSubjectIds" resultType="java.lang.String">
+        SELECT
+        subject.pids
+        FROM budget_subject AS subject
+        INNER JOIN budget_unit_subject AS unitsubject ON unitsubject.subjectid = subject.id
+        INNER JOIN budget_unit ON unitsubject.unitid = budget_unit.id
+        WHERE subject.yearid = #{yearId}
+        AND budget_unit.baseunitid = #{baseUnitId}
+        <choose>
+            <when test="type == 1">
+                <!-- 一般科目 (非公式、非分解、非产品) -->
+                AND formulaflag != 1 AND costsplitflag != 1 AND jointproductflag != 1
+            </when>
+            <when test="type == 2">
+                <!-- 产品科目 (非公式、非分解) -->
+                AND formulaflag != 1 AND costsplitflag != 1 AND jointproductflag = 1
+            </when>
+            <when test="type == 3">
+                <!-- 分解科目 (非公式、非产品) -->
+                AND formulaflag != 1 AND costsplitflag = 1 AND jointproductflag != 1 AND unitsubject.splitflag = 1
+            </when>
+        </choose>
+    </select>
+
+    <select id="listSubjectByType" resultType="com.jtyjy.finance.manager.bean.BudgetSubject">
+        SELECT
+        bs.*
+        FROM budget_subject bs, budget_unit_subject bus
+        WHERE bs.id = bus.subjectid
+        and bs.leafflag = 1
+        and bs.yearid = #{yearId}
+        and bus.unitid = #{budgetUnitId}
+        <choose>
+            <when test="type == 1">
+                <!-- 一般科目 (非公式、非分解、非产品) -->
+                AND formulaflag != 1 AND costsplitflag != 1 AND jointproductflag != 1
+            </when>
+            <when test="type == 2">
+                <!-- 产品科目 (非公式、非分解) -->
+                AND formulaflag != 1 AND costsplitflag != 1 and bs.jointproductflag = 1
+            </when>
+            <when test="type == 3">
+                <!-- 分解科目 (非公式、非产品) -->
+                AND formulaflag != 1 AND costsplitflag = 1 AND jointproductflag != 1 AND bus.splitflag = 1
+            </when>
+        </choose>
+    </select>
+
+    <select id="getSubjectByUnitIdAndSubjectName" resultType="com.jtyjy.finance.manager.bean.BudgetSubject">
+        SELECT
+        bs.*
+        from budget_unit unit,
+        budget_subject bs,
+        budget_unit_subject bus
+        WHERE unit.id = bus.unitid
+        and bs.id = bus.subjectid
+        and bs.leafflag = 1
+        and unitid = #{budgetUnitId}
+        and bs.name = #{subjectName}
+        <choose>
+            <when test="type == 1">
+                <!-- 一般科目 (非公式、非分解、非产品) -->
+                AND formulaflag != 1 AND costsplitflag != 1 AND jointproductflag != 1
+            </when>
+            <when test="type == 2">
+                <!-- 产品科目 (非公式、非分解) -->
+                AND formulaflag != 1 AND costsplitflag != 1 AND jointproductflag = 1
+            </when>
+            <when test="type == 3">
+                <!-- 分解科目 (非公式、非产品) -->
+                AND formulaflag != 1 AND costsplitflag = 1 AND jointproductflag != 1 AND bus.splitflag = 1
+            </when>
+        </choose>
+        LIMIT 1
+    </select>
+
+    <select id="listMissingSubject" resultType="com.jtyjy.finance.manager.bean.BudgetSubject">
+        SELECT _subject.id,
+            _subject.name,
+        FROM budget_subject AS _subject
+            INNER
+            JOIN budget_unit_subject AS _unit_subject
+        ON _unit_subject.subjectid = _subject.id
+            INNER JOIN budget_unit AS _unit
+            ON _unit_subject.unitid = _unit.id AND _unit.yearid = _subject.yearid
+        WHERE _subject.leafflag = 1
+          AND _subject.costsplitflag = 1
+          AND _unit.id = #{budgetUnitId}
+          AND (_unit.id
+            , _subject.id) NOT IN
+            (select
+            _agent.unitid
+            , _agent.subjectid
+            FROM budget_year_agent _agent
+            WHERE _unit.id = #{budgetUnitId})
+    </select>
+
+    <select id="listProductSubject" resultType="com.jtyjy.finance.manager.bean.BudgetSubject">
+        SELECT _subject.*
+        FROM budget_subject _subject
+            INNER JOIN budget_unit_subject _unitsubject
+        ON _unitsubject.subjectid = _subject.id
+        WHERE _subject.jointproductflag = 1
+          AND _subject.leafflag = 1
+          AND _subject.procategoryid IS NOT NULL
+          AND _unitsubject.unitid = #{budgetUnitId}
+    </select>
+
+    <select id="listSubjectByUnitId" resultType="com.jtyjy.finance.manager.bean.BudgetSubject">
+        SELECT DISTINCT if(length(bus.formula) > 0, bus.formula, bs.formula) AS formula,
+                        if(length(bus.revenueformula) > 0, bus.revenueformula,
+                           u.revenueformula)                                 AS revenueformula,
+                        if(length(bus.preccratioformula) > 0, bus.preccratioformula,
+                           u.preccratioformula)                              AS preccratioformula,
+                        if(length(bus.ccratioformula) > 0, bus.ccratioformula,
+                           u.ccratioformula)                                 AS ccratioformula,
+                        bs.id,
+                        bs.parentid,
+                        bs.leafflag,
+                        bs.formulaorderno,
+                        bs.upsumflag
+        FROM budget_subject AS bs
+                 INNER JOIN budget_unit_subject AS bus
+                            ON bus.subjectid = bs.id
+                 INNER JOIN budget_unit AS u ON bus.unitid = u.id
+        WHERE bs.yearid = #{yearId}
+          AND (u.id = #{budgetUnitId}
+            or u.parentid = #{budgetUnitId})
+    </select>
+
+    <select id="getSubjectByYearId" resultType='com.jtyjy.finance.manager.vo.SubjectInfoVO'>
+        SELECT subject.costaddflag, if(subject.costaddflag=0,'否','是') costaddflagstr, subject.formulaorderno,
+        subject.formula, subject.formulaflag, if(subject.formulaflag=0,'否','是') formulaflagstr,
+        subject.parentid, subject.stopflag,if(subject.stopflag=0,'否','是') stopflagstr, subject.remark, subject.orderno,
+        subject.code, subject.yearid, subject.name, subject.subjectid, subject.id,
+        bsubject.name basename, year.period yearname, subject.yearplantype, subject.assistflag,
+        if(subject.assistflag=0,'否','是') assistflagstr, subject.upsumflag, subject.level,
+        if(subject.upsumflag=0,'否','是') upsumflagstr, subject.costsplitflag, if(subject.costsplitflag=0,'否','是')
+        costsplitflagstr, subject.costlendflag, if(subject.costlendflag=0,'否','是') costlendflagstr,
+        subject.jointproductflag, if(subject.jointproductflag=0,'否','是') jointproductflagstr, subject.procategoryid, subject.jindiecode, subject.jindiename
+        FROM
+        budget_subject AS subject INNER JOIN budget_base_subject AS bsubject ON bsubject.id = subject.subjectid INNER
+        JOIN budget_year_period AS year ON year.id = subject.yearid
+        WHERE 1=1 AND subject.yearid = #{yearId}
+        <if test="subName != null and subName != ''">
+            and subject.name LIKE CONCAT('%', #{subName}, '%')
+        </if>
+        <if test="stopFlag != null">
+            and subject.stopflag = #{stopFlag}
+        </if>
+        ORDER BY subject.level, subject.parentid, subject.orderno
+    </select>
+
+    <select id="listSubjectByMap" parameterType="java.util.Map"
+            resultType="com.jtyjy.finance.manager.bean.BudgetSubject">
+        SELECT
+        subject.*
+        FROM budget_subject AS subject
+        INNER JOIN budget_unit_subject AS unitsubject ON unitsubject.subjectid = subject.id
+        INNER JOIN budget_unit ON unitsubject.unitid = budget_unit.id
+        WHERE formulaflag != 1
+        and budget_unit.yearId = #{map.yearId}
+        <if test="map.budgetUnitId != null">
+            and budget_unit.id = #{map.budgetUnitId}
+        </if>
+    </select>
+
+    <select id="querySubByIds" resultMap="BaseResultMap">
+        SELECT _subject.*
+         FROM budget_subject _subject
+         WHERE _subject.id IN (${subjectIds})
+    </select>
+
+    <select id="listCanAddSubjects" resultType="com.jtyjy.finance.manager.bean.BudgetSubject">
+        SELECT subject.id,
+               subject.name
+        FROM budget_subject AS subject
+                 INNER JOIN budget_unit_subject AS unitsubject_ ON unitsubject_.subjectid = subject.id
+        WHERE subject.stopflag = 0
+          AND subject.leafflag = 1
+          AND subject.costaddflag = 1
+          AND unitsubject_.unitid = #{budgetUnitId}
+        ORDER BY subject.orderno
+    </select>
+
+    <select id="listLendSubjects" resultType="com.jtyjy.finance.manager.bean.BudgetSubject">
+        SELECT subject.id,
+               subject.name
+        FROM budget_subject subject
+                 INNER JOIN budget_unit_subject unitSubject ON unitSubject.subjectid = subject.id
+        WHERE subject.costlendflag = 1
+          AND subject.leafflag = '1'
+          AND unitSubject.unitid = #{budgetUnitId}
+    </select>
+    
+    <select id = "getJindieCodeByYearId" resultType = "map">
+    	SELECT sub.name, sub.code, sub.jindiecode, period.period FROM budget_subject sub LEFT JOIN budget_year_period period ON sub.yearid = period.id 
+		WHERE yearid = #{yearId}
+		ORDER BY sub.orderno
+    </select>
+
+    <select id="getAssetSubjectInfo" resultType="com.jtyjy.finance.manager.bean.BudgetSubject">
+        SELECT
+            DISTINCT bs.id, bs.`name`, bs.pids,bs.parentid
+		FROM budget_unit_subject bus
+		INNER JOIN budget_unit bu ON bu.id = bus.unitid
+		INNER JOIN budget_subject bs ON bs.id = bus.subjectid
+		INNER JOIN budget_month_subject bms ON bms.subjectid = bs.id
+		WHERE bs.formulaflag!= 1 AND bs.jointproductflag!=1
+		AND bms.yearid = #{map.yearId} AND bms.monthid = #{map.monthId} AND bms.unitid= #{map.unitId}
+    </select>
+</mapper>

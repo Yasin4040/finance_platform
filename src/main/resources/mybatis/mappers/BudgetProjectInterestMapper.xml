@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetProjectInterestMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetProjectInterest">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="projectid" jdbcType="BIGINT" property="projectid"/>
+        <result column="depositflag" jdbcType="INTEGER" property="depositflag"/>
+        <result column="monthid" jdbcType="BIGINT" property="monthid"/>
+        <result column="isheadcalinterest" jdbcType="INTEGER" property="isheadcalinterest"/>
+        <result column="days" jdbcType="INTEGER" property="days"/>
+        <result column="insideinterestrate" jdbcType="DECIMAL" property="insideinterestrate"/>
+        <result column="outsideinterestrate" jdbcType="DECIMAL" property="outsideinterestrate"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , projectid, depositflag, monthid, isheadcalinterest, days, insideinterestrate,
+    outsideinterestrate, createtime
+    </sql>
+</mapper>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetProductMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetProduct">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="firstspell" jdbcType="VARCHAR" property="firstspell"/>
+        <result column="fullspell" jdbcType="VARCHAR" property="fullspell"/>
+        <result column="procategoryid" jdbcType="BIGINT" property="procategoryid"/>
+        <result column="stopflag" jdbcType="BIT" property="stopflag"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="orderno" jdbcType="INTEGER" property="orderno"/>
+        <result column="productno" jdbcType="VARCHAR" property="productno"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , name, firstspell, fullspell, procategoryid, stopflag, remark, orderno, productno
+    </sql>
+
+    <select id="listProduct" resultType="com.jtyjy.finance.manager.bean.BudgetProduct">
+        SELECT
+            bp.id,
+            bp.name,
+            bp.firstspell,
+            bp.fullspell,
+            bp.procategoryid,
+            bp.stopflag,
+            bp.remark,
+            bp.orderno,
+            bp.productno,
+            bpc.pids
+        from budget_unit_product bup,
+        budget_product bp,
+        budget_product_category bpc
+        where bp.id = bup.productid
+        and bp.procategoryid = bpc.id
+        and bup.unitid = #{budgetUnitId}
+    </select>
+            
+    <select id="getProductPageInfo" resultType="com.jtyjy.finance.manager.bean.BudgetProduct">
+    	select
+        bp.*,
+        pc.name as categoryname
+        from
+        budget_product bp,
+        budget_product_category pc
+        where bp.procategoryid = pc.id
+        <foreach collection="conditionMap" index="key" item="value">
+	        <if test="key == 'name'">
+		        <if test="value != null and value != ''" >
+		            and bp.name like CONCAT('%', #{value}, '%')
+		        </if>
+	        </if>
+	        <if test="key == 'stopflag'">
+		        <if test="value != null">
+		            and bp.stopflag = #{value}
+		        </if>
+	        </if>
+	        <if test="key == 'procategoryid'">
+		        <if test="value != null">
+		            and bp.procategoryid = #{value}
+		        </if>
+	        </if>
+	    </foreach>
+        order by bp.orderno
+        <if test="authSql !=null and authSql !=''">
+            ${authSql}
+        </if>
+    </select>
+    
+    <select id='getPdInfoByCid' resultType="com.jtyjy.finance.manager.bean.BudgetProduct">
+	     SELECT _product.* 
+	     FROM budget_product AS _product INNER JOIN budget_product_category AS _cate ON _cate.id = _product.procategoryid
+	     WHERE CONCAT('-',_cate.pids,'-') LIKE CONCAT('%-', #{cid}, '-%') 
+    </select>
+</mapper>

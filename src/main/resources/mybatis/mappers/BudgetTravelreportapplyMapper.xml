@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetTravelreportapplyMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetTravelreportapply">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="empid" jdbcType="VARCHAR" property="empid"/>
+        <result column="empno" jdbcType="VARCHAR" property="empno"/>
+        <result column="empname" jdbcType="VARCHAR" property="empname"/>
+        <result column="deptid" jdbcType="VARCHAR" property="deptid"/>
+        <result column="deptname" jdbcType="VARCHAR" property="deptname"/>
+        <result column="travelstarttime" jdbcType="TIMESTAMP" property="travelstarttime"/>
+        <result column="actualtotalmoney" jdbcType="DECIMAL" property="actualtotalmoney"/>
+        <result column="exceedpredictmoney" jdbcType="DECIMAL" property="exceedpredictmoney"/>
+        <result column="exceedpredictdescrption" jdbcType="VARCHAR" property="exceedpredictdescrption"/>
+        <result column="requestid" jdbcType="VARCHAR" property="requestid"/>
+        <result column="activitytime" jdbcType="TIMESTAMP" property="activitytime"/>
+        <result column="situation" jdbcType="VARCHAR" property="situation"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="travelapplyid" jdbcType="VARCHAR" property="travelapplyid"/>
+        <result column="travelapplyor" jdbcType="VARCHAR" property="travelapplyor"/>
+        <result column="travelcompanion" jdbcType="VARCHAR" property="travelcompanion"/>
+        <result column="travelstartdate" jdbcType="TIMESTAMP" property="travelstartdate"/>
+        <result column="travelenddate" jdbcType="TIMESTAMP" property="travelenddate"/>
+        <result column="travelreason" jdbcType="VARCHAR" property="travelreason"/>
+        <result column="processnumber" jdbcType="VARCHAR" property="processnumber"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , empid, empno, empname, deptid, deptname, travelstarttime, actualtotalmoney, exceedpredictmoney,
+    exceedpredictdescrption, requestid, activitytime, situation, remark, travelapplyid, 
+    travelapplyor, travelcompanion, travelstartdate, travelenddate, travelreason, processnumber
+    </sql>
+</mapper>

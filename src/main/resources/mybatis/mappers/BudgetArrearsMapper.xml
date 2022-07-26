@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetArrearsMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetArrears">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="empid" jdbcType="VARCHAR" property="empid"/>
+        <result column="empno" jdbcType="VARCHAR" property="empno"/>
+        <result column="empname" jdbcType="VARCHAR" property="empname"/>
+        <result column="arrearsmoeny" jdbcType="DECIMAL" property="arrearsmoeny"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="lendmoney" jdbcType="DECIMAL" property="lendmoney"/>
+        <result column="repaymoney" jdbcType="DECIMAL" property="repaymoney"/>
+        <result column="interestmoney" jdbcType="DECIMAL" property="interestmoney"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , empid, empno, empname, arrearsmoeny, updatetime, createtime, lendmoney, repaymoney,
+    interestmoney
+    </sql>
+
+    <select id="listArrearsPage" resultType="com.jtyjy.finance.manager.bean.BudgetArrears">
+        SELECT wd.DEPT_FULLNAME           AS deptFullName,
+               ba.id,
+               ba.empid,
+               ba.empno,
+               ba.empname,
+               ba.lendmoney,
+               ba.repaymoney,
+               ba.arrearsmoeny,
+               ba.interestmoney,
+               ba.overduerecords,
+               ba.badcredit,
+               IF(arrearsmoeny > 0, 0, 1) AS repaymentStatus
+        FROM wb_person wp
+                 INNER JOIN budget_arrears_new ba ON ba.empid = wp.USER_ID
+                 INNER JOIN wb_dept wd ON wd.DEPT_ID = wp.DEPT_ID
+        <where>
+            <if test="paramMap.name != null and paramMap.name != ''">
+                and (ba.empname like CONCAT('%', #{paramMap.name}, '%')
+                    or ba.empno like CONCAT('%', #{paramMap.name}, '%'))
+            </if>
+            <if test="paramMap.repaymentStatus != null">
+                and IF(arrearsmoeny > 0, 0, 1) = #{paramMap.repaymentStatus}
+            </if>
+        </where>
+        UNION
+        SELECT null                       AS deptFullName,
+               ba.id,
+               ba.empid,
+               ba.empno,
+               ba.empname,
+               ba.lendmoney,
+               ba.repaymoney,
+               ba.arrearsmoeny,
+               ba.interestmoney,
+               ba.overduerecords,
+               ba.badcredit,
+               IF(arrearsmoeny > 0, 0, 1) AS repaymentStatus
+        FROM budget_arrears_new ba
+        WHERE ba.empid IS null
+        <if test="paramMap.name != null and paramMap.name != ''">
+            and (ba.empname like CONCAT('%', #{paramMap.name}, '%')
+            or ba.empno like CONCAT('%', #{paramMap.name}, '%'))
+        </if>
+        <if test="paramMap.repaymentStatus != null">
+            and IF(arrearsmoeny > 0, 0, 1) = #{paramMap.repaymentStatus}
+        </if>
+    </select>
+</mapper>

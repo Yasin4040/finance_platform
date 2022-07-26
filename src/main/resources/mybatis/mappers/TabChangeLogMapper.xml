@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.TabChangeLogMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.TabChangeLog">
+        <id column="id" jdbcType="VARCHAR" property="id"/>
+        <result column="operator_id" jdbcType="VARCHAR" property="operatorId"/>
+        <result column="operator_name" jdbcType="VARCHAR" property="operatorName"/>
+        <result column="username" jdbcType="VARCHAR" property="username"/>
+        <result column="table_name" jdbcType="VARCHAR" property="tableName"/>
+        <result column="action" jdbcType="VARCHAR" property="action"/>
+        <result column="context" jdbcType="VARCHAR" property="context"/>
+        <result column="create_time" jdbcType="BIGINT" property="createTime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , operator_id, operator_name, username, table_name, action, context, create_time
+    </sql>
+</mapper>

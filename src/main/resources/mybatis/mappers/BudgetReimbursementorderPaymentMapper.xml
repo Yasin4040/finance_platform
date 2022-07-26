@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetReimbursementorderPaymentMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetReimbursementorderPayment">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="reimbursementid" jdbcType="BIGINT" property="reimbursementid"/>
+        <result column="lendmoneyid" jdbcType="BIGINT" property="lendmoneyid"/>
+        <result column="lendmoneycode" jdbcType="VARCHAR" property="lendmoneycode"/>
+        <result column="lendmoneyname" jdbcType="VARCHAR" property="lendmoneyname"/>
+        <result column="lendcode" jdbcType="VARCHAR" property="lendcode"/>
+        <result column="lendmoney" jdbcType="DECIMAL" property="lendmoney"/>
+        <result column="unrepaidmoney" jdbcType="DECIMAL" property="unrepaidmoney"/>
+        <result column="lendmoneyremark" jdbcType="VARCHAR" property="lendmoneyremark"/>
+        <result column="paymentmoney" jdbcType="DECIMAL" property="paymentmoney"/>
+        <result column="repaymoneyid" jdbcType="BIGINT" property="repaymoneyid"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , reimbursementid, lendmoneyid, lendmoneycode, lendmoneyname, lendcode, lendmoney,
+    unrepaidmoney, lendmoneyremark, paymentmoney, repaymoneyid
+    </sql>
+</mapper>

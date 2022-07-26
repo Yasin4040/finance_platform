@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetYearStartupMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetYearStartup">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="creator_id" jdbcType="VARCHAR" property="creatorId"/>
+        <result column="creator_name" jdbcType="VARCHAR" property="creatorName"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="enduniteditflag" jdbcType="BIT" property="enduniteditflag"/>
+        <result column="endsubjecteditflag" jdbcType="BIT" property="endsubjecteditflag"/>
+        <result column="endbudgeteditflag" jdbcType="BIT" property="endbudgeteditflag"/>
+        <result column="startbudgetflag" jdbcType="BIT" property="startbudgetflag"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , creator_id, creator_name, create_time, update_time, yearid, enduniteditflag,
+    endsubjecteditflag, endbudgeteditflag, startbudgetflag
+    </sql>
+</mapper>

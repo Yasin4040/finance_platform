@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetReportBaseSubjectMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetReportBaseSubject">
+        <id column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <id column="subjectid" jdbcType="BIGINT" property="subjectid"/>
+        <result column="yearname" jdbcType="VARCHAR" property="yearname"/>
+        <result column="subjectname" jdbcType="VARCHAR" property="subjectname"/>
+        <result column="subjecttrrname" jdbcType="VARCHAR" property="subjecttrrname"/>
+        <result column="firstspell" jdbcType="VARCHAR" property="firstspell"/>
+        <result column="fullspell" jdbcType="VARCHAR" property="fullspell"/>
+        <result column="subjectcode" jdbcType="VARCHAR" property="subjectcode"/>
+        <result column="level" jdbcType="INTEGER" property="level"/>
+        <result column="leafflag" jdbcType="BIT" property="leafflag"/>
+        <result column="pid" jdbcType="BIGINT" property="pid"/>
+        <result column="pids" jdbcType="VARCHAR" property="pids"/>
+        <result column="assistflag" jdbcType="BIT" property="assistflag"/>
+        <result column="upsumflag" jdbcType="BIT" property="upsumflag"/>
+        <result column="costsplitflag" jdbcType="BIT" property="costsplitflag"/>
+        <result column="costaddflag" jdbcType="BIT" property="costaddflag"/>
+        <result column="costlendflag" jdbcType="BIT" property="costlendflag"/>
+        <result column="jointproductflag" jdbcType="BIT" property="jointproductflag"/>
+        <result column="yearplantype" jdbcType="INTEGER" property="yearplantype"/>
+        <result column="formulaflag" jdbcType="BIT" property="formulaflag"/>
+        <result column="formula" jdbcType="VARCHAR" property="formula"/>
+        <result column="formulaorderno" jdbcType="INTEGER" property="formulaorderno"/>
+        <result column="procategoryid" jdbcType="VARCHAR" property="procategoryid"/>
+        <result column="orderno" jdbcType="BIGINT" property="orderno"/>
+        <result column="basesubjectid" jdbcType="BIGINT" property="basesubjectid"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        yearid
+        , subjectid, yearname, subjectname, subjecttrrname, firstspell, fullspell,
+    subjectcode, level, leafflag, pid, pids, assistflag, upsumflag, costsplitflag, costaddflag, 
+    costlendflag, jointproductflag, yearplantype, formulaflag, formula, formulaorderno, 
+    procategoryid, orderno, basesubjectid
+    </sql>
+</mapper>

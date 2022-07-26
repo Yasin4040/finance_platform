@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetQywxMsgMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetQywxMsg">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="toparty" jdbcType="VARCHAR" property="toparty"/>
+        <result column="totag" jdbcType="VARCHAR" property="totag"/>
+        <result column="touser" jdbcType="VARCHAR" property="touser"/>
+        <result column="msgtype" jdbcType="VARCHAR" property="msgtype"/>
+        <result column="content" jdbcType="VARCHAR" property="content"/>
+        <result column="btntxt" jdbcType="VARCHAR" property="btntxt"/>
+        <result column="description" jdbcType="VARCHAR" property="description"/>
+        <result column="title" jdbcType="VARCHAR" property="title"/>
+        <result column="url" jdbcType="VARCHAR" property="url"/>
+        <result column="success" jdbcType="BIT" property="success"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="errmsg" jdbcType="LONGVARCHAR" property="errmsg"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , toparty, totag, touser, msgtype, content, btntxt, description, title, url, success,
+    createtime, errmsg
+    </sql>
+</mapper>

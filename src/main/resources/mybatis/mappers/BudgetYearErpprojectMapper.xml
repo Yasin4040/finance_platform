@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetYearErpprojectMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetYearErpproject">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="erporderid" jdbcType="BIGINT" property="erporderid"/>
+        <result column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <result column="erporderno" jdbcType="VARCHAR" property="erporderno"/>
+        <result column="erpordername" jdbcType="VARCHAR" property="erpordername"/>
+        <result column="erporderje" jdbcType="DECIMAL" property="erporderje"/>
+        <result column="erpordertime" jdbcType="DATE" property="erpordertime"/>
+        <result column="oacreatorid" jdbcType="VARCHAR" property="oacreatorid"/>
+        <result column="requestid" jdbcType="VARCHAR" property="requestid"/>
+        <result column="requeststatus" jdbcType="INTEGER" property="requeststatus"/>
+        <result column="audittime" jdbcType="TIMESTAMP" property="audittime"/>
+        <result column="handleflag" jdbcType="BIT" property="handleflag"/>
+        <result column="deleteflag" jdbcType="BIT" property="deleteflag"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="creatorid" jdbcType="VARCHAR" property="creatorid"/>
+        <result column="creatorname" jdbcType="VARCHAR" property="creatorname"/>
+        <result column="leaderid" jdbcType="VARCHAR" property="leaderid"/>
+        <result column="leadername" jdbcType="VARCHAR" property="leadername"/>
+        <result column="projectrs" jdbcType="INTEGER" property="projectrs"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , yearid, erporderid, unitid, erporderno, erpordername, erporderje, erpordertime,
+    oacreatorid, requestid, requeststatus, audittime, handleflag, deleteflag, updatetime, 
+    createtime, creatorid, creatorname, leaderid, leadername, projectrs
+    </sql>
+</mapper>

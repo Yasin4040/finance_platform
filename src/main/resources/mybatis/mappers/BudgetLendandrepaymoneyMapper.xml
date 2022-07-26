@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetLendandrepaymoneyMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetLendandrepaymoney">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="empid" jdbcType="VARCHAR" property="empid"/>
+        <result column="empno" jdbcType="VARCHAR" property="empno"/>
+        <result column="empname" jdbcType="VARCHAR" property="empname"/>
+        <result column="lendmoneyid" jdbcType="BIGINT" property="lendmoneyid"/>
+        <result column="repaymoneyid" jdbcType="BIGINT" property="repaymoneyid"/>
+        <result column="curmoney" jdbcType="DECIMAL" property="curmoney"/>
+        <result column="money" jdbcType="DECIMAL" property="money"/>
+        <result column="moneytype" jdbcType="INTEGER" property="moneytype"/>
+        <result column="nowmoney" jdbcType="DECIMAL" property="nowmoney"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , empid, empno, empname, lendmoneyid, repaymoneyid, curmoney, money, moneytype,
+    nowmoney, createtime, remark
+    </sql>
+</mapper>

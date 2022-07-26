@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetReportBaseUnitMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetReportBaseUnit">
+        <id column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <id column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <result column="yearname" jdbcType="VARCHAR" property="yearname"/>
+        <result column="unitname" jdbcType="VARCHAR" property="unitname"/>
+        <result column="unittreename" jdbcType="VARCHAR" property="unittreename"/>
+        <result column="level" jdbcType="INTEGER" property="level"/>
+        <result column="leafflag" jdbcType="BIT" property="leafflag"/>
+        <result column="pid" jdbcType="BIGINT" property="pid"/>
+        <result column="pids" jdbcType="VARCHAR" property="pids"/>
+        <result column="orderno" jdbcType="INTEGER" property="orderno"/>
+        <result column="baseunitid" jdbcType="BIGINT" property="baseunitid"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        yearid
+        , unitid, yearname, unitname, unittreename, level, leafflag, pid, pids, orderno,
+    baseunitid
+    </sql>
+</mapper>

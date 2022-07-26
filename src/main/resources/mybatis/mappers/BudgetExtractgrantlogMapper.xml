@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetExtractgrantlogMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetExtractgrantlog">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="extractmonth" jdbcType="VARCHAR" property="extractmonth"/>
+        <result column="iscompanyemp" jdbcType="BIT" property="iscompanyemp"/>
+        <result column="idnumber" jdbcType="VARCHAR" property="idnumber"/>
+        <result column="empno" jdbcType="VARCHAR" property="empno"/>
+        <result column="empname" jdbcType="VARCHAR" property="empname"/>
+        <result column="billingunitid" jdbcType="BIGINT" property="billingunitid"/>
+        <result column="billingunitname" jdbcType="VARCHAR" property="billingunitname"/>
+        <result column="excessmoney" jdbcType="DECIMAL" property="excessmoney"/>
+        <result column="alreadygrantmoney" jdbcType="DECIMAL" property="alreadygrantmoney"/>
+        <result column="shouldgrantextract" jdbcType="DECIMAL" property="shouldgrantextract"/>
+        <result column="couldgrantextract" jdbcType="DECIMAL" property="couldgrantextract"/>
+        <result column="orderno" jdbcType="INTEGER" property="orderno"/>
+        <result column="cratetime" jdbcType="TIMESTAMP" property="cratetime"/>
+        <result column="excessgrantflag" jdbcType="BIT" property="excessgrantflag"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , extractmonth, iscompanyemp, idnumber, empno, empname, billingunitid, billingunitname,
+    excessmoney, alreadygrantmoney, shouldgrantextract, couldgrantextract, orderno, cratetime, 
+    excessgrantflag
+    </sql>
+</mapper>

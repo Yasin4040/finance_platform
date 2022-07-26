@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetExtractsumMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetExtractsum">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="code" jdbcType="VARCHAR" property="code"/>
+        <result column="status" jdbcType="INTEGER" property="status"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="deptid" jdbcType="VARCHAR" property="deptid"/>
+        <result column="deptname" jdbcType="VARCHAR" property="deptname"/>
+        <result column="salarymonth" jdbcType="VARCHAR" property="salarymonth"/>
+        <result column="extractmonth" jdbcType="VARCHAR" property="extractmonth"/>
+        <result column="extractseq" jdbcType="INTEGER" property="extractseq"/>
+        <result column="extractnum" jdbcType="INTEGER" property="extractnum"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="creator" jdbcType="VARCHAR" property="creator"/>
+        <result column="createorname" jdbcType="VARCHAR" property="createorname"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="deleteflag" jdbcType="INTEGER" property="deleteflag"/>
+        <result column="reimbursementflag" jdbcType="INTEGER" property="reimbursementflag"/>
+        <result column="reimbursementsubjectname" jdbcType="VARCHAR" property="reimbursementsubjectname"/>
+        <result column="reimbursementagentname" jdbcType="VARCHAR" property="reimbursementagentname"/>
+        <result column="reimbursementsubjectid" jdbcType="BIGINT" property="reimbursementsubjectid"/>
+        <result column="reimbursementagentid" jdbcType="BIGINT" property="reimbursementagentid"/>
+        <result column="budgetuserid" jdbcType="VARCHAR" property="budgetuserid"/>
+        <result column="verifyorid" jdbcType="VARCHAR" property="verifyorid"/>
+        <result column="verifytime" jdbcType="TIMESTAMP" property="verifytime"/>
+        <result column="verifyorname" jdbcType="VARCHAR" property="verifyorname"/>
+        <result column="resubmitor" jdbcType="VARCHAR" property="resubmitor"/>
+        <result column="resubmitorname" jdbcType="VARCHAR" property="resubmitorname"/>
+        <result column="resubmittime" jdbcType="TIMESTAMP" property="resubmittime"/>
+        <result column="qrcodebase64str" jdbcType="LONGVARCHAR" property="qrcodebase64str"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id, code, status, yearid, deptid, deptname, salarymonth, extractmonth, extractseq,
+    extractnum, createtime, creator, createorname, updatetime, remark, deleteflag, reimbursementflag, 
+    reimbursementsubjectname, reimbursementagentname, reimbursementsubjectid, reimbursementagentid, 
+    budgetuserid, verifyorid, verifytime, verifyorname, resubmitor, resubmitorname, resubmittime, qrcodebase64str
+    </sql>
+    
+    <select id="getExtractDeductionReport" resultType="com.jtyjy.finance.manager.vo.ExtractDeductionDetailVO">
+    	SELECT
+			br.repaydate,
+			byp.period,
+			bes.deptname 'unitname',
+			bed.empno,
+			bed.empname,
+			bes.extractmonth,
+			bes.`code`,
+			bpls.projectname,
+			brd.repaymoney 
+		FROM
+			budget_extractsum bes
+			LEFT JOIN budget_year_period byp ON byp.id = bes.yearid
+			LEFT JOIN budget_extractdetail bed ON bes.id = bed.extractsumid
+			LEFT JOIN budget_repaymoney_new br ON bed.repaymoneyid = br.id
+			LEFT JOIN budget_repaymoney_detail_new brd ON br.id = brd.repaymoneyid
+			LEFT JOIN budget_lendmoney_new bl ON bl.id = brd.lendmoneyid
+			AND bl.lendtype IN 
+			<foreach collection="lendTypeList" item="lendType" open="(" close=")" separator=",">
+    			#{lendType}
+			</foreach>
+			LEFT JOIN budget_projectlendsum_new bpls ON bl.projectlendsumid = bpls.id
+		<where>
+			br.repaymoney > 0 
+			<if test="empNo !=null and empNo != ''">
+				and ( bed.empno like concat('%',#{empNo},'%') 
+					or bed.empname like concat('%',#{empNo},'%') 
+				)
+			</if>
+		</where>
+		ORDER BY
+			br.repaydate DESC
+    </select>
+    
+    <select id="getExtractInfoList" resultType="com.jtyjy.finance.manager.vo.ExtractInfoVO">
+	SELECT
+		* 
+	FROM
+		(
+		SELECT
+			be.id,
+			be.`code`,
+			be.`status`,
+			byp.period,
+			byp.id yearid,
+			be.verifyorname,
+			DATE_FORMAT( be.verifytime, '%Y-%m-%d %H:%i:%S' ) verifytime,
+			be.deptname 'unitname',
+			be.extractmonth,
+			be.extractnum,
+			DATE_FORMAT( be.createtime, '%Y-%m-%d %H:%i:%S' ) createtime,
+			be.createorname,
+			be.remark
+		FROM
+			budget_extractsum be,
+			budget_year_period byp,
+			budget_unit _unit 
+		WHERE
+			be.yearid = byp.id 
+			AND _unit.yearid = be.yearid 
+			AND CONCAT( '', _unit.id ) = be.deptid 
+			AND be.deleteflag = 0 
+		) a
+		LEFT JOIN ( SELECT extractsumid, SUM( copeextract ) totalCopeextract, SUM( consotax ) totalConsotax FROM budget_extract_importdetail GROUP BY extractsumid ) b ON a.id = b.extractsumid
+    	<where>
+    		1=1
+    		<if test="params.status !=null">
+    			and a.status = #{params.status}
+    		</if>
+    		<if test="params.code !=null and params.code !=''">
+    			and a.code like concat('%',#{params.code},'%')
+    		</if>
+    		<if test="params.unitname !=null and params.unitname !=''">
+    			and a.unitname like concat('%',#{params.unitname},'%')
+    		</if>
+    		<if test="params.yearid !=null and params.yearid !=''">
+    			and a.yearid = #{params.yearid}
+    		</if>
+    		<if test="params.queryKey !=null and params.queryKey !=''">
+    			and a.extractmonth like concat(#{params.queryKey},'%')
+    		</if>
+    	</where>  
+    	order by a.status,a.createtime desc
+    </select> 
+    
+    <select id="getExtractWithholdDetails" resultType="com.jtyjy.finance.manager.vo.ExtractWithholdDetailVO">
+    SELECT
+		brd.repaymoneyid,
+		DATE_FORMAT( brd.createtime, '%Y-%m-%d %H:%i:%S' ) repaytime,
+		brd.repaymoney,
+		brm.empno,
+		brm.empname,
+		bl.lendtype,
+		brd.curlendmoney,
+		bl.lendmoneycode,
+		brd.nowlendmoney
+	FROM
+		budget_repaymoney_detail_new brd
+		LEFT JOIN 
+		budget_repaymoney_new brm on brd.repaymoneyid = brm.id
+		left JOIN 
+		budget_lendmoney_new bl on brd.lendmoneyid = bl.id
+	<where>
+		brd.repaymoneyid = #{params.repaymoneyid}
+		<if test="params.lendtype != null">
+			and bl.lendtype = #{params.lendtype}
+		</if>
+		<if test="params.lendmoneycode != null and params.lendmoneycode != ''">
+			and bl.lendmoneycode like concat('%',#{params.lendmoneycode},'%') 
+		</if>
+	</where>
+	 order by brd.createtime desc
+    </select>
+    
+    <select id="getExtractPayDetails" resultType="com.jtyjy.finance.manager.vo.ExtractPayDetailVO">
+		SELECT
+			bep.id,
+			paydetail.empno,
+			paydetail.empname,
+			paydetail.extractmonth,
+			bep.payfee payFee,
+			bep.extractdetailids,
+			bep.before_cal_fee beforeCalFee,
+			(select sum(realextract) from budget_extractdetail bed where bed.id in (bep.extractdetailids) and bed.empno = paydetail.empno) realextract,
+			(select sum(withholdmoney) from budget_extractdetail bed where bed.id in (bep.extractdetailids) and bed.empno = paydetail.empno) repaymoney,
+			(select sum(consotax) from budget_extractdetail bed where bed.id in (bep.extractdetailids) and bed.empno = paydetail.empno) consotax,
+			bep.bunitid1 billingUnitId,
+			bep.bunitname1 billingUnitname,
+			bep.paymoney1 billingPaymoney,
+			bep.bunitname2 avoidBillingNnitname,
+			bep.paymoney2 avoidBillingPaymoney 
+		FROM
+			budget_extractpayment bep
+			LEFT JOIN budget_extractpaydetail paydetail ON paydetail.id = bep.budgetextractpaydetailid 
+		WHERE
+			paydetail.extractmonth = #{params.extractmonth}   	
+			<if test="params.empno !=null and params.empno != ''">
+				and ( paydetail.empno like concat('%',#{params.empno},'%') 
+					or paydetail.empname like concat('%',#{params.empno},'%') 
+				)
+			</if>
+    </select>
+    <select id="getIncorporatedcompanyPayedExtract" resultType="java.lang.String">
+    
+    	SELECT ifnull(bep.paymoney1,0) paymoney1 FROM budget_extractpayment bep,budget_extractpaydetail bepd   
+    	<where> 
+    		bepd.id = bep.budgetextractpaydetailid 
+    		and bepd.idnumber=#{idnumber} 
+    		and bep.bunitid1 = #{billingUnitId} 
+    		and bepd.extractmonth &lt; #{curExtractBatch} 
+    		and bepd.extractmonth &gt;= #{curYearStartExtractBatch} 
+    	</where>  
+    </select>
+    
+    <select id="getRepaymoneymsg" resultType="java.util.Map" parameterType="java.lang.Long">
+    	SELECT TRUNCATE(brd.repaymoney,2) repaymoney,IFNULL(bpls.projectname,'个人') projectname FROM budget_repaymoney_new br LEFT JOIN budget_repaymoney_detail_new brd ON br.id = brd.repaymoneyid LEFT JOIN budget_lendmoney_new bl ON bl.id = brd.lendmoneyid LEFT JOIN budget_projectlendsum_new bpls ON bpls.id = bl.projectlendsumid  WHERE br.id = #{repaymoneyid}
+    </select>
+    
+    <select id="getCCLPayDetailList" parameterType="java.lang.String" resultType="com.jtyjy.finance.manager.easyexcel.ExtractCCLPayExcelData">
+	SELECT
+		bep.empno empNo,
+		bep.empname empName,
+		dept.DEPT_FULLNAME fullDeptName,
+		bet.bankaccount bankAccount,
+		bet.bankaccountbranchname bankName,
+		bet.paymoney2 paymoney 
+	FROM
+		budget_extractpaydetail bep
+		LEFT JOIN budget_extractpayment bet ON bep.id = bet.budgetextractpaydetailid
+		LEFT JOIN wb_person sus ON bep.empno = sus.PERSON_CODE
+		LEFT JOIN wb_dept dept ON dept.DEPT_ID = sus.DEPT_ID
+	WHERE
+		bep.extractmonth = #{extractBatch}
+		AND bet.bunitname2 like concat('%陈彩莲%')
+		AND bet.paymoney2 > 0    
+    </select>
+</mapper>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.WbBanksMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.WbBanks">
+        <result column="sub_branch_name" jdbcType="VARCHAR" property="subBranchName"/>
+        <result column="sub_branch_code" jdbcType="VARCHAR" property="subBranchCode"/>
+        <result column="province_code" jdbcType="VARCHAR" property="provinceCode"/>
+        <result column="province" jdbcType="VARCHAR" property="province"/>
+        <result column="city_code" jdbcType="VARCHAR" property="cityCode"/>
+        <result column="city" jdbcType="VARCHAR" property="city"/>
+        <result column="bank_name" jdbcType="VARCHAR" property="bankName"/>
+    </resultMap>
+
+    <select id='getAreaInfo' resultType='com.jtyjy.finance.manager.bean.WbRegion'>
+        SELECT *
+        FROM wb_region
+        WHERE region_leve = #{level}
+        <if test="pcode !=null and pcode !=''">
+            AND region_pcode = #{pcode}
+        </if>
+        <if test="name !=null and name !=''">
+            AND region_name LIKE CONCAT(#{name}, '%')
+        </if>
+        <if test="authSql !=null and authSql !=''">
+            ${authSql}
+        </if>
+    </select>
+
+    <select id='getBankType' resultType='String'>
+        SELECT bank_name
+        FROM wb_banks
+        GROUP BY bank_name
+    </select>
+
+    <select id='getBankPageInfo' resultMap='BaseResultMap'>
+        SELECT * FROM wb_banks wb
+        WHERE 1 = 1
+        <foreach collection="conditionMap" index="key" item="value">
+            <if test="key == 'cityName'">
+                <if test="value !=null and value !=''">
+                    and (wb.province = #{value} or wb.city = #{value})
+                </if>
+            </if>
+            <if test="key == 'branchName'">
+                <if test="value !=null and value !=''">
+                    and wb.sub_branch_name like CONCAT ('%', #{value}, '%')
+                </if>
+            </if>
+            <if test="key == 'branchCode'">
+                <if test="value !=null and value !=''">
+                    and wb.sub_branch_code like CONCAT ('%', #{value}, '%')
+                </if>
+            </if>
+            <if test="key == 'province'">
+                <if test="value !=null and value !=''">
+                    and wb.province_code = #{value}
+                </if>
+            </if>
+            <if test="key == 'city'">
+                <if test="value !=null and value !=''">
+                    and wb.city_code = #{value}
+                </if>
+            </if>
+            <if test="key == 'bankName'">
+                <if test="value !=null and value !=''">
+                    and wb.bank_name like CONCAT ('%', #{value}, '%')
+                </if>
+            </if>
+
+        </foreach>
+        <if test="authSql !=null and authSql !=''">
+            ${authSql}
+        </if>
+    </select>
+
+    <!-- 查询所有银行信息名称放入map中 -->
+    <select id="queryAllBanks" resultMap="BaseResultMap" parameterType="java.util.Map">
+        SELECT *
+        FROM wb_banks
+    </select>
+
+    <select id="selectByAccount" resultType="com.jtyjy.finance.manager.bean.WbBanks">
+        SELECT wb.bank_name       AS bankName,
+               wb.sub_branch_code AS subBranchCode,
+               bba.accountname    AS accountName,
+               bba.bankaccount    AS bankAccount
+        FROM budget_bank_account bba
+                 LEFT JOIN wb_banks wb ON bba.branchcode = wb.sub_branch_code
+        WHERE bba.bankaccount = #{account}
+    </select>
+
+    <select id="selectByAccountId" resultType="com.jtyjy.finance.manager.bean.WbBanks">
+        SELECT wb.bank_name       AS bankName,
+               wb.sub_branch_code AS subBranchCode,
+               bba.accountname    AS accountName,
+               bba.bankaccount    AS bankAccount,
+               bba.code           AS bankCode
+        FROM budget_bank_account bba
+                 LEFT JOIN wb_banks wb ON bba.branchcode = wb.sub_branch_code
+        WHERE bba.id = #{accountId}
+    </select>
+
+    <select id="selectByUnitAccount" resultType="com.jtyjy.finance.manager.bean.WbBanks">
+        SELECT bbua.bankaccount   as bankAccount,
+               wb.bank_name       AS bankName,
+               wb.sub_branch_code AS subBranchCode,
+               bbu.id             AS billingUnitId,
+               bbu.name           AS billingUnitName
+        FROM budget_billing_unit_account bbua
+                 LEFT JOIN budget_billing_unit bbu ON bbua.billingunitid = bbu.id
+                 LEFT JOIN wb_banks wb ON bbua.branchcode = wb.sub_branch_code
+        WHERE bbua.stopflag = 0
+          and bbu.stopflag = 0
+          AND bbua.bankaccount = #{bankAccount}
+    </select>
+
+    <select id="selectByBillingUnitId" resultType="com.jtyjy.finance.manager.bean.WbBanks">
+        SELECT bba.branchcode     AS subBranchCode,
+               bba.bankaccount    AS bankAccount,
+               bbu.name           AS billingUnitName,
+               wb.bank_name       AS bankName,
+               wb.sub_branch_name AS subBranchName
+        FROM budget_billing_unit_account bba
+                 INNER JOIN budget_billing_unit bbu ON bba.billingunitid = bbu.id
+                 INNER JOIN wb_banks wb ON wb.sub_branch_code = bba.branchcode
+        WHERE bba.stopflag = 0
+          and bbu.stopflag = 0
+          and bbu.id = #{billingUnitId}
+        order by bbu.orderno
+    </select>
+
+</mapper>

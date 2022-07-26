@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetReportYearunitexcutedetailsumMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetReportYearunitexcutedetailsum">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="yearname" jdbcType="VARCHAR" property="yearname"/>
+        <result column="unitid" jdbcType="BIGINT" property="unitid"/>
+        <result column="unitname" jdbcType="VARCHAR" property="unitname"/>
+        <result column="subjectid" jdbcType="BIGINT" property="subjectid"/>
+        <result column="subjectname" jdbcType="VARCHAR" property="subjectname"/>
+        <result column="subjecttrrname" jdbcType="VARCHAR" property="subjecttrrname"/>
+        <result column="assistflag" jdbcType="BIT" property="assistflag"/>
+        <result column="upsumflag" jdbcType="BIT" property="upsumflag"/>
+        <result column="costaddflag" jdbcType="BIT" property="costaddflag"/>
+        <result column="costsplitflag" jdbcType="BIT" property="costsplitflag"/>
+        <result column="costlendflag" jdbcType="BIT" property="costlendflag"/>
+        <result column="jointproductflag" jdbcType="BIT" property="jointproductflag"/>
+        <result column="yearplantype" jdbcType="INTEGER" property="yearplantype"/>
+        <result column="formulaflag" jdbcType="BIT" property="formulaflag"/>
+        <result column="formula" jdbcType="VARCHAR" property="formula"/>
+        <result column="procategoryid" jdbcType="VARCHAR" property="procategoryid"/>
+        <result column="formulaorderno" jdbcType="INTEGER" property="formulaorderno"/>
+        <result column="level" jdbcType="INTEGER" property="level"/>
+        <result column="yeartotalmoney" jdbcType="DECIMAL" property="yeartotalmoney"/>
+        <result column="yearexcutemoney" jdbcType="DECIMAL" property="yearexcutemoney"/>
+        <result column="yearbalancemoney" jdbcType="DECIMAL" property="yearbalancemoney"/>
+        <result column="monthtotalmoney6" jdbcType="DECIMAL" property="monthtotalmoney6"/>
+        <result column="monthexcutemoney6" jdbcType="DECIMAL" property="monthexcutemoney6"/>
+        <result column="monthtotalmoney7" jdbcType="DECIMAL" property="monthtotalmoney7"/>
+        <result column="monthexcutemoney7" jdbcType="DECIMAL" property="monthexcutemoney7"/>
+        <result column="monthtotalmoney8" jdbcType="DECIMAL" property="monthtotalmoney8"/>
+        <result column="monthexcutemoney8" jdbcType="DECIMAL" property="monthexcutemoney8"/>
+        <result column="monthtotalmoney9" jdbcType="DECIMAL" property="monthtotalmoney9"/>
+        <result column="monthexcutemoney9" jdbcType="DECIMAL" property="monthexcutemoney9"/>
+        <result column="monthtotalmoney10" jdbcType="DECIMAL" property="monthtotalmoney10"/>
+        <result column="monthexcutemoney10" jdbcType="DECIMAL" property="monthexcutemoney10"/>
+        <result column="monthtotalmoney11" jdbcType="DECIMAL" property="monthtotalmoney11"/>
+        <result column="monthexcutemoney11" jdbcType="DECIMAL" property="monthexcutemoney11"/>
+        <result column="monthtotalmoney12" jdbcType="DECIMAL" property="monthtotalmoney12"/>
+        <result column="monthexcutemoney12" jdbcType="DECIMAL" property="monthexcutemoney12"/>
+        <result column="monthtotalmoney1" jdbcType="DECIMAL" property="monthtotalmoney1"/>
+        <result column="monthexcutemoney1" jdbcType="DECIMAL" property="monthexcutemoney1"/>
+        <result column="monthtotalmoney2" jdbcType="DECIMAL" property="monthtotalmoney2"/>
+        <result column="monthexcutemoney2" jdbcType="DECIMAL" property="monthexcutemoney2"/>
+        <result column="monthtotalmoney3" jdbcType="DECIMAL" property="monthtotalmoney3"/>
+        <result column="monthexcutemoney3" jdbcType="DECIMAL" property="monthexcutemoney3"/>
+        <result column="monthtotalmoney4" jdbcType="DECIMAL" property="monthtotalmoney4"/>
+        <result column="monthexcutemoney4" jdbcType="DECIMAL" property="monthexcutemoney4"/>
+        <result column="monthtotalmoney5" jdbcType="DECIMAL" property="monthtotalmoney5"/>
+        <result column="monthexcutemoney5" jdbcType="DECIMAL" property="monthexcutemoney5"/>
+        <result column="orderno" jdbcType="INTEGER" property="orderno"/>
+        <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
+        <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , yearid, yearname, unitid, unitname, subjectid, subjectname, subjecttrrname, assistflag,
+    upsumflag, costaddflag, costsplitflag, costlendflag, jointproductflag, yearplantype, 
+    formulaflag, formula, procategoryid, formulaorderno, level, yeartotalmoney, yearexcutemoney, 
+    yearbalancemoney, monthtotalmoney6, monthexcutemoney6, monthtotalmoney7, monthexcutemoney7, 
+    monthtotalmoney8, monthexcutemoney8, monthtotalmoney9, monthexcutemoney9, monthtotalmoney10, 
+    monthexcutemoney10, monthtotalmoney11, monthexcutemoney11, monthtotalmoney12, monthexcutemoney12, 
+    monthtotalmoney1, monthexcutemoney1, monthtotalmoney2, monthexcutemoney2, monthtotalmoney3, 
+    monthexcutemoney3, monthtotalmoney4, monthexcutemoney4, monthtotalmoney5, monthexcutemoney5, 
+    orderno, createtime, updatetime
+    </sql>
+</mapper>

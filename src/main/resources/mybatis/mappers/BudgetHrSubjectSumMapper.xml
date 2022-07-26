@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetHrSubjectSumMapper">
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetHrSubjectSum">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="year" jdbcType="VARCHAR" property="year"/>
+        <result column="yearid" jdbcType="BIGINT" property="yearid"/>
+        <result column="month" jdbcType="VARCHAR" property="month"/>
+        <result column="monthid" jdbcType="BIGINT" property="monthid"/>
+        <result column="unitname" jdbcType="VARCHAR" property="unitname"/>
+        <result column="type" jdbcType="INTEGER" property="type"/>
+        <result column="count" jdbcType="INTEGER" property="count"/>
+        <result column="createdate" jdbcType="TIMESTAMP" property="createdate"/>
+        <result column="valuestr" jdbcType="LONGVARCHAR" property="valuestr"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , year, yearid, month, monthid, unitname, type, count, createdate, valuestr
+    </sql>
+</mapper>
