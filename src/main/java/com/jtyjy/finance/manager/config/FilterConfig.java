@@ -115,6 +115,7 @@ public class FilterConfig {
         apis.add("/api/base/baseUnit/importSave");
         apis.add("/api/base/baseUnit/exportErrors");
 
+        apis.add("/api/base/bankAccount/stopTemplate");
         apis.add("/api/base/bankAccount/exportErrors");
         apis.add("/api/base/bankAccount/downloadTemplate");
         apis.add("/api/base/bankAccount/importSave");

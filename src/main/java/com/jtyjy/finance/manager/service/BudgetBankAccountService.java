@@ -159,7 +159,6 @@ public class BudgetBankAccountService extends DefaultBaseService<BudgetBankAccou
 /*      if (operateType .equals(OPERATE_TYPE_ADD)) {//新增时需要验证是否已存在该编号
             isDuplicateCode(bankAcc.getCode());
         }*/
-        List<BudgetBankAccount> bankAccounts = this.bbaMapper.selectList(new QueryWrapper<BudgetBankAccount>().eq("accounttype", 2));
         if (IN_ACCOUNT_TYPE.equals(bankAcc.getAccounttype()) && null != bankAcc.getCode()) {
             WbUser inUser = this.wuMapper.selectOne(new QueryWrapper<WbUser>().eq("USER_NAME", bankAcc.getCode().trim()));
             if (null != inUser && !inUser.getDisplayName().equals(bankAcc.getPname().trim())) {
@@ -174,15 +173,11 @@ public class BudgetBankAccountService extends DefaultBaseService<BudgetBankAccou
             if (null != outUser) {
                 return "选择“对外账户”时，编号不能与内部员工工号重复！";
             }
-            if (null != bankAccounts && OPERATE_TYPE_ADD.equals(operateType)) { //对外人员存在
-                Map<String, BudgetBankAccount> outMap = bankAccounts.stream().collect(Collectors.toMap(BudgetBankAccount :: getCode, a -> a,(k1,k2)->k1));
+            if (OPERATE_TYPE_ADD.equals(operateType)) { //对外人员存在
                 String lowCase = bankAcc.getCode().toLowerCase();
                 String upCase = bankAcc.getCode().toUpperCase();
-                BudgetBankAccount ba = outMap.get(bankAcc.getCode());
-                BudgetBankAccount baLow = outMap.get(lowCase);
-                BudgetBankAccount baUp = outMap.get(upCase);
-                
-                if (null != ba || null != baLow || null != baUp) {
+                List<BudgetBankAccount> bankAccounts = this.bbaMapper.selectList(new QueryWrapper<BudgetBankAccount>().eq("accounttype", 2).in("code", bankAcc.getCode(), lowCase, upCase));
+                if (bankAccounts.size() > 0) {
                     return "该编号人员已存在！请更换编号重新录入！";
                 }
                 /*
@@ -286,6 +281,12 @@ public class BudgetBankAccountService extends DefaultBaseService<BudgetBankAccou
         Set<String> branchCodeSet = excelList.stream().map(ImportBankAccountExcelData::getBranchCode).collect(Collectors.toSet());
         Set<String> allBranchCodeSet = wbBanksMapper.selectList(Wrappers.<WbBanks>lambdaQuery().select(WbBanks::getSubBranchCode).in(WbBanks::getSubBranchCode, branchCodeSet)).stream().map(WbBanks::getSubBranchCode).collect(Collectors.toSet());
         for (ImportBankAccountExcelData excelData : excelList) {
+            String errMsg = notNullValid(excelData);
+            if (errMsg != null) {
+                excelData.setErrMsg(errMsg);
+                errorList.add(excelData);
+                continue;
+            }
             if (allBranchCodeSet.contains(excelData.getBranchCode())) {
                 Integer accountType = "对内账户".equals(excelData.getAccountType()) ? IN_ACCOUNT_TYPE : OUT_ACCOUNT_TYPE;
                 boolean wagesflag = "是".equals(excelData.getWagesFlag());
@@ -300,7 +301,7 @@ public class BudgetBankAccountService extends DefaultBaseService<BudgetBankAccou
                 bankAccount.setUpdateTime(new Date());
                 bankAccount.setUpdateBy(wbUser.getDisplayName() + "(" + wbUser.getUserName() + ")");
                 bankAccount.setWagesflag(wagesflag);
-                String errMsg = addUserAccount(bankAccount, wbUser);
+                errMsg = addUserAccount(bankAccount, wbUser);
                 if (StringUtils.isNotBlank(errMsg)) {
                     excelData.setErrMsg(errMsg);
                     errorList.add(excelData);
@@ -314,6 +315,32 @@ public class BudgetBankAccountService extends DefaultBaseService<BudgetBankAccou
         return excelList.size() - errorList.size();
     }
 
+    private String notNullValid(ImportBankAccountExcelData excelData) {
+	    StringBuilder errMsg = new StringBuilder();
+	    if (StringUtils.isBlank(excelData.getCode())) {
+	        errMsg.append("编号不能为空；");
+        }
+        if (StringUtils.isBlank(excelData.getPname())) {
+            errMsg.append("名称不能为空；");
+        }
+        if (StringUtils.isBlank(excelData.getAccountType())) {
+            errMsg.append("账户类型不能为空；");
+        }
+        if (StringUtils.isBlank(excelData.getBankAccount())) {
+            errMsg.append("银行账号不能为空；");
+        }
+        if (StringUtils.isBlank(excelData.getWagesFlag())) {
+            errMsg.append("工资账户不能为空；");
+        }
+        if (StringUtils.isBlank(excelData.getBranchCode())) {
+            errMsg.append("联行号不能为空；");
+        }
+        if (errMsg.length() > 0) {
+            return errMsg.toString().substring(0 , errMsg.length() - 1);
+        } else {
+            return null;
+        }
+    }
     /**
      * 批量停用
      * @param accountList

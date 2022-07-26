@@ -43,7 +43,7 @@ public class BankAccountVO {
     private Integer accountType;
 
     @ApiParam(hidden = true)
-    @NotBlank(message = "账号不能为空")
+    @NotBlank(message = "银行账号不能为空")
     @ApiModelProperty(value = "账号")
     private String bankAccount;
 

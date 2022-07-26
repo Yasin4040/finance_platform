@@ -125,6 +125,9 @@ public class SyncUserAndBankAccountJob {
 					account.setStopflag(!"0".equals(usestatus));
 					account.setOutkey(outkey);
 					account.setOrderno(0);
+					account.setUpdateTime(new Date());
+					account.setUpdateBy("SYSTEM");
+
 					List<BudgetBankAccount> l = new ArrayList<>();
 					l.add(account);
 					bankAccountMap.put(bankaccount, l);

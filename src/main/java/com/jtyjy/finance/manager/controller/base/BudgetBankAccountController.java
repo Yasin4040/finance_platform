@@ -19,6 +19,7 @@ import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.service.BudgetBankAccountService;
 import com.jtyjy.finance.manager.service.InvokeRecordService;
 import com.jtyjy.finance.manager.utils.EasyExcelUtil;
+import com.jtyjy.finance.manager.utils.PoiExcelUtil;
 import com.jtyjy.finance.manager.utils.ResponseUtil;
 import com.jtyjy.finance.manager.vo.BankAccountVO;
 import com.jtyjy.core.result.ResponseEntity;
@@ -180,7 +181,7 @@ public class BudgetBankAccountController extends BaseController<BudgetAgentExecu
     })
     @GetMapping("queryLog")
     public ResponseEntity<List> queryLog(Long id) {
-        List<DbInvokeRecord> list = invokeRecordService.list(Wrappers.<DbInvokeRecord>lambdaQuery().eq(DbInvokeRecord::getBankId, id));
+        List<DbInvokeRecord> list = invokeRecordService.list(Wrappers.<DbInvokeRecord>lambdaQuery().eq(DbInvokeRecord::getBankId, id).orderByDesc(DbInvokeRecord::getCreateTime));
         return ResponseEntity.ok(list);
     }
 
@@ -312,6 +313,22 @@ public class BudgetBankAccountController extends BaseController<BudgetAgentExecu
             if(is!=null) is.close();
         }
     }
+
+    @ApiOperation(value = "停用导入模板下载", httpMethod = "GET")
+    @ApiImplicitParams(value = {
+            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
+    })
+    @GetMapping(value = "/stopTemplate")
+    public void stopTemplate(HttpServletResponse response) throws Exception {
+        // 文件导出
+        List<String> columnNames = new ArrayList<>();
+        columnNames.add("银行账号");
+        List<Integer> columnWidths = new ArrayList<>();
+        columnWidths.add(20 * 256);
+        PoiExcelUtil.exportExcelFile("待停用银行账号", columnNames, columnWidths, null, null, EasyExcelUtil.getOutputStream("银行账号停用导入模板", response));
+
+    }
+
     /**
      * 批量停用
      */
@@ -336,7 +353,10 @@ public class BudgetBankAccountController extends BaseController<BudgetAgentExecu
         if (!CollectionUtils.isEmpty(accountList)) {
             List<String> list = accountList.stream().map(BatchStopExcelData::getBankAccount).collect(Collectors.toList());
             this.service.batchStop(list);
+            return ResponseEntity.ok();
+        } else {
+            return ResponseEntity.apply(StatusCodeEnmus.ERROR_FORMAT, "导入失败!");
+
         }
-        return ResponseEntity.ok();
     }
 }
