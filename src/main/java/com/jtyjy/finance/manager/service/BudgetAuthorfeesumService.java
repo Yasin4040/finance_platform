@@ -609,7 +609,7 @@ public class BudgetAuthorfeesumService extends DefaultBaseService<BudgetAuthorfe
 
 					List<BudgetAuthorfeedetail> detail1 = feeDetailList.stream().filter(e -> "读者（原创版）".equals(e.getAgentname())).collect(Collectors.toList());
 					List<BudgetAuthorfeedetail> detail2 = feeDetailList.stream().filter(e -> "读者（校园版）".equals(e.getAgentname())).collect(Collectors.toList());
-					List<BudgetAuthorfeedetail> detail3 = feeDetailList.stream().filter(e -> !"读者（校园版）".equals(e.getAgentname()) && !"读者（校园版）".equals(e.getAgentname())).collect(Collectors.toList());
+					List<BudgetAuthorfeedetail> detail3 = feeDetailList.stream().filter(e -> !"读者（校园版）".equals(e.getAgentname()) && !"读者（原创版）".equals(e.getAgentname())).collect(Collectors.toList());
 
 					if(!CollectionUtils.isEmpty(detail1)){
 						BudgetAuthorfeedtlMerge feeMerge = createFeeMerageDetail(detail1, idnumber, taxIdnumber, isIdnumberMerage, subjectname);
@@ -649,6 +649,7 @@ public class BudgetAuthorfeesumService extends DefaultBaseService<BudgetAuthorfe
 					//创建稿费合并的明细
 					BudgetAuthorfeedtlMerge feeMerge = createFeeMerageDetail(feeDetailList, idnumber, taxIdnumber, isIdnumberMerage, subjectname);
 					feeMerge.setCommon(false);
+					feeMerge.setDzcb(false);
 					//计算并生成发放数据
 					doCalculate(feeMerge, commonData);
 					handleTaxAccuracy(feeDetailList,feeMerge);
