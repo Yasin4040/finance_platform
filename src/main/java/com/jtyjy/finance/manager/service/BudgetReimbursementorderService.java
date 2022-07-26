@@ -1887,12 +1887,15 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
             }
         }
         newdetaillist = new java.util.ArrayList<>(groupBysubjectMap.values());
-        for (int i = 0; i < newdetaillist.size(); i++) {
-            if(i==0 && size>1) {
-                PrintReimbursementDetail reimbursementDetail = newdetaillist.get(0);
-                reimbursementDetail.setRemark("(多家公司发票)<br>"+reimbursementDetail.getRemark());
-            }
-        }
+        /*
+        取消多家公司发票
+         */
+//        for (int i = 0; i < newdetaillist.size(); i++) {
+//            if(i==0 && size>1) {
+//                PrintReimbursementDetail reimbursementDetail = newdetaillist.get(0);
+//                reimbursementDetail.setRemark("(多家公司发票)<br>"+reimbursementDetail.getRemark());
+//            }
+//        }
         if(newdetaillist.size()>=4){
             newdetaillist = newdetaillist.subList(0, 4);
         }else{
