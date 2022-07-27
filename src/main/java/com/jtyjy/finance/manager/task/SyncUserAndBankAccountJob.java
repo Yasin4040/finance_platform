@@ -49,7 +49,7 @@ public class SyncUserAndBankAccountJob {
 		List<Map<String, Object>> hrDeptList = hrService.getSyncDeptList();
 		List<Map<String,Object>> hrUserList = hrService.getHrUserList();
 		userService.syncUser1(hrDeptList,budgetDeptList,hrUserList);
-		//syncUser(); //同步用户
+		syncUser(); //同步用户
 		try{
 		//同步银行账户
 			syncBankAccount();
@@ -66,7 +66,7 @@ public class SyncUserAndBankAccountJob {
 		List<Map<String, Object>> hrBankAccountList = hrService.getSyncBankAccountList();
 		if (CollectionUtils.isEmpty(hrBankAccountList)) return;
 		List<BudgetBankAccount> budgetBankAccountList = bankAccountService.list();
-		//Map<String, List<BudgetBankAccount>> empMap = budgetBankAccountList.stream().collect(Collectors.groupingBy(BudgetBankAccount::getCode));
+		Map<String, List<BudgetBankAccount>> empMap = budgetBankAccountList.stream().collect(Collectors.groupingBy(BudgetBankAccount::getCode));
 		//Map<String, List<BudgetBankAccount>> outKeyMap = budgetBankAccountList.stream().filter(e -> StringUtils.isNotBlank(e.getOutkey())).collect(Collectors.groupingBy(BudgetBankAccount::getOutkey));
 		Map<String, List<BudgetBankAccount>> bankAccountMap = budgetBankAccountList.stream().collect(Collectors.groupingBy(BudgetBankAccount::getBankaccount));
 		Map<String, WbBanks> bankMap = bankService.list(null).stream().collect(Collectors.toMap(WbBanks::getSubBranchCode, e -> e, (e1, e2) -> e1));
@@ -110,48 +110,79 @@ public class SyncUserAndBankAccountJob {
 				bankMap.put(unionpayno, bank);
 				newBanks.add(bank);
 			}
-			//List<BudgetBankAccount> outKeyBudgetBankAccounts = outKeyMap.get(outkey);
-			//if(CollectionUtils.isEmpty(outKeyBudgetBankAccounts)){
-			if (bankAccountMap.get(bankaccount) == null || bankAccountMap.get(bankaccount).isEmpty()) {
-				//新增
-				BudgetBankAccount account = new BudgetBankAccount();
-				account.setCode(empno);
-				account.setPname(empname);
-				account.setAccountname(payeename);
-				account.setAccounttype(1);
-				account.setBankaccount(bankaccount);
-				account.setWagesflag(true);
-				account.setBranchcode(unionpayno);
-				account.setStopflag(!"0".equals(usestatus));
-				account.setOutkey(outkey);
-				account.setOrderno(0);
-				account.setUpdateTime(new Date());
-				account.setUpdateBy("SYSTEM");
+			List<BudgetBankAccount> empNoBudgetBankAccounts = empMap.get(empno);
+			if(!CollectionUtils.isEmpty(empNoBudgetBankAccounts)){
+				if (bankAccountMap.get(bankaccount) == null || bankAccountMap.get(bankaccount).isEmpty()){
+					BudgetBankAccount salaryBudgetBankAccount = empNoBudgetBankAccounts.stream().filter(e -> e.getWagesflag()).findFirst().orElse(null);
+					if(Objects.isNull(salaryBudgetBankAccount)){
+						BudgetBankAccount account = new BudgetBankAccount();
+						account.setCode(empno);
+						account.setPname(empname);
+						account.setAccountname(payeename);
+						account.setAccounttype(1);
+						account.setBankaccount(bankaccount);
+						account.setWagesflag(true);
+						account.setBranchcode(unionpayno);
+						account.setStopflag(!"0".equals(usestatus));
+						account.setOutkey(outkey);
+						account.setOrderno(0);
+						account.setUpdateTime(new Date());
+						account.setUpdateBy("SYSTEM");
+						List<BudgetBankAccount> l = new ArrayList<>();
+						l.add(account);
+						bankAccountMap.put(bankaccount, l);
+						newAccounts.add(account);
+						empNoBudgetBankAccounts.add(account);
+					}else{
+						salaryBudgetBankAccount.setCode(empno);
+						salaryBudgetBankAccount.setPname(empname);
+						salaryBudgetBankAccount.setAccountname(payeename);
+						salaryBudgetBankAccount.setAccounttype(1);
+						salaryBudgetBankAccount.setWagesflag(true);
+						salaryBudgetBankAccount.setBranchcode(unionpayno);
+						salaryBudgetBankAccount.setStopflag(!"0".equals(usestatus));
+						salaryBudgetBankAccount.setOutkey(outkey);
+						salaryBudgetBankAccount.setBankaccount(bankaccount);
+						bankAccountService.updateById(salaryBudgetBankAccount);
+						List<BudgetBankAccount> l = new ArrayList<>();
+						l.add(salaryBudgetBankAccount);
+						bankAccountMap.put(bankaccount, l);
+					}
+				}else{
+//					List<BudgetBankAccount> budgetBankAccounts = bankAccountMap.get(bankaccount);
+//					long count = budgetBankAccounts.stream().filter(e -> e.getCode().equals(empno)).count();
+//					if(count > 0){
+//
+//					}
+				}
 
-				List<BudgetBankAccount> l = new ArrayList<>();
-				l.add(account);
-				bankAccountMap.put(bankaccount, l);
-				newAccounts.add(account);
-			} else {
-				List<BudgetBankAccount> budgetBankAccounts = bankAccountMap.get(bankaccount);
-				BudgetBankAccount account = budgetBankAccounts.get(0);
-				account.setCode(empno);
-				account.setPname(empname);
-				account.setAccountname(payeename);
-				account.setAccounttype(1);
-				account.setWagesflag(true);
-				account.setBranchcode(unionpayno);
-				account.setStopflag(!"0".equals(usestatus));
-				account.setOutkey(outkey);
-				bankAccountService.updateById(account);
-				//重复取一条有效的数据
-				for (int i = 1; i < budgetBankAccounts.size(); i++) {
-					BudgetBankAccount account1 = budgetBankAccounts.get(i);
-					account1.setStopflag(true);
-					bankAccountService.updateById(account);
+			}else{
+				if (bankAccountMap.get(bankaccount) == null || bankAccountMap.get(bankaccount).isEmpty()){
+					BudgetBankAccount account = new BudgetBankAccount();
+					account.setCode(empno);
+					account.setPname(empname);
+					account.setAccountname(payeename);
+					account.setAccounttype(1);
+					account.setBankaccount(bankaccount);
+					account.setWagesflag(true);
+					account.setBranchcode(unionpayno);
+					account.setStopflag(!"0".equals(usestatus));
+					account.setOutkey(outkey);
+					account.setOrderno(0);
+					account.setUpdateTime(new Date());
+					account.setUpdateBy("SYSTEM");
+					List<BudgetBankAccount> l = new ArrayList<>();
+					l.add(account);
+					bankAccountMap.put(bankaccount, l);
+					newAccounts.add(account);
+
+					empNoBudgetBankAccounts = new ArrayList<>();
+					empNoBudgetBankAccounts.add(account);
+					empMap.put(empno,empNoBudgetBankAccounts);
+				}else{
+
 				}
 			}
-
 		}
 		if (!newBanks.isEmpty()) bankService.saveBatch(newBanks);
 		if (!newAccounts.isEmpty()) bankAccountService.saveBatch(newAccounts);

@@ -201,7 +201,8 @@
 	FROM
 		budget_base_bankaccount bb
 		LEFT JOIN budget_base_bank bbb ON bb.bankId = bbb.id
-		LEFT JOIN sys_dictionary sd ON bbb.bankTypeId = sd.dicId   
+		LEFT JOIN sys_dictionary sd ON bbb.bankTypeId = sd.dicId
+	where bb.isWage = 1 and bb.useStatus = 0
     </select>
     <!--
      update by minzhq
