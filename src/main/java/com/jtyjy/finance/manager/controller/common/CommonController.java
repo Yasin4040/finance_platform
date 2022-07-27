@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.jtyjy.core.auth.anno.NoLoginAnno;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -72,7 +73,14 @@ public class CommonController extends BaseController {
 //        List<String> list = commonService.getDistinctBankTypes();
 //        return list;
 //    }
-    
+
+	@GetMapping("test")
+	@NoLoginAnno
+	public String test(){
+		return "test";
+	}
+
+
     /**
      * author minzhq
      */

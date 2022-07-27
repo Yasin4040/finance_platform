@@ -52,8 +52,8 @@ public class MyBatisConfig {
             //清除二级缓存
             configuration.setCacheEnabled(false);
             // 配置打印sql语句
-            configuration.setLogImpl(StdOutImpl.class);
-            configuration.setMapUnderscoreToCamelCase(true);
+            //configuration.setLogImpl(StdOutImpl.class);
+            //configuration.setMapUnderscoreToCamelCase(true);
             sqlSessionFactoryBean.setConfiguration(configuration);
 
             // 设置别名包
