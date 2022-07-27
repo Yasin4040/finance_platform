@@ -65,9 +65,9 @@ public class SyncUserAndBankAccountJob {
 	private void syncBankAccount() {
 		List<Map<String, Object>> hrBankAccountList = hrService.getSyncBankAccountList();
 		if (CollectionUtils.isEmpty(hrBankAccountList)) return;
-		List<BudgetBankAccount> budgetBankAccountList = bankAccountService.list(new LambdaQueryWrapper<BudgetBankAccount>().eq(BudgetBankAccount::getStopflag,0));
-		Map<String, List<BudgetBankAccount>> empMap = budgetBankAccountList.stream().collect(Collectors.groupingBy(BudgetBankAccount::getCode));
-		Map<String, List<BudgetBankAccount>> outKeyMap = budgetBankAccountList.stream().filter(e -> StringUtils.isNotBlank(e.getOutkey())).collect(Collectors.groupingBy(BudgetBankAccount::getOutkey));
+		List<BudgetBankAccount> budgetBankAccountList = bankAccountService.list();
+		//Map<String, List<BudgetBankAccount>> empMap = budgetBankAccountList.stream().collect(Collectors.groupingBy(BudgetBankAccount::getCode));
+		//Map<String, List<BudgetBankAccount>> outKeyMap = budgetBankAccountList.stream().filter(e -> StringUtils.isNotBlank(e.getOutkey())).collect(Collectors.groupingBy(BudgetBankAccount::getOutkey));
 		Map<String, List<BudgetBankAccount>> bankAccountMap = budgetBankAccountList.stream().collect(Collectors.groupingBy(BudgetBankAccount::getBankaccount));
 		Map<String, WbBanks> bankMap = bankService.list(null).stream().collect(Collectors.toMap(WbBanks::getSubBranchCode, e -> e, (e1, e2) -> e1));
 		List<WbBanks> provinces = bankService.list(null);
@@ -78,11 +78,11 @@ public class SyncUserAndBankAccountJob {
 
 			if (map.get("empNo") == null) continue;
 			if (map.get("unionPayNo") == null) continue;
-			String accountType = map.get("accountType") == null ? "1" : map.get("accountType").toString();
-			if (!"0".equals(accountType)) continue;
+			//String accountType = map.get("accountType") == null ? "1" : map.get("accountType").toString();
+			//if (!"0".equals(accountType)) continue;
 			String isWage = map.get("isWage") == null ? "0" : map.get("isWage").toString();
 			//只同步工资卡
-			if("0".equals(isWage)) continue;
+			if ("0".equals(isWage)) continue;
 			String outkey = map.get("id").toString();
 			String bankaccount = map.get("account").toString();
 			String empno = map.get("empNo").toString();
@@ -110,50 +110,11 @@ public class SyncUserAndBankAccountJob {
 				bankMap.put(unionpayno, bank);
 				newBanks.add(bank);
 			}
-			List<BudgetBankAccount> outKeyBudgetBankAccounts = outKeyMap.get(outkey);
-			if(CollectionUtils.isEmpty(outKeyBudgetBankAccounts)){
-				if (bankAccountMap.get(bankaccount) == null || bankAccountMap.get(bankaccount).isEmpty()) {
-					//新增
-					BudgetBankAccount account = new BudgetBankAccount();
-					account.setCode(empno);
-					account.setPname(empname);
-					account.setAccountname(payeename);
-					account.setAccounttype(1);
-					account.setBankaccount(bankaccount);
-					account.setWagesflag(true);
-					account.setBranchcode(unionpayno);
-					account.setStopflag(!"0".equals(usestatus));
-					account.setOutkey(outkey);
-					account.setOrderno(0);
-					account.setUpdateTime(new Date());
-					account.setUpdateBy("SYSTEM");
-
-					List<BudgetBankAccount> l = new ArrayList<>();
-					l.add(account);
-					bankAccountMap.put(bankaccount, l);
-					newAccounts.add(account);
-				}else{
-					List<BudgetBankAccount> budgetBankAccounts = bankAccountMap.get(bankaccount);
-					BudgetBankAccount account = budgetBankAccounts.get(0);
-					account.setCode(empno);
-					account.setPname(empname);
-					account.setAccountname(payeename);
-					account.setAccounttype(1);
-					account.setWagesflag(true);
-					account.setBranchcode(unionpayno);
-					account.setStopflag(!"0".equals(usestatus));
-					account.setOutkey(outkey);
-					bankAccountService.updateById(account);
-					//重复取一条有效的数据
-					for (int i = 1; i < budgetBankAccounts.size(); i++) {
-						BudgetBankAccount account1 = budgetBankAccounts.get(i);
-						account1.setStopflag(true);
-						bankAccountService.updateById(account);
-					}
-				}
-
-			}else{
-				BudgetBankAccount account = outKeyBudgetBankAccounts.get(0);
+			//List<BudgetBankAccount> outKeyBudgetBankAccounts = outKeyMap.get(outkey);
+			//if(CollectionUtils.isEmpty(outKeyBudgetBankAccounts)){
+			if (bankAccountMap.get(bankaccount) == null || bankAccountMap.get(bankaccount).isEmpty()) {
+				//新增
+				BudgetBankAccount account = new BudgetBankAccount();
 				account.setCode(empno);
 				account.setPname(empname);
 				account.setAccountname(payeename);
@@ -163,15 +124,34 @@ public class SyncUserAndBankAccountJob {
 				account.setBranchcode(unionpayno);
 				account.setStopflag(!"0".equals(usestatus));
 				account.setOutkey(outkey);
-				bankAccountService.updateById(account);
+				account.setOrderno(0);
+				account.setUpdateTime(new Date());
+				account.setUpdateBy("SYSTEM");
 
+				List<BudgetBankAccount> l = new ArrayList<>();
+				l.add(account);
+				bankAccountMap.put(bankaccount, l);
+				newAccounts.add(account);
+			} else {
+				List<BudgetBankAccount> budgetBankAccounts = bankAccountMap.get(bankaccount);
+				BudgetBankAccount account = budgetBankAccounts.get(0);
+				account.setCode(empno);
+				account.setPname(empname);
+				account.setAccountname(payeename);
+				account.setAccounttype(1);
+				account.setWagesflag(true);
+				account.setBranchcode(unionpayno);
+				account.setStopflag(!"0".equals(usestatus));
+				account.setOutkey(outkey);
+				bankAccountService.updateById(account);
 				//重复取一条有效的数据
-				for (int i = 1; i < outKeyBudgetBankAccounts.size(); i++) {
-					BudgetBankAccount account1 = outKeyBudgetBankAccounts.get(i);
+				for (int i = 1; i < budgetBankAccounts.size(); i++) {
+					BudgetBankAccount account1 = budgetBankAccounts.get(i);
 					account1.setStopflag(true);
 					bankAccountService.updateById(account);
 				}
 			}
+
 		}
 		if (!newBanks.isEmpty()) bankService.saveBatch(newBanks);
 		if (!newAccounts.isEmpty()) bankAccountService.saveBatch(newAccounts);
