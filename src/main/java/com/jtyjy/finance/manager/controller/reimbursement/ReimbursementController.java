@@ -1317,7 +1317,7 @@ public class ReimbursementController {
            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
            @ApiImplicitParam(value = "付款单类型（1：报销；2：付款失败修改；6：项目）", name = "paymoneytype", dataType = "Integer"),
            @ApiImplicitParam(value = "付款方式（0：现金；1：转账）", name = "paytype", dataType = "Integer"),
-           @ApiImplicitParam(value = "（报销/付款失败修改/项目）单据号", name = "objectcode", dataType = "String", required = true),
+           @ApiImplicitParam(value = "（报销/付款失败修改/项目）单据号", name = "objectcode", dataType = "String"),
            @ApiImplicitParam(value = "收款人名称（模糊查询）", name =  "bankaccountname", dataType = "String"),
            @ApiImplicitParam(value = "按其他方式查询必送（仅查ids中包含的id）", name = "ids", dataType = "String"),
     })

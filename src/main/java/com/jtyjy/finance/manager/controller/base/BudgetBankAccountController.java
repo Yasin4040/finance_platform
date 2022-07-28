@@ -351,10 +351,19 @@ public class BudgetBankAccountController extends BaseController<BudgetAgentExecu
         List<BatchStopExcelData> accountList = EasyExcelUtil.getExcelContent(srcFile.getInputStream(), BatchStopExcelData.class);
         if (!CollectionUtils.isEmpty(accountList)) {
             List<String> list = accountList.stream().map(BatchStopExcelData::getBankAccount).collect(Collectors.toList());
-            this.service.batchStop(list);
-            return ResponseEntity.ok();
+            list.removeIf(account -> StringUtils.isBlank(account));
+            if (CollectionUtils.isEmpty(list)) {
+                return ResponseEntity.apply(StatusCodeEnmus.ERROR_FORMAT, "导入失败，无有效数据!");
+            }
+            boolean result = this.service.batchStop(list);
+            if (result) {
+                return ResponseEntity.ok();
+            } else {
+                return ResponseEntity.apply(StatusCodeEnmus.ERROR_FORMAT, "未停用任何数据!");
+            }
+
         } else {
-            return ResponseEntity.apply(StatusCodeEnmus.ERROR_FORMAT, "导入失败!");
+            return ResponseEntity.apply(StatusCodeEnmus.ERROR_FORMAT, "导入失败，无有效数据!");
 
         }
     }

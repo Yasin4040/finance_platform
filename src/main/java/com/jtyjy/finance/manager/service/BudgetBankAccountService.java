@@ -345,10 +345,10 @@ public class BudgetBankAccountService extends DefaultBaseService<BudgetBankAccou
      * 批量停用
      * @param accountList
      */
-    public void batchStop(List<String> accountList) {
+    public boolean batchStop(List<String> accountList) {
         LambdaUpdateWrapper<BudgetBankAccount> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.in(BudgetBankAccount::getBankaccount, accountList);
         updateWrapper.set(BudgetBankAccount::getStopflag, true);
-        super.update(updateWrapper);
+        return super.update(updateWrapper);
     }
 }

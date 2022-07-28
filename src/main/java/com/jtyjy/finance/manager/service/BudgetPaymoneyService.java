@@ -404,6 +404,13 @@ public class BudgetPaymoneyService extends DefaultBaseService<BudgetPaymoneyMapp
      */
     public List<BudgetPaymoney> getCanPayMoneyByPmtype(Integer paymoneytype, String objectcode, Integer paytype){
         List<BudgetPaymoney> retList = this.mapper.getCanPayMoneyByPmtype(paymoneytype, objectcode,paytype);
+        retList.stream().forEach(budgetPaymoney -> {
+            if(budgetPaymoney.getPaymoneytype() == 1 || budgetPaymoney.getPaymoneytype() == 2){
+                budgetPaymoney.setSourceTypeName("预算系统");
+            }else if(Arrays.asList(3).contains(budgetPaymoney.getPaymoneytype())){
+                budgetPaymoney.setSourceTypeName("OA系统");
+            }
+        });
         return retList;
     }
        
@@ -425,6 +432,13 @@ public class BudgetPaymoneyService extends DefaultBaseService<BudgetPaymoneyMapp
             }
         }
         List<BudgetPaymoney> retList = this.mapper.getCanPayMoneyByFkType(paytype, objectcode, bankaccountname, theIds);
+        retList.stream().forEach(budgetPaymoney -> {
+            if(budgetPaymoney.getPaymoneytype() == 1 || budgetPaymoney.getPaymoneytype() == 2){
+                budgetPaymoney.setSourceTypeName("预算系统");
+            }else if(Arrays.asList(3).contains(budgetPaymoney.getPaymoneytype())){
+                budgetPaymoney.setSourceTypeName("OA系统");
+            }
+        });
         return retList;
     }
     
