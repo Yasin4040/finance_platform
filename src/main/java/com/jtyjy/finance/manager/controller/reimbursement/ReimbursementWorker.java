@@ -1,17 +1,17 @@
 package com.jtyjy.finance.manager.controller.reimbursement;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Lists;
 import com.jtyjy.common.tools.ClassTools;
 import com.jtyjy.core.jdbc.JdbcTemplateService;
 import com.jtyjy.finance.manager.bean.*;
+import com.jtyjy.finance.manager.cache.UserCache;
 import com.jtyjy.finance.manager.constants.StatusConstants;
 import com.jtyjy.finance.manager.dto.ReimbursementRequest;
 import com.jtyjy.finance.manager.enmus.ReimbursementTypeEnmu;
 import com.jtyjy.finance.manager.mapper.BudgetMonthAgentMapper;
 import com.jtyjy.finance.manager.mapper.response.LendmoneyUseBean;
-import com.jtyjy.finance.manager.service.BudgetLendmoneyService;
-import com.jtyjy.finance.manager.service.BudgetPaymoneyService;
-import com.jtyjy.finance.manager.service.BudgetReimbursementorderService;
+import com.jtyjy.finance.manager.service.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -52,6 +52,12 @@ public class ReimbursementWorker {
 
     @Autowired
     private BudgetMonthAgentMapper monthAgentMapper;
+    @Autowired
+    private TabDmService dmService;
+    @Autowired
+    private HrService hrService;
+    @Autowired
+    private BudgetBillingUnitService billingUnitService;
 
 
     /**
@@ -495,6 +501,15 @@ public class ReimbursementWorker {
             request.getOrderDetail().get(i).setRow(i+1);
         }
 
+        /*
+          当报销明细的费用科目为销售费用-市场推广及宣传费-差旅补贴、南昌接待时，
+          开票单位校验报销人所在发薪单位，若不一致不允许提交，提示“提交失败！开票单位应与报销人所在发薪单位不一致！”
+         */
+        result = this.validateSalaryUnit(request);
+        if (StringUtils.isNotBlank(result)) {
+            return result;
+        }
+
         //需要校验的报销明细（计入执行）
         List<BudgetReimbursementorderDetail> validatedDetails = request.getOrderDetail().stream().filter(BudgetReimbursementorderDetail::getReimflag).collect(Collectors.toList());
         /**
@@ -535,6 +550,30 @@ public class ReimbursementWorker {
             return errorMsgList.stream().distinct().collect(Collectors.joining("<br>"));
         }
         return result;
+    }
+
+
+    private String  validateSalaryUnit(ReimbursementRequest request) throws Exception {
+        List<TabDm> dmList = dmService.list(new LambdaQueryWrapper<TabDm>().eq(TabDm::getDmType, "validateSalaryUnit").eq(TabDm::getDmStatus, 1));
+        if(!CollectionUtils.isEmpty(dmList)){
+            List<String> dms = dmList.stream().map(TabDm::getDmName).collect(Collectors.toList());
+            List<BudgetReimbursementorderDetail> matchSubjectDetailList = request.getOrderDetail().stream().filter(e -> dms.contains(e.getSubjectname())).collect(Collectors.toList());
+            if(!CollectionUtils.isEmpty(matchSubjectDetailList)){
+                String companyidOutKey = hrService.getSalaryUnitByEmpno(UserCache.getUserByUserId(request.getOrder().getReimperonsid()).getUserName());
+                if(StringUtils.isBlank(companyidOutKey)) return null;
+                List<BudgetBillingUnit> list = billingUnitService.list(new LambdaQueryWrapper<BudgetBillingUnit>().eq(BudgetBillingUnit::getOutKey, companyidOutKey));
+                if(!CollectionUtils.isEmpty(list)){
+                    BudgetBillingUnit budgetBillingUnit = list.get(0);
+                    long count = matchSubjectDetailList.stream().filter(e -> !e.getBunitid().toString().equals(budgetBillingUnit.getId().toString())).count();
+                    if(count > 0 ){
+                        return "提交失败！开票单位与报销人所在发薪单位不一致！";
+                    }
+
+                }
+
+            }
+        }
+        return null;
     }
 
     /**

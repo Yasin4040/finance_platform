@@ -17,6 +17,7 @@ import com.jtyjy.core.local.JdbcSqlThreadLocal;
 import com.jtyjy.core.service.DefaultBaseService;
 import com.jtyjy.easy.excel.ExportHelper;
 import com.jtyjy.finance.manager.bean.*;
+import com.jtyjy.finance.manager.cache.UserCache;
 import com.jtyjy.finance.manager.constants.Constants;
 import com.jtyjy.finance.manager.constants.ReimbursementStepHelper;
 import com.jtyjy.finance.manager.constants.StatusConstants;
@@ -413,6 +414,9 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
         String tmpFilePath = this.file_temp_path + File.separator + "bxinfo_" + time + ".xls";
         try {
             ReimbursementRequest result = this.detail(id);
+            if (null == result) {
+                return;
+            }
             List<BudgetReimbursementorderTrans> trans = this.transService.list(new QueryWrapper<BudgetReimbursementorderTrans>().eq("reimbursementid",id));
             result.setOrderTrans(trans);
             //现金
@@ -421,9 +425,6 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
             //划拨
             List<BudgetReimbursementorderAllocated> allocated = this.allocatedService.list(new QueryWrapper<BudgetReimbursementorderAllocated>().eq("reimbursementid",id));
             result.setOrderAllocated(allocated);
-            if (null == result) {
-                return;
-            }
             Map<Class<?>, Map<String, Object>> export_map = new HashMap<Class<?>, Map<String, Object>>(3);
             ExportHelper exportHelp = new ExportHelper(file_share_template + File.separator + "bxApplyImportTemplate.xls");
             Map<String, Object> map = new HashMap<>();
@@ -439,7 +440,8 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
             map.put("b2", orderInfo.getYearName());
             map.put("d2", orderInfo.getMonthid() + "月");
             map.put("f2", orderInfo.getUnitName());
-            map.put("b3", orderInfo.getReimperonsname());
+            map.put("b3", orderInfo.getReimperonsNo());
+            map.put("g3", orderInfo.getReimperonsname());
             map.put("d3", Constants.FORMAT2_10.format(orderInfo.getReimdate()));
             map.put("f3", orderInfo.getOthermoney().setScale(2, BigDecimal.ROUND_HALF_UP));
             map.put("b4", orderInfo.getAttachcount());
@@ -1728,6 +1730,7 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
         if (order == null) {
             return null;
         }
+        order.setReimperonsNo(UserCache.getUserByUserId(order.getReimperonsid()).getUserName());
         if (StringUtils.isNotBlank(order.getTraveler())) {
             StringJoiner sj = new StringJoiner(",");
             for (String empNo : order.getTraveler().split(",")) {
@@ -1817,19 +1820,24 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
         order.setAllocatedmoney(order.getAllocatedmoney().negate());
         order.setCashmoney(BigDecimal.ZERO);
         order.setOthermoney(order.getOthermoney().negate());
-        request.getOrderDetail().stream().forEach(e -> e.setReimmoney(e.getReimmoney().negate()));
-        //request.getOrderPayment().stream().forEach(e -> e.setPaymentmoney(e.getPaymentmoney().negate()));
-        request.getOrderAllocated().stream().forEach(e -> e.setAllocatedmoney(e.getAllocatedmoney().negate()));
-        request.getOrderTravel().stream().forEach(e -> {
+        request.getOrderDetail().forEach(e -> e.setReimmoney(e.getReimmoney().negate()));
+        request.getOrderAllocated().forEach(e -> e.setAllocatedmoney(e.getAllocatedmoney().negate()));
+        request.getOrderTravel().forEach(e -> {
             e.setLongtravelexp(e.getLongtravelexp().negate());
             e.setCitytravelexp(e.getCitytravelexp().negate());
             e.setHotelexpense(e.getHotelexpense().negate());
             e.setOther(e.getOther().negate());
-            e.setTravelday(e.getTravelday().negate());
+            e.setDailysubsidy(e.getDailysubsidy().negate());
             e.setTotal(e.getTotal().negate());
         });
-        request.getOrderEntertain().stream().forEach(e -> {
+        request.getOrderEntertain().forEach(e -> {
+            e.setMealsbz(e.getMealsbz().negate());
+            e.setMealstotal(e.getMealstotal().negate());
+            e.setHotalbz(e.getHotalbz().negate());
+            e.setHotaltotal(e.getHotaltotal().negate());
             e.setTotal(e.getTotal().negate());
+            e.setPublicityexp(e.getPublicityexp().negate());
+            e.setOther(e.getOther().negate());
         });
         
         this.saveOrUpdate(order);
@@ -1838,6 +1846,8 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
         //保存附表信息
         this.saveFbInfo(request, order);
     }
+
+
     
     private List<PrintReimbursementDetail> getPrintReimbursementDetail(Long reimbursementId) {
         String sql = "SELECT detail_.subjectname,detail_.monthagentname,detail_.bunitid,detail_.reimmoney,detail_.remark,subject_.jindiecode subjectcode,subject_.pids ";
@@ -2484,13 +2494,14 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
     }
 
     public static void main(String[] args) {
-        String qrcodebase64str = null;
-        try {
-            qrcodebase64str = QRCodeUtil.createBase64Qrcode("http://oauth.jtyjy.com/ys/api/reimbursement/code?c=" + 26743 + "-" + 6, "/home/data/tmp" + File.separator + 26743 + QRCODE_FORMAT);
-        } catch (Exception exception) {
-            exception.printStackTrace();
-        }
-        System.out.println(qrcodebase64str);
+//        String qrcodebase64str = null;
+//        try {
+//            qrcodebase64str = QRCodeUtil.createBase64Qrcode("http://oauth.jtyjy.com/ys/api/reimbursement/code?c=" + 26743 + "-" + 6, "/home/data/tmp" + File.separator + 26743 + QRCODE_FORMAT);
+//        } catch (Exception exception) {
+//            exception.printStackTrace();
+//        }
+//        System.out.println(qrcodebase64str);
+        System.out.println(new BigDecimal("123").negate());
     }
 
     public List<String> listBackType() {

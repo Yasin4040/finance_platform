@@ -28,4 +28,6 @@ public interface HrSalaryYearTaxUserMapper extends BaseMapper<HrSalaryYearTaxUse
 	List<Map<String, Object>> getSyncDeptList();
 
 	List<Map<String, Object>> getHrUserList();
+
+	String getSalaryUnitByEmpno(@Param("empNo") String empNo);
 }

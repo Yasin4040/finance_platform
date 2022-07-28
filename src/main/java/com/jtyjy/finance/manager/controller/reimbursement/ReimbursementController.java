@@ -52,6 +52,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -453,6 +454,9 @@ public class ReimbursementController {
 			@ApiImplicitParam(value = "预算单位名称（模糊查询）", name = "ysdw", dataType = "String", required = false),
 			@ApiImplicitParam(value = "报销人（模糊查询）", name = "bxr", dataType = "String", required = false),
             @ApiImplicitParam(value = "报销日期（yyyy-mm-dd）", name = "bxrq", dataType = "String", required = false),
+			@ApiImplicitParam(value = "报销金额前区间", name = "bxMoneyStart", dataType = "BigDecimal", required = false),
+			@ApiImplicitParam(value = "报销金额后区间", name = "bxMoneyEnd", dataType = "BigDecimal", required = false),
+			@ApiImplicitParam(value = "科目名称", name = "subjectName", dataType = "String", required = false),
             @ApiImplicitParam(value = "报销金额", name = "bxje", dataType = "Double", required = false),
             @ApiImplicitParam(value = "冲账金额", name = "czje", dataType = "Double", required = false),
             @ApiImplicitParam(value = "转账金额", name = "zzje", dataType = "Double", required = false),
@@ -466,9 +470,13 @@ public class ReimbursementController {
 			@ApiImplicitParam(value = "每页条数", name = "rows", dataType = "Integer", required = false)
 	})
 	@ApiDataAuthAnno
-	public ResponseEntity<Page<ReimbursementInfoVO>> pageLike(Boolean budgeterflag, String reimcode, Integer reuqeststatus, Integer yearid, Integer monthid, String ysdw,
-	        String bxr, String bxrq, Double bxje, Double czje, Double zzje, Double xjje, Double hbje, Double othermoney, String submittime, String applicanttime,String bxType,
-			@RequestParam(defaultValue = "1") Integer page, @RequestParam(defaultValue = Constants.ROWS)Integer rows) throws Exception{
+	public ResponseEntity<Page<ReimbursementInfoVO>> pageLike(Boolean budgeterflag,
+	                                                          String reimcode, Integer reuqeststatus, Integer yearid, Integer monthid, String ysdw,
+	                                                            String bxr, String bxrq, Double bxje, Double czje, Double zzje,
+	                                                          Double xjje, Double hbje, Double othermoney, String submittime,
+	                                                          String applicanttime,String bxType,BigDecimal bxMoneyStart,BigDecimal bxMoneyEnd,String subjectName,
+	                                                          @RequestParam(defaultValue = "1") Integer page,
+			                                                  @RequestParam(defaultValue = Constants.ROWS)Integer rows) throws Exception{
         List<Long> bxTypes = splitStringToLong(bxType);
 	    Map<String, Object> conditionMap = new HashMap<>();
 	    conditionMap.put("reuqeststatus", reuqeststatus);
@@ -482,6 +490,9 @@ public class ReimbursementController {
 	    conditionMap.put("zzje", zzje);
 	    conditionMap.put("xjje", xjje);
         conditionMap.put("hbje", hbje);
+        conditionMap.put("bxMoneyStart", bxMoneyStart);
+        conditionMap.put("bxMoneyEnd", bxMoneyEnd);
+        conditionMap.put("subjectName", subjectName);
         conditionMap.put("othermoney", othermoney);
         conditionMap.put("ysdw", ysdw);
         conditionMap.put("submittime", submittime);

@@ -163,6 +163,10 @@ public class HrService extends DefaultBaseService<HrSalaryYearTaxUserMapper, HrS
 		}
 		return result;
 	}
+
+	public String getSalaryUnitByEmpno(String empNo){
+    	return this.mapper.getSalaryUnitByEmpno(empNo);
+	}
 	
 	
 	/**

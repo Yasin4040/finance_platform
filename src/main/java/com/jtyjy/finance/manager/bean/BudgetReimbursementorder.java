@@ -106,6 +106,10 @@ public class BudgetReimbursementorder implements Serializable {
     @TableField(value = "reimperonsname")
     private String reimperonsname;
 
+    @ApiModelProperty(value = "报销人工号", hidden = false, required = false)
+    @TableField(exist = false)
+    private String reimperonsNo;
+
     /**
      * 报销日期
      */

@@ -230,4 +230,13 @@
 	<select id="getHrUserList" resultType="java.util.Map">
 		select * from sys_user where companyId = 3
 	</select>
+	<select id="getSalaryUnitByEmpno" resultType="java.lang.String">
+		SELECT
+			st.hr_company_id AS companyid
+		FROM
+			hr_salary_template st
+			INNER JOIN sys_user user_ ON st.hr_emp_id = user_.empId
+		WHERE
+			user_.empNo = #{empNo}
+	</select>
 </mapper>

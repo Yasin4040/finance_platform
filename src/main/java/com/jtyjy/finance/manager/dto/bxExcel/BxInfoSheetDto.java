@@ -30,9 +30,11 @@ public class BxInfoSheetDto {
     @NotBlank(message = "报销人工号不能为空")
 	private String b3;
 	@Location(soleRow = 2, column = 3)
+	private String g3;
+	@Location(soleRow = 2, column = 5)
     @NotNull(message = "报销日期不能为空")
 	private String d3;
-	@Location(soleRow = 2, column = 5)
+	@Location(soleRow = 2, column = 7)
 	private Double f3;
 	@Location(soleRow = 3, column = 1)
     @NotNull(message = "附件张数不能为空")

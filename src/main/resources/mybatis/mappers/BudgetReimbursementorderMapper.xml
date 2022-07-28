@@ -86,7 +86,7 @@
 				    	or (1=1 ${authSql})
 				    </if>
 				    )
-                </if>               
+                </if>
             </if>
             <if test="key == 'reuqeststatus'">
                 <if test="value != null">
@@ -171,6 +171,29 @@
 					</foreach>
 			   </if>
 		   </if>
+
+		   <if test="key == 'bxMoneyStart'">
+			   <if test="value != null">
+				   AND ttt.bxje &gt;= #{value}
+			   </if>
+		   </if>
+
+		   <if test="key == 'bxMoneyEnd'">
+			   <if test="value != null">
+				   AND ttt.bxje &lt;= #{value}
+			   </if>
+		   </if>
+
+		   <if test="key == 'subjectName'">
+			   <if test="value != null and value !=''">
+			   		and (
+				   		ttt.id in (select reimbursementid from budget_reimbursementorder_detail where subjectname like concat('%',#{value},'%'))
+				   			or
+				   		ttt.id in (select reimbursementid from budget_reimbursementorder_allocated where subjectname like  concat('%',#{value},'%'))
+				   )
+			   </if>
+		   </if>
+
         </foreach>
 		order by ttt.reimcode desc
    </select>
