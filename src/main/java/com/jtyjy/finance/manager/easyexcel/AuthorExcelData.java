@@ -42,10 +42,6 @@ public class AuthorExcelData {
     @ColumnWidth(12)
     private String bankaccount;
 
-    @ExcelProperty(value = "电子联行号")
-    @ColumnWidth(12)
-    private String branchcode;
-
 
     @ExcelProperty(value = "银行")
     @ColumnWidth(12)
@@ -63,6 +59,9 @@ public class AuthorExcelData {
     @ColumnWidth(12)
     private String childBankName;
 
+    @ExcelProperty(value = "电子联行号")
+    @ColumnWidth(12)
+    private String branchcode;
 
     @ExcelProperty(value = "备注")
     @ColumnWidth(20)

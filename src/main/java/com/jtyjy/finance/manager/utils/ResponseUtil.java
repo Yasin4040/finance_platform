@@ -607,11 +607,11 @@ public class ResponseUtil {
         columnNames.add("是否公司员工\r\n（是或否）");
         columnNames.add("所在单位");
         columnNames.add("收款银行账号");
-        columnNames.add("电子联行号");
         columnNames.add("银行");
         columnNames.add("省份");
         columnNames.add("城市");
         columnNames.add("支行");
+        columnNames.add("电子联行号");
         columnNames.add("备注");
         List<Integer> columnWidths = new ArrayList<>();
         columnWidths.add(12 * 256);
