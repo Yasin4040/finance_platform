@@ -1937,6 +1937,9 @@ public class BudgetAuthorfeesumService extends DefaultBaseService<BudgetAuthorfe
 			List<WbDept> allChildDeptList = new ArrayList<>();
 			for (String deptid : budgetdepts.split(",")) {
 				WbDept dept = deptMap.get(deptid);
+				if (null == dept) {
+					continue;
+				}
 				List<WbDept> childrenDepts = DeptCache.DEPT_MAP.values().stream().filter(e -> e.getParentIds().startsWith(dept.getParentIds())).collect(Collectors.toList());
 				allChildDeptList.addAll(childrenDepts);
 			}
