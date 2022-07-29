@@ -2,6 +2,7 @@ package com.jtyjy.finance.manager.easyexcel;
 
 import java.math.BigDecimal;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 
 import lombok.AllArgsConstructor;
@@ -9,7 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 差旅汇总报表
+ * 总报表
  * @author User
  *
  */
@@ -69,9 +70,17 @@ public class TravelSumExcelData {
     private String travelReason;
     
     @ExcelProperty(value="报销动因")
-    private String agentName;  
-    
+    private String agentName;
+
+    @ExcelProperty(value="科目")
+    private String subject;
+
+    @ExcelProperty(value="划拨金额")
+    private BigDecimal allocatedmoney;
+
     @ExcelProperty(value="备注")
     private String remark;
-    
+
+    @ExcelIgnore
+    private Long reimbursementid;
 }

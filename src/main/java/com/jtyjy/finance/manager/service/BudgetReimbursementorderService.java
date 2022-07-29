@@ -5,9 +5,11 @@ import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.WriteTable;
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
 import com.jtyjy.core.anno.JdbcSelector;
@@ -2615,6 +2617,47 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
      */
 	public void sendQYWXTextMsg(String msg, String empno) {
         sender.sendQywxMsgSyn(new QywxTextMsg(empno+"|17474", null, null, 0, msg, null));
+    }
+
+    /**
+     * 发送报销进度消息提醒报销人
+     * @param stepFlag
+     * @param opt
+     * @param setStep
+     * @param order
+     * @throws MyException
+     */
+    public void noticeScheduleToBxr(String stepFlag, String opt, String setStep, BudgetReimbursementorder order) throws MyException {
+	    if (ReimbursementStepHelper.RECEIVED.equals(opt)) {
+	        //票面接收
+            if (!ReimbursementStepHelper.BILL_RECEIVE.equals(stepFlag) && !ReimbursementStepHelper.FINANCIAL_MANAGE_CHECK.equals(stepFlag)
+                    && !ReimbursementStepHelper.GENERAL_MANAGER_CHECK.equals(stepFlag) && !ReimbursementStepHelper.CASHIER_PAY.equals(stepFlag)) {
+                return;
+            }
+        } else {
+	        //审核
+            if (!ReimbursementStepHelper.BUDGET_CHECK.equals(stepFlag) && !ReimbursementStepHelper.SPLIT_BILL_SCAN.equals(stepFlag)
+                    && !ReimbursementStepHelper.SPLIT_BILL_CONFIRM.equals(stepFlag)) {
+                return;
+            }
+        }
+	    //出纳付款前面环节需发送消息
+        List<TabDm> dmList = dmService.list(Wrappers.<TabDm>lambdaQuery().eq(TabDm::getDmType, "verifyNotice").eq(TabDm::getDmStatus, 1));
+        if(!CollectionUtils.isEmpty(dmList)) {
+            //不包含指定科目无需发消息
+            List<String> dms = dmList.stream().map(TabDm::getDmName).collect(Collectors.toList());
+            List<BudgetReimbursementorderDetail> detailList = detailService.getByOrderId(order.getId());
+            List<BudgetReimbursementorderDetail> matchSubjectDetailList = detailList.stream().filter(e -> dms.contains(e.getSubjectname())).collect(Collectors.toList());
+            if(!CollectionUtils.isEmpty(matchSubjectDetailList)){
+                //需通知报销人
+                WbUser user = UserCache.getUserByUserId(order.getReimperonsid());
+                String msg = "您报销的["+ matchSubjectDetailList.get(0).getSubjectname()+"]（￥" + order.getReimmoney() + "）已流转至[" + setStep + "]环节";
+                sender.sendQywxMsgSyn(new QywxTextMsg(user.getUserName(), null, null, 0, msg, null));
+            }
+        }
+
+
+
     }
 }
 @Data

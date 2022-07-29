@@ -1,14 +1,15 @@
 package com.jtyjy.finance.manager.service;
 
 import java.io.InputStream;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.StringJoiner;
+import java.math.BigDecimal;
+import java.util.*;
 
 import javax.servlet.http.HttpServletResponse;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.jtyjy.finance.manager.bean.*;
+import com.jtyjy.finance.manager.mapper.BudgetReimbursementorderAllocatedMapper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,13 +21,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.jtyjy.core.local.DefaultChangeLogThreadLocal;
 import com.jtyjy.core.service.DefaultBaseService;
-import com.jtyjy.finance.manager.bean.BudgetReimbursementorder;
-import com.jtyjy.finance.manager.bean.BudgetReimbursementorderTravel;
-import com.jtyjy.finance.manager.bean.BudgetYearPeriod;
-import com.jtyjy.finance.manager.bean.TabChangeLog;
-import com.jtyjy.finance.manager.bean.WbUser;
 import com.jtyjy.finance.manager.constants.Constants;
-import com.jtyjy.finance.manager.easyexcel.EntertainSumExcelData;
 import com.jtyjy.finance.manager.easyexcel.TravelSumExcelData;
 import com.jtyjy.finance.manager.mapper.BudgetReimbursementorderTravelMapper;
 import com.jtyjy.finance.manager.mapper.TabChangeLogMapper;
@@ -47,6 +42,8 @@ public class BudgetReimbursementorderTravelService extends DefaultBaseService<Bu
 	private final BudgetReimbursementorderTravelMapper mapper; 
 	
     private final BudgetYearPeriodService yearService;
+
+    private final BudgetReimbursementorderAllocatedMapper allocatedMapper;
     
     private final WbUserService userService;
 	@Override
@@ -87,6 +84,7 @@ public class BudgetReimbursementorderTravelService extends DefaultBaseService<Bu
         if (null == list || list.isEmpty()) {
             throw new Exception("无差旅数据");
         }
+        List<TravelSumExcelData> resultList = new ArrayList<>();
         for (TravelSumExcelData data : list) {
             StringJoiner sj = new StringJoiner(",");
             for (String empNo : data.getTraveler().split(",")) {
@@ -98,6 +96,35 @@ public class BudgetReimbursementorderTravelService extends DefaultBaseService<Bu
                 }
             }
             data.setTraveler(sj.toString());
+            if (data.getAllocatedmoney().compareTo(BigDecimal.ZERO) > 0) {
+                //存在划拨金额
+                resultList.add(data);
+                List<BudgetReimbursementorderAllocated> allocatedList = allocatedMapper.selectList(Wrappers.<BudgetReimbursementorderAllocated>lambdaQuery().eq(BudgetReimbursementorderAllocated::getReimbursementid, data.getReimbursementid()));
+                allocatedList.forEach(allocated -> {
+                    TravelSumExcelData allocateData = new TravelSumExcelData();
+                    BeanUtils.copyProperties(data, allocateData);
+                    allocateData.setTraveler("");
+                    allocateData.setTravelerNum(null);
+                    allocateData.setTravelPeriod("");
+                    allocateData.setTravelDay(null);
+                    allocateData.setTotalAmt(null);
+                    allocateData.setLongAmt(null);
+                    allocateData.setCityAmt(null);
+                    allocateData.setHotelAmt(null);
+                    allocateData.setSubsidyDay(null);
+                    allocateData.setSubsidyBz(null);
+                    allocateData.setSubsidyAmt(null);
+                    allocateData.setOtherAmt(null);
+                    allocateData.setTravelReason("");
+                    allocateData.setUnitName(allocated.getUnitname());
+                    allocateData.setAgentName(allocated.getMonthagentname());
+                    allocateData.setSubject(allocated.getSubjectname());
+                    allocateData.setAllocatedmoney(allocated.getAllocatedmoney());
+                    resultList.add(allocateData);
+                });
+            } else {
+                resultList.add(data);
+            }
         }
         String excelName = 2 == bxType ? "差旅报销" : "差旅补贴";
         Map<String, String> heads = new HashMap<>();
@@ -108,7 +135,7 @@ public class BudgetReimbursementorderTravelService extends DefaultBaseService<Bu
         WriteSheet sheet = EasyExcel.writerSheet(0).build();
         sheet.setSheetName(excelName + "汇总");
         workBook.fill(heads, sheet);
-        workBook.fill(list, sheet);
+        workBook.fill(resultList, sheet);
         workBook.finish();
     }
 }

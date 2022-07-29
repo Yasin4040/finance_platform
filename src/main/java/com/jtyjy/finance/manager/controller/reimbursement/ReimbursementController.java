@@ -438,7 +438,6 @@ public class ReimbursementController {
 	
 	/**
 	 * 分页查询
-	 * @param id
 	 * @return
 	 * @throws Exception
 	 */
@@ -1156,6 +1155,8 @@ public class ReimbursementController {
 		String content = "扫码成功！";
 		content = "报销单【" + order.getReimcode() + "】-【" + setStep + "】" +"扫描成功。";
 		messageSender.sendQywxMsg(new QywxTextMsg(codeRequest.getEmpNo(), null, null, 0, content, 0));
+		//接收后，发送消息通知报销人
+        service.noticeScheduleToBxr(values[0], values[1], setStep, order);
 		this.redis.set(REDIS_BXDH + codeRequest.getEmpNo(), order.getReimcode());
 		this.redis.set(REDIS_BXDID + codeRequest.getEmpNo(), order.getId().toString());
 		HtmlUtil.draw(HtmlUtil.html("报销审核", setStep, "成功", content, FULL_FORMAT.format(new Date())), response);

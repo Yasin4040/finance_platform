@@ -26,7 +26,7 @@
     <select id = "travelSummaryByYear" resultType = "com.jtyjy.finance.manager.easyexcel.TravelSumExcelData" >
     	SELECT maintab.*, (LENGTH(maintab.traveler) - LENGTH(REPLACE(maintab.traveler,',',''))+1) travelerNum, CONCAT(DATE_FORMAT(travel.travelstart, '%Y-%m-%d %H:%i:%s' ), '--', DATE_FORMAT(travel.travelend, '%Y-%m-%d %H:%i:%s' )) travelPeriod, ROUND(travel.travelday, 2) travelDay, ROUND(travel.total, 2) totalAmt, ROUND(travel.longtravelexp,2) longAmt, ROUND(travel.citytravelexp,2) cityAmt, ROUND(travel.hotelexpense,2) hotelAmt, ROUND(travel.travelday, 2) subsidyDay, ROUND(travel.dailysubsidy, 2) subsidyBz, ROUND(travel.travelday * travel.dailysubsidy, 2) subsidyAmt, ROUND(travel.other, 2) otherAmt
 		FROM 
-		(SELECT ord.id, ord.reimcode, unit.name unitName, CONCAT(ord.monthid, '月') bxMonth, ord.reimperonsname bxr, ord.traveler, ord.travelreason travelReason, GROUP_CONCAT(detail.monthagentname) agentName, ord.remark 
+		(SELECT ord.id reimbursementid, ord.reimcode, unit.name unitName, CONCAT(ord.monthid, '月') bxMonth, ord.reimperonsname bxr, ord.traveler, ord.travelreason travelReason, GROUP_CONCAT(detail.monthagentname) agentName, ord.remark, ord.allocatedmoney
 		FROM budget_reimbursementorder ord LEFT JOIN budget_unit unit ON ord.unitid = unit.id LEFT JOIN budget_reimbursementorder_detail detail ON ord.id = detail.reimbursementid
 		WHERE ord.reuqeststatus = 2 AND ord.bxtype = #{bxType} AND ord.yearid = #{yearId}
 		<if test="monthId !=null and monthId !=''">
@@ -35,6 +35,6 @@
 		GROUP BY ord.id
 		ORDER BY ord.id
 		) maintab
-		LEFT JOIN budget_reimbursementorder_travel travel ON maintab.id = travel.reimbursementid
+		LEFT JOIN budget_reimbursementorder_travel travel ON maintab.reimbursementid = travel.reimbursementid
     </select>
 </mapper>

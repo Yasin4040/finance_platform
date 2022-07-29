@@ -2,6 +2,7 @@ package com.jtyjy.finance.manager.easyexcel;
 
 import java.math.BigDecimal;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 
 import lombok.AllArgsConstructor;
@@ -60,9 +61,21 @@ public class EntertainSumExcelData {
     private BigDecimal xcpf;
     
     @ExcelProperty(value="报销动因")
-    private String agentName;  
-    
+    private String agentName;
+
+    @ExcelProperty(value="科目")
+    private String subject;
+
+    @ExcelProperty(value="划拨金额")
+    private BigDecimal allocatedmoney;
+
     @ExcelProperty(value="备注")
     private String remark;
+
+    @ExcelProperty(value="合计")
+    private BigDecimal totalSum;
+
+    @ExcelIgnore
+    private Long reimbursementid;
     
 }

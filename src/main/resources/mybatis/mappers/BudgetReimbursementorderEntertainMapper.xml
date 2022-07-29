@@ -26,8 +26,8 @@
     <select id = "entertainSummaryByYear" resultType = "com.jtyjy.finance.manager.easyexcel.EntertainSumExcelData">
     	SELECT maintab.*, DATE_FORMAT(entertain.date, '%Y-%m-%d' ) zdDate, entertain.mealsrs cfrs, ROUND(entertain.mealsbz, 2) cfbz, ROUND(entertain.mealstotal,2) cfje, entertain.hotalrs zsrs, ROUND(entertain.hotalbz,2) zsbz, entertain.hotaljs zsjs, ROUND(entertain.hotaltotal,2) zsje, ROUND(entertain.other,2) other, ROUND(entertain.publicityexp,2) xcpf
 		FROM 
-		(SELECT ord.id, ord.reimcode, unit.name unitName, CONCAT(ord.monthid, '月') bxMonth, ord.reimperonsname bxr, 
-		GROUP_CONCAT(detail.monthagentname) agentName, ord.remark 
+		(SELECT ord.id reimbursementid, ord.reimcode, unit.name unitName, CONCAT(ord.monthid, '月') bxMonth, ord.reimperonsname bxr,
+		GROUP_CONCAT(detail.monthagentname) agentName, ord.remark, ord.allocatedmoney
 		FROM budget_reimbursementorder ord LEFT JOIN budget_unit unit ON ord.unitid = unit.id LEFT JOIN budget_reimbursementorder_detail detail ON ord.id = detail.reimbursementid
 		WHERE ord.reuqeststatus = 2 AND ord.bxtype = #{bxType} AND ord.yearid = #{yearId}
 		<if test="monthId !=null and monthId !=''">
@@ -36,6 +36,6 @@
 		GROUP BY ord.id
 		ORDER BY ord.id
 		) maintab
-		LEFT JOIN budget_reimbursementorder_entertain entertain ON maintab.id = entertain.reimbursementid
+		LEFT JOIN budget_reimbursementorder_entertain entertain ON maintab.reimbursementid = entertain.reimbursementid
     </select>
 </mapper>
