@@ -36,7 +36,7 @@ public class BxInfoSheetDto {
 	 * 报销人姓名
 	 */
 	@Location(soleRow = 2, column = 3)
-    @NotNull(message = "报销人姓名不能为空")
+    @NotBlank(message = "报销人姓名不能为空")
 	private String d3;
 
 	/**
@@ -49,7 +49,7 @@ public class BxInfoSheetDto {
 	 * 其他金额
 	 */
 	@Location(soleRow = 2, column = 7)
-	@NotBlank(message = "其他金额不能为空")
+	@NotNull(message = "其他金额不能为空")
 	private Double h3;
 
 	@Location(soleRow = 3, column = 1)
