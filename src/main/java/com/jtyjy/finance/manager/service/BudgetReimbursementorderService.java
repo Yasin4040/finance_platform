@@ -443,9 +443,9 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
             map.put("d2", orderInfo.getMonthid() + "月");
             map.put("f2", orderInfo.getUnitName());
             map.put("b3", orderInfo.getReimperonsNo());
-            map.put("g3", orderInfo.getReimperonsname());
-            map.put("d3", Constants.FORMAT2_10.format(orderInfo.getReimdate()));
-            map.put("f3", orderInfo.getOthermoney().setScale(2, BigDecimal.ROUND_HALF_UP));
+            map.put("d3", orderInfo.getReimperonsname());
+            map.put("f3", Constants.FORMAT2_10.format(orderInfo.getReimdate()));
+            map.put("h3", orderInfo.getOthermoney().setScale(2, BigDecimal.ROUND_HALF_UP));
             map.put("b4", orderInfo.getAttachcount());
             map.put("d4", ReimbursementTypeEnmu.getValue(orderInfo.getBxtype()));
             map.put("f4", orderInfo.getReimcode());

@@ -294,7 +294,7 @@ public class ReimbursementController {
         order.setReimperonsid((String)map.get("bxrId"));
         order.setReimperonsname((String)map.get("bxrName"));
         order.setReimdate((Date) map.get("bxDate"));
-        order.setOthermoney(null == map.get("f3") ? BigDecimal.ZERO : new BigDecimal((Double)map.get("f3")));
+        order.setOthermoney(null == map.get("h3") ? BigDecimal.ZERO : new BigDecimal((Double)map.get("h3")));
         order.setAttachcount((Integer)map.get("b4"));
         order.setBxtype((Integer)map.get("bxType"));
         order.setRemark((String)map.get("f4"));

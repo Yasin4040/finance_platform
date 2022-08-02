@@ -3174,6 +3174,9 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 
 
 		List<BudgetExtractpaydetail> curExtractPayDetails = this.payDetailMapper.selectList(new QueryWrapper<BudgetExtractpaydetail>().likeRight("extractmonth", extractMonth));
+		if (CollectionUtils.isEmpty(curExtractPayDetails)) {
+			return new ArrayList<>();
+		}
 		Map<Long, BudgetExtractpaydetail> payDetailMap = curExtractPayDetails.stream().collect(Collectors.toMap(BudgetExtractpaydetail::getId, e -> e, (e1, e2) -> e1));
 		//所有的发放记录
 		Map<Long, BudgetExtractpayment> paymentMap = this.paymentMapper.selectList(new QueryWrapper<BudgetExtractpayment>().in("budgetextractpaydetailid", curExtractPayDetails.stream().map(e -> e.getId()).collect(Collectors.toList()))).stream().collect(Collectors.toMap(BudgetExtractpayment::getBudgetextractpaydetailid, e -> e, (e1, e2) -> e1));

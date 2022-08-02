@@ -272,7 +272,7 @@ public class BxImportExcelPostProcessor implements ImportPostProcessor{
 	            BxInfoSheetDto head = JSONObject.parseObject(JSONObject.toJSONString(headMap),BxInfoSheetDto.class);
 	            String errorInfo = BaseController.validate(head);
 	            if(StringUtils.isNotBlank(errorInfo)) throw new RuntimeException(errorInfo);
-	            if(null == head.getF3()) head.setF3(0d);	            BudgetYearPeriod yearPeriod = this.yearMapper.selectOne(new QueryWrapper<BudgetYearPeriod>().eq("period", head.getB2()));
+	            if(null == head.getH3()) head.setH3(0d);	            BudgetYearPeriod yearPeriod = this.yearMapper.selectOne(new QueryWrapper<BudgetYearPeriod>().eq("period", head.getB2()));
 	            if(Objects.isNull(yearPeriod)) throw new RuntimeException("届别【"+head.getB2()+"】不存在！");
 	            //head.setYearPeriod(yearPeriod);
 	            this.yearId = yearPeriod.getId();
@@ -294,18 +294,10 @@ public class BxImportExcelPostProcessor implements ImportPostProcessor{
 	            if (null == bxTypeDm) throw new RuntimeException("报销类型【" + head.getD4() +"】无效！");
 	            this.bxType = Integer.valueOf(bxTypeDm.getDm());
                 headMap.put("bxType", this.bxType);
-                String empNo = null;
-                String userName = null;
-                try {
-                    String userInfo = head.getB3().replace("（", "(").replace("）", ")");
-                    Integer left = userInfo.indexOf("(");
-                    userName = userInfo.substring(0, left);
-                    empNo = userInfo.substring(left+1, userInfo.length()-1);
-                }catch (Exception dateParseE){
-                    throw new RuntimeException("报销人格式有误，需为：姓名（工号）！");
-                }
+                String empNo = head.getB3();
+                String userName = head.getD3();
                 WbUser bxrInfo = this.userMapper.selectOne(new QueryWrapper<WbUser>().eq("USER_NAME", empNo).eq("DISPLAY_NAME", userName));
-                if (null == bxrInfo) throw new RuntimeException("报销人【"+ head.getB3() +"】不存在！");
+                if (null == bxrInfo) throw new RuntimeException("报销人信息不存在！");
                 headMap.put("bxrId", bxrInfo.getUserId());
                 headMap.put("bxrName", bxrInfo.getDisplayName());
                 if (StringUtils.isNotBlank(head.getF4())) {
@@ -314,7 +306,7 @@ public class BxImportExcelPostProcessor implements ImportPostProcessor{
                     headMap.put("id", orgOrder.getId());                
                 }
                 try {
-                    String date = head.getD3();
+                    String date = head.getF3();
                     if(date.length() != 10){
                     	throw new RuntimeException("error");
                     }

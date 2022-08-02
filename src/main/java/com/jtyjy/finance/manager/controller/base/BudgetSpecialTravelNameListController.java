@@ -6,6 +6,7 @@ import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.result.ResponseEntity;
 import com.jtyjy.finance.manager.bean.BudgetSpecialTravelNameList;
 import com.jtyjy.finance.manager.bean.WbDept;
+import com.jtyjy.finance.manager.cache.DeptCache;
 import com.jtyjy.finance.manager.controller.BaseController;
 import com.jtyjy.finance.manager.service.BudgetSpecialTravelNameListService;
 import com.jtyjy.finance.manager.service.WbDeptService;
@@ -103,7 +104,7 @@ public class BudgetSpecialTravelNameListController extends BaseController<Budget
 	                                       @RequestParam(value = "displayName",required = false)String empNo
 										, @RequestParam(value = "stopFlag",required = false)Boolean stopFlag){
 		try {
-			Map<String, WbDept> deptMap = deptService.list(null).stream().collect(Collectors.toMap(e -> e.getDeptId(), e -> e));
+			Map<String, WbDept> deptMap = DeptCache.DEPT_MAP;
 			Page<BudgetSpecialTravelNameList> pageCond = new Page<>(page,rows);
 			LambdaQueryWrapper<BudgetSpecialTravelNameList> qw = new LambdaQueryWrapper<>();
 			if(stopFlag !=null) qw.eq(BudgetSpecialTravelNameList::getStopFlag,stopFlag);
@@ -115,8 +116,11 @@ public class BudgetSpecialTravelNameListController extends BaseController<Budget
 			pageCond = this.service.page(pageCond, qw.orderByDesc(BudgetSpecialTravelNameList::getUpdateTime));
 			pageCond.getRecords().stream().forEach(e->{
 				if(e.getDeptId()!=null) {
-					e.setDeptFullName(deptMap.get(e.getDeptId().toString()).getDeptFullname());
-					e.setDeptName(deptMap.get(e.getDeptId().toString()).getDeptName());
+					WbDept wbDept = deptMap.get(e.getDeptId());
+					if (null != wbDept) {
+						e.setDeptFullName(wbDept.getDeptFullname());
+						e.setDeptName(wbDept.getDeptName());
+					}
 				}
 			});
 			return ResponseEntity.ok(PageResult.apply(pageCond.getTotal(),pageCond.getRecords()));
