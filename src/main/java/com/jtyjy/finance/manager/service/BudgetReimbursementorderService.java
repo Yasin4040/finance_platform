@@ -2652,7 +2652,7 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
                 //需通知报销人
                 WbUser user = UserCache.getUserByUserId(order.getReimperonsid());
                 String msg = "您报销的["+ matchSubjectDetailList.get(0).getSubjectname()+"]（￥" + order.getReimmoney() + "）已流转至[" + setStep + "]环节";
-                sender.sendQywxMsgSyn(new QywxTextMsg(user.getUserName(), null, null, 0, msg, null));
+                sender.sendQywxMsg(new QywxTextMsg(user.getUserName(), null, null, 0, msg, null));
             }
         }
 
