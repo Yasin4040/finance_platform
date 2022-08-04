@@ -103,7 +103,7 @@ public class BudgetReimbursementorderEntertainService extends DefaultBaseService
 					allocateData.setZsje(null);
 					allocateData.setOther(null);
 					allocateData.setXcpf(null);
-					allocateData.setTotalSum(null);
+					allocateData.setTotalSum(allocated.getAllocatedmoney());
 					allocateData.setUnitName(allocated.getUnitname());
 					allocateData.setAgentName(allocated.getMonthagentname());
 					allocateData.setSubject(allocated.getSubjectname());

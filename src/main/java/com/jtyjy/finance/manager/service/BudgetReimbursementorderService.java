@@ -2639,25 +2639,23 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
         if (needNotice) {
             //出纳付款前面环节需发送消息
             List<TabDm> dmList = dmService.list(Wrappers.<TabDm>lambdaQuery().eq(TabDm::getDmType, "verifyNotice").eq(TabDm::getDmStatus, 1));
-            if(!CollectionUtils.isEmpty(dmList)) {
+            if (!CollectionUtils.isEmpty(dmList)) {
                 //不包含指定科目无需发消息
                 List<String> dms = dmList.stream().map(TabDm::getDmName).collect(Collectors.toList());
                 List<BudgetReimbursementorderDetail> detailList = detailService.getByOrderId(order.getId());
                 List<BudgetReimbursementorderDetail> matchSubjectDetailList = detailList.stream().filter(e -> dms.contains(e.getSubjectname())).collect(Collectors.toList());
-                if(!CollectionUtils.isEmpty(matchSubjectDetailList)){
+                if (!CollectionUtils.isEmpty(matchSubjectDetailList)) {
                     //需通知报销人
                     WbUser user = UserCache.getUserByUserId(order.getReimperonsid());
-                    String msg = "您报销的["+ matchSubjectDetailList.get(0).getSubjectname()+"]（￥" + order.getReimmoney().setScale(BigDecimal.ROUND_HALF_UP, 2) + "）已流转至[" + stepName + "]环节";
+                    String msg = "您报销的[" + matchSubjectDetailList.get(0).getSubjectname() + "]（￥" + order.getReimmoney().setScale(BigDecimal.ROUND_HALF_UP, 2) + "）已流转至[" + stepName + "]环节";
                     sender.sendQywxMsg(new QywxTextMsg(user.getUserName(), null, null, 0, msg, 0));
                 }
             }
         }
-
-}
-
-
     }
 }
+
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
