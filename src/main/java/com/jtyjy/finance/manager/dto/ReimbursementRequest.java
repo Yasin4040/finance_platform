@@ -80,6 +80,15 @@ public class ReimbursementRequest {
 	@ApiModelProperty(value = "招待信息",required = true)
 	private List<BudgetReimbursementorderEntertain> orderEntertain = new ArrayList<>();
 
+	//欠票信息
+	@ApiModelProperty(value = "欠票信息",required = true)
+	private List<BudgetReimbursementorderLackBill> lackBillList = new ArrayList<>();
+
+	/**
+	 * 欠票标志
+	 */
+	private Boolean lackBillFlag;
+
 	/**
 	 * 是否项目报销
 	 */

@@ -20,6 +20,7 @@ import com.jtyjy.easy.excel.ImportHelper;
 import com.jtyjy.finance.manager.bean.*;
 import com.jtyjy.finance.manager.constants.ReimbursementStepHelper;
 import com.jtyjy.finance.manager.controller.BaseController;
+import com.jtyjy.finance.manager.dto.BudgetLackBillQueryDTO;
 import com.jtyjy.finance.manager.dto.CheckPassRequest;
 import com.jtyjy.finance.manager.dto.ReimbursementRequest;
 import com.jtyjy.finance.manager.dto.bxExcel.*;
@@ -353,6 +354,8 @@ public class ReimbursementController {
         order.setAllocatedmoney(hbje);
         order.setTransmoney(zzje);
         order.setCashmoney(xjje);
+        //不支持导入欠票
+        dataRequest.setLackBillFlag(false);
         dataRequest.setOrder(order);
         dataRequest.setOrderDetail(orderDetail);;
         dataRequest.setOrderPayment(orderPayment);
@@ -1780,6 +1783,25 @@ public class ReimbursementController {
         }
         //List<ExpenseInfoVO> vos = this.service.getExpenseInfo(conditionMap,authSql);
         this.service.exportExpense(conditionMap,authSql,response);
+    }
+
+    @GetMapping("getLackBillList")
+    @ApiOperation(value = "欠票信息分页查询", httpMethod = "GET")
+    @ApiImplicitParams(value = {
+            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
+    })
+    public ResponseEntity<Page<BudgetLackBillVO>> getLackBillList(BudgetLackBillQueryDTO params) {
+        Page<BudgetLackBillVO> voList = this.service.getLackBillList(params);
+        return ResponseEntity.ok(voList);
+    }
+
+    @GetMapping("exportLackBill")
+    @ApiOperation(value = "欠票信息导出", httpMethod = "GET")
+    @ApiImplicitParams(value = {
+            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
+    })
+    public void exportLackBill(BudgetLackBillQueryDTO params, HttpServletResponse response) throws Exception {
+        this.service.exportLackBill(params, response);
     }
 
     /*@ApiDataAuthAnno

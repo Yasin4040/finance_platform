@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetReimbursementorderLackBillMapper">
+
+
+    <select id="getLackBillList" resultType="com.jtyjy.finance.manager.vo.BudgetLackBillVO">
+        SELECT t1.*, date_format(t1.estimated_return_time, '%Y-%m-%d' ) estimatedReturnTime,
+            t2.reimcode, t2.reimperonsname,
+            t3.period yearName, t4.period monthName,
+            IF( t1.bill_status = 1, '已签收', '未签收' ) billStatusName,
+            t5.name unitName
+        FROM budget_reimbursementorder_lack_bill t1
+             LEFT JOIN budget_reimbursementorder t2 ON t1.reimbursementid = t2.id
+             LEFT JOIN budget_year_period t3 ON t1.yearid = t3.id
+             LEFT JOIN budget_month_period t4 ON t1.monthid = t4.id
+             LEFT JOIN budget_unit t5 ON t2.unitid = t5.id
+        <where>
+            <if test="params.reimcode != null and params.reimcode != ''">
+                AND t2.reimcode LIKE CONCAT('%', #{params.reimcode}, '%')
+            </if>
+            <if test="params.reimperonsname != null and params.reimperonsname != ''">
+                AND t2.reimperonsname LIKE CONCAT('%', #{params.reimperonsname}, '%')
+            </if>
+            <if test="params.yearid != null">
+                AND t1.yearid = #{params.yearid}
+            </if>
+            <if test="params.monthid != null">
+                AND t1.monthid = #{params.monthid}
+            </if>
+            <if test="params.minMoney != null">
+                AND t1.money >= #{params.minMoney}
+            </if>
+            <if test="params.maxMoney != null">
+                AND t1.money &lt;= #{params.maxMoney}
+            </if>
+            <if test="params.estimatedReturnTime != null">
+                AND t1.estimated_return_time = #{params.estimatedReturnTime}
+            </if>
+            <if test="params.bunitname != null and params.bunitname != ''">
+                AND t1.bunitname LIKE CONCAT('%', #{params.bunitname}, '%')
+            </if>
+            <if test="params.billStatus != null">
+                AND t1.bill_status = #{params.billStatus}
+            </if>
+        </where>
+        ORDER BY t1.create_time DESC
+        <if test="authSql != null and authSql != ''">
+            ${authSql}
+        </if>
+    </select>
+</mapper>

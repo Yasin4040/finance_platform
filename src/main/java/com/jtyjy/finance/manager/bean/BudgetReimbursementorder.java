@@ -604,6 +604,12 @@ public class BudgetReimbursementorder implements Serializable {
     @TableField(exist = false)
     private String travelerName;
 
+    /**
+     * 是否欠票（0：否 1：是）
+     */
+    @ApiModelProperty(value = "是否欠票（0：否 1：是）")
+    private Boolean lackBill;
+
     public void setBase(String reimcode, Boolean isProjectBx,Boolean isFixAsset,WbUser user) {
         //设置主键为空
         this.setId(null);

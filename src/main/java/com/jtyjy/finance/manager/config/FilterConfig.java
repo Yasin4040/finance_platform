@@ -139,6 +139,7 @@ public class FilterConfig {
         apis.add("/api/reimbursement/importPayVerify");
         apis.add("/api/reimbursement/downImporPayVerifyDetail");
         apis.add("/api/reimbursement/exportExpense");
+        apis.add("/api/reimbursement/exportLackBill");
         FilterRegistrationBean<RequestResponseFilter> registration = new FilterRegistrationBean<RequestResponseFilter>();
         registration.setFilter(new RequestResponseFilter(this.requestResponseReplaceStrategy(), apis));
         List<String> urlList = new ArrayList<String>();

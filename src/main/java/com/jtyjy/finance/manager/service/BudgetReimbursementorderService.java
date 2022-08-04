@@ -22,6 +22,7 @@ import com.jtyjy.finance.manager.cache.UserCache;
 import com.jtyjy.finance.manager.constants.Constants;
 import com.jtyjy.finance.manager.constants.ReimbursementStepHelper;
 import com.jtyjy.finance.manager.constants.StatusConstants;
+import com.jtyjy.finance.manager.dto.BudgetLackBillQueryDTO;
 import com.jtyjy.finance.manager.dto.CheckPassRequest;
 import com.jtyjy.finance.manager.dto.ReimBursementDTO;
 import com.jtyjy.finance.manager.dto.ReimbursementRequest;
@@ -62,6 +63,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.util.*;
@@ -92,6 +94,8 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
     private BudgetReimbursementorderTravelService travelService;
     @Autowired
     private BudgetReimbursementorderEntertainService entertainService;
+    @Autowired
+    private BudgetReimbursementorderLackBillService lackBillService;
     @Autowired
     private BudgetReimbursementorderPaymentService paymentService;
     @Autowired
@@ -163,6 +167,8 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
     @Autowired
     private BudgetSpecialTravelNameListService specialTravelNameListService;
 
+    @Autowired
+    private BudgetReimbursementorderLackBillMapper lackBillMapper;
     //二维码格式
     private static final String QRCODE_FORMAT = ".png";
 
@@ -266,6 +272,10 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
         this.travelService.saveByOrder(request.getOrderTravel(), order);
         //保存招待
         this.entertainService.saveByOrder(request.getOrderEntertain(), order);
+        //保存欠票
+        if (Boolean.TRUE.equals(request.getLackBillFlag())) {
+            this.lackBillService.saveByOrder(request.getLackBillList(), order);
+        }
         return 7;
     }
 
@@ -2652,6 +2662,39 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
                 }
             }
         }
+    }
+
+    /**
+     * 欠票信息分页查询
+     * @param params
+     * @return
+     */
+    public Page<BudgetLackBillVO> getLackBillList(BudgetLackBillQueryDTO params) {
+        if (null == params.getPage()) {
+            params.setPage(1);
+        }
+        if (null == params.getRows()) {
+            params.setRows(20);
+        }
+        Page<BudgetLackBillVO> pageCond = new Page<>(params.getPage(), params.getRows());
+        List<BudgetLackBillVO> retList = this.lackBillMapper.getLackBillList(pageCond, params, JdbcSqlThreadLocal.get());
+        pageCond.setRecords(retList);
+        return pageCond;
+    }
+
+    /**
+     * 导出欠票信息
+     * @param params
+     * @param response
+     * @throws Exception
+     */
+    public void exportLackBill(BudgetLackBillQueryDTO params, HttpServletResponse response) throws Exception {
+        List<BudgetLackBillVO> retList = this.lackBillMapper.getLackBillList(null, params, JdbcSqlThreadLocal.get());
+        String fileName = URLEncoder.encode("欠票信息表", "UTF-8").replaceAll("\\+", "%20");;
+        response.setHeader("Content-Disposition", "attachment;filename=" + fileName + ".xlsx");
+        EasyExcel.write(EasyExcelUtil.getOutputStream(fileName, response),BudgetLackBillVO.class)
+                .autoCloseStream(false).sheet("欠票信息").doWrite(retList);
+
     }
 }
 

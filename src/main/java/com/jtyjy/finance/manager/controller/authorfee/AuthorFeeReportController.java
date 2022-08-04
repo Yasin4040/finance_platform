@@ -7,6 +7,7 @@ import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.WriteTable;
 import com.alibaba.excel.write.metadata.fill.FillConfig;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.result.ResponseEntity;
 import com.jtyjy.finance.manager.bean.*;
@@ -99,7 +100,8 @@ public class AuthorFeeReportController {
 			if (authorFeeMergeList.isEmpty()) throw new RuntimeException("无数据可导出！");
 			List<Long> mergeIdList = authorFeeMergeList.stream().map(e -> e.getId()).collect(Collectors.toList());
 			//所有的稿费明细
-			List<BudgetAuthorfeedetail> feeDetailList = detailService.list(new QueryWrapper<BudgetAuthorfeedetail>().in("authormergeid", mergeIdList));
+			List<BudgetAuthorfeedetail> feeDetailList = detailService.list(Wrappers.<BudgetAuthorfeedetail>lambdaQuery().in(BudgetAuthorfeedetail::getAuthormergeid, mergeIdList)
+					.eq(BudgetAuthorfeedetail::getNeedzz, true));
 
 			//入账汇总表
 			List<AuthorFeeEntryDetailExcelData> excelDataSumList = new ArrayList<>();
