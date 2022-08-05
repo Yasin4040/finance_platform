@@ -49,7 +49,7 @@ public class SyncUserAndBankAccountJob {
 		List<Map<String, Object>> hrDeptList = hrService.getSyncDeptList();
 		List<Map<String,Object>> hrUserList = hrService.getHrUserList();
 		userService.syncUser1(hrDeptList,budgetDeptList,hrUserList);
-		syncUser(); //同步用户
+		//syncUser(); //同步用户
 		try{
 		//同步银行账户
 			syncBankAccount();
