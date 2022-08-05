@@ -24,9 +24,6 @@ public class YearAgentAddInfoExcelData {
     @ExcelProperty(value = "状态 -1：退回，0：保存，1：已提交（待审核），2：审核通过")
     private String requestStatus;
 
-    @ExcelProperty(value = "是否免罚")
-    private String mf;
-
     @ExcelProperty(value = "单据号")
     private String yearAddCode;
 
@@ -69,4 +66,15 @@ public class YearAgentAddInfoExcelData {
     @ExcelProperty(value = "审核日期")
     private String auditTime;
 
+    @ExcelProperty(value = "是否申请免罚")
+    private String isExemptFine;
+
+    @ExcelProperty(value = "免罚理由说明")
+    private String exemptFineReason;
+
+    @ExcelProperty(value = "免罚结果")
+    private String exemptResult;
+
+    @ExcelProperty(value = "罚款理由说明")
+    private String fineRemark;
 }

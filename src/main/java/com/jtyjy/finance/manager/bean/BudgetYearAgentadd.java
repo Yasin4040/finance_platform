@@ -278,4 +278,28 @@ public class BudgetYearAgentadd implements Serializable {
     @TableField(exist = false)
     private BigDecimal yearBalance;
 
+    /**
+     * 是否免罚 0 否 1是
+     */
+    @NotNull(message = "是否免罚不能为空")
+    @ApiModelProperty(value = "是否免罚 false否 true是", required = true)
+    private Boolean isExemptFine;
+
+    /**
+     * 免罚原因
+     */
+    @ApiModelProperty(value = "免罚原因")
+    private String exemptFineReason;
+
+    /**
+     * 免罚结果 0 免罚 1 罚款
+     */
+    @ApiModelProperty(value = "免罚结果 0 免罚 1 罚款（新增修改不用传）")
+    private Integer exemptResult;
+
+    /**
+     * 罚款理由说明
+     */
+    @ApiModelProperty(value = "罚款理由说明（新增修改不用传）")
+    private String fineRemark;
 }

@@ -2696,6 +2696,23 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
                 .autoCloseStream(false).sheet("欠票信息").doWrite(retList);
 
     }
+
+    public void receiveBill(String lackBillIds)  {
+        List<BudgetReimbursementorderLackBill> lackBillList = this.lackBillMapper.selectBatchIds(Arrays.asList(lackBillIds.split(",")));
+        if (CollectionUtils.isEmpty(lackBillList)) {
+            throw new RuntimeException("无效的数据");
+        }
+        lackBillList.forEach(lackBill -> {
+            if (1 == lackBill.getBillStatus()) {
+                throw new RuntimeException(lackBill.getProject() + "已收票，请勿重复操作！");
+            } else {
+                lackBill.setBillStatus(1);
+                lackBill.setUpdateTime(new Date());
+                lackBill.setUpdateBy(UserThreadLocal.get().getDisplayName());
+            }
+        });
+        this.lackBillService.updateBatchById(lackBillList);
+    }
 }
 
 

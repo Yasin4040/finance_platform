@@ -54,13 +54,13 @@ public class YearAgentAddInfoDTO {
      * 是否免罚 0 否 1是
      */
     //@NotNull(message = "是否免罚不能为空")
-    @ApiModelProperty(value = "是否免罚 false否 true是")
+    @ApiModelProperty(value = "是否免罚 false否 true是", hidden = true)
     private Boolean isExemptFine;
 
     /**
      * 免罚原因
      */
-    @ApiModelProperty(value = "免罚原因")
+    @ApiModelProperty(value = "免罚原因", hidden = true)
     private String exemptFineReason;
 
 }

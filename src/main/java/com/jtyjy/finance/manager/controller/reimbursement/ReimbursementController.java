@@ -1804,6 +1804,17 @@ public class ReimbursementController {
         this.service.exportLackBill(params, response);
     }
 
+    @GetMapping("receiveBill")
+    @ApiOperation(value = "欠票信息导出", httpMethod = "GET")
+    @ApiImplicitParams(value = {
+            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
+            @ApiImplicitParam(value = "欠票明细ids（多个,隔开）", name = "lackBillIds", dataType = "String", required = true)
+    })
+    public ResponseEntity<String> receiveBill(String lackBillIds) {
+        this.service.receiveBill(lackBillIds);
+        return ResponseEntity.ok("操作成功！");
+    }
+
     /*@ApiDataAuthAnno
     @ApiOperation(value = "导出预算员报销22",httpMethod="GET")
     @GetMapping("/exportExpense2")

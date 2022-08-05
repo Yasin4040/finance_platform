@@ -93,12 +93,15 @@
             left (su.agentaddmoney, LENGTH (su.agentaddmoney) - 2) kmljzj,
             left (su.agentlendoutmoney, LENGTH (su.agentlendoutmoney) - 2) kmljcc,
             left (su.agentexcutemoney, LENGTH (su.agentexcutemoney) - 2) kmljzx,
+            detail.id detailId
             detail.type,
             detail.subjectid,
             detail.yearagentid,
             detail.`name`,
             detail.remark,
             detail.curmonthid,
+            detail.is_exempt_fine,
+            detail.exempt_fine_reason,
             left (detail.total, LENGTH (detail.total) - 2) total,
             left (detail.curmonthmoney, LENGTH (detail.curmonthmoney) - 2) curmonthmoney
         from budget_year_agentaddinfo su,

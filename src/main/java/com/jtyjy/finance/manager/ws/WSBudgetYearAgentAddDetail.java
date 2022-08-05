@@ -11,6 +11,11 @@ import java.math.BigDecimal;
 public class WSBudgetYearAgentAddDetail extends WorkflowBase {
 
     /**
+     * 明细id
+     */
+    private String sjid;
+
+    /**
      * 追加类型
      */
     private String zjlx;
@@ -64,6 +69,16 @@ public class WSBudgetYearAgentAddDetail extends WorkflowBase {
      * 本次追加后年度预算总额(科目)
      */
     private String bczjhndysye;
+
+    /**
+     * 是否免罚 false否 true是
+     */
+    private Boolean sfsqmf;
+
+    /**
+     * 免罚原因
+     */
+    private String mfly;
 
     @Override
     public String getWfid() {

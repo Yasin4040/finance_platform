@@ -7,7 +7,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jtyjy.core.local.DefaultChangeLogThreadLocal;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.service.DefaultBaseService;
+import com.jtyjy.ecology.EcologyClient;
 import com.jtyjy.ecology.EcologyParams;
+import com.jtyjy.ecology.EcologyWorkFlowValue;
 import com.jtyjy.ecology.webservice.workflow.WorkflowInfo;
 import com.jtyjy.finance.manager.bean.*;
 import com.jtyjy.finance.manager.constants.Constants;
@@ -150,7 +152,7 @@ public class BudgetYearAgentaddinfoService extends DefaultBaseService<BudgetYear
     /**
      * 年度预算追加
      */
-    public void yearAgentAddMoney(YearAgentAddInfoDTO bean,List<Map<String,Object>> list) throws Exception {
+    public void yearAgentAddMoney(YearAgentAddInfoDTO bean, List<Map<String, Object>> list) throws Exception {
 
         String key = UserThreadLocal.getEmpNo();
         if (bean.getId() != null) {
@@ -202,7 +204,7 @@ public class BudgetYearAgentaddinfoService extends DefaultBaseService<BudgetYear
             // 是否提交至OA系统
             if (bean.getIsSubmit()) {
                 try {
-                    submitVerify(info.getId(), true,list);
+                    submitVerify(info.getId(), true, list);
                 } catch (Exception e) {
                     e.printStackTrace();
                     throw new RuntimeException(e.getMessage());
@@ -353,7 +355,7 @@ public class BudgetYearAgentaddinfoService extends DefaultBaseService<BudgetYear
         // oa密码，上传附件时需使用
         updateAgentAddInfo.setOapassword(bean.getOaPwd());
 
-        updateAgentAddInfo.setIsExemptFine(bean.getIsExemptFine()==null?false:bean.getIsExemptFine());
+        updateAgentAddInfo.setIsExemptFine(bean.getIsExemptFine() == null ? false : bean.getIsExemptFine());
         updateAgentAddInfo.setExemptFineReason(bean.getExemptFineReason());
         if (bean.getId() == null) {
             WbUser wbUser = UserThreadLocal.get();
@@ -375,7 +377,7 @@ public class BudgetYearAgentaddinfoService extends DefaultBaseService<BudgetYear
     /**
      * 提交至OA系统
      */
-    public void submitVerify(Long infoId, Boolean existLock,List<Map<String,Object>> list) throws Exception {
+    public void submitVerify(Long infoId, Boolean existLock, List<Map<String, Object>> list) throws Exception {
         ZookeeperShareLock lock = null;
         try {
             if (!existLock) {
@@ -409,7 +411,7 @@ public class BudgetYearAgentaddinfoService extends DefaultBaseService<BudgetYear
 
             String oAUserId;
             String oAdeptId;
-            String userIdDeptId = this.oaService.getOaUserId(empNo,list);
+            String userIdDeptId = this.oaService.getOaUserId(empNo, list);
             if ("0".equals(userIdDeptId)) {
                 oAUserId = "0";
                 oAdeptId = "0";
@@ -541,6 +543,7 @@ public class BudgetYearAgentaddinfoService extends DefaultBaseService<BudgetYear
             WSBudgetYearAgentAddDetail detail = new WSBudgetYearAgentAddDetail();
             // 追加类型
             int type = Integer.parseInt(yearAdd.get("type").toString());
+            detail.setSjid(yearAdd.get("detailId").toString());
             detail.setZjlx(type == 0 ? "追加金额" : "追加动因");
             // 动因名称
             detail.setDymc(yearAdd.get("name").toString());
@@ -554,7 +557,11 @@ public class BudgetYearAgentaddinfoService extends DefaultBaseService<BudgetYear
             // 追加理由
             Object remark = yearAdd.get("remark");
             detail.setZjly(remark != null ? remark.toString() : "");
-
+            //是否免罚
+            detail.setSfsqmf((Boolean) yearAdd.get("is_exempt_fine"));
+            //免罚理由
+            Object exempt_fine_reason = yearAdd.get("exempt_fine_reason");
+            detail.setMfly(exempt_fine_reason == null ? "" : exempt_fine_reason.toString());
             BudgetYearSubject budgetYearSubject = this.budgetYearSubjectMapper.selectOne(new QueryWrapper<BudgetYearSubject>()
                     .eq("yearId", yearId)
                     .eq("unitId", unitId)
@@ -640,13 +647,15 @@ public class BudgetYearAgentaddinfoService extends DefaultBaseService<BudgetYear
             if (!addList.isEmpty()) {
                 for (BudgetYearAgentadd agentAdd : addList) {
                     YearAgentAddInfoExcelData rowData = new YearAgentAddInfoExcelData();
-                    rowData.setMf(addInfo.getIsExemptFine()==null?"否":(addInfo.getIsExemptFine()?"是":"否"));
                     rowData.setNum(resultList.size() + 1);
                     rowData.setRequestStatus(Constants.getRequestStatus(addInfo.getRequeststatus()));
                     rowData.setYearAddCode(addInfo.getYearaddcode());
                     rowData.setPeriod(addInfo.getPeriod());
                     rowData.setUnitName(addInfo.getUnitName());
-
+                    rowData.setIsExemptFine(agentAdd.getIsExemptFine() == null ? "否" : (agentAdd.getIsExemptFine() ? "是" : "否"));
+                    rowData.setExemptFineReason(agentAdd.getExemptFineReason() == null ? "" : agentAdd.getExemptFineReason());
+                    rowData.setExemptResult(agentAdd.getExemptResult() == null ? "" : (0 == agentAdd.getExemptResult() ? "免罚" : "罚款"));
+                    rowData.setFineRemark(agentAdd.getFineRemark() == null ? "" : agentAdd.getFineRemark());
                     // 预算科目名称
                     if (!subjectNames.containsKey(agentAdd.getSubjectid())) {
                         BudgetSubject subject = this.budgetSubjectMapper.selectById(agentAdd.getSubjectid());
@@ -707,83 +716,93 @@ public class BudgetYearAgentaddinfoService extends DefaultBaseService<BudgetYear
             }
 
             HashMap<Long, BigDecimal> subjectIds = new HashMap<>();
-            List<BudgetYearAgentadd> addList = this.budgetYearAgentaddMapper.selectList(new QueryWrapper<BudgetYearAgentadd>()
-                    .eq("infoid", agentAddInfo.getId()));
-            addList.forEach(yearAdd -> {
-                Long subjectId = yearAdd.getSubjectid();
-                if (!subjectIds.containsKey(subjectId)) {
-                    subjectIds.put(subjectId, yearAdd.getTotal());
-                } else {
-                    subjectIds.put(subjectId, subjectIds.get(subjectId).add(yearAdd.getTotal()));
-                }
+            EcologyWorkFlowValue value = EcologyClient.getWorkflowValue(params);
+            Map<String, List<Map<String, String>>> detailTableValues = value.getDetailtablevalues();
+            if (detailTableValues != null && !detailTableValues.isEmpty()) {
+                // 获取明细表数据(一个发放单位对应一个收款单位，有多条记录)
+                detailTableValues.forEach((str, values) -> {
+                    values.forEach(detail -> {
+                        String id = detail.get("sjid");
+                        BudgetYearAgentadd yearAdd = this.budgetYearAgentaddMapper.selectById(id);
+                        Long subjectId = yearAdd.getSubjectid();
+                        if (!subjectIds.containsKey(subjectId)) {
+                            subjectIds.put(subjectId, yearAdd.getTotal());
+                        } else {
+                            subjectIds.put(subjectId, subjectIds.get(subjectId).add(yearAdd.getTotal()));
+                        }
 
-                // 获取追加类型
-                int type = yearAdd.getType();
-                // 年度动因
-                BudgetYearAgent budgetYearAgent;
-                // 月度动因
-                BudgetMonthAgent budgetMonthAgent;
-                // 当前月id
-                Long currentMonthId = yearAdd.getCurmonthid();
-                // 当前月金额
-                BigDecimal currentMonthMoney = yearAdd.getCurmonthmoney();
-                // 追加金额
-                if (type == 0) {
-                    // 年度动因id
-                    Long yearAgentId = yearAdd.getYearagentid();
-                    budgetYearAgent = this.budgetYearAgentMapper.selectById(yearAgentId);
-                    if (budgetYearAgent == null) {
-                        throw new RuntimeException("追加的年度动因" + yearAdd.getName() + "不存在");
-                    }
-                    BudgetYearAgent updateYearAgent = new BudgetYearAgent();
-                    updateYearAgent.setId(yearAgentId);
-                    updateYearAgent.setUpdatetime(new Date());
-                    updateYearAgent.setAddmoney(budgetYearAgent.getAddmoney().add(yearAdd.getTotal()));
-                    this.budgetYearAgentMapper.updateById(updateYearAgent);
+                        // 获取追加类型
+                        int type = yearAdd.getType();
+                        // 年度动因
+                        BudgetYearAgent budgetYearAgent;
+                        // 月度动因
+                        BudgetMonthAgent budgetMonthAgent;
+                        // 当前月id
+                        Long currentMonthId = yearAdd.getCurmonthid();
+                        // 当前月金额
+                        BigDecimal currentMonthMoney = yearAdd.getCurmonthmoney();
+                        // 追加金额
+                        if (type == 0) {
+                            // 年度动因id
+                            Long yearAgentId = yearAdd.getYearagentid();
+                            budgetYearAgent = this.budgetYearAgentMapper.selectById(yearAgentId);
+                            if (budgetYearAgent == null) {
+                                throw new RuntimeException("追加的年度动因" + yearAdd.getName() + "不存在");
+                            }
+                            BudgetYearAgent updateYearAgent = new BudgetYearAgent();
+                            updateYearAgent.setId(yearAgentId);
+                            updateYearAgent.setUpdatetime(new Date());
+                            updateYearAgent.setAddmoney(budgetYearAgent.getAddmoney().add(yearAdd.getTotal()));
+                            this.budgetYearAgentMapper.updateById(updateYearAgent);
 
-                    budgetMonthAgent = saveOrUpdateMonthAgent(budgetYearAgent, currentMonthId, currentMonthMoney, true);
-                } else {
-                    Integer duplicationCount = this.budgetYearAgentMapper.selectCount(new QueryWrapper<BudgetYearAgent>()
-                            .eq("unitId", yearAdd.getUnitid())
-                            .eq("subjectId", subjectId)
-                            .eq("name", yearAdd.getName()));
-                    if (duplicationCount > 0) {
-                        throw new RuntimeException("追加的年度动因名称【" + yearAdd.getName() + "】已经存在。");
-                    }
-                    // 追加动因
-                    budgetYearAgent = new BudgetYearAgent();
-                    budgetYearAgent.setYearid(yearAdd.getYearid());
-                    budgetYearAgent.setUnitid(yearAdd.getUnitid());
-                    budgetYearAgent.setSubjectid(subjectId);
-                    budgetYearAgent.setTotal(BigDecimal.ZERO);
-                    budgetYearAgent.setPretotal(BigDecimal.ZERO);
-                    budgetYearAgent.setPreestimate(BigDecimal.ZERO);
-                    budgetYearAgent.setCreatetime(currentDate);
-                    budgetYearAgent.setUpdatetime(currentDate);
-                    budgetYearAgent.setName(yearAdd.getName());
-                    budgetYearAgent.setHappencount("");
-                    budgetYearAgent.setRemark(yearAdd.getRemark());
-                    budgetYearAgent.setAddmoney(yearAdd.getTotal());
-                    budgetYearAgent.setLendoutmoney(BigDecimal.ZERO);
-                    budgetYearAgent.setLendinmoney(BigDecimal.ZERO);
-                    budgetYearAgent.setExecutemoney(BigDecimal.ZERO);
-                    budgetYearAgent.setElasticflag(false);
-                    budgetYearAgent.setElasticratio(BigDecimal.ZERO);
-                    budgetYearAgent.setElasticmax(BigDecimal.ZERO);
-                    budgetYearAgent.setAgenttype(1);
-                    this.budgetYearAgentMapper.insert(budgetYearAgent);
+                            budgetMonthAgent = saveOrUpdateMonthAgent(budgetYearAgent, currentMonthId, currentMonthMoney, true);
+                        } else {
+                            Integer duplicationCount = this.budgetYearAgentMapper.selectCount(new QueryWrapper<BudgetYearAgent>()
+                                    .eq("unitId", yearAdd.getUnitid())
+                                    .eq("subjectId", subjectId)
+                                    .eq("name", yearAdd.getName()));
+                            if (duplicationCount > 0) {
+                                throw new RuntimeException("追加的年度动因名称【" + yearAdd.getName() + "】已经存在。");
+                            }
+                            // 追加动因
+                            budgetYearAgent = new BudgetYearAgent();
+                            budgetYearAgent.setYearid(yearAdd.getYearid());
+                            budgetYearAgent.setUnitid(yearAdd.getUnitid());
+                            budgetYearAgent.setSubjectid(subjectId);
+                            budgetYearAgent.setTotal(BigDecimal.ZERO);
+                            budgetYearAgent.setPretotal(BigDecimal.ZERO);
+                            budgetYearAgent.setPreestimate(BigDecimal.ZERO);
+                            budgetYearAgent.setCreatetime(currentDate);
+                            budgetYearAgent.setUpdatetime(currentDate);
+                            budgetYearAgent.setName(yearAdd.getName());
+                            budgetYearAgent.setHappencount("");
+                            budgetYearAgent.setRemark(yearAdd.getRemark());
+                            budgetYearAgent.setAddmoney(yearAdd.getTotal());
+                            budgetYearAgent.setLendoutmoney(BigDecimal.ZERO);
+                            budgetYearAgent.setLendinmoney(BigDecimal.ZERO);
+                            budgetYearAgent.setExecutemoney(BigDecimal.ZERO);
+                            budgetYearAgent.setElasticflag(false);
+                            budgetYearAgent.setElasticratio(BigDecimal.ZERO);
+                            budgetYearAgent.setElasticmax(BigDecimal.ZERO);
+                            budgetYearAgent.setAgenttype(1);
+                            this.budgetYearAgentMapper.insert(budgetYearAgent);
 
-                    budgetMonthAgent = saveOrUpdateMonthAgent(budgetYearAgent, currentMonthId, currentMonthMoney, false);
-                }
-                // 月度追加
-                if (budgetMonthAgent != null) {
-                    // 同步月度预算科目执行数
-                    this.budgetSysService.doSyncBudgetSubjectMonthAddMoney(budgetMonthAgent.getYearid(), budgetMonthAgent.getUnitid(), budgetMonthAgent.getSubjectid(), currentMonthId, currentMonthMoney, 1);
-                }
-                yearAdd.setYearagentid(budgetYearAgent.getId());
-                yearAdd.setMonthagentid(budgetMonthAgent != null ? budgetMonthAgent.getId() : null);
-                this.budgetYearAgentaddMapper.updateById(yearAdd);
-            });
+                            budgetMonthAgent = saveOrUpdateMonthAgent(budgetYearAgent, currentMonthId, currentMonthMoney, false);
+                        }
+                        // 月度追加
+                        if (budgetMonthAgent != null) {
+                            // 同步月度预算科目执行数
+                            this.budgetSysService.doSyncBudgetSubjectMonthAddMoney(budgetMonthAgent.getYearid(), budgetMonthAgent.getUnitid(), budgetMonthAgent.getSubjectid(), currentMonthId, currentMonthMoney, 1);
+                        }
+                        yearAdd.setYearagentid(budgetYearAgent.getId());
+                        yearAdd.setMonthagentid(budgetMonthAgent != null ? budgetMonthAgent.getId() : null);
+                        String mfjg = detail.get("mfjg");
+                        yearAdd.setExemptResult(Integer.valueOf(mfjg));
+                        yearAdd.setFineRemark(detail.get("fkyy"));
+                        this.budgetYearAgentaddMapper.updateById(yearAdd);
+                    });
+                });
+            }
 
             // 更新年度动因追加记录
             BudgetYearAgentaddinfo updateAddInfo = new BudgetYearAgentaddinfo();
