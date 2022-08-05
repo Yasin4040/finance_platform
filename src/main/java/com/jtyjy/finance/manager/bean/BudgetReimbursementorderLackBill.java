@@ -62,7 +62,7 @@ public class BudgetReimbursementorderLackBill implements Serializable {
      */
     @NotBlank(message = "开票单位名称不能为空")
     @ApiModelProperty(value = "开票单位名称", required = true)
-    @TableField(value = "开票单位名称")
+    @TableField(value = "bunitname")
     private String bunitname;
 
     /**
