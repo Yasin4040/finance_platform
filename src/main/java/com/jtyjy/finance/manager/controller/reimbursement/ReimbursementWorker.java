@@ -559,18 +559,21 @@ public class ReimbursementWorker {
             List<String> dms = dmList.stream().map(TabDm::getDmName).collect(Collectors.toList());
             List<BudgetReimbursementorderDetail> matchSubjectDetailList = request.getOrderDetail().stream().filter(e -> dms.contains(e.getSubjectname())).collect(Collectors.toList());
             if(!CollectionUtils.isEmpty(matchSubjectDetailList)){
-                String companyidOutKey = hrService.getSalaryUnitByEmpno(UserCache.getUserByUserId(request.getOrder().getReimperonsid()).getUserName());
-                if(StringUtils.isBlank(companyidOutKey)) return null;
-                List<BudgetBillingUnit> list = billingUnitService.list(new LambdaQueryWrapper<BudgetBillingUnit>().eq(BudgetBillingUnit::getOutKey, companyidOutKey));
-                if(!CollectionUtils.isEmpty(list)){
-                    BudgetBillingUnit budgetBillingUnit = list.get(0);
-                    long count = matchSubjectDetailList.stream().filter(e -> !e.getBunitid().toString().equals(budgetBillingUnit.getId().toString())).count();
-                    if(count > 0 ){
-                        return "提交失败！开票单位与报销人所在发薪单位不一致！";
+                //无票单位不做校验
+                List<BudgetReimbursementorderDetail> detailList = matchSubjectDetailList.stream().filter(e -> !e.getBunitname().contains("无票")).collect(Collectors.toList());
+                if(!CollectionUtils.isEmpty(detailList)){
+                    String companyidOutKey = hrService.getSalaryUnitByEmpno(UserCache.getUserByUserId(request.getOrder().getReimperonsid()).getUserName());
+                    if(StringUtils.isBlank(companyidOutKey)) return null;
+                    List<BudgetBillingUnit> list = billingUnitService.list(new LambdaQueryWrapper<BudgetBillingUnit>().eq(BudgetBillingUnit::getOutKey, companyidOutKey));
+                    if(!CollectionUtils.isEmpty(list)){
+                        BudgetBillingUnit budgetBillingUnit = list.get(0);
+                        long count = detailList.stream().filter(e -> !e.getBunitid().toString().equals(budgetBillingUnit.getId().toString())).count();
+                        if(count > 0 ){
+                            return "提交失败！开票单位与报销人所在发薪单位不一致！";
+                        }
+
                     }
-
                 }
-
             }
         }
         return null;
