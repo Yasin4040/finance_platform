@@ -14,8 +14,6 @@ public class YearAgentLendExcelData {
     @ExcelProperty(value = "主键Id")
     private Integer num;
 
-    @ExcelProperty(value = "是否免罚")
-    private String mf;
 
     @ExcelProperty(value = "拆借状态，-1：退回，0：保存，1：已提交（待审核），2：审核通过")
     private String requestStatus;
@@ -70,5 +68,17 @@ public class YearAgentLendExcelData {
 
     @ExcelProperty(value = "审核时间")
     private String auditTime;
+
+    @ExcelProperty(value = "是否免罚")
+    private String isExemptFine;
+
+    @ExcelProperty(value = "免罚原因")
+    private String exemptFineReason;
+
+    @ExcelProperty(value = "免罚结果")
+    private String exemptFineResult;
+
+    @ExcelProperty(value = "罚款原因说明")
+    private String fineReasonRemark;
 
 }

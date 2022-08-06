@@ -7,10 +7,14 @@ import com.jtyjy.core.log.DefaultChangeLog;
 import com.jtyjy.core.log.LoggerAction;
 import com.jtyjy.core.service.BaseService;
 import com.jtyjy.core.service.DefaultBaseService;
+import com.jtyjy.finance.manager.bean.TabDm;
 import com.jtyjy.finance.manager.bean.WbBanks;
+import com.jtyjy.finance.manager.dto.TabPayOrderVO;
 import com.jtyjy.finance.manager.mapper.WbBanksMapper;
+import com.jtyjy.finance.manager.utils.HttpUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +30,13 @@ public class CommonService extends DefaultBaseService<WbBanksMapper, WbBanks> {
 
     @Autowired
     private WbBanksMapper banksMapper;
+
+    @Autowired
+    private TabDmService dmService;
+
+    @Value("${sunpay.add.url}")
+    private String sunPayUrl;
+
 
 
     @Override
@@ -58,5 +69,27 @@ public class CommonService extends DefaultBaseService<WbBanksMapper, WbBanks> {
         query.clear();
         query.addAll(set);
         return query;
+    }
+
+    /**
+     * <p></p>
+     * @author minzhq
+     * @date 2022/8/6 10:15
+     * @param opt 1 追加  2 拆借
+     * @param remark 罚款原因
+     */
+    public void createBudgetFine(int opt,int fineCount,String empNo){
+        try{
+
+            TabDm dm = dmService.getByPrimaryKey("is_test_fine", "is_test_fine");
+            String fineEmpNo = empNo;
+            if("1".equals(dm.getDmValue())){
+                TabDm dm1 = dmService.getByPrimaryKey("test_fine_notice", "test_fine_notice");
+                fineEmpNo = dm1.getDmValue();
+            }
+            HttpUtil.doGet(sunPayUrl+"?empNo="+fineEmpNo+"&opt="+opt+"&count="+fineCount);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 }

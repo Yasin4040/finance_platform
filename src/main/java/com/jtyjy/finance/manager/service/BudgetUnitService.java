@@ -1,21 +1,26 @@
 package com.jtyjy.finance.manager.service;
 
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-
-import com.jtyjy.core.result.ResponseEntity;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.jtyjy.core.anno.JdbcSelector;
+import com.jtyjy.core.local.DefaultChangeLogThreadLocal;
+import com.jtyjy.core.local.JdbcSqlThreadLocal;
+import com.jtyjy.core.result.KVBean;
+import com.jtyjy.core.result.PageResult;
+import com.jtyjy.core.service.DefaultBaseService;
+import com.jtyjy.core.tools.AuthUtils;
 import com.jtyjy.finance.manager.bean.*;
+import com.jtyjy.finance.manager.cache.UserCache;
+import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.mapper.*;
-import com.jtyjy.finance.manager.utils.TreeUtil;
-import com.jtyjy.finance.manager.vo.BudgetSubjectVO;
+import com.jtyjy.finance.manager.vo.BudgetUnitSubjectVO;
+import com.jtyjy.finance.manager.vo.BudgetUnitVO;
+import com.jtyjy.weixin.message.MessageSender;
+import com.jtyjy.weixin.message.QywxTextMsg;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.shaded.com.google.common.collect.Lists;
@@ -24,25 +29,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.jtyjy.core.anno.JdbcSelector;
-import com.jtyjy.core.interceptor.LoginThreadLocal;
-import com.jtyjy.core.local.DefaultChangeLogThreadLocal;
-import com.jtyjy.core.local.JdbcSqlThreadLocal;
-import com.jtyjy.core.result.KVBean;
-import com.jtyjy.core.result.PageResult;
-import com.jtyjy.core.service.DefaultBaseService;
-import com.jtyjy.core.tools.AuthUtils;
-import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
-import com.jtyjy.finance.manager.vo.BudgetUnitSubjectVO;
-import com.jtyjy.finance.manager.vo.BudgetUnitVO;
-import com.jtyjy.weixin.message.MessageSender;
-import com.jtyjy.weixin.message.QywxTextMsg;
-
-import lombok.RequiredArgsConstructor;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 /**
  * @author Admin
@@ -140,6 +135,10 @@ public class BudgetUnitService extends DefaultBaseService<BudgetUnitMapper, Budg
             vo.setBudgetUsersCode(getSplitValue(vo.getBudgetUsers(), userNameMap, "USER_NAME"));
             vo.setBudgetDeptsName(getSplitValue(vo.getBudgetDepts(), deptNameMap, "DEPT_NAME"));
 
+            if(StringUtils.isNotBlank(vo.getBudgetResponsibilities())){
+                String names = Arrays.asList(vo.getBudgetResponsibilities().split(",")).stream().map(e -> UserCache.getUserByEmpNo(e).getDisplayName()).collect(Collectors.joining(","));
+                vo.setBudgetResponsibilitienames(names);
+            }
         }
         return retList;
     }
@@ -313,15 +312,18 @@ public class BudgetUnitService extends DefaultBaseService<BudgetUnitMapper, Budg
                 }
                 if (null != tmp.get("revenueformula")) {
                     unitsubject.setRevenueformula((String) tmp.get("revenueformula"));
+                    unitsubject.setShowRevenueformula(unitsubject.getRevenueformula().replace("[this]",unitsubject.getName()));
                 }
                 if (null != tmp.get("preccratioformula")) {
                     unitsubject.setPreccratioformula((String) tmp.get("preccratioformula"));
                 }
                 if (null != tmp.get("ccratioformula")) {
                     unitsubject.setCcratioformula((String) tmp.get("ccratioformula"));
+                    unitsubject.setShowCcratioformula(unitsubject.getCcratioformula().replace("[this]",unitsubject.getName()));
                 }
                 if (null != tmp.get("formula") || null == unitsubject.getFormula()) {
                     unitsubject.setFormula((String) tmp.get("formula"));
+                    unitsubject.setShowFormula(unitsubject.getFormula().replace("[this]",unitsubject.getName()));
                 }
                 if (null != tmp.get("hidden")) {
                     unitsubject.setHidden((Boolean) tmp.get("hidden"));
@@ -414,6 +416,36 @@ public class BudgetUnitService extends DefaultBaseService<BudgetUnitMapper, Budg
         }
         if (StringUtils.isNotBlank(uncheckedIds)) {
             uncheckedIds = uncheckedIds.substring(0, uncheckedIds.length() - 1);
+
+
+            List<String> unCheckedSubjectIds = Arrays.asList(uncheckedIds.split(","));
+
+            //取消勾选的产品科目ids
+            List<String> cancelProductSubjectIds = unCheckedSubjectIds.stream().filter(e -> {
+                BudgetSubject budgetSubject = bsMapper.selectById(e);
+                return budgetSubject.getJointproductflag() != null && budgetSubject.getJointproductflag();
+            }).collect(Collectors.toList());
+            if(!CollectionUtils.isEmpty(cancelProductSubjectIds)){
+
+                List<BudgetYearAgent> budgetYearAgents = byaMapper.selectList(new LambdaQueryWrapper<BudgetYearAgent>().eq(BudgetYearAgent::getUnitid, unit.getId()).in(BudgetYearAgent::getSubjectid, cancelProductSubjectIds));
+                List<BudgetMonthAgent> budgetMonthAgents = monthAgentMapper.selectList(new LambdaQueryWrapper<BudgetMonthAgent>().eq(BudgetMonthAgent::getUnitid, unit.getId()).in(BudgetMonthAgent::getSubjectid, cancelProductSubjectIds));
+
+                long count = budgetYearAgents.stream().filter(e -> e.getTotal().compareTo(BigDecimal.ZERO) != 0).count();
+                long count1 = budgetMonthAgents.stream().filter(e -> e.getTotal().compareTo(BigDecimal.ZERO) != 0).count();
+                if(count == 0 && count1 == 0){
+                    //全为0
+                    if(unit.getRequeststatus() >= 1){
+                        throw new RuntimeException("取消失败！年度预算已提交！");
+                    }
+                    monthAgentMapper.deleteBatchIds(budgetMonthAgents.stream().map(BudgetMonthAgent::getId).collect(Collectors.toList()));
+                    byaMapper.deleteBatchIds(budgetYearAgents.stream().map(BudgetYearAgent::getId).collect(Collectors.toList()));
+                }else{
+                    throw new RuntimeException("取消失败！该科目已编制预算！");
+                }
+            }
+
+            uncheckedIds = unCheckedSubjectIds.stream().filter(e->!cancelProductSubjectIds.contains(e)).collect(Collectors.joining(","));
+
             Map<String, Object> map = this.busMapper.countYearAgent(uncheckedIds, unit.getYearid(), unit.getId());
             Long count = (Long)map.get("sum");
             if (count > 0) {

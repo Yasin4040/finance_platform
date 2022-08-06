@@ -270,6 +270,10 @@ public class BudgetUnit implements Serializable {
     @ApiModelProperty(value = "审核人名字")
     private String verifyorname;
 
+    @ApiModelProperty(value="传工号，预算责任人，多个以逗号分隔。")
+    @TableField(value = "budget_responsibilities")
+    private String budgetResponsibilities;
+
     // --------------------------------------------------
 
     /**
@@ -296,5 +300,6 @@ public class BudgetUnit implements Serializable {
         this.revenueformula = vo.getRevenueFormula();
         this.orderno = vo.getOrderNo();
         this.remark = vo.getRemark();
+        this.budgetResponsibilities = vo.getBudgetResponsibilities();
     }
 }

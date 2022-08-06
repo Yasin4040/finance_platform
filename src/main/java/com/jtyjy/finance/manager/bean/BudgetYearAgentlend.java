@@ -319,4 +319,7 @@ public class BudgetYearAgentlend implements Serializable {
     @TableField(value = "oapassword")
     private String oapassword;
 
+
+    @TableField(value = "is_cross_dept")
+    private Boolean isCrossDept;
 }

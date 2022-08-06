@@ -91,9 +91,19 @@ public class BudgetUnitSubjectVO {
     @ApiModelProperty(value = "本届收入占比公式")
     private String revenueformula;
 
-    @ApiParam(hidden = true)
     @ApiModelProperty(value = "计算公式")
     private String formula;
+
+
+    @ApiModelProperty(value = "本届码洋占比公式(只做展示)")
+    private String showCcratioformula;
+
+    @ApiModelProperty(value = "本届收入占比公式(只做展示)")
+    private String showRevenueformula;
+
+    @ApiModelProperty(value = "计算公式(只有展示)")
+    private String showFormula;
+
 
     @ApiParam(hidden = true)
     @ApiModelProperty(value = "上届码洋占比公式", hidden = true)

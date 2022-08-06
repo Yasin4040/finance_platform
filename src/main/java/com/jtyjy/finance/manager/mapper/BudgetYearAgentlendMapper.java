@@ -22,4 +22,9 @@ public interface BudgetYearAgentlendMapper extends BaseMapper<BudgetYearAgentlen
      * @return 结果集
      */
     List<BudgetYearAgentLendVO> listYearAgentLendPage(@Param("pageBean") Page<BudgetYearAgentLendVO> pageBean, @Param("paramMap") HashMap<String, Object> paramMap);
+
+
+    List<BudgetYearAgentLendVO> listOldYearAgentLendPageNotAcrossDept(@Param("pageBean") Page<BudgetYearAgentLendVO> pageBean,@Param("paramMap") HashMap<String, Object> paramMap);
+
+    List<Long> listOldYearAgentLendPageAcrossDept(@Param("paramMap")HashMap<String, Object> paramMap);
 }

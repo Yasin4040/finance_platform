@@ -121,4 +121,10 @@ public class BudgetUnitVO {
     @ApiParam(hidden = true)
     @ApiModelProperty(value="月结标志")
     private Boolean monthEndFlag;
+
+    @ApiModelProperty(value="传工号，预算责任人，多个以逗号分隔。")
+    private String budgetResponsibilities;
+
+    @ApiModelProperty(value="预算责任人名称。")
+    private String budgetResponsibilitienames;
 }

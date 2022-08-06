@@ -131,4 +131,107 @@
         </if>
         order by bya.createtime desc
     </select>
+    <select id="listOldYearAgentLendPageNotAcrossDept" resultType="com.jtyjy.finance.manager.vo.BudgetYearAgentLendVO">
+
+        SELECT bya.id,
+                bya.requeststatus                    AS requestStatus,
+                bya.ordernumber                      AS orderNumber,
+                bya.yearid                           AS yearId,
+                period.period                        AS yearPeriod,
+                inUnit.id                            AS inBudgetUnitId,
+                inUnit.name                          AS inBudgetUnitName,
+                bya.creatorname                      AS creatorName,
+                bya.createtime       AS createTime
+            FROM budget_year_agentlend bya
+            LEFT JOIN budget_year_period period ON period.id = bya.yearid
+            LEFT JOIN budget_unit inUnit ON inUnit.id = bya.inunitid
+        WHERE bya.deleteflag = 0 AND bya.is_cross_dept = 0
+        <if test="paramMap.baseUnitIds != null ">
+            AND ( inUnit.baseunitid IN (SELECT _unit.baseunitid FROM budget_unit _unit WHERE _unit.managers is NOT NULL AND CONCAT(',',_unit.managers,',') LIKE CONCAT('%,', #{paramMap.userId}, ',%') )
+            or inUnit.baseunitid in (${paramMap.baseUnitIds}) )
+        </if>
+
+        <if test="paramMap.yearId != null">
+            AND bya.yearid = #{paramMap.yearId}
+        </if>
+        <if test="paramMap.orderNumber != null and paramMap.orderNumber != null">
+            AND bya.ordernumber like concat('%',#{paramMap.orderNumber},'%')
+        </if>
+        <if test="paramMap.requestStatus != null">
+            AND bya.requeststatus = #{paramMap.requestStatus}
+        </if>
+        <if test="paramMap.name != null and paramMap.name != ''">
+            AND inUnit.name like concat('%',#{paramMap.name},'%')
+        </if>
+        order by bya.createtime desc
+
+    </select>
+    <select id="listOldYearAgentLendPageAcrossDept" resultType="java.lang.Long">
+        SELECT DISTINCT
+            bya.id
+        FROM
+            budget_year_agentlend bya
+            LEFT JOIN budget_year_agentlend_detail byad ON bya.id = byad.year_agent_lend_id
+            LEFT JOIN budget_unit unit ON bya.inunitid = unit.id
+            LEFT JOIN budget_unit unit1 ON bya.outunitid = unit1.id
+        WHERE
+            bya.is_cross_dept = 1 and bya.deleteflag = 0
+            AND byad.id IS NULL
+
+            <if test="paramMap.baseUnitIds != null ">
+                AND ( unit.baseunitid IN (SELECT _unit.baseunitid FROM budget_unit _unit WHERE _unit.managers is NOT NULL AND CONCAT(',',_unit.managers,',') LIKE CONCAT('%,', #{paramMap.userId}, ',%') )
+                or unit.baseunitid in (${paramMap.baseUnitIds}) )
+
+                AND ( unit1.baseunitid IN (SELECT _unit.baseunitid FROM budget_unit _unit WHERE _unit.managers is NOT NULL AND CONCAT(',',_unit.managers,',') LIKE CONCAT('%,', #{paramMap.userId}, ',%') )
+                or unit1.baseunitid in (${paramMap.baseUnitIds}) )
+            </if>
+
+            <if test="paramMap.yearId != null">
+                AND bya.yearid = #{paramMap.yearId}
+            </if>
+            <if test="paramMap.orderNumber != null and paramMap.orderNumber != null">
+                AND bya.ordernumber like concat('%',#{paramMap.orderNumber},'%')
+            </if>
+            <if test="paramMap.requestStatus != null">
+                AND bya.requeststatus = #{paramMap.requestStatus}
+            </if>
+            <if test="paramMap.name != null and paramMap.name != ''">
+                AND (unit.name like concat('%',#{paramMap.name},'%')
+                    or unit1.name like concat('%',#{paramMap.name},'%')
+                )
+            </if>
+        UNION ALL
+        SELECT DISTINCT
+            bya.id
+        FROM
+            budget_year_agentlend bya
+            LEFT JOIN budget_year_agentlend_detail byad ON bya.id = byad.year_agent_lend_id
+            LEFT JOIN budget_unit unit ON byad.inunitid = unit.id
+            LEFT JOIN budget_unit unit1 ON byad.outunitid = unit1.id
+        WHERE
+            bya.is_cross_dept = 1  and bya.deleteflag = 0
+            AND byad.id IS NOT NULL
+            <if test="paramMap.baseUnitIds != null ">
+                AND ( unit.baseunitid IN (SELECT _unit.baseunitid FROM budget_unit _unit WHERE _unit.managers is NOT NULL AND CONCAT(',',_unit.managers,',') LIKE CONCAT('%,', #{paramMap.userId}, ',%') )
+                or unit.baseunitid in (${paramMap.baseUnitIds}) )
+
+                AND ( unit1.baseunitid IN (SELECT _unit.baseunitid FROM budget_unit _unit WHERE _unit.managers is NOT NULL AND CONCAT(',',_unit.managers,',') LIKE CONCAT('%,', #{paramMap.userId}, ',%') )
+                or unit1.baseunitid in (${paramMap.baseUnitIds}) )
+            </if>
+
+            <if test="paramMap.yearId != null">
+                AND bya.yearid = #{paramMap.yearId}
+            </if>
+            <if test="paramMap.orderNumber != null and paramMap.orderNumber != null">
+                AND bya.ordernumber like concat('%',#{paramMap.orderNumber},'%')
+            </if>
+            <if test="paramMap.requestStatus != null">
+                AND bya.requeststatus = #{paramMap.requestStatus}
+            </if>
+            <if test="paramMap.name != null and paramMap.name != ''">
+                AND (unit.name like concat('%',#{paramMap.name},'%')
+                or unit1.name like concat('%',#{paramMap.name},'%')
+                )
+            </if>
+    </select>
 </mapper>

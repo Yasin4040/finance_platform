@@ -1,6 +1,7 @@
 package com.jtyjy.finance.manager.service;
 
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -63,6 +64,7 @@ public class BudgetYearAgentaddinfoService extends DefaultBaseService<BudgetYear
     private final BudgetYearAgentaddService budgetYearAgentaddService;
     private final CuratorFramework curatorFramework;
     private final BudgetSysService budgetSysService;
+    private final CommonService commonService;
 
     @Value("${yearadd.workflowid}")
     private String flowid;
@@ -811,6 +813,17 @@ public class BudgetYearAgentaddinfoService extends DefaultBaseService<BudgetYear
             updateAddInfo.setHandleflag(true);
             updateAddInfo.setAudittime(new Date());
             this.budgetYearAgentaddinfoMapper.updateById(updateAddInfo);
+
+
+            List<BudgetYearAgentadd> budgetYearAgentadds = budgetYearAgentaddMapper.selectList(new LambdaQueryWrapper<BudgetYearAgentadd>().eq(BudgetYearAgentadd::getInfoid, agentAddInfo.getId()));
+            //罚款
+            long size = budgetYearAgentadds.stream().filter(e -> e.getExemptResult() != null && e.getExemptResult() == 1).count();
+
+            BudgetUnit budgetUnit = this.budgetUnitMapper.selectById(agentAddInfo.getUnitid());
+            String budgetResponsibilities = budgetUnit.getBudgetResponsibilities();
+            if(StringUtils.isNotBlank(budgetResponsibilities)){
+                commonService.createBudgetFine(1,(int)size,budgetResponsibilities);
+            }
 
             // 同步年度预算科目执行数
             subjectIds.forEach((subjectId, addTotal) -> this.budgetSysService.doSyncBudgetSubjectYearAddMoney(agentAddInfo.getYearid(), agentAddInfo.getUnitid(), subjectId, addTotal, 1));

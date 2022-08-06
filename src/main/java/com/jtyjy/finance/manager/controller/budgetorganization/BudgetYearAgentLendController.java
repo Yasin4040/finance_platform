@@ -20,6 +20,7 @@ import com.jtyjy.finance.manager.service.BudgetYearAgentlendService;
 import com.jtyjy.finance.manager.service.FineOAService;
 import com.jtyjy.finance.manager.utils.EasyExcelUtil;
 import com.jtyjy.finance.manager.vo.BudgetYearAgentLendVO;
+import com.jtyjy.finance.manager.vo.YearAgentLendVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -27,6 +28,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
@@ -125,13 +127,27 @@ public class BudgetYearAgentLendController extends BaseController<BudgetYearAgen
         return ResponseEntity.ok(this.budgetYearAgentlendService.listLendAgent(budgetUnitId, budgetSubjectId));
     }
 
+
+
+    @ApiOperation(value = "详情", httpMethod = "GET")
+    @ApiImplicitParams(value = {
+            @ApiImplicitParam(value = "拆借Id", name = "id", dataType = "Long", required = true),
+            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
+    })
+    @GetMapping(value = "/getYearLendDetail")
+    public ResponseEntity<YearAgentLendVO> getYearLendDetail(@RequestParam Long id) {
+        YearAgentLendVO result = this.budgetYearAgentlendService.getYearLendDetail(id);
+        return ResponseEntity.ok(result);
+    }
+
+
     @ApiOperation(value = "新增预算拆借", httpMethod = "POST")
     @ApiImplicitParams(value = {
             @ApiImplicitParam(value = "Object", name = "bean", dataType = "YearAgentLendDTO", required = true),
             @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
     })
     @PostMapping(value = "/addYearAgentLend")
-    public ResponseEntity<String> addYearAgentLend(@Valid @RequestBody YearAgentLendDTO bean) throws Exception {
+    public ResponseEntity<String> addYearAgentLend(@Validated @RequestBody YearAgentLendDTO bean) throws Exception {
         List<Map<String,Object>> list = oaService.getSpecialPerson();
         this.budgetYearAgentlendService.saveYearAgentLend(bean,list);
         return ResponseEntity.ok();
