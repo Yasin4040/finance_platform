@@ -96,11 +96,11 @@ public class BudgetAuthorService extends DefaultBaseService<BudgetAuthorMapper, 
 			    excelData.setAuthortype(rows.get(3));
 			    excelData.setCompany(rows.get(4));
 			    excelData.setBankaccount(rows.get(5));
-			    excelData.setBranchcode(rows.get(6));
-			    excelData.setBankName(rows.get(7));
-			    excelData.setProvince(rows.get(8));
-			    excelData.setCity(rows.get(9));
-			    excelData.setChildBankName(rows.get(10));
+			    excelData.setBankName(rows.get(6));
+			    excelData.setProvince(rows.get(7));
+			    excelData.setCity(rows.get(8));
+			    excelData.setChildBankName(rows.get(9));
+                excelData.setBranchcode(rows.get(10));
 			    excelData.setRemark(rows.get(11));
 			    excelList.add(excelData);
 		    }
