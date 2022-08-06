@@ -302,6 +302,7 @@ public class BudgetSysService {
                     newMonthAgentList.add(budgetMonthAgent);
                     monthAgentMap.put(budgetMonthAgent.getYearagentid(), budgetMonthAgent);
                 } else {
+                    budgetMonthAgent.setName(yearAgent.getName());
                     budgetMonthAgent.setYearagentmoney(yearAgent.getTotal());
                     //当时的年度追加金额
                     budgetMonthAgent.setYearaddmoney(addmoney);
