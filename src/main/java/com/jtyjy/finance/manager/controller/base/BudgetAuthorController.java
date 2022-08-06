@@ -193,11 +193,11 @@ public class BudgetAuthorController extends BaseController<BudgetAgentExecuteVie
                 colList.add(data.getAuthortype());
                 colList.add(data.getCompany());
                 colList.add(data.getBankaccount());
-                colList.add(data.getBranchcode());
                 colList.add(data.getBankName());
                 colList.add(data.getProvince());
                 colList.add(data.getCity());
                 colList.add(data.getChildBankName());
+                colList.add(data.getBranchcode());
                 colList.add(data.getRemark());
                 colList.add(data.getErrMsg());
                 dataList.add(colList);
