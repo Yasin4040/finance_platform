@@ -16,6 +16,7 @@ import com.jtyjy.finance.manager.mapper.TabChangeLogMapper;
 import com.jtyjy.finance.manager.mapper.WbBanksMapper;
 import com.jtyjy.finance.manager.mapper.response.BankInfo;
 import com.jtyjy.finance.manager.utils.CheckIdCard;
+import com.jtyjy.finance.manager.utils.EasyExcelUtil;
 import com.jtyjy.finance.manager.utils.ResponseUtil;
 import com.jtyjy.finance.manager.vo.BudgetAuthorVO;
 import lombok.RequiredArgsConstructor;
@@ -78,38 +79,11 @@ public class BudgetAuthorService extends DefaultBaseService<BudgetAuthorMapper, 
 	
 
     public int importAdd(MultipartFile srcFile, String coverFlag, List<AuthorExcelData> errorList) throws Exception {
-		List<AuthorExcelData> excelList = new ArrayList<>();
-	    Map<String, List<List<String>>> excelDataMap = ResponseUtil.getMultipleExcelContent(srcFile);
-	    for (Map.Entry<String, List<List<String>>> entry : excelDataMap.entrySet()) {
-		    List<List<String>> sheetContent = entry.getValue();
-		    int size = sheetContent.size();
-		    for (int i = 0; i < size; i++) {
-			    // 表格正文从第三行开始
-			    if (i < 1) {
-				    continue;
-			    }
-			    List<String> rows = sheetContent.get(i);
-			    AuthorExcelData excelData = new AuthorExcelData();
-			    excelData.setAuthor(rows.get(0));
-			    excelData.setIdnumber(rows.get(1));
-			    excelData.setTaxpayernumber(rows.get(2));
-			    excelData.setAuthortype(rows.get(3));
-			    excelData.setCompany(rows.get(4));
-			    excelData.setBankaccount(rows.get(5));
-			    excelData.setBankName(rows.get(6));
-			    excelData.setProvince(rows.get(7));
-			    excelData.setCity(rows.get(8));
-			    excelData.setChildBankName(rows.get(9));
-                excelData.setBranchcode(rows.get(10));
-			    excelData.setRemark(rows.get(11));
-			    excelList.add(excelData);
-		    }
-	    }
-	    //List<AuthorExcelData> excelList = EasyExcelUtil.getExcelContent(inputStream, AuthorExcelData.class);
-        if (excelList.isEmpty()) {
-            AuthorExcelData authorData = new AuthorExcelData();
-            authorData.setErrMsg("表格解析失败或无有效数据");
-            errorList.add(authorData);
+		List<AuthorExcelData> excelList = EasyExcelUtil.getExcelContent(srcFile.getInputStream(), AuthorExcelData.class);
+        if (null == excelList || excelList.isEmpty()) {
+            AuthorExcelData excelData = new AuthorExcelData();
+            excelData.setErrMsg("表格解析失败或无有效数据");
+            errorList.add(excelData);
             return 0;
         }
         int success = 0;

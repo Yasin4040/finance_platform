@@ -212,6 +212,9 @@ public class BudgetAuthorController extends BaseController<BudgetAgentExecuteVie
     }
 
     @ApiOperation(value = "导出错误明细")
+    @ApiImplicitParams(value = {
+            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
+    })
     @GetMapping("/exportErrors")
     public void exportErrors(HttpServletRequest request, HttpServletResponse response) throws Exception {
         InputStream is = null;
