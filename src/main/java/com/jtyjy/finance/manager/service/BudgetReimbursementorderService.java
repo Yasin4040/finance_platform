@@ -2690,9 +2690,7 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
      */
     public void exportLackBill(BudgetLackBillQueryDTO params, HttpServletResponse response) throws Exception {
         List<BudgetLackBillVO> retList = this.lackBillMapper.getLackBillList(null, params, JdbcSqlThreadLocal.get());
-        String fileName = URLEncoder.encode("欠票信息表", "UTF-8").replaceAll("\\+", "%20");;
-        response.setHeader("Content-Disposition", "attachment;filename=" + fileName + ".xlsx");
-        EasyExcel.write(EasyExcelUtil.getOutputStream(fileName, response),BudgetLackBillVO.class)
+        EasyExcel.write(EasyExcelUtil.getOutputStream("欠票信息表", response),BudgetLackBillVO.class)
                 .autoCloseStream(false).sheet("欠票信息").doWrite(retList);
 
     }
