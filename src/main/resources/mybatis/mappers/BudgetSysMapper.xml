@@ -201,28 +201,28 @@
 		SELECT
 			_view.outyearagentid,
 			_view.outsubjectpids,
-			_view.lendmoney 
+			_view.lendmoney
 		FROM
-			budget_year_agent_lend_view _view 
+			budget_year_agent_lend_view _view
 		WHERE
 			CONCAT( '-', _view.outunitpids, '-' ) LIKE concat('%-',#{unitId},'-%')
 			AND _view.audittime &lt;= #{enddate}
 			AND _view.requeststatus = 2
 	</select>
-	<select id="getYearLendoutData" resultType="java.util.Map">
-		SELECT
-			_view.outyearagentid,
-			_view.inyearagentid,
-			_view.outsubjectpids,
-			_view.insubjectpids,
-			_view.lendmoney 
-		FROM
-			budget_year_agent_erp_lend_view _view 
-		WHERE
-			CONCAT( '-', _view.unitpids, '-' ) LIKE concat('%-',#{unitId},'-%') 
-			AND _view.audittime &lt;= #{enddate}
-			AND _view.requeststatus = 2
-	</select>
+<!--	<select id="getYearLendoutData" resultType="java.util.Map">-->
+<!--		SELECT-->
+<!--			_view.outyearagentid,-->
+<!--			_view.inyearagentid,-->
+<!--			_view.outsubjectpids,-->
+<!--			_view.insubjectpids,-->
+<!--			_view.lendmoney -->
+<!--		FROM-->
+<!--			budget_year_agent_erp_lend_view _view -->
+<!--		WHERE-->
+<!--			CONCAT( '-', _view.unitpids, '-' ) LIKE concat('%-',#{unitId},'-%') -->
+<!--			AND _view.audittime &lt;= #{enddate}-->
+<!--			AND _view.requeststatus = 2-->
+<!--	</select>-->
 	<select id="getYearSubjectMap" resultType="java.util.Map">
 		SELECT
 			yearsubject_.executemoney,

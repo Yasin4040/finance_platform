@@ -1,3 +1,4 @@
+## 部署拆借的视图至线上
 CREATE TABLE budget_reimbursementorder_lack_bill (
   id bigint(20) NOT NULL AUTO_INCREMENT,
   reimbursementid bigint(20) DEFAULT NULL COMMENT '报销单id',
