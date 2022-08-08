@@ -103,6 +103,7 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 				vo.setYearPeriod(getPeriodInfo(e.getYearid()).getPeriod());
 				vo.setCreatorName(e.getCreatorname());
 				vo.setCreateTime(e.getCreatetime());
+				vo.setTotal(e.getTotal());
 				return vo;
 			}).collect(Collectors.toList()));
 		} else {
@@ -278,6 +279,7 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 			detail.setIsExemptFine(e.getIsExemptFine());
 			detail.setExemptFineReason(e.getExemptFineReason());
 			detail.setRequeststatus(0);
+			detail.setTotal(e.getTotal());
 
 			BudgetYearAgent outAgent = budgetYearAgentMapper.selectById(e.getOutAgentId());
 			// 拆出信息
@@ -311,6 +313,9 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 			yearAgentlendDetailMapper.deleteBatchIds(deletedDetailIds.stream().map(BudgetYearAgentlendDetail::getId).collect(Collectors.toList()));
 		}
 
+		BigDecimal total = bean.getDetails().stream().map(YearAgentLendDetailDTO::getTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+		yearAgentLend.setTotal(total);
+		this.budgetYearAgentlendMapper.updateById(yearAgentLend);
 		return yearAgentLend.getId();
 	}
 
@@ -459,8 +464,9 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 			workflowDetail.setCjhndysu(outBalance);
 			workflowDetail.setCjje(e.getTotal());
 			workflowDetail.setCjyy(e.getRemark());
-			workflowDetail.setSfsqmf(e.getIsExemptFine() ? "是" : "否");
+			workflowDetail.setSfsqmf(e.getIsExemptFine() ? "0" : "1");
 			workflowDetail.setMflysm(e.getExemptFineReason());
+			//workflowDetail.setWfid(flowid);
 			return workflowDetail;
 		}).collect(Collectors.toList());
 
@@ -478,7 +484,8 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 		if (null != yearAgentLend.getRequestid()) {
 			this.oaService.deleteRequest(yearAgentLend.getRequestid(), yearAgentLend.getOacreatorid());
 		}
-		return this.oaService.createWorkflow(wi, yearAgentLending.getWfid(), main, workflowDetails.stream().map(e -> (Map<String, Object>) JSON.toJSON(e)).collect(Collectors.toList()));
+		List<Map<String, Object>> list = (List<Map<String, Object>>) JSON.toJSON(workflowDetails);
+		return this.oaService.createWorkflow(wi, yearAgentLending.getWfid(), main, list);
 	}
 
 	/**

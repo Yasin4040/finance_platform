@@ -46,8 +46,8 @@ public class BudgetYearAgentLendVO {
 //    @ApiModelProperty(value = "拆出基础单位Id")
 //    private Long outBaseUnitId;
 
-//    @ApiModelProperty(value = "拆进金额")
-//    private BigDecimal total;
+    @ApiModelProperty(value = "拆进金额")
+    private BigDecimal total;
 //
 //    @ApiModelProperty(value = "拆进科目Id")
 //    private Long inSubjectId;

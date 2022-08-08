@@ -93,7 +93,7 @@
             left (su.agentaddmoney, LENGTH (su.agentaddmoney) - 2) kmljzj,
             left (su.agentlendoutmoney, LENGTH (su.agentlendoutmoney) - 2) kmljcc,
             left (su.agentexcutemoney, LENGTH (su.agentexcutemoney) - 2) kmljzx,
-            detail.id detailId
+            detail.id detailId,
             detail.type,
             detail.subjectid,
             detail.yearagentid,

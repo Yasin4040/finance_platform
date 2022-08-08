@@ -5,10 +5,14 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.jtyjy.api.OAServiceProxy;
 import com.jtyjy.ecology.webservice.workflow.EcologyWorkflowClient;
 import com.jtyjy.ecology.webservice.workflow.WorkflowInfo;
+import com.jtyjy.finance.manager.bean.BudgetYearAgentlendDetail;
 import com.jtyjy.finance.manager.bean.TabDm;
+import com.jtyjy.finance.manager.constants.Constants;
 import com.jtyjy.finance.manager.mapper.BudgetUnitMapper;
 import com.jtyjy.finance.manager.mapper.TabDmMapper;
 import com.jtyjy.finance.manager.utils.AesUtil;
+import com.jtyjy.finance.manager.ws.BudgetYearAgentLending;
+import com.jtyjy.finance.manager.ws.BudgetYearAgentLendingDetail;
 import localhost.services.DocService.DocServiceLocator;
 import localhost.services.DocService.DocServicePortType;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +26,10 @@ import weaver.docs.webservices.DocInfo;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.net.URL;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -166,8 +172,44 @@ public class OaService {
     }
     
     public static void main(String[] args) throws RemoteException {
-    	OAServiceProxy proxy = new OAServiceProxy("http://api.jtyjy.com/services/OAService?wsdl");
-    	String result = proxy.getOAUserinfo("17474");
-    	System.out.println(result);
-	}
+//    	OAServiceProxy proxy = new OAServiceProxy("http://api.jtyjy.com/services/OAService?wsdl");
+//    	String result = proxy.getOAUserinfo("17474");
+//    	System.out.println(result);
+
+        EcologyWorkflowClient ecologyWorkflowClient = new EcologyWorkflowClient("http://192.168.4.63/services/WorkflowService");
+        BudgetYearAgentLending yearLending = new BudgetYearAgentLending();
+        yearLending.setFj("-1");
+        yearLending.setSsbm("200");
+        yearLending.setSqr("5001");
+        yearLending.setYsjb("fff");
+        // 申请日期
+        yearLending.setSqrq("2022-08-08");
+        yearLending.setCjcs(1);
+
+        yearLending.setCjje(new BigDecimal("5"));
+        yearLending.setWfid("2783");
+        Map<String, Object> main = (Map<String, Object>) JSON.toJSON(yearLending);
+        List<BudgetYearAgentLendingDetail> workflowDetails = new ArrayList<>();
+        BudgetYearAgentLendingDetail detail = new BudgetYearAgentLendingDetail();
+        detail.setCjysdw("bbb");
+        detail.setCjkm("aaa");
+        detail.setCjdy("dfff");
+        detail.setCjhndys(new BigDecimal("1"));
+        detail.setCcyysdw("ffffff");
+        detail.setCckm("dfsdfsadf");
+        detail.setCcdy("dsfdf");
+        detail.setCjhndysu(new BigDecimal("12332"));
+        detail.setCjje(new BigDecimal("12323"));
+        detail.setCjyy("dsfsdf");
+        detail.setSfsqmf("0");
+        detail.setMflysm("sdfsdsd");
+        workflowDetails.add(detail);
+        List<Map<String, Object>> list = (List<Map<String, Object>>) JSON.toJSON(workflowDetails);
+        WorkflowInfo wi = new WorkflowInfo();
+        wi.setCreatorId("5001");
+        wi.setRequestLevel("0");
+        wi.setRequestName("年度预算拆借--aaaa");
+        String workflow = ecologyWorkflowClient.createWorkflow(wi, "2783", main, list);
+        System.out.println(workflow);
+    }
 }

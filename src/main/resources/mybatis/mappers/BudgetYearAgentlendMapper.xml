@@ -141,7 +141,8 @@
                 inUnit.id                            AS inBudgetUnitId,
                 inUnit.name                          AS inBudgetUnitName,
                 bya.creatorname                      AS creatorName,
-                bya.createtime       AS createTime
+                bya.createtime       AS createTime,
+                bya.total
             FROM budget_year_agentlend bya
             LEFT JOIN budget_year_period period ON period.id = bya.yearid
             LEFT JOIN budget_unit inUnit ON inUnit.id = bya.inunitid

@@ -2,6 +2,7 @@ package com.jtyjy.finance.manager.ws;
 
 import com.jtyjy.ecology.webservice.workflow.WorkflowBase;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 
@@ -11,6 +12,7 @@ import java.math.BigDecimal;
  * @author minzhq
  * @since 2022/8/5
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 public class BudgetYearAgentLendingDetail extends WorkflowBase {
 
