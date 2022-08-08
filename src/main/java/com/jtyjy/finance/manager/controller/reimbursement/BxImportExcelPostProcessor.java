@@ -127,7 +127,7 @@ public class BxImportExcelPostProcessor implements ImportPostProcessor{
 	@Override
 	public void instanceProcess(ExcelImportHelper helper, Class<?> arg1, Row row, Map<String, Object> headMap, Object obj)
 			throws Exception {
-		if(headMap.get("headError")!=null && (Boolean)headMap.get("headError")) return;
+		if((headMap.get("headError")!=null && (Boolean)headMap.get("headError") ) || helper.getErrorFile()) return;
 		String sheetName = row.getSheet().getSheetName();
 		try {
 		    if (BX_SHEET.equals(sheetName)) {
