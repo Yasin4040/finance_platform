@@ -170,9 +170,9 @@
 		bam.authorname,
 		bam.authoridnumber,
 		bam.taxpayeridnumber,
-		bam.copefee,
-		bam.tax,
-		bam.realfee,
+		details.tax as tax,
+		details.copefee as copefee,
+		(details.copefee - details.tax) as realfee,
 		bam.gatherunit,
 		bam.gatherbankaccount,
 		bam.gatherbank,  
@@ -184,10 +184,17 @@
 		bam.paybank,
 		bam.feebdgdept,
 		DATE_FORMAT( bam.createtime, '%Y-%m-%d %H:%i:%s' ) AS createtime  
-		FROM budget_authorfeedtl_merge bam 
+		FROM budget_authorfeedtl_merge bam
+		inner join (
+		SELECT authormergeid, SUM(tax) as tax, SUM(copefee) as copefee
+		FROM budget_authorfeedetail
+		WHERE needzz = 1 AND authormergeid IS NOT NULL
+		GROUP BY authormergeid
+		ORDER BY authormergeid
+		) details on bam.id = details.authormergeid
 		left join budget_author ba on bam.gatherbankaccount = ba.bankaccount
 		left join wb_banks wb on wb.sub_branch_code = ba.branchcode
-		left join budget_year_period byp on byp.period = bam.yearperiod 
+		left join budget_year_period byp on byp.period = bam.yearperiod
 		<where>
 			1=1
 			<if test="params.reportid !=null">

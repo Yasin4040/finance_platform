@@ -1787,7 +1787,9 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
         //划拨
         List<BudgetReimbursementorderAllocated> allocated = this.allocatedService.getByOrderId(id);
         request.setOrderAllocated(allocated);
-
+        //欠票
+        List<BudgetReimbursementorderLackBill> lackBillList = this.lackBillService.getByOrderId(id);
+        request.setLackBillList(lackBillList);
         int length = 0;
         if(StringUtils.isNotBlank(order.getTraveler())){
             length = length +  order.getTraveler().replace("，",",").split(",").length;
