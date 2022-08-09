@@ -354,8 +354,8 @@ public class ReimbursementController {
         order.setAllocatedmoney(hbje);
         order.setTransmoney(zzje);
         order.setCashmoney(xjje);
+        order.setLackBill(false);
         //不支持导入欠票
-        dataRequest.setLackBillFlag(false);
         dataRequest.setOrder(order);
         dataRequest.setOrderDetail(orderDetail);;
         dataRequest.setOrderPayment(orderPayment);

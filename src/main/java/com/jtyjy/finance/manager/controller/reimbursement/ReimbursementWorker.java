@@ -384,7 +384,13 @@ public class ReimbursementWorker {
                 return "【报销金额】不等于【冲账金额 + 转账金额 + 现金金额 + 其他金额】";
             }
         }
-
+        if (order.getLackBill() == null ) {
+            return "欠票标志不能为空！";
+        } else {
+            if (order.getLackBill() && CollectionUtils.isEmpty(request.getLackBillList())) {
+                return "欠票信息不能为空！";
+            }
+        }
         return null;
     }
 

@@ -273,7 +273,7 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
         //保存招待
         this.entertainService.saveByOrder(request.getOrderEntertain(), order);
         //保存欠票
-        if (Boolean.TRUE.equals(request.getLackBillFlag())) {
+        if (Boolean.TRUE.equals(order.getLackBill())) {
             this.lackBillService.saveByOrder(request.getLackBillList(), order);
         }
         return 7;
