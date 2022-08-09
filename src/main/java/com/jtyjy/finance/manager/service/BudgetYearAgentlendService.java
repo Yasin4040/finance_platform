@@ -928,6 +928,10 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 				detail.setInUnitName(getUnitInfo(budgetYearAgentlend.getInunitid()).getName());
 				detail.setOutUnitName(detail.getInUnitName());
 			}
+			detail.setInAgentMoney(budgetYearAgentlend.getInagentmoney());
+			detail.setInAgentExecuteMoney(budgetYearAgentlend.getInagentexcutemoney());
+			detail.setOutAgentMoney(budgetYearAgentlend.getOutagentmoney());
+			detail.setOutAgentBalance(budgetYearAgentlend.getOutagentmoney().subtract(budgetYearAgentlend.getOutagentexcutemoney()).subtract(budgetYearAgentlend.getOutagentlendoutmoney()).add(budgetYearAgentlend.getOutagentaddmoney()).add(budgetYearAgentlend.getOutagentlendinmoney()));
 			detail.setInSubjectId(budgetYearAgentlend.getInsubjectid());
 			detail.setInSubjectName(budgetYearAgentlend.getInsubjectname());
 			detail.setOutSubjectId(budgetYearAgentlend.getOutsubjectid());
@@ -968,6 +972,10 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 				detail.setOutAgentId(lendDetail.getOutyearagentid());
 				detail.setOutAgentName(lendDetail.getOutname());
 				detail.setTotal(lendDetail.getTotal());
+				detail.setInAgentMoney(lendDetail.getInagentmoney());
+				detail.setInAgentExecuteMoney(lendDetail.getInagentexcutemoney());
+				detail.setOutAgentMoney(lendDetail.getOutagentmoney());
+				detail.setOutAgentBalance(lendDetail.getOutagentmoney().subtract(lendDetail.getOutagentexcutemoney()).subtract(lendDetail.getOutagentlendoutmoney()).add(lendDetail.getOutagentaddmoney()).add(lendDetail.getOutagentlendinmoney()));
 				detail.setIsExemptFine(lendDetail.getIsExemptFine());
 				detail.setExemptFineReason(lendDetail.getExemptFineReason());
 				detail.setExemptFineResult(lendDetail.getExemptFineResult());

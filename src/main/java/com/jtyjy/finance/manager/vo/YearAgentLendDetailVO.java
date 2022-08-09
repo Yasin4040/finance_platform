@@ -44,6 +44,12 @@ public class YearAgentLendDetailVO {
     @ApiModelProperty(value = "拆进年度动因")
     private String inAgentName;
 
+    @ApiModelProperty(value = "拆进年度动因预算")
+    private BigDecimal inAgentMoney;
+
+    @ApiModelProperty(value = "拆进年度动因已执行金额")
+    private BigDecimal inAgentExecuteMoney;
+
     @ApiModelProperty(value = "拆借原因")
     private String remark;
 
@@ -52,6 +58,12 @@ public class YearAgentLendDetailVO {
 
     @ApiModelProperty(value = "拆出年度动因")
     private String outAgentName;
+
+    @ApiModelProperty(value = "拆出年度动因预算")
+    private BigDecimal outAgentMoney;
+
+    @ApiModelProperty(value = "拆出年度动因可拆出预算")
+    private BigDecimal outAgentBalance;
 
     @ApiModelProperty(value = "拆借金额")
     private BigDecimal total;
