@@ -1,6 +1,7 @@
 package com.jtyjy.finance.manager.service;
 
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -72,6 +73,7 @@ public class BudgetPaybatchService extends DefaultBaseService<BudgetPaybatchMapp
     private final BudgetPaymoneyService paymoneyService;    
     private final BudgetReimburmentTimedetailService timeDetailService;
     private final BudgetReimbursementorderDetailService budgetReimbursementorderDetailService;
+    private final BudgetReimbursementorderTransService transService;
     private final MessageSender sender;
     @Value("${webfront.url}")
     private String webfront_url;//前端ip地址
@@ -231,7 +233,7 @@ public class BudgetPaybatchService extends DefaultBaseService<BudgetPaybatchMapp
                         this.sendMessageByBankAccountInner(bean, bankAccountMap, bxMsgTemplate,
                                 "您于" + Constants.FORMAT_10.format(payIdOrderMap.get(bean.getId()).getReimdate()) + "申请的报销单下的",
                                 bean.getPaymoneycode().substring(bean.getPaymoneycode().length() - 4),
-                                bankAccountMap.get(bean.getBankaccount()).getAccountname(),
+                                bean.getBankaccountname(),
                                 bean.getBankaccount(),
                                 bean.getPaymoney().setScale(2, BigDecimal.ROUND_HALF_UP).toString(),
                                 subjects,remarks);
@@ -515,6 +517,9 @@ public class BudgetPaybatchService extends DefaultBaseService<BudgetPaybatchMapp
                         }
                         //非稿费，内部
                         return 2;
+                    }else{
+                        //银行账号可能会被删除（hr同步）
+                        return 2;
                     }
                 }
             }
@@ -684,6 +689,11 @@ public class BudgetPaybatchService extends DefaultBaseService<BudgetPaybatchMapp
         BudgetBankAccount bankAccount = bankAccountMap.get(pay.getBankaccount());
         if (bankAccount != null) {
             this.sendMessage(messageFormat, bankAccount.getCode(), params);
+        }else{
+            List<BudgetReimbursementorderTrans> list = transService.list(new LambdaQueryWrapper<BudgetReimbursementorderTrans>().eq(BudgetReimbursementorderTrans::getPaymoneyid, pay.getId()));
+            if(!list.isEmpty()){
+                this.sendMessage(messageFormat, list.get(0).getPayeecode(), params);
+            }
         }
     }
 

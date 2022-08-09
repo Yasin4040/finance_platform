@@ -52,7 +52,7 @@ public class SyncUserAndBankAccountJob {
 		//syncUser(); //同步用户adffdddffffffff
 		try{
 		//同步银行账户
-			syncBankAccount();
+			//syncBankAccount();
 		}catch(Exception e) {e.printStackTrace();}
 		log.info("同步用户和银行账号定时器==================END==============================");
 		return ReturnT.SUCCESS;

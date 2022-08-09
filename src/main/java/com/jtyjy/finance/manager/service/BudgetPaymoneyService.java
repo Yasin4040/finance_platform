@@ -1,5 +1,6 @@
 package com.jtyjy.finance.manager.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -7,6 +8,7 @@ import com.jtyjy.core.local.DefaultChangeLogThreadLocal;
 import com.jtyjy.core.local.JdbcSqlThreadLocal;
 import com.jtyjy.core.service.DefaultBaseService;
 import com.jtyjy.finance.manager.bean.*;
+import com.jtyjy.finance.manager.cache.UserCache;
 import com.jtyjy.finance.manager.constants.Constants;
 import com.jtyjy.finance.manager.controller.BaseController;
 import com.jtyjy.finance.manager.controller.reimbursement.ReimbursementController;
@@ -26,6 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.Map.Entry;
@@ -224,13 +227,39 @@ public class BudgetPaymoneyService extends DefaultBaseService<BudgetPaymoneyMapp
                 if (unitBankInfo == null) {
                     throw new Exception("付款单位账户【" + tran.getDraweebankaccount() + "】不存在或已停用！");
                 }
+                String empAccountName="";
+                String empBankCode="";
+                String empBankName="";
+                String openBank="";
+                String remark="";
                 if (empBankInfo == null) {
-                    throw new Exception("收款账户【" + tran.getPayeebankaccount() + "】不存在或已停用！");
+                    tran.getPayeecode();
+                    WbUser userByEmpNo = UserCache.getUserByEmpNo(tran.getPayeecode());
+                    if(userByEmpNo == null){
+                        throw new Exception("收款账户【" + tran.getPayeebankaccount() + "】不存在或已停用！");
+                    }else{
+                        empAccountName = tran.getPayeename();
+                        String payeebankname = tran.getPayeebankname();
+                        List<WbBanks> list = banksService.list(new LambdaQueryWrapper<WbBanks>().eq(WbBanks::getSubBranchName, payeebankname));
+                        if(list.size()>1){
+                            throw new Exception("有多个相同的开户行【"+payeebankname+"】，请联系系统管理员进行处理。");
+                        }
+                        empBankCode = list.get(0).getSubBranchCode();
+                        empBankName = list.get(0).getBankName();
+                        openBank = list.get(0).getSubBranchName();
+                        remark = "报销转账信息自动创建付款单！(银行账号不存在。)";
+                    }
+                }else{
+                    empAccountName = empBankInfo.getAccountName();
+                    empBankCode= empBankInfo.getBankCode();
+                    empBankName=empBankInfo.getBankName();
+                    openBank=empBankInfo.getOpenBank();
+                    remark="报销转账信息自动创建付款单！";
                 }
                 paymoney = this.createDefaultPaymoney(
                         1, order.getReimcode(), tran.getId(), tran.getTransmoney(), true,
                         unitBankInfo.getAccountName(), unitBankInfo.getBankAccount(), unitBankInfo.getBankCode(), unitBankInfo.getBankName(),
-                        empBankInfo.getAccountName(), empBankInfo.getBankAccount(), empBankInfo.getBankCode(), empBankInfo.getBankName(), empBankInfo.getOpenBank(), "报销转账信息自动创建付款单！");
+                        empAccountName, tran.getPayeebankaccount(), empBankCode, empBankName, openBank, remark);
                 this.save(paymoney);
                 tran.setPaymoneyid(paymoney.getId());
             }
