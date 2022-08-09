@@ -560,7 +560,7 @@ public class BudgetYearAgentaddinfoService extends DefaultBaseService<BudgetYear
             Object remark = yearAdd.get("remark");
             detail.setZjly(remark != null ? remark.toString() : "");
             //是否免罚
-            detail.setSfsqmf((Boolean) yearAdd.get("is_exempt_fine"));
+            detail.setSfsqmf((Boolean) yearAdd.get("is_exempt_fine")?"0":"1");
             //免罚理由
             Object exempt_fine_reason = yearAdd.get("exempt_fine_reason");
             detail.setMfly(exempt_fine_reason == null ? "" : exempt_fine_reason.toString());

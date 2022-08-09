@@ -73,7 +73,7 @@ public class WSBudgetYearAgentAddDetail extends WorkflowBase {
     /**
      * 是否免罚 false否 true是
      */
-    private Boolean sfsqmf;
+    private String sfsqmf;
 
     /**
      * 免罚原因
