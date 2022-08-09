@@ -312,7 +312,7 @@ public class BudgetUnitService extends DefaultBaseService<BudgetUnitMapper, Budg
                 }
                 if (null != tmp.get("revenueformula")) {
                     unitsubject.setRevenueformula((String) tmp.get("revenueformula"));
-                    unitsubject.setShowRevenueformula(unitsubject.getRevenueformula().replace("[this]",unitsubject.getName()));
+                    if(StringUtils.isNotBlank(unitsubject.getRevenueformula()))unitsubject.setShowRevenueformula(unitsubject.getRevenueformula().replace("[this]",unitsubject.getName()));
                 }
                 if (null != tmp.get("preccratioformula")) {
                     unitsubject.setPreccratioformula((String) tmp.get("preccratioformula"));
@@ -323,7 +323,7 @@ public class BudgetUnitService extends DefaultBaseService<BudgetUnitMapper, Budg
                 }
                 if (null != tmp.get("formula") || null == unitsubject.getFormula()) {
                     unitsubject.setFormula((String) tmp.get("formula"));
-                    unitsubject.setShowFormula(unitsubject.getFormula().replace("[this]",unitsubject.getName()));
+                    if(StringUtils.isNotBlank(unitsubject.getFormula()))unitsubject.setShowFormula(unitsubject.getFormula().replace("[this]",unitsubject.getName()));
                 }
                 if (null != tmp.get("hidden")) {
                     unitsubject.setHidden((Boolean) tmp.get("hidden"));

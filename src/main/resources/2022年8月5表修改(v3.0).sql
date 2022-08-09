@@ -19,7 +19,7 @@ CREATE TABLE budget_reimbursementorder_lack_bill (
   KEY lack_bill_ibfk_2 (bunitid, money,estimated_return_time) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='预算欠票表';
 
-
+ALTER TABLE budget_reimbursementorder ADD lack_bill bit(1) DEFAULT b'0' COMMENT '是否欠票 0 否 1是';
 ALTER TABLE budget_year_agentadd ADD is_exempt_fine bit(1) DEFAULT b'0' COMMENT '是否免罚 0 否 1是';
 ALTER TABLE budget_year_agentadd ADD exempt_fine_reason varchar(500) DEFAULT NULL COMMENT '免罚原因';
 ALTER TABLE budget_year_agentadd ADD exempt_result bit(1) DEFAULT NULL COMMENT '免罚结果 0 免罚 1 罚款';
