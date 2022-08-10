@@ -798,7 +798,7 @@ public class BudgetYearAgentaddinfoService extends DefaultBaseService<BudgetYear
                         }
                         yearAdd.setYearagentid(budgetYearAgent.getId());
                         yearAdd.setMonthagentid(budgetMonthAgent != null ? budgetMonthAgent.getId() : null);
-                        String mfjg = detail.get("mfjg");
+                        String mfjg = detail.get("mfjg1");
                         yearAdd.setExemptResult(Integer.valueOf(mfjg));
                         yearAdd.setFineRemark(detail.get("fkyy"));
                         this.budgetYearAgentaddMapper.updateById(yearAdd);
@@ -901,6 +901,23 @@ public class BudgetYearAgentaddinfoService extends DefaultBaseService<BudgetYear
         updateAddInfo.setUpdatetime(new Date());
         updateAddInfo.setAudittime(new Date());
         this.budgetYearAgentaddinfoMapper.updateById(updateAddInfo);
+
+
+        EcologyWorkFlowValue workflowValue = EcologyClient.getWorkflowValue(params);
+        Map<String, List<Map<String, String>>> detailtablevalues = workflowValue.getDetailtablevalues();
+        detailtablevalues.values().forEach(list -> {
+            list.forEach(e -> {
+                String id = e.get("sjid");
+                String mfjg = e.get("mfjg1");
+                String mflysmi = e.get("mflysmi");
+
+                BudgetYearAgentadd budgetYearAgentadd = budgetYearAgentaddMapper.selectById(id);
+                budgetYearAgentadd.setIsExemptFine(!"0".equals(mfjg));
+                budgetYearAgentadd.setFineRemark(mflysmi);
+                budgetYearAgentaddMapper.updateById(budgetYearAgentadd);
+            });
+        });
+
     }
 
 }

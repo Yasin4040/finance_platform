@@ -790,7 +790,7 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 				detailtablevalues.values().forEach(list -> {
 					list.forEach(e -> {
 						String id = e.get("sjid");
-						String mfjg = e.get("mfjg");
+						String mfjg = e.get("mfjg1");
 						String mflysmi = e.get("mflysmi");
 						map.put(id + "-1", mfjg);
 						map.put(id + "-2", mflysmi);
@@ -800,7 +800,9 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 				budgetYearAgentlendDetails.forEach(detail -> {
 					detail.setRequeststatus(2);
 					detail.setAudittime(new Date());
-					detail.setExemptFineResult(map.get(detail.getId() + "-1"));
+					String mfjg = map.get(detail.getId() + "-1");
+
+					detail.setExemptFineResult("0".equals(mfjg)?"罚款":"免罚");
 					detail.setFineReasonRemark(map.get(detail.getId() + "-2"));
 					this.yearAgentlendDetailMapper.updateById(detail);
 
@@ -887,12 +889,12 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 		detailtablevalues.values().forEach(list -> {
 			list.forEach(e -> {
 				String id = e.get("sjid");
-				String mfjg = e.get("mfjg");
+				String mfjg = e.get("mfjg1");
 				String mflysmi = e.get("mflysmi");
 
 				BudgetYearAgentlendDetail budgetYearAgentlendDetail = yearAgentlendDetailMapper.selectById(id);
 				budgetYearAgentlendDetail.setRequeststatus(-1);
-				budgetYearAgentlendDetail.setExemptFineResult(mfjg);
+				budgetYearAgentlendDetail.setExemptFineResult("0".equals(mfjg)?"罚款":"免罚");
 				budgetYearAgentlendDetail.setFineReasonRemark(mflysmi);
 				yearAgentlendDetailMapper.updateById(budgetYearAgentlendDetail);
 			});
