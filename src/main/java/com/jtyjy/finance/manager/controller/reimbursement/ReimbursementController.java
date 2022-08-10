@@ -272,10 +272,10 @@ public class ReimbursementController {
         Map<String, Object> map = helper.doImport(sheets, BxInfoSheetDto.class);
         Map<String, Object> cz_map = helper.doImport(sheets, StrickSheetDto.class);
         Map<String, Object> zz_map = helper.doImport(sheets, TransferSheetDto.class);
-        Map<String, Object> cl_map = helper.doImport(sheets, TravelSheetDto.class);
         Map<String, Object> zd_map = helper.doImport(sheets, EntertainSheetDto.class);
-        Map<String, Object> hb_map = helper.doImport(sheets, HbSheetDto.class);
-        if(helper.getErrorFile()) {
+	    Map<String, Object> hb_map = helper.doImport(sheets, HbSheetDto.class);
+	    Map<String, Object> cl_map = helper.doImport(sheets, TravelSheetDto.class);
+	    if(helper.getErrorFile()) {
             helper.end(true);
             File file2 = (File)obj[1];
             if(file2.exists())file2.delete();
