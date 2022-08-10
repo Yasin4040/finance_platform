@@ -587,7 +587,8 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 					excelData.setInSubjectName(v.getInsubjectname());
 					excelData.setInAgentName(v.getInname());
 					excelData.setInYearTotal(v.getInagentmoney().setScale(2, BigDecimal.ROUND_HALF_UP));
-					excelData.setInYearBalance(v.getInagentmoney().add(v.getInagentaddmoney()).add(v.getInagentlendinmoney()).subtract(v.getInagentlendoutmoney()).subtract(v.getInagentexcutemoney()).setScale(2, BigDecimal.ROUND_HALF_UP));
+					//excelData.setInYearBalance(v.getInagentmoney().add(v.getInagentaddmoney()).add(v.getInagentlendinmoney()).subtract(v.getInagentlendoutmoney()).subtract(v.getInagentexcutemoney()).setScale(2, BigDecimal.ROUND_HALF_UP));
+					excelData.setInYearBalance(v.getInagentexcutemoney().setScale(2, BigDecimal.ROUND_HALF_UP));
 					excelData.setOutSubjectName(v.getOutsubjectname());
 					excelData.setOutAgentName(v.getOutname());
 					excelData.setOutYearTotal(v.getOutagentmoney());
@@ -611,7 +612,8 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 						excelData.setInSubjectName(detail.getInsubjectname());
 						excelData.setInAgentName(detail.getInname());
 						excelData.setInYearTotal(detail.getInagentmoney().setScale(2, BigDecimal.ROUND_HALF_UP));
-						excelData.setInYearBalance(detail.getInagentmoney().add(detail.getInagentaddmoney()).add(detail.getInagentlendinmoney()).subtract(detail.getInagentlendoutmoney()).subtract(detail.getInagentexcutemoney()).setScale(2, BigDecimal.ROUND_HALF_UP));
+						//excelData.setInYearBalance(detail.getInagentmoney().add(detail.getInagentaddmoney()).add(detail.getInagentlendinmoney()).subtract(detail.getInagentlendoutmoney()).subtract(detail.getInagentexcutemoney()).setScale(2, BigDecimal.ROUND_HALF_UP));
+						excelData.setInYearBalance(detail.getInagentexcutemoney().setScale(2, BigDecimal.ROUND_HALF_UP));
 						excelData.setOutSubjectName(detail.getOutsubjectname());
 						excelData.setOutAgentName(detail.getOutname());
 						excelData.setOutYearTotal(detail.getOutagentmoney());
