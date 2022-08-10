@@ -319,7 +319,7 @@ public class BudgetUnitService extends DefaultBaseService<BudgetUnitMapper, Budg
                 }
                 if (null != tmp.get("ccratioformula")) {
                     unitsubject.setCcratioformula((String) tmp.get("ccratioformula"));
-                    unitsubject.setShowCcratioformula(unitsubject.getCcratioformula().replace("[this]",unitsubject.getName()));
+                    if(StringUtils.isNotBlank(unitsubject.getCcratioformula()))unitsubject.setShowCcratioformula(unitsubject.getCcratioformula().replace("[this]",unitsubject.getName()));
                 }
                 if (null != tmp.get("formula") || null == unitsubject.getFormula()) {
                     unitsubject.setFormula((String) tmp.get("formula"));
@@ -344,6 +344,9 @@ public class BudgetUnitService extends DefaultBaseService<BudgetUnitMapper, Budg
                 unitsubject.setMonthcontrolflag(true);
                 unitsubject.setYearcontrolflag(true);
                 unitsubject.setYearsubjectcontrolflag(true);
+                if(StringUtils.isNotBlank(unitsubject.getCcratioformula()))unitsubject.setShowCcratioformula(unitsubject.getCcratioformula().replace("[this]",unitsubject.getName()));
+                if(StringUtils.isNotBlank(unitsubject.getRevenueformula()))unitsubject.setShowRevenueformula(unitsubject.getRevenueformula().replace("[this]",unitsubject.getName()));
+                if(StringUtils.isNotBlank(unitsubject.getFormula()))unitsubject.setShowFormula(unitsubject.getFormula().replace("[this]",unitsubject.getName()));
             }
             if (!subjectidlist.contains(id)) {
                 if (!unitsubject.getFormulaflag()) {
@@ -437,24 +440,34 @@ public class BudgetUnitService extends DefaultBaseService<BudgetUnitMapper, Budg
                     if(unit.getRequeststatus() >= 1){
                         throw new RuntimeException("取消失败！年度预算已提交！");
                     }
-                    monthAgentMapper.deleteBatchIds(budgetMonthAgents.stream().map(BudgetMonthAgent::getId).collect(Collectors.toList()));
-                    byaMapper.deleteBatchIds(budgetYearAgents.stream().map(BudgetYearAgent::getId).collect(Collectors.toList()));
+                    if(!CollectionUtils.isEmpty(budgetMonthAgents)){
+                        monthAgentMapper.deleteBatchIds(budgetMonthAgents.stream().map(BudgetMonthAgent::getId).collect(Collectors.toList()));
+                    }
+                    if(!CollectionUtils.isEmpty(budgetYearAgents)){
+                        byaMapper.deleteBatchIds(budgetYearAgents.stream().map(BudgetYearAgent::getId).collect(Collectors.toList()));
+                    }
+                    UpdateWrapper<BudgetUnitSubject> wrapper = new UpdateWrapper<>();
+                    wrapper.eq("unitid", Long.valueOf(unitId));
+                    wrapper.in("subjectid", cancelProductSubjectIds);
+                    this.busMapper.delete(wrapper);
                 }else{
                     throw new RuntimeException("取消失败！该科目已编制预算！");
                 }
             }
 
             uncheckedIds = unCheckedSubjectIds.stream().filter(e->!cancelProductSubjectIds.contains(e)).collect(Collectors.joining(","));
-
-            Map<String, Object> map = this.busMapper.countYearAgent(uncheckedIds, unit.getYearid(), unit.getId());
-            Long count = (Long)map.get("sum");
-            if (count > 0) {
-                throw new RuntimeException("已存在【" + map.get("agentNames") + "】等年度动因，对应科目不能取消。");
+            if(StringUtils.isNotBlank(uncheckedIds)){
+                Map<String, Object> map = this.busMapper.countYearAgent(uncheckedIds, unit.getYearid(), unit.getId());
+                Long count = (Long)map.get("sum");
+                if (count > 0) {
+                    throw new RuntimeException("已存在【" + map.get("agentNames") + "】等年度动因，对应科目不能取消。");
+                }
+                UpdateWrapper<BudgetUnitSubject> wrapper = new UpdateWrapper<>();
+                wrapper.eq("unitid", Long.valueOf(unitId));
+                wrapper.in("subjectid", Arrays.asList(uncheckedIds.split(",")));
+                this.busMapper.delete(wrapper);
             }
-            UpdateWrapper<BudgetUnitSubject> wrapper = new UpdateWrapper<>();
-            wrapper.eq("unitid", Long.valueOf(unitId));
-            wrapper.in("subjectid", Arrays.asList(uncheckedIds.split(",")));
-            this.busMapper.delete(wrapper);
+
         }
         //获取预算科目
         List<BudgetSubject> mysubjects = this.bsMapper.querySubByIds(subIds);
