@@ -148,6 +148,7 @@ public class BudgetYearAgentaddinfoService extends DefaultBaseService<BudgetYear
 //            v.setYearBalance(v.getPreYearBalance().add(v.getTotal()));
 			v.setYearBalance(v.getPreYearBalance());
 			v.setShowExemptResult(v.getExemptResult() == null ? "" : (0 == v.getExemptResult() ? "罚款" : "免罚"));
+			v.setSubjectName(budgetSubjectMapper.selectById(v.getSubjectid()).getName());
 		});
 		return agentAdds;
 	}

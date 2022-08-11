@@ -268,6 +268,10 @@ public class BudgetYearAgentadd implements Serializable {
     @TableField(value = "name")
     private String name;
 
+    @ApiModelProperty("科目名称")
+    @TableField(exist = false)
+    private String subjectName;
+
     // --------------------------------------------------
 
     @ApiModelProperty(value = "追加前-年度余额")
