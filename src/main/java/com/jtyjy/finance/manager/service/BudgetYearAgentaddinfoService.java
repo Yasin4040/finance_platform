@@ -798,7 +798,7 @@ public class BudgetYearAgentaddinfoService extends DefaultBaseService<BudgetYear
                         }
                         yearAdd.setYearagentid(budgetYearAgent.getId());
                         yearAdd.setMonthagentid(budgetMonthAgent != null ? budgetMonthAgent.getId() : null);
-                        String mfjg = detail.get("mfjg1");
+                        String mfjg = detail.get("mfjg");
                         yearAdd.setExemptResult(Integer.valueOf(mfjg));
                         yearAdd.setFineRemark(detail.get("fkyy"));
                         this.budgetYearAgentaddMapper.updateById(yearAdd);
@@ -908,7 +908,7 @@ public class BudgetYearAgentaddinfoService extends DefaultBaseService<BudgetYear
         detailtablevalues.values().forEach(list -> {
             list.forEach(e -> {
                 String id = e.get("sjid");
-                String mfjg = e.get("mfjg1");
+                String mfjg = e.get("mfjg");
                 String mflysmi = e.get("mflysmi");
 
                 BudgetYearAgentadd budgetYearAgentadd = budgetYearAgentaddMapper.selectById(id);
