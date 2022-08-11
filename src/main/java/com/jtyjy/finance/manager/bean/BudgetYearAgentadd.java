@@ -297,6 +297,10 @@ public class BudgetYearAgentadd implements Serializable {
     @ApiModelProperty(value = "免罚结果 0 免罚 1 罚款（新增修改不用传）")
     private Integer exemptResult;
 
+    @ApiModelProperty(value = "免罚结果")
+    @TableField(exist = false)
+    private String showExemptResult;
+
     /**
      * 罚款理由说明
      */
