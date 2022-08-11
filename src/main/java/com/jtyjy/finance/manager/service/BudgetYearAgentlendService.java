@@ -575,7 +575,7 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 			budgetYearAgentLends.forEach(v -> {
 
 				List<BudgetYearAgentlendDetail> budgetYearAgentlendDetails = yearAgentlendDetailMapper.selectList(new LambdaQueryWrapper<BudgetYearAgentlendDetail>().eq(BudgetYearAgentlendDetail::getYearAgentLendId, v.getId()));
-				if(CollectionUtils.isEmpty(budgetYearAgentlendDetails)){
+				if (CollectionUtils.isEmpty(budgetYearAgentlendDetails)) {
 					YearAgentLendExcelData excelData = new YearAgentLendExcelData();
 					excelData.setNum(resultList.size() + 1);
 					excelData.setRequestStatus(Constants.getRequestStatus(v.getRequeststatus()));
@@ -598,9 +598,9 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 					excelData.setCreateTime(Constants.FORMAT_10.format(v.getCreatetime()));
 					excelData.setAuditTime(v.getAudittime() != null ? Constants.FORMAT_10.format(v.getAudittime()) : "");
 					resultList.add(excelData);
-				}else{
+				} else {
 
-					budgetYearAgentlendDetails.forEach(detail->{
+					budgetYearAgentlendDetails.forEach(detail -> {
 						YearAgentLendExcelData excelData = new YearAgentLendExcelData();
 						excelData.setNum(resultList.size() + 1);
 						excelData.setRequestStatus(Constants.getRequestStatus(v.getRequeststatus()));
@@ -622,7 +622,7 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 						excelData.setCreatorName(v.getCreatorname());
 						excelData.setCreateTime(Constants.FORMAT_10.format(v.getCreatetime()));
 						excelData.setAuditTime(v.getAudittime() != null ? Constants.FORMAT_10.format(v.getAudittime()) : "");
-						excelData.setIsExemptFine(detail.getIsExemptFine()?"是":"否");
+						excelData.setIsExemptFine(detail.getIsExemptFine() ? "是" : "否");
 						excelData.setExemptFineReason(detail.getExemptFineReason());
 						excelData.setExemptFineResult(detail.getExemptFineResult());
 						excelData.setFineReasonRemark(detail.getFineReasonRemark());
@@ -636,7 +636,7 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 			List<BudgetYearAgentlend> budgetYearAgentLends = budgetYearAgentlendMapper.selectList(new LambdaQueryWrapper<BudgetYearAgentlend>().in(BudgetYearAgentlend::getId, lendVOList.stream().map(BudgetYearAgentLendVO::getId).collect(Collectors.toList())).orderByDesc(BudgetYearAgentlend::getCreatetime));
 			budgetYearAgentLends.forEach(v -> {
 				List<BudgetYearAgentlendDetail> budgetYearAgentlendDetails = yearAgentlendDetailMapper.selectList(new LambdaQueryWrapper<BudgetYearAgentlendDetail>().eq(BudgetYearAgentlendDetail::getYearAgentLendId, v.getId()));
-				if(CollectionUtils.isEmpty(budgetYearAgentlendDetails)){
+				if (CollectionUtils.isEmpty(budgetYearAgentlendDetails)) {
 					YearAgentLendExcelData excelData = new YearAgentLendExcelData();
 					excelData.setNum(resultList.size() + 1);
 					excelData.setRequestStatus(Constants.getRequestStatus(v.getRequeststatus()));
@@ -658,9 +658,9 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 					excelData.setCreateTime(Constants.FORMAT_10.format(v.getCreatetime()));
 					excelData.setAuditTime(v.getAudittime() != null ? Constants.FORMAT_10.format(v.getAudittime()) : "");
 					resultList.add(excelData);
-				}else{
+				} else {
 
-					budgetYearAgentlendDetails.forEach(detail->{
+					budgetYearAgentlendDetails.forEach(detail -> {
 						YearAgentLendExcelData excelData = new YearAgentLendExcelData();
 						excelData.setNum(resultList.size() + 1);
 						excelData.setRequestStatus(Constants.getRequestStatus(v.getRequeststatus()));
@@ -681,7 +681,7 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 						excelData.setCreatorName(v.getCreatorname());
 						excelData.setCreateTime(Constants.FORMAT_10.format(v.getCreatetime()));
 						excelData.setAuditTime(v.getAudittime() != null ? Constants.FORMAT_10.format(v.getAudittime()) : "");
-						excelData.setIsExemptFine(detail.getIsExemptFine()?"是":"否");
+						excelData.setIsExemptFine(detail.getIsExemptFine() ? "是" : "否");
 						excelData.setExemptFineReason(detail.getExemptFineReason());
 						excelData.setExemptFineResult(detail.getExemptFineResult());
 						excelData.setFineReasonRemark(detail.getFineReasonRemark());
@@ -804,7 +804,7 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 					detail.setAudittime(new Date());
 					String mfjg = map.get(detail.getId() + "-1");
 
-					detail.setExemptFineResult("0".equals(mfjg)?"罚款":"免罚");
+					detail.setExemptFineResult("0".equals(mfjg) ? "罚款" : "免罚");
 					detail.setFineReasonRemark(map.get(detail.getId() + "-2"));
 					this.yearAgentlendDetailMapper.updateById(detail);
 
@@ -837,7 +837,7 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 						.collect(Collectors.groupingBy(BudgetYearAgentlendDetail::getInunitid)).forEach((inUnitId, list) -> {
 					BudgetUnit budgetUnit = this.budgetUnitMapper.selectById(inUnitId);
 					String budgetResponsibilities = budgetUnit.getBudgetResponsibilities();
-					if (StringUtils.isNotBlank(budgetResponsibilities)) {
+					if (StringUtils.isNotBlank(budgetResponsibilities) && list.size() > 0) {
 						commonService.createBudgetFine(2, list.size(), budgetResponsibilities.split(",")[0]);
 					}
 				});
@@ -896,7 +896,7 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 
 				BudgetYearAgentlendDetail budgetYearAgentlendDetail = yearAgentlendDetailMapper.selectById(id);
 				budgetYearAgentlendDetail.setRequeststatus(-1);
-				budgetYearAgentlendDetail.setExemptFineResult("0".equals(mfjg)?"罚款":"免罚");
+				budgetYearAgentlendDetail.setExemptFineResult("0".equals(mfjg) ? "罚款" : "免罚");
 				budgetYearAgentlendDetail.setFineReasonRemark(mflysmi);
 				yearAgentlendDetailMapper.updateById(budgetYearAgentlendDetail);
 			});
