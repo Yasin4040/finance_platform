@@ -15,9 +15,9 @@ public class FilterConfig {
     @Bean
     public RequestResponseReplaceStrategy requestResponseReplaceStrategy() throws Exception {
         RequestResponseReplaceStrategy strategy = new RequestResponseReplaceStrategy();
-        strategy.add("\\r", "rhuanhang");
-        strategy.add("\\n", "nhuanhang");
-        strategy.add("\\r\\n", "allhuanhang");
+        //strategy.add("\\r", "rhuanhang");
+       //strategy.add("\\n", "nhuanhang");
+        //strategy.add("\\r\\n", "allhuanhang");
         return strategy;
     }
 
