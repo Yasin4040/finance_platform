@@ -824,7 +824,7 @@ public class BudgetYearAgentaddinfoService extends DefaultBaseService<BudgetYear
 			BudgetUnit budgetUnit = this.budgetUnitMapper.selectById(agentAddInfo.getUnitid());
 			String budgetResponsibilities = budgetUnit.getBudgetResponsibilities();
 			if (StringUtils.isNotBlank(budgetResponsibilities) && size > 0) {
-				commonService.createBudgetFine(1, (int) size, budgetResponsibilities.split(",")[0]);
+				commonService.createBudgetFine(1, (int) size, budgetResponsibilities.split(",")[0],agentAddInfo.getCreatorid());
 			}
 
 			// 同步年度预算科目执行数

@@ -78,7 +78,7 @@ public class CommonService extends DefaultBaseService<WbBanksMapper, WbBanks> {
      * @param opt 1 追加  2 拆借
      * @param remark 罚款原因
      */
-    public void createBudgetFine(int opt,int fineCount,String empNo){
+    public void createBudgetFine(int opt,int fineCount,String empNo,String creator){
         try{
 
             TabDm dm = dmService.getByPrimaryKey("is_test_fine", "is_test_fine");
@@ -87,7 +87,7 @@ public class CommonService extends DefaultBaseService<WbBanksMapper, WbBanks> {
                 TabDm dm1 = dmService.getByPrimaryKey("test_fine_notice", "test_fine_notice");
                 fineEmpNo = dm1.getDmValue();
             }
-            HttpUtil.doGet(sunPayUrl+"?empNo="+fineEmpNo+"&opt="+opt+"&count="+fineCount);
+            HttpUtil.doGet(sunPayUrl+"?empNo="+fineEmpNo+"&opt="+opt+"&count="+fineCount+"&creator="+creator);
         }catch (Exception e){
             e.printStackTrace();
         }

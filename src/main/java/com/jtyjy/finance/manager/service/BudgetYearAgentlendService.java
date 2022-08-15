@@ -838,7 +838,7 @@ public class BudgetYearAgentlendService extends DefaultBaseService<BudgetYearAge
 					BudgetUnit budgetUnit = this.budgetUnitMapper.selectById(inUnitId);
 					String budgetResponsibilities = budgetUnit.getBudgetResponsibilities();
 					if (StringUtils.isNotBlank(budgetResponsibilities) && list.size() > 0) {
-						commonService.createBudgetFine(2, list.size(), budgetResponsibilities.split(",")[0]);
+						commonService.createBudgetFine(2, list.size(), budgetResponsibilities.split(",")[0],yearAgentLend.getCreatorid());
 					}
 				});
 
