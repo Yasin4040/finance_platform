@@ -65,6 +65,7 @@ public class BudgetMonthAgentController extends BaseController<BudgetMonthAgent>
             @ApiImplicitParam(value = "月份Id", name = "monthId", dataType = "Integer", required = true),
             @ApiImplicitParam(value = "类型（1普通 2产品 3分解）", name = "type", dataType = "Integer", required = true),
             @ApiImplicitParam(value = "动因名称", name = "name", dataType = "String"),
+            @ApiImplicitParam(value = "产品分类", name = "category", dataType = "String"),
             @ApiImplicitParam(value = "当前页（默认1）", name = "page", dataType = "Integer"),
             @ApiImplicitParam(value = "每页条数（默认20）", name = "rows", dataType = "Integer"),
             @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
@@ -75,9 +76,10 @@ public class BudgetMonthAgentController extends BaseController<BudgetMonthAgent>
                                                                         @RequestParam(value = "monthId") Integer monthId,
                                                                         @RequestParam(value = "type") Integer type,
                                                                         @RequestParam(value = "name", required = false) String name,
+                                                                        @RequestParam(value = "category", required = false) String category,
                                                                         @RequestParam(value = "page", defaultValue = "1") Integer page,
                                                                         @RequestParam(value = "rows", defaultValue = "20") Integer rows) {
-        return ResponseEntity.ok(this.budgetMonthAgentService.monthAgentPage(budgetUnitId, budgetSubjectId, monthId, type, name, page, rows));
+        return ResponseEntity.ok(this.budgetMonthAgentService.monthAgentPage(budgetUnitId, budgetSubjectId, monthId, type, name, page, rows,category));
     }
 
     @ApiOperation(value = "查询月度动因明细", httpMethod = "GET")

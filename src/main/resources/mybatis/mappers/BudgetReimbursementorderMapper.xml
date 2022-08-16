@@ -70,7 +70,7 @@
        SELECT ttt.* 
        FROM
        ( 
-       SELECT `order`.qrcodebase64str qrcode, `order`.id, `order`.reimcode, order.reuqeststatus , order.reuqeststatus reuqeststatus_dictname, `order`.yearid,  myyear.period AS `yearname`, `order`.unitid , budgetunit.name ysdw, `order`.monthid, mymonth.period AS `monthname`, `order`.reimperonsid, CONCAT(`order`.reimperonsname,'(', user.USER_NAME, ')') 'bxr', DATE_FORMAT(`order`.reimdate,'%Y-%m-%d') bxrq, `order`.reimmoney bxje, `order`.nonreimmoney, `order`.paymentmoney czje, `order`.transmoney zzje, `order`.cashmoney xjje, `order`.othermoney, `order`.allocatedmoney hbje, `order`.attachcount fjzs, `order`.remark, budgetunit.baseunitid, `order`.createtime, `order`.updatetime, `order`.applicantid, `order`.bxtype, `order`.bxtype bxtype_dictname, `order`.applicantame, `order`.traveler, `order`.travelreason, `order`.curscanstatusname, `order`.curscanername, DATE_FORMAT(`order`.verifytime,'%Y-%m-%d %H:%i:%S') verifytime, DATE_FORMAT(`order`.submittime,'%Y-%m-%d %H:%i:%S') submittime, DATE_FORMAT(`order`.applicanttime,'%Y-%m-%d %H:%i:%S') applicanttime FROM budget_reimbursementorder AS `order` INNER JOIN budget_year_period AS myyear ON `order`.yearid = myyear.id INNER JOIN budget_month_period AS mymonth ON `order`.monthid = mymonth.id INNER JOIN budget_unit AS budgetunit ON budgetunit.yearid = myyear.id AND `order`.unitid = budgetunit.id  LEFT JOIN wb_user AS user ON `order`.reimperonsid = user.USER_ID 
+       SELECT `order`.qrcodebase64str qrcode, `order`.id, `order`.reimcode, order.reuqeststatus , order.reuqeststatus reuqeststatus_dictname, `order`.yearid,  myyear.period AS `yearname`, `order`.unitid , budgetunit.name ysdw, `order`.monthid, mymonth.period AS `monthname`, `order`.reimperonsid, CONCAT(`order`.reimperonsname,'(', user.USER_NAME, ')') 'bxr',CONCAT(`order`.applicantame,'(', user2.USER_NAME, ')') 'sqr', DATE_FORMAT(`order`.reimdate,'%Y-%m-%d') bxrq, `order`.reimmoney bxje, `order`.nonreimmoney, `order`.paymentmoney czje, `order`.transmoney zzje, `order`.cashmoney xjje, `order`.othermoney, `order`.allocatedmoney hbje, `order`.attachcount fjzs, `order`.remark, budgetunit.baseunitid, `order`.createtime, `order`.updatetime, `order`.applicantid, `order`.bxtype, `order`.bxtype bxtype_dictname, `order`.applicantame, `order`.traveler, `order`.travelreason, `order`.curscanstatusname, `order`.curscanername, DATE_FORMAT(`order`.verifytime,'%Y-%m-%d %H:%i:%S') verifytime, DATE_FORMAT(`order`.submittime,'%Y-%m-%d %H:%i:%S') submittime, DATE_FORMAT(`order`.applicanttime,'%Y-%m-%d %H:%i:%S') applicanttime FROM budget_reimbursementorder AS `order` INNER JOIN budget_year_period AS myyear ON `order`.yearid = myyear.id INNER JOIN budget_month_period AS mymonth ON `order`.monthid = mymonth.id INNER JOIN budget_unit AS budgetunit ON budgetunit.yearid = myyear.id AND `order`.unitid = budgetunit.id  LEFT JOIN wb_user AS user ON `order`.reimperonsid = user.USER_ID LEFT JOIN wb_user AS user2 ON `order`.applicantid = user2.USER_ID
 	   ) ttt
 	   WHERE 1 = 1
 	   <foreach collection="conditionMap" index="key" item="value">
@@ -110,9 +110,14 @@
             </if>
             <if test="key == 'bxr'">
                 <if test="value != null and value !=''">
-                    AND ttt.bxr LIKE CONCAT('%', #{value}, '%')  
+                    AND ttt.bxr LIKE CONCAT('%', #{value}, '%')
                 </if>
             </if>
+		   <if test="key == 'sqr'">
+			   <if test="value != null and value !=''">
+				   AND  ttt.sqr LIKE CONCAT('%', #{value}, '%')
+			   </if>
+		   </if>
             <if test="key == 'bxrq'">
                 <if test="value != null and value !=''">
                     AND ttt.bxrq = #{value} 

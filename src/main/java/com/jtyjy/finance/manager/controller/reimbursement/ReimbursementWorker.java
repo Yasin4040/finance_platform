@@ -511,11 +511,12 @@ public class ReimbursementWorker {
           当报销明细的费用科目为销售费用-市场推广及宣传费-差旅补贴、南昌接待时，
           开票单位校验报销人所在发薪单位，若不一致不允许提交，提示“提交失败！开票单位应与报销人所在发薪单位不一致！”
          */
-        result = this.validateSalaryUnit(request);
-        if (StringUtils.isNotBlank(result)) {
-            return result;
+        if(request.getIsHireHalfYear()){
+            result = this.validateSalaryUnit(request);
+            if (StringUtils.isNotBlank(result)) {
+                return result;
+            }
         }
-
         //需要校验的报销明细（计入执行）
         List<BudgetReimbursementorderDetail> validatedDetails = request.getOrderDetail().stream().filter(BudgetReimbursementorderDetail::getReimflag).collect(Collectors.toList());
         /**

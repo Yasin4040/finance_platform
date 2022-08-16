@@ -68,6 +68,9 @@
         <if test="name != null and name !=''">
             AND agent.name LIKE concat('%',#{name},'%')
         </if>
+        <if test="category != null and category !=''">
+            AND budget_product_category.name LIKE concat('%',#{category},'%')
+        </if>
         order by agent.createtime desc
     </select>
 

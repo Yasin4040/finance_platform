@@ -97,10 +97,10 @@ public class BudgetYearAgentService extends DefaultBaseService<BudgetYearAgentMa
     /**
      * 查询年度动因（分页）
      */
-    public PageResult<BudgetYearAgentVO> yearAgentPage(Long budgetUnitId, Long budgetSubjectId, String name, Integer page, Integer rows) {
+    public PageResult<BudgetYearAgentVO> yearAgentPage(Long budgetUnitId, Long budgetSubjectId, String name, Integer page, Integer rows ,String category) {
         Page<BudgetYearAgentVO> pageBean = new Page<>(page, rows);
 
-        List<BudgetYearAgentVO> budgetYearAgents = budgetYearAgentMapper.yearAgentPage(pageBean, budgetUnitId, budgetSubjectId, name);
+        List<BudgetYearAgentVO> budgetYearAgents = budgetYearAgentMapper.yearAgentPage(pageBean, budgetUnitId, budgetSubjectId, name,category);
 
         return PageResult.apply(pageBean.getTotal(), budgetYearAgents);
     }

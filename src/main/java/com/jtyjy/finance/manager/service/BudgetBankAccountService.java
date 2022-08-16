@@ -97,11 +97,12 @@ public class BudgetBankAccountService extends DefaultBaseService<BudgetBankAccou
             return "【"+bankAcc.getBankaccount()+"】该银行账号已重复，请重新输入！";
         }
         if (bankAcc.getWagesflag()) {
-            List<BudgetBankAccount> wagesAccount =this.bbaMapper.selectList(new QueryWrapper<BudgetBankAccount>().eq("accounttype", 1).eq("wagesflag", 1).eq("pname", bankAcc.getPname()).eq("code", bankAcc.getCode()));
-            if (null != wagesAccount) {
-                return "该人员已经存在一个工资账户，不允许再次添加！";
-
-            }
+        	return "不允许添加工资卡";
+//            List<BudgetBankAccount> wagesAccount =this.bbaMapper.selectList(new QueryWrapper<BudgetBankAccount>().eq("accounttype", 1).eq("wagesflag", 1).eq("pname", bankAcc.getPname()).eq("code", bankAcc.getCode()));
+//            if (null != wagesAccount) {
+//                return "该人员已经存在一个工资账户，不允许再次添加！";
+//
+//            }
         }
         //"户名"没填就默认为“名称”对应的名字
         if (StringUtils.isBlank(bankAcc.getAccountname())) {
@@ -118,8 +119,12 @@ public class BudgetBankAccountService extends DefaultBaseService<BudgetBankAccou
         if (StringUtils.isBlank(bbk.getRemark())) {
             bbk.setRemark(" ");
         }
-        
-        if (StringUtils.isNotBlank(bbk.getBankaccount())) {
+	    BudgetBankAccount budgetBankAccount = bbaMapper.selectById(bbk.getId());
+		if(StringUtils.isNotBlank(budgetBankAccount.getOutkey())){
+			return "不允许修改来源hr系统的银行账号";
+		}
+
+	    if (StringUtils.isNotBlank(bbk.getBankaccount())) {
             //验证银行卡号是否填写正确
             /*if (null !=bbk.get("bankaccount").toString()) {
                 if (!BudgetSysUtils.validateBankCardNum(bbk.get("bankaccount").toString())) {
@@ -139,11 +144,12 @@ public class BudgetBankAccountService extends DefaultBaseService<BudgetBankAccou
             return errMsg;
         }
         if (bbk.getWagesflag()) {
-            BudgetBankAccount wagesAccount =this.bbaMapper.selectOne(new QueryWrapper<BudgetBankAccount>().eq("accounttype", 1).eq("wagesflag", 1).eq("pname", bbk.getPname()).eq("code", bbk.getCode()));
-            if (null != wagesAccount && !wagesAccount.getId().equals(bbk.getId())) {
-                return "该人员已经存在一个工资账户，不允许再次添加！";
-                
-            }
+	        return "不允许添加工资卡";
+//            BudgetBankAccount wagesAccount =this.bbaMapper.selectOne(new QueryWrapper<BudgetBankAccount>().eq("accounttype", 1).eq("wagesflag", 1).eq("pname", bbk.getPname()).eq("code", bbk.getCode()));
+//            if (null != wagesAccount && !wagesAccount.getId().equals(bbk.getId())) {
+//                return "该人员已经存在一个工资账户，不允许再次添加！";
+//
+//            }
         }
         if(null == bbk.getOrderno()){
             bbk.setOrderno(0);
@@ -204,6 +210,11 @@ public class BudgetBankAccountService extends DefaultBaseService<BudgetBankAccou
             if (null != deptInfo) {
                 vo.setDeptName(deptInfo.getDeptFullname());
             }
+            if(StringUtils.isNotBlank(vo.getOutKey())){
+            	vo.setSourceType("HR系统");
+            }else{
+            	vo.setSourceType("预算系统");
+            }
         }
         pageCond.setRecords(retList);
         return pageCond;
@@ -217,6 +228,11 @@ public class BudgetBankAccountService extends DefaultBaseService<BudgetBankAccou
 	        if (null != deptInfo) {
                 excel.setDeptName((String)deptInfo.get("DEPT_FULLNAME"));
             }
+		    if(StringUtils.isNotBlank(excel.getOutKey())){
+			    excel.setSourceType("HR系统");
+		    }else{
+			    excel.setSourceType("预算系统");
+		    }
 	    }
 	    return retList;
 	}

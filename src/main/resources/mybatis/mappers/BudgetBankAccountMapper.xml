@@ -23,7 +23,7 @@
     
     <select id = 'getBankAccountPageInfo' resultType = "com.jtyjy.finance.manager.vo.BankAccountVO">
     	SELECT ba.id, ba.code, ba.pname pname, ba.accountname accountName, ba.accounttype accountType, ba.bankaccount bankAccount, ba.wagesflag wagesFlag, ba.branchcode branchCode, ba.orderno orderNo,
-    	ba.stopflag stopFlag, ba.remark, ba.outKey, wb.province, wb.city, wb.bank_name bankName, wb.sub_branch_name branchName, wp.DEPT_ID deptId, ba.update_time, ba.update_by
+    	ba.stopflag stopFlag, ba.remark, ba.outKey, wb.province, wb.city, wb.bank_name bankName, wb.sub_branch_name branchName, wp.DEPT_ID deptId, ba.update_time, ba.update_by,ba.outkey outKey
     	FROM budget_bank_account ba LEFT JOIN wb_banks wb ON ba.branchcode = wb.sub_branch_code LEFT JOIN wb_person wp ON ba.code = wp.PERSON_CODE
     	WHERE 1 = 1
     	<foreach collection="conditionMap" index="key" item="value">
@@ -72,6 +72,14 @@
                     and (ba.accountname LIKE CONCAT('%', #{value}, '%') or ba.code LIKE CONCAT('%', #{value}, '%') or ba.bankaccount LIKE CONCAT('%', #{value}, '%'))
                 </if>
             </if>
+            <if test="key == 'sourceType'">
+                <if test="value != null and value == 1">
+                    and ba.outkey is not null or ba.outkey != ''
+                </if>
+                <if test="value != null and value == 2">
+                    and ba.outkey is null or ba.outkey = ''
+                </if>
+            </if>
         </foreach>
         order by ba.orderno
     	<if test="authSql !=null and authSql !=''">
@@ -94,7 +102,7 @@
     </select>
     
     <select id = 'getBankAccountExcelInfo' resultType = "com.jtyjy.finance.manager.easyexcel.BankAccountExcelData">
-    	SELECT ba.code, ba.pname pname, ba.accountname accountName, ba.bankaccount bankAccount, wb.bank_name bankName, wp.DEPT_ID deptId,wb.province,wb.city,wb.sub_branch_name subBranchName
+    	SELECT ba.code, ba.pname pname, ba.accountname accountName, ba.bankaccount bankAccount, wb.bank_name bankName, wp.DEPT_ID deptId,wb.province,wb.city,wb.sub_branch_name subBranchName,ba.outkey outKey
     	FROM budget_bank_account ba LEFT JOIN wb_banks wb ON ba.branchcode = wb.sub_branch_code LEFT JOIN wb_person wp ON ba.code = wp.PERSON_CODE
     	WHERE 1 = 1
     	<foreach collection="conditionMap" index="key" item="value">
@@ -136,6 +144,14 @@
            	<if test="key == 'stopFlag'">
                 <if test="value !=null">
                     AND ba.stopflag = #{value}
+                </if>
+            </if>
+            <if test="key == 'sourceType'">
+                <if test="value != null and value == 1">
+                    and ba.outkey is not null or ba.outkey != ''
+                </if>
+                <if test="value != null and value == 2">
+                    and ba.outkey is null or ba.outkey = ''
                 </if>
             </if>
         </foreach>

@@ -25,7 +25,7 @@ public interface BudgetYearAgentMapper extends BaseMapper<BudgetYearAgent> {
     List<BudgetYearAgentVO> yearAgentPage(@Param("pageBean") Page<BudgetYearAgentVO> pageBean,
                                           @Param("budgetUnitId") Long budgetUnitId,
                                           @Param("budgetSubjectId") Long budgetSubjectId,
-                                          @Param("name") String name);
+                                          @Param("name") String name,@Param("category")String category);
 
     /**
      * 检测动因是否能删除

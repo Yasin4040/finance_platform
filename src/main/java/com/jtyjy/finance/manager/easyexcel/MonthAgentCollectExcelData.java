@@ -1,5 +1,6 @@
 package com.jtyjy.finance.manager.easyexcel;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -54,5 +55,8 @@ public class MonthAgentCollectExcelData {
 
     @ExcelProperty(value = "月度预算活动说明")
     private String monthBusiness;
+
+    @ExcelIgnore
+    private Integer orderNo;
 
 }

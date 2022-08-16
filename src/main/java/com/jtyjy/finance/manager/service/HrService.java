@@ -197,8 +197,8 @@ public class HrService extends DefaultBaseService<HrSalaryYearTaxUserMapper, HrS
 		return this.mapper.getSyncUserList();
 	}
 
-	public List<Map<String,Object>> getSyncBankAccountList(){
-		return this.mapper.getSyncBankAccountList();
+	public List<Map<String,Object>> getSyncBankAccountList(List<String> empNoList){
+		return this.mapper.getSyncBankAccountList(empNoList);
 	}
 
 	public List<Map<String,Object>> getSyncDeptList(){
@@ -207,5 +207,9 @@ public class HrService extends DefaultBaseService<HrSalaryYearTaxUserMapper, HrS
 
 	public List<Map<String, Object>> getHrUserList() {
 		return this.mapper.getHrUserList();
+	}
+
+	public Integer getEmpHireDay(String empNo) {
+		return this.mapper.getEmpHireDay(empNo);
 	}
 }

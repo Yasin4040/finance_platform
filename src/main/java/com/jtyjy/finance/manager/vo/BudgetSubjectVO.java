@@ -17,4 +17,7 @@ public class BudgetSubjectVO extends TreeNode<BudgetSubjectVO> {
     @ApiModelProperty(value = "预算科目名称")
     private String name;
 
+    @ApiModelProperty(value = "排序号")
+    private Integer orderNo;
+
 }

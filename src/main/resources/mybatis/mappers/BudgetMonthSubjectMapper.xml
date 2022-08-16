@@ -51,7 +51,8 @@
                yearPeriod.period          AS yearPeriod,
                yearPeriod.code            AS yearCode,
                monthPeriod.id             AS monthId,
-               monthPeriod.period         AS monthPeriod
+               monthPeriod.period         AS monthPeriod,
+               subject.orderno
         FROM budget_month_subject AS monthSubject
                  INNER JOIN budget_subject subject ON monthSubject.subjectid = subject.id
                  INNER JOIN budget_year_subject yearSubject ON yearSubject.unitid = monthSubject.unitid
@@ -61,6 +62,7 @@
                  INNER JOIN budget_month_period monthPeriod ON monthPeriod.id = monthSubject.monthid
         where monthSubject.unitid = #{budgetUnitId}
           and monthSubject.monthid = #{monthId}
+          order by subject.orderno
     </select>
 
     <select id="exportCompanyMonthAgentCollect" resultType="com.jtyjy.finance.manager.vo.BudgetMonthSubjectVO">

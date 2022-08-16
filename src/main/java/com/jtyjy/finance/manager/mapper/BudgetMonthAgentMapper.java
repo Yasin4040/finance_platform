@@ -60,7 +60,7 @@ public interface BudgetMonthAgentMapper extends BaseMapper<BudgetMonthAgent> {
                                              @Param("budgetUnitId") Long budgetUnitId,
                                              @Param("budgetSubjectId") Long budgetSubjectId,
                                              @Param("monthId") Integer monthId,
-                                             @Param("name") String name);
+                                             @Param("name") String name, @Param("category")String category);
 
     /**
      * 查询月度动因（分解）

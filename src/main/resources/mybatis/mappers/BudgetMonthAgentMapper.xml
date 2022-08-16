@@ -92,6 +92,9 @@
         <if test="name != null and name != ''">
             and monthagent.name like concat('%',#{name},'%')
         </if>
+        <if test="category != null and category != ''">
+            and cate.name like concat('%',#{category},'%')
+        </if>
         order by monthagent.createtime desc
     </select>
 

@@ -21,7 +21,7 @@ public interface HrSalaryYearTaxUserMapper extends BaseMapper<HrSalaryYearTaxUse
 
 	List<Map<String, Object>> getSyncUserList();
 
-	List<Map<String, Object>> getSyncBankAccountList();
+	List<Map<String, Object>> getSyncBankAccountList(@Param("empNoList")List<String> empNoList);
 	
 	List<Map<String, Object>> getTravelEmpPage(Page pageCond, String date, String queryText, String authSql);
 
@@ -30,4 +30,6 @@ public interface HrSalaryYearTaxUserMapper extends BaseMapper<HrSalaryYearTaxUse
 	List<Map<String, Object>> getHrUserList();
 
 	String getSalaryUnitByEmpno(@Param("empNo") String empNo);
+
+	Integer getEmpHireDay(@Param("empNo")String empNo);
 }

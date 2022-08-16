@@ -118,16 +118,16 @@ public class BudgetBankAccountController extends BaseController<BudgetAgentExecu
     /**
      * 按照主键批量删除
      */
-    @ApiOperation(value = "按照主键批量删除", httpMethod = "POST")
-    @ApiImplicitParams(value = {
-            @ApiImplicitParam(value = "主键（多个主键以“,”分割）", name = "ids", dataType = "String", required = true),
-            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
-    })
-    @PostMapping("deleteByIds")
-    public ResponseResult deleteByIds(String ids) {
-        this.service.removeByIds(Arrays.asList(ids.split(",")));
-        return ResponseResult.ok();
-    }
+//    @ApiOperation(value = "按照主键批量删除", httpMethod = "POST")
+//    @ApiImplicitParams(value = {
+//            @ApiImplicitParam(value = "主键（多个主键以“,”分割）", name = "ids", dataType = "String", required = true),
+//            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
+//    })
+//    @PostMapping("deleteByIds")
+//    public ResponseResult deleteByIds(String ids) {
+//        this.service.removeByIds(Arrays.asList(ids.split(",")));
+//        return ResponseResult.ok();
+//    }
 
     /**
      * 分页查询银行账户
@@ -142,13 +142,14 @@ public class BudgetBankAccountController extends BaseController<BudgetAgentExecu
             @ApiImplicitParam(value = "工资账户 0：否 1：是", name = "wagesFlag", dataType = "Integer"),
             @ApiImplicitParam(value = "电子联行号", name = "branchCode", dataType = "String"),
             @ApiImplicitParam(value = "停用标志 0：启用 1：停用", name = "stopFlag", dataType = "Integer"),
+            @ApiImplicitParam(value = "来源类型（1：hr系统 2：预算系统）", name = "sourceType", dataType = "Integer"),
             @ApiImplicitParam(value = "工号/名字/条件同时查询", name = "queryText", dataType = "String"),
             @ApiImplicitParam(value = "当前页（默认1）", name = "page", dataType = "Integer"),
             @ApiImplicitParam(value = "每页条数（默认20）", name = "rows", dataType = "Integer"),
             @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
     })
     @PostMapping("page")
-    public ResponseEntity<Page<BankAccountVO>> page(BankAccountVO bean,
+    public ResponseEntity<Page<BankAccountVO>> page(BankAccountVO bean,Integer sourceType,
             @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
             @RequestParam(value = "rows", required = false, defaultValue = "20") Integer rows) throws Exception {
         Map<String, Object> conditionMap = new HashMap<>();
@@ -170,6 +171,7 @@ public class BudgetBankAccountController extends BaseController<BudgetAgentExecu
         conditionMap.put("branchCode", bean.getBranchCode());
         conditionMap.put("stopFlag", bean.getStopFlag());
         conditionMap.put("queryText", bean.getQueryText());
+        conditionMap.put("sourceType", sourceType);
         Page<BankAccountVO> voList = this.service.getBankInfo(conditionMap, page, rows);
         return ResponseEntity.ok(voList);
     }
@@ -197,10 +199,11 @@ public class BudgetBankAccountController extends BaseController<BudgetAgentExecu
             @ApiImplicitParam(value = "工资账户 0：否 1：是", name = "wagesFlag", dataType = "Integer"),
             @ApiImplicitParam(value = "电子联行号", name = "branchCode", dataType = "String"),
             @ApiImplicitParam(value = "停用标志 0：启用 1：停用", name = "stopFlag", dataType = "Integer"),
+            @ApiImplicitParam(value = "来源类型（1：hr系统 2：预算系统）", name = "sourceType", dataType = "Integer"),
             @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
     })
     @GetMapping("export")
-    public void export(BankAccountVO bean, HttpServletResponse response) throws Exception {
+    public void export(BankAccountVO bean,Integer sourceType, HttpServletResponse response) throws Exception {
         Map<String, Object> conditionMap = new HashMap<>();
         conditionMap.put("code", bean.getCode());
         String deptId = bean.getDeptId();
@@ -219,6 +222,7 @@ public class BudgetBankAccountController extends BaseController<BudgetAgentExecu
         conditionMap.put("wagesFlag", bean.getWagesFlag());
         conditionMap.put("branchCode", bean.getBranchCode());
         conditionMap.put("stopFlag", bean.getStopFlag());
+        conditionMap.put("sourceType", sourceType);
         List<BankAccountExcelData> details = this.service.getExcelInfo(conditionMap);
         InputStream is = this.getClass().getClassLoader().getResourceAsStream("template/bankAccountExportTemplate.xlsx");
         ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream("银行账户表", response), BankAccountExcelData.class).withTemplate(is).build();

@@ -20,10 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -266,13 +263,14 @@ public class BudgetMonthSubjectService extends DefaultBaseService<BudgetMonthSub
 			subjectVO.setId(v.getId());
 			subjectVO.setParentId(v.getParentId());
 			subjectVO.setName(v.getSubjectName());
+			subjectVO.setOrderNo(v.getOrderNo());
 			subjectList.add(subjectVO);
 		});
 		List<BudgetSubjectVO> treeList = TreeUtil.build(subjectList);
 
 		List<MonthAgentCollectExcelData> resultList = new ArrayList<>();
 		putExcelData(budgetTime, treeList, collect, resultList, "");
-		return resultList;
+		return resultList.stream().sorted(Comparator.comparing(MonthAgentCollectExcelData::getOrderNo)).collect(Collectors.toList());
 	}
 
 	private void putExcelData(String budgetTime, List<BudgetSubjectVO> treeList, Map<Long, BudgetMonthSubjectVO> hashMap, List<MonthAgentCollectExcelData> resultList, String space) {
@@ -297,6 +295,7 @@ public class BudgetMonthSubjectService extends DefaultBaseService<BudgetMonthSub
 			excelData.setSyZxl(v.getSyZxl().multiply(decimal).setScale(2, BigDecimal.ROUND_HALF_UP) + "%");
 			excelData.setMonthMoney(v.getMonthMoney());
 			excelData.setMonthBusiness(v.getMonthBusiness());
+			excelData.setOrderNo(node.getOrderNo());
 			resultList.add(excelData);
 
 			// 如果存在子集

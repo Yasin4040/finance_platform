@@ -72,6 +72,7 @@ public class BudgetYearAgentController extends BaseController<BudgetYearAgent> {
             @ApiImplicitParam(value = "预算单位Id", name = "budgetUnitId", dataType = "Long", required = true),
             @ApiImplicitParam(value = "预算科目Id", name = "budgetSubjectId", dataType = "Long", required = true),
             @ApiImplicitParam(value = "动因名称", name = "name", dataType = "String"),
+            @ApiImplicitParam(value = "产品分类", name = "category", dataType = "String"),
             @ApiImplicitParam(value = "当前页（默认1）", name = "page", dataType = "Integer"),
             @ApiImplicitParam(value = "每页条数（默认20）", name = "rows", dataType = "Integer"),
             @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
@@ -80,9 +81,10 @@ public class BudgetYearAgentController extends BaseController<BudgetYearAgent> {
     public ResponseEntity<PageResult<BudgetYearAgentVO>> yearAgentPage(@RequestParam(value = "budgetUnitId") Long budgetUnitId,
                                                                        @RequestParam(value = "budgetSubjectId") Long budgetSubjectId,
                                                                        @RequestParam(value = "name", required = false) String name,
+                                                                       @RequestParam(value = "category", required = false) String category,
                                                                        @RequestParam(value = "page", defaultValue = "1") Integer page,
                                                                        @RequestParam(value = "rows", defaultValue = "20") Integer rows) {
-        return ResponseEntity.ok(this.budgetYearAgentService.yearAgentPage(budgetUnitId, budgetSubjectId, name, page, rows));
+        return ResponseEntity.ok(this.budgetYearAgentService.yearAgentPage(budgetUnitId, budgetSubjectId, name, page, rows,category));
     }
 
     @ApiOperation(value = "新增年度动因", httpMethod = "POST")

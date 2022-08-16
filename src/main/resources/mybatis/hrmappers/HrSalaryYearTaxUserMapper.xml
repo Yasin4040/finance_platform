@@ -202,7 +202,13 @@
 		budget_base_bankaccount bb
 		LEFT JOIN budget_base_bank bbb ON bb.bankId = bbb.id
 		LEFT JOIN sys_dictionary sd ON bbb.bankTypeId = sd.dicId
-	where bb.isWage = 1 and bb.useStatus = 0
+	where bb.isWage = 1
+	<if test="empNoList!=null and empNoList.size()>0">
+		and bb.empNo in
+		<foreach collection="empNoList" separator="," open="(" close=")" item="empNo">
+			 #{empNo}
+		</foreach>
+	</if>
     </select>
     <!--
      update by minzhq
@@ -238,5 +244,17 @@
 			INNER JOIN sys_user user_ ON st.hr_emp_id = user_.empId
 		WHERE
 			user_.empNo = #{empNo}
+	</select>
+    <select id="getEmpHireDay" resultType="java.lang.Integer">
+		SELECT
+			timestampdiff(
+				DAY,
+				file.hireDate,
+			DATE_FORMAT( now(), '%Y-%m-%d' ))+ 1 hireDay
+		FROM
+			emp_employeefile file
+			LEFT JOIN sys_user sus ON file.empId = sus.empId
+		WHERE
+			sus.empNo = #{empNo}
 	</select>
 </mapper>

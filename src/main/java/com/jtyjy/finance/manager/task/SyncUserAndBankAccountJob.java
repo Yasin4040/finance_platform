@@ -1,8 +1,11 @@
 package com.jtyjy.finance.manager.task;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.google.common.collect.Lists;
 import com.iamxiongx.util.message.DateUtil;
 import com.jtyjy.finance.manager.bean.*;
+import com.jtyjy.finance.manager.mapper.BudgetBankAccountMapper;
 import com.jtyjy.finance.manager.service.*;
 import com.jtyjy.finance.manager.utils.SysUtil;
 import com.xxl.job.core.biz.model.ReturnT;
@@ -40,6 +43,9 @@ public class SyncUserAndBankAccountJob {
 	private BudgetBankAccountService bankAccountService;
 
 	@Autowired
+	private BudgetBankAccountMapper bankAccountMapper;
+
+	@Autowired
 	private WbBanksService bankService;
 
 	@XxlJob("syncUserAndBankAccountJob")
@@ -49,11 +55,14 @@ public class SyncUserAndBankAccountJob {
 		List<Map<String, Object>> hrDeptList = hrService.getSyncDeptList();
 		List<Map<String,Object>> hrUserList = hrService.getHrUserList();
 		userService.syncUser1(hrDeptList,budgetDeptList,hrUserList);
-		//syncUser(); //同步用户adffdddffffffff
 		try{
 		//同步银行账户
-			//syncBankAccount();
-		}catch(Exception e) {e.printStackTrace();}
+			syncBankAccount();
+		}catch(Exception e) {
+			e.printStackTrace();
+			log.error(e.getMessage(),e);
+			return ReturnT.FAIL;
+		}
 		log.info("同步用户和银行账号定时器==================END==============================");
 		return ReturnT.SUCCESS;
 	}
@@ -63,15 +72,15 @@ public class SyncUserAndBankAccountJob {
 	 * 只同步对内账户
 	 */
 	private void syncBankAccount() {
-		List<Map<String, Object>> hrBankAccountList = hrService.getSyncBankAccountList();
+
+		List<String> empNoList = Lists.newArrayList();
+		List<Map<String, Object>> hrBankAccountList = hrService.getSyncBankAccountList(empNoList);
 		if (CollectionUtils.isEmpty(hrBankAccountList)) return;
 		List<BudgetBankAccount> budgetBankAccountList = bankAccountService.list();
 		Map<String, List<BudgetBankAccount>> empMap = budgetBankAccountList.stream().collect(Collectors.groupingBy(BudgetBankAccount::getCode));
-		//Map<String, List<BudgetBankAccount>> outKeyMap = budgetBankAccountList.stream().filter(e -> StringUtils.isNotBlank(e.getOutkey())).collect(Collectors.groupingBy(BudgetBankAccount::getOutkey));
 		Map<String, List<BudgetBankAccount>> bankAccountMap = budgetBankAccountList.stream().collect(Collectors.groupingBy(BudgetBankAccount::getBankaccount));
-		Map<String, WbBanks> bankMap = bankService.list(null).stream().collect(Collectors.toMap(WbBanks::getSubBranchCode, e -> e, (e1, e2) -> e1));
-		List<WbBanks> provinces = bankService.list(null);
-		List<WbBanks> citys = bankService.list(null);
+		List<WbBanks> bankList = bankService.list(null);
+		Map<String, WbBanks> bankMap = bankList.stream().collect(Collectors.toMap(WbBanks::getSubBranchCode, e -> e, (e1, e2) -> e1));
 		List<BudgetBankAccount> newAccounts = new ArrayList<>();
 		List<WbBanks> newBanks = new ArrayList<>();
 		for (Map<String, Object> map : hrBankAccountList) {
@@ -93,10 +102,10 @@ public class SyncUserAndBankAccountJob {
 			String province = map.get("province").toString();
 			String city = map.get("city").toString();
 			String banktype = map.get("dicName").toString();
-			String usestatus = map.get("useStatus") == null ? "0" : map.get("useStatus").toString();
+			//String usestatus = map.get("useStatus") == null ? "0" : map.get("useStatus").toString();
 			WbBanks bank = bankMap.get(unionpayno);
-			List<WbBanks> provinceList = provinces.stream().filter(e -> province.equals(e.getProvince())).collect(Collectors.toList());
-			List<WbBanks> cityList = citys.stream().filter(e -> city.equals(e.getCity())).collect(Collectors.toList());
+			List<WbBanks> provinceList = bankList.stream().filter(e -> province.equals(e.getProvince())).collect(Collectors.toList());
+			List<WbBanks> cityList = bankList.stream().filter(e -> city.equals(e.getCity())).collect(Collectors.toList());
 			if (Objects.isNull(bank)) {
 				//开户行没有
 				bank = new WbBanks();
@@ -113,8 +122,9 @@ public class SyncUserAndBankAccountJob {
 			List<BudgetBankAccount> empNoBudgetBankAccounts = empMap.get(empno);
 			if(!CollectionUtils.isEmpty(empNoBudgetBankAccounts)){
 				if (bankAccountMap.get(bankaccount) == null || bankAccountMap.get(bankaccount).isEmpty()){
-					BudgetBankAccount salaryBudgetBankAccount = empNoBudgetBankAccounts.stream().filter(e -> e.getWagesflag()).findFirst().orElse(null);
-					if(Objects.isNull(salaryBudgetBankAccount)){
+
+					List<BudgetBankAccount> nowBudgetSalaryList = empNoBudgetBankAccounts.stream().filter(e -> e.getWagesflag()).collect(Collectors.toList());
+					if(CollectionUtils.isEmpty(nowBudgetSalaryList)){
 						BudgetBankAccount account = new BudgetBankAccount();
 						account.setCode(empno);
 						account.setPname(empname);
@@ -123,7 +133,7 @@ public class SyncUserAndBankAccountJob {
 						account.setBankaccount(bankaccount);
 						account.setWagesflag(true);
 						account.setBranchcode(unionpayno);
-						account.setStopflag(!"0".equals(usestatus));
+						account.setStopflag(false);
 						account.setOutkey(outkey);
 						account.setOrderno(0);
 						account.setUpdateTime(new Date());
@@ -134,26 +144,53 @@ public class SyncUserAndBankAccountJob {
 						newAccounts.add(account);
 						empNoBudgetBankAccounts.add(account);
 					}else{
+						BudgetBankAccount salaryBudgetBankAccount = nowBudgetSalaryList.get(0);
 						salaryBudgetBankAccount.setCode(empno);
 						salaryBudgetBankAccount.setPname(empname);
 						salaryBudgetBankAccount.setAccountname(payeename);
 						salaryBudgetBankAccount.setAccounttype(1);
 						salaryBudgetBankAccount.setWagesflag(true);
 						salaryBudgetBankAccount.setBranchcode(unionpayno);
-						salaryBudgetBankAccount.setStopflag(!"0".equals(usestatus));
+						salaryBudgetBankAccount.setStopflag(false);
 						salaryBudgetBankAccount.setOutkey(outkey);
 						salaryBudgetBankAccount.setBankaccount(bankaccount);
 						bankAccountService.updateById(salaryBudgetBankAccount);
 						List<BudgetBankAccount> l = new ArrayList<>();
 						l.add(salaryBudgetBankAccount);
 						bankAccountMap.put(bankaccount, l);
+
+						for (int i = 1; i < nowBudgetSalaryList.size(); i++) {
+							BudgetBankAccount budgetBankAccount = nowBudgetSalaryList.get(i);
+							bankAccountMapper.update(budgetBankAccount,
+									new LambdaUpdateWrapper<BudgetBankAccount>().set(BudgetBankAccount::getWagesflag,0).set(BudgetBankAccount::getUpdateTime,new Date()).eq(BudgetBankAccount::getId,budgetBankAccount.getId()));
+						}
 					}
 				}else{
-//					List<BudgetBankAccount> budgetBankAccounts = bankAccountMap.get(bankaccount);
-//					long count = budgetBankAccounts.stream().filter(e -> e.getCode().equals(empno)).count();
-//					if(count > 0){
-//
-//					}
+					List<BudgetBankAccount> budgetBankAccounts = bankAccountMap.get(bankaccount);
+					long count = budgetBankAccounts.stream().filter(e -> e.getCode().equals(empno)).count();
+					if(count > 0){
+						BudgetBankAccount budgetBankAccount = budgetBankAccounts.get(0);
+						budgetBankAccount.setOutkey(outkey);
+						budgetBankAccount.setWagesflag(true);
+						budgetBankAccount.setStopflag(false);
+						budgetBankAccount.setUpdateTime(new Date());
+						bankAccountService.updateById(budgetBankAccount);
+						empNoBudgetBankAccounts.stream().filter(e->!e.getId().equals(budgetBankAccount.getId())).forEach(b->{
+							bankAccountMapper.update(b,
+									new LambdaUpdateWrapper<BudgetBankAccount>().set(BudgetBankAccount::getWagesflag,0).set(BudgetBankAccount::getOutkey,null).set(BudgetBankAccount::getUpdateTime,new Date()).eq(BudgetBankAccount::getId,b.getId()));
+
+						});
+					}else{
+						//同步过来的账号与当前工号不匹配
+
+						empNoBudgetBankAccounts.stream().filter(e->!e.getWagesflag()).forEach(b->{
+							bankAccountMapper.update(b,
+									new LambdaUpdateWrapper<BudgetBankAccount>().set(BudgetBankAccount::getOutkey,null).set(BudgetBankAccount::getUpdateTime,new Date()).eq(BudgetBankAccount::getId,b.getId()));
+
+						});
+
+					}
+
 				}
 
 			}else{
@@ -166,7 +203,7 @@ public class SyncUserAndBankAccountJob {
 					account.setBankaccount(bankaccount);
 					account.setWagesflag(true);
 					account.setBranchcode(unionpayno);
-					account.setStopflag(!"0".equals(usestatus));
+					account.setStopflag(false);
 					account.setOutkey(outkey);
 					account.setOrderno(0);
 					account.setUpdateTime(new Date());

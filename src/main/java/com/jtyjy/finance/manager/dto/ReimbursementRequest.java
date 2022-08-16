@@ -85,6 +85,11 @@ public class ReimbursementRequest {
 	private List<BudgetReimbursementorderLackBill> lackBillList = new ArrayList<>();
 
 	/**
+	 * 是否入职半年
+	 */
+	private Boolean isHireHalfYear = false;
+
+	/**
 	 * 欠票标志
 	 */
 	private Boolean lackBillFlag;

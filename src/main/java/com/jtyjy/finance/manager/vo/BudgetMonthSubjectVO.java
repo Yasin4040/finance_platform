@@ -81,4 +81,6 @@ public class BudgetMonthSubjectVO {
     @ApiModelProperty(value = "年度剩余执行率")
     private BigDecimal syZxl;
 
+    private Integer orderNo;
+
 }

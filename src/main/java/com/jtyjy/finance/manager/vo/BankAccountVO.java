@@ -115,4 +115,7 @@ public class BankAccountVO {
     @ApiParam(hidden = true)
     @ApiModelProperty(value = "查询条件")
     private String queryText;
+
+    @ApiModelProperty(value = "来源系统")
+    private String sourceType;
 }

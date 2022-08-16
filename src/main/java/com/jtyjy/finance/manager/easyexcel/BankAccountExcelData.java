@@ -1,5 +1,6 @@
 package com.jtyjy.finance.manager.easyexcel;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.alibaba.excel.annotation.write.style.ContentRowHeight;
@@ -46,4 +47,10 @@ public class BankAccountExcelData {
 
     @ExcelProperty(value = "开户行")
     private String subBranchName;
+
+    @ExcelProperty(value = "来源系统")
+    private String sourceType;
+
+    @ExcelIgnore
+    private String outKey;
 }

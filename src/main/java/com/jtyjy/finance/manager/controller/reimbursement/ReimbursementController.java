@@ -163,7 +163,7 @@ public class ReimbursementController {
 
 	@Autowired
 	private CuratorFramework curatorFramework;
-    
+
     private final static Map<String,String> fileMap = new HashMap<>();
 
 
@@ -182,6 +182,12 @@ public class ReimbursementController {
 		//是否月结
 		this.service.checkIsMonthEnd(request.getOrder(),request.getOrderAllocated());
 		String result = null;
+
+		Integer hireDay = hrService.getEmpHireDay(request.getOrder().getReimperonsNo());
+		if(hireDay>180){
+			request.setIsHireHalfYear(true);
+		}
+
 		//是否提交
 		boolean submit = "1".equals(request.getSubmit());
 		if(ReimbursementRequest.SAVE.equals(request.getRequestType())) {
@@ -457,6 +463,7 @@ public class ReimbursementController {
 			@ApiImplicitParam(value = "月份", name = "monthid", dataType = "Long", required = false),
 			@ApiImplicitParam(value = "预算单位名称（模糊查询）", name = "ysdw", dataType = "String", required = false),
 			@ApiImplicitParam(value = "报销人（模糊查询）", name = "bxr", dataType = "String", required = false),
+			@ApiImplicitParam(value = "申请人（模糊查询）", name = "sqr", dataType = "String", required = false),
             @ApiImplicitParam(value = "报销日期（yyyy-mm-dd）", name = "bxrq", dataType = "String", required = false),
 			@ApiImplicitParam(value = "报销金额前区间", name = "bxMoneyStart", dataType = "BigDecimal", required = false),
 			@ApiImplicitParam(value = "报销金额后区间", name = "bxMoneyEnd", dataType = "BigDecimal", required = false),
@@ -476,7 +483,7 @@ public class ReimbursementController {
 	@ApiDataAuthAnno
 	public ResponseEntity<Page<ReimbursementInfoVO>> pageLike(Boolean budgeterflag,
 	                                                          String reimcode, Integer reuqeststatus, Integer yearid, Integer monthid, String ysdw,
-	                                                            String bxr, String bxrq, Double bxje, Double czje, Double zzje,
+	                                                            String bxr, String sqr, String bxrq, Double bxje, Double czje, Double zzje,
 	                                                          Double xjje, Double hbje, Double othermoney, String submittime,
 	                                                          String applicanttime,String bxType,BigDecimal bxMoneyStart,BigDecimal bxMoneyEnd,String subjectName,
 	                                                          @RequestParam(defaultValue = "1") Integer page,
@@ -488,6 +495,7 @@ public class ReimbursementController {
 	    conditionMap.put("yearid", yearid);
 	    conditionMap.put("monthid", monthid);
 	    conditionMap.put("bxr", bxr);
+	    conditionMap.put("sqr", sqr);
 	    conditionMap.put("bxrq", bxrq);
 	    conditionMap.put("bxje", bxje);
 	    conditionMap.put("czje", czje);
