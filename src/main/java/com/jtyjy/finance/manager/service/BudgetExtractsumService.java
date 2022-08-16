@@ -2767,6 +2767,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		String curYearStartExtractBatch = year + "0100";
 		//当前年的结束提成批次
 		String curYearEndExtractBatch = year + "1299";
+
 		commonData.setCurYearStartExtractBatch(curYearStartExtractBatch);
 		commonData.setCurYearEndExtractBatch(curYearEndExtractBatch);
 		commonData.setCurExtractBatch(extractBatch);
