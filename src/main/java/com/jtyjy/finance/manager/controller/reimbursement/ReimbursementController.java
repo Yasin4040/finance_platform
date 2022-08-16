@@ -213,7 +213,9 @@ public class ReimbursementController {
 	@PostMapping("optForAsset")
 	@NoLoginAnno
 	public ResponseEntity<String> optForAsset(@RequestBody ReimbursementRequest request) throws Exception{
-		//是否月结
+        //非欠票
+	    request.setLackBillFlag(false);
+	    //是否月结
 		this.service.checkIsMonthEnd(request.getOrder(),request.getOrderAllocated());
 		String result = null;
 		//是否提交
