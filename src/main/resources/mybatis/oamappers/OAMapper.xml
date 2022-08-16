@@ -11,6 +11,6 @@
 		WHERE
 			hr.BELONGTO = hr2.id
 			AND hr.BELONGTO > 0
-			AND hr2.LOGINID IS NOT NULL
+			AND hr2.LOGINID IS NOT NULL and hr.LOGINID is not null
     </select>
 </mapper>
