@@ -90,11 +90,6 @@ public class ReimbursementRequest {
 	private Boolean isHireHalfYear = false;
 
 	/**
-	 * 欠票标志
-	 */
-	private Boolean lackBillFlag;
-
-	/**
 	 * 是否项目报销
 	 */
 	private Boolean isProjectBx;

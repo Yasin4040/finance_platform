@@ -220,7 +220,7 @@ public class ReimbursementController {
 	@NoLoginAnno
 	public ResponseEntity<String> optForAsset(@RequestBody ReimbursementRequest request) throws Exception{
         //非欠票
-	    request.setLackBillFlag(false);
+	    request.getOrder().setLackBill(false);
 	    //是否月结
 		this.service.checkIsMonthEnd(request.getOrder(),request.getOrderAllocated());
 		String result = null;
