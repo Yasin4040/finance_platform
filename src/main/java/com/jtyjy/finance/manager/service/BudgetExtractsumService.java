@@ -2735,8 +2735,8 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	private Map<String, Object> getSalaryMsg(String salaryMonth) throws Exception {
 		String result = "";
 		try {
-			result = HttpClientTool.getRequest(String.format("http://127.0.0.1:9597/api/extractInfo/getSalary?salaryMonth=%s", salaryMonth));
-			//result = HttpClientTool.getRequest(String.format("http://ys.jtyjy.com/api/extractInfo/getSalary?salaryMonth=%s", salaryMonth));
+			//result = HttpClientTool.getRequest(String.format("http://127.0.0.1:9597/api/extractInfo/getSalary?salaryMonth=%s", salaryMonth));
+			result = HttpClientTool.getRequest(String.format("http://ys.jtyjy.com/api/extractInfo/getSalary?salaryMonth=%s", salaryMonth));
 		} catch (Exception e) {
 			e.printStackTrace();
 			LOGGER.error(e.getMessage(), e);
