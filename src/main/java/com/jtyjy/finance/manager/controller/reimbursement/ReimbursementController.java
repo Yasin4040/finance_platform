@@ -18,6 +18,7 @@ import com.jtyjy.core.tools.DeviceTools;
 import com.jtyjy.core.tools.FileTools;
 import com.jtyjy.easy.excel.ImportHelper;
 import com.jtyjy.finance.manager.bean.*;
+import com.jtyjy.finance.manager.cache.UserCache;
 import com.jtyjy.finance.manager.constants.ReimbursementStepHelper;
 import com.jtyjy.finance.manager.controller.BaseController;
 import com.jtyjy.finance.manager.dto.BudgetLackBillQueryDTO;
@@ -183,7 +184,7 @@ public class ReimbursementController {
 		this.service.checkIsMonthEnd(request.getOrder(),request.getOrderAllocated());
 		String result = null;
 
-		Integer hireDay = hrService.getEmpHireDay(request.getOrder().getReimperonsNo());
+		Integer hireDay = hrService.getEmpHireDay(UserCache.getUserByUserId(request.getOrder().getReimperonsid()).getUserName());
 		if(hireDay>180){
 			request.setIsHireHalfYear(true);
 		}
