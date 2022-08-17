@@ -270,12 +270,12 @@ public class BudgetMonthSubjectService extends DefaultBaseService<BudgetMonthSub
 
 		List<MonthAgentCollectExcelData> resultList = new ArrayList<>();
 		putExcelData(budgetTime, treeList, collect, resultList, "");
-		return resultList.stream().sorted(Comparator.comparing(MonthAgentCollectExcelData::getOrderNo)).collect(Collectors.toList());
+		return resultList;
 	}
 
 	private void putExcelData(String budgetTime, List<BudgetSubjectVO> treeList, Map<Long, BudgetMonthSubjectVO> hashMap, List<MonthAgentCollectExcelData> resultList, String space) {
 		BigDecimal decimal = new BigDecimal("100");
-		for (BudgetSubjectVO node : treeList) {
+		for (BudgetSubjectVO node : treeList.stream().sorted(Comparator.comparing(BudgetSubjectVO::getOrderNo)).collect(Collectors.toList())) {
 			if (!hashMap.containsKey(node.getId())) {
 				continue;
 			}
