@@ -167,7 +167,7 @@ public class ReimbursementMainPrintVo {
 
 		vo.setSubjectInfo(subjectList);
 		vo.setTotal(order.getReimmoney());
-		String defaultName = "见详请";
+		String defaultName = "见详情";
 		List<BudgetReimbursementorderPayment> pList = request.getOrderPayment();
 
 		Optional.ofNullable(pList).ifPresent(e->{
