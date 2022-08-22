@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jtyjy.core.local.DefaultChangeLogThreadLocal;
+import com.jtyjy.core.redis.RedisClient;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.service.DefaultBaseService;
 import com.jtyjy.ecology.EcologyClient;
@@ -48,8 +49,8 @@ public class BudgetContractService extends DefaultBaseService<BudgetContractMapp
     private final BudgetBillingUnitMapper budgetBillingUnitMapper;
     private final WbBanksMapper wbBanksMapper;
     private final WbUserMapper wbUserMapper;
-
     private final DistributedNumber distributedNumber;
+    private final RedisClient redisClient;
 
     @Override
     public BaseMapper<TabChangeLog> getLoggerMapper() {
@@ -137,65 +138,78 @@ public class BudgetContractService extends DefaultBaseService<BudgetContractMapp
      */
     public void contractSigning(EcologyParams params) {
         String requestId = params.getRequestid();
-        Integer count = this.budgetLendmoneyMapper.selectCount(new QueryWrapper<BudgetLendmoney>().eq("requestid", requestId));
-        if (count > 0) {
-            throw new RuntimeException("合同签订归档错误!");
+
+        if (redisClient.exist("contractSigning:" + requestId)) {
+            throw new RuntimeException("流程正在归档中，请勿重复点击!");
         }
+        redisClient.set("contractSigning:" + requestId, "contractSigning",60);
 
-        EcologyWorkFlowValue value = EcologyClient.getWorkflowValue(params);
-        Map<String, String> mainTableValue = value.getMaintablevalue();
+        try{
+            Integer count = this.budgetLendmoneyMapper.selectCount(new QueryWrapper<BudgetLendmoney>().eq("requestid", requestId));
+            if (count > 0) {
+                throw new RuntimeException("合同签订归档错误!");
+            }
 
-        // 申请人
-        String applyPerson = mainTableValue.get("sqr");
-        // 合同名称
-        String contractName = mainTableValue.get("htmc");
-        // 合同编号
-        String contractCode = mainTableValue.get("htbh");
-        // 合同类型
-        String contractType = mainTableValue.get("htlx_new").split("_")[1];
-        // 合同/预估金额
-        String contractAmtStr = mainTableValue.get("htje");
-        // 签订时间
-        String signDateStr = mainTableValue.get("qdsj");
-        // 对方单位名称
-        String oppoCompany = mainTableValue.get("dfdwmc");
-        // 签订份数
-        String signCopies = mainTableValue.get("qjfs");
-        // 合同分配
-        String contractDistribute = mainTableValue.get("htfp");
-        // 地址和电话
-        String addrTel = mainTableValue.get("txdzjdh");
-        // 约定结算方式
-        String agreeSumType = mainTableValue.get("htydjsfs");
-        // 合同内容摘要
-        String contextDigest = mainTableValue.get(" htnrzy");
+            EcologyWorkFlowValue value = EcologyClient.getWorkflowValue(params);
+            Map<String, String> mainTableValue = value.getMaintablevalue();
 
-        if (StringUtils.isNotBlank(agreeSumType)) {
-            agreeSumType = agreeSumType.replace("&nbsp;", " ");
-        }
+            // 申请人
+            String applyPerson = mainTableValue.get("sqr");
+            // 合同名称
+            String contractName = mainTableValue.get("htmc");
+            // 合同编号
+            String contractCode = mainTableValue.get("htbh");
+            // 合同类型
+            String contractType = mainTableValue.get("htlx_new").split("_")[1];
+            // 合同/预估金额
+            String contractAmtStr = mainTableValue.get("htje");
+            // 签订时间
+            String signDateStr = mainTableValue.get("qdsj");
+            // 对方单位名称
+            String oppoCompany = mainTableValue.get("dfdwmc");
+            // 签订份数
+            String signCopies = mainTableValue.get("qjfs");
+            // 合同分配
+            String contractDistribute = mainTableValue.get("htfp");
+            // 地址和电话
+            String addrTel = mainTableValue.get("txdzjdh");
+            // 约定结算方式
+            String agreeSumType = mainTableValue.get("htydjsfs");
+            // 合同内容摘要
+            String contextDigest = mainTableValue.get(" htnrzy");
 
-        BudgetContract budgetContract = new BudgetContract();
-        budgetContract.setContractname(contractName);
-        budgetContract.setContractcode(contractCode);
-        budgetContract.setContracttype(contractType);
-        budgetContract.setContractmoney(Float.parseFloat(contractAmtStr));
-        try {
-            budgetContract.setSigndate(Constants.FORMAT_10.parse(signDateStr));
-        } catch (ParseException e) {
+            if (StringUtils.isNotBlank(agreeSumType)) {
+                agreeSumType = agreeSumType.replace("&nbsp;", " ");
+            }
+
+            BudgetContract budgetContract = new BudgetContract();
+            budgetContract.setContractname(contractName);
+            budgetContract.setContractcode(contractCode);
+            budgetContract.setContracttype(contractType);
+            budgetContract.setContractmoney(Float.parseFloat(contractAmtStr));
+            try {
+                budgetContract.setSigndate(Constants.FORMAT_10.parse(signDateStr));
+            } catch (ParseException e) {
+                e.printStackTrace();
+                throw new RuntimeException("签订日期时间格式转换出错！");
+            }
+            budgetContract.setContractcopies(signCopies);
+            budgetContract.setCreatetime(new Date());
+            budgetContract.setTerminationflag(0);
+            budgetContract.setAgreesumtype(agreeSumType);
+            budgetContract.setContextdigest(contextDigest);
+            budgetContract.setOtherpartyunit(oppoCompany);
+            budgetContract.setRequestid(requestId);
+
+            // 拼接一些额外信息
+            budgetContract.setOtherinfo("申请人：" + applyPerson + ", 对方地址和电话：" + addrTel + ", 合同分配：" + contractDistribute);
+            this.budgetContractMapper.insert(budgetContract);
+        }catch (Exception e){
             e.printStackTrace();
-            throw new RuntimeException("签订日期时间格式转换出错！");
+            throw new RuntimeException("合同签订归档错误!");
+        }finally {
+            redisClient.delete("contractSigning:" + requestId);
         }
-        budgetContract.setContractcopies(signCopies);
-        budgetContract.setCreatetime(new Date());
-        budgetContract.setTerminationflag(0);
-        budgetContract.setAgreesumtype(agreeSumType);
-        budgetContract.setContextdigest(contextDigest);
-        budgetContract.setOtherpartyunit(oppoCompany);
-        budgetContract.setRequestid(requestId);
-
-        // 拼接一些额外信息
-        budgetContract.setOtherinfo("申请人：" + applyPerson + ", 对方地址和电话：" + addrTel + ", 合同分配：" + contractDistribute);
-        this.budgetContractMapper.insert(budgetContract);
     }
 
     /**
@@ -203,175 +217,188 @@ public class BudgetContractService extends DefaultBaseService<BudgetContractMapp
      */
     public void contractLendMoney(EcologyParams params) {
         String requestId = params.getRequestid();
-        Integer count = this.budgetLendmoneyMapper.selectCount(new QueryWrapper<BudgetLendmoney>().eq("requestid", requestId));
-        if (count > 0) {
-            throw new RuntimeException("合同借款归档错误!");
+
+        if (redisClient.exist("contractLendMoney:" + requestId)) {
+            throw new RuntimeException("流程正在归档中，请勿重复点击!");
         }
+        redisClient.set("contractLendMoney:" + requestId, "contractLendMoney",60);
 
-        EcologyWorkFlowValue value = EcologyClient.getWorkflowValue(params);
-        Map<String, String> mainTableValue = value.getMaintablevalue();
-        Map<String, List<Map<String, String>>> detailTableValues = value.getDetailtablevalues();
-
-        // 工号
-        String empNo = mainTableValue.get("gh");
-        if (StringUtils.isNotBlank(empNo) && empNo.length() > 5) {
-            empNo = empNo.substring(0, 5);
-        }
-        // 经办日期
-        String lendDateStr = mainTableValue.get("jbrq");
-        // 预计报销日期
-        String planDateStr = mainTableValue.get("yjbxrq");
-        // 付款届别Id
-        String yearId = mainTableValue.get("bxjb");
-        // 合同Id
-        String contractNameId = mainTableValue.get("htmc");
-        // 合同总额
-        String nonContractAmtStr = mainTableValue.get("xmzje");
-        // 付款事由
-        String payRemark = mainTableValue.get("fksy");
-        // 支付方式  0 现金；1 转账
-        String payType = mainTableValue.get("yqzffs");
-        // 流程编号
-        String requestCode = mainTableValue.get("lcbh");
-
-        // 是否签订合同  0 是 ，1 否
-        String isContract = mainTableValue.get("sfqdht");
-        // 非合同名称
-        String nonContractName = mainTableValue.get("xmmc");
-
-        if (StringUtils.isNotBlank(payRemark)) {
-            payRemark = payRemark.replace("&nbsp;", " ");
-        }
-
-        int lendType;
-        BudgetContract budgetContract;
-        if ("1".equals(isContract)) {
-            // 项目借款需要保存项目信息, 要求不能和已存在的重名
-            // update minzhq 2021-09-15  取消这个验证
-            //Integer exist = this.budgetContractMapper.selectCount(new QueryWrapper<BudgetContract>().eq("contractname", nonContractName));
-            //if (exist > 0) {
-            //    throw new RuntimeException("已存在名为【" + nonContractName + "】的项目，请重新取名！");
-            //}
-            budgetContract = new BudgetContract();
-            budgetContract.setContractname(nonContractName);
-            budgetContract.setContractmoney(Float.parseFloat(nonContractAmtStr));
-            budgetContract.setCreatetime(new Date());
-            budgetContract.setTerminationflag(0);
-            budgetContract.setRequestid(requestId);
-            budgetContract.setOtherinfo(payRemark);
-            this.budgetContractMapper.insert(budgetContract);
-
-            lendType = LendTypeEnum.LEND_TYPE_16.getType();
-        } else {
-            budgetContract = this.budgetContractMapper.selectById(Long.parseLong(contractNameId));
-            if (budgetContract == null) {
-                throw new RuntimeException("该合同不存在");
+        try{
+            Integer count = this.budgetLendmoneyMapper.selectCount(new QueryWrapper<BudgetLendmoney>().eq("requestid", requestId));
+            if (count > 0) {
+                throw new RuntimeException("合同借款归档错误!");
             }
-            lendType = LendTypeEnum.LEND_TYPE_15.getType();
-        }
 
-        WbUser user = this.wbUserMapper.selectOne(new QueryWrapper<WbUser>().eq("user_name", empNo));
-        if (user == null) {
-            throw new RuntimeException("工号【" + empNo + "】用户不存在");
-        }
+            EcologyWorkFlowValue value = EcologyClient.getWorkflowValue(params);
+            Map<String, String> mainTableValue = value.getMaintablevalue();
+            Map<String, List<Map<String, String>>> detailTableValues = value.getDetailtablevalues();
 
-        if (detailTableValues != null && !detailTableValues.isEmpty()) {
-            // 获取明细表数据(一个发放单位对应一个收款单位，有多条记录)
-            String finalPayRemark = payRemark;
-            detailTableValues.forEach((str, values) -> {
-                values.forEach(detail -> {
-                    // 收款单位信息：(外部单位)
-                    String gatherId = detail.get("wbdw");
-                    String gatherAccountId = detail.get("wbdwyhzh");
-                    String openBank = detail.get("khh");
-                    String je = detail.get("je");
-                    WbBanks bank = this.wbBanksMapper.selectByAccountId(gatherAccountId);
-                    if (bank == null) {
-                        throw new RuntimeException("收款银行账户【" + gatherAccountId + "】不存在或已停用");
-                    }
+            // 工号
+            String empNo = mainTableValue.get("gh");
+            if (StringUtils.isNotBlank(empNo) && empNo.length() > 5) {
+                empNo = empNo.substring(0, 5);
+            }
+            // 经办日期
+            String lendDateStr = mainTableValue.get("jbrq");
+            // 预计报销日期
+            String planDateStr = mainTableValue.get("yjbxrq");
+            // 付款届别Id
+            String yearId = mainTableValue.get("bxjb");
+            // 合同Id
+            String contractNameId = mainTableValue.get("htmc");
+            // 合同总额
+            String nonContractAmtStr = mainTableValue.get("xmzje");
+            // 付款事由
+            String payRemark = mainTableValue.get("fksy");
+            // 支付方式  0 现金；1 转账
+            String payType = mainTableValue.get("yqzffs");
+            // 流程编号
+            String requestCode = mainTableValue.get("lcbh");
 
-                    // 付款单位信息：付款单位和单位账户不是联动关系，单位账户没填的时候就以选择的付款单位的卡号为准，选了卡号的以卡号为准
-                    String payUnitId = detail.get("kpdw");
-                    String payAccount = detail.get("kpdwyhzh");
-                    String payOpenBank = detail.get("kpdwkhh");
-                    WbBanks unitBank;
-                    if (StringUtils.isBlank(payAccount)) {
-                        List<WbBanks> unitBanks = this.wbBanksMapper.selectByBillingUnitId(payUnitId);
-                        if(CollectionUtils.isEmpty(unitBanks)){
-                            throw new RuntimeException("付款单位【" + payUnitId + "】不存在或已停用");
+            // 是否签订合同  0 是 ，1 否
+            String isContract = mainTableValue.get("sfqdht");
+            // 非合同名称
+            String nonContractName = mainTableValue.get("xmmc");
+
+            if (StringUtils.isNotBlank(payRemark)) {
+                payRemark = payRemark.replace("&nbsp;", " ");
+            }
+
+            int lendType;
+            BudgetContract budgetContract;
+            if ("1".equals(isContract)) {
+                // 项目借款需要保存项目信息, 要求不能和已存在的重名
+                // update minzhq 2021-09-15  取消这个验证
+                //Integer exist = this.budgetContractMapper.selectCount(new QueryWrapper<BudgetContract>().eq("contractname", nonContractName));
+                //if (exist > 0) {
+                //    throw new RuntimeException("已存在名为【" + nonContractName + "】的项目，请重新取名！");
+                //}
+                budgetContract = new BudgetContract();
+                budgetContract.setContractname(nonContractName);
+                budgetContract.setContractmoney(Float.parseFloat(nonContractAmtStr));
+                budgetContract.setCreatetime(new Date());
+                budgetContract.setTerminationflag(0);
+                budgetContract.setRequestid(requestId);
+                budgetContract.setOtherinfo(payRemark);
+                this.budgetContractMapper.insert(budgetContract);
+
+                lendType = LendTypeEnum.LEND_TYPE_16.getType();
+            } else {
+                budgetContract = this.budgetContractMapper.selectById(Long.parseLong(contractNameId));
+                if (budgetContract == null) {
+                    throw new RuntimeException("该合同不存在");
+                }
+                lendType = LendTypeEnum.LEND_TYPE_15.getType();
+            }
+
+            WbUser user = this.wbUserMapper.selectOne(new QueryWrapper<WbUser>().eq("user_name", empNo));
+            if (user == null) {
+                throw new RuntimeException("工号【" + empNo + "】用户不存在");
+            }
+
+            if (detailTableValues != null && !detailTableValues.isEmpty()) {
+                // 获取明细表数据(一个发放单位对应一个收款单位，有多条记录)
+                String finalPayRemark = payRemark;
+                detailTableValues.forEach((str, values) -> {
+                    values.forEach(detail -> {
+                        // 收款单位信息：(外部单位)
+                        String gatherId = detail.get("wbdw");
+                        String gatherAccountId = detail.get("wbdwyhzh");
+                        String openBank = detail.get("khh");
+                        String je = detail.get("je");
+                        WbBanks bank = this.wbBanksMapper.selectByAccountId(gatherAccountId);
+                        if (bank == null) {
+                            throw new RuntimeException("收款银行账户【" + gatherAccountId + "】不存在或已停用");
                         }
-                        unitBank = unitBanks.get(0);
-                    } else {
-                        unitBank = this.wbBanksMapper.selectByUnitAccount(payAccount);
-                    }
-                    if (unitBank == null) {
-                        throw new RuntimeException("付款单位账户【" + payAccount + "】不存在或已停用");
-                    }
 
-                    // 借款单(合同借款为外部人员借款与经办人的关系，实际上并不是经办人的借款)
-                    BudgetLendmoney lendMoney = new BudgetLendmoney();
-                    lendMoney.setEmpno(bank.getBankCode());
-                    lendMoney.setEmpname(bank.getAccountName());
-                    lendMoney.setOperatorEmpId(user.getUserId());
-                    lendMoney.setOperatorEmpNo(user.getUserName());
-                    lendMoney.setOperatorEmpName(user.getDisplayName());
-                    lendMoney.setLendmoneycode(this.distributedNumber.getLendNum());
-                    lendMoney.setLendmoney(new BigDecimal(je));
-                    lendMoney.setContractid(budgetContract.getId());
-                    lendMoney.setLendtype(lendType);
-                    lendMoney.setRepaidmoney(BigDecimal.ZERO);
-                    try {
-                        lendMoney.setLenddate(Constants.FORMAT_10.parse(lendDateStr));
-                        lendMoney.setPlanpaydate(Constants.FORMAT_10.parse(planDateStr));
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                        throw new RuntimeException("时间格式转换出错！");
-                    }
-                    lendMoney.setCreatetime(new Date());
-                    lendMoney.setRemark(finalPayRemark);
-                    lendMoney.setRequestid(requestId);
-                    lendMoney.setDeleteflag(false);
-                    lendMoney.setYearid(Long.valueOf(yearId));
-                    lendMoney.setInterestmoney(BigDecimal.ZERO);
-                    lendMoney.setFlushingflag(false);
-                    lendMoney.setEffectflag(true);
-                    lendMoney.setChargebillflag(false);
-                    lendMoney.setMakeaccountflag(false);
-                    lendMoney.setRequestcode(requestCode);
-                    this.budgetLendmoneyMapper.insert(lendMoney);
+                        // 付款单位信息：付款单位和单位账户不是联动关系，单位账户没填的时候就以选择的付款单位的卡号为准，选了卡号的以卡号为准
+                        String payUnitId = detail.get("kpdw");
+                        String payAccount = detail.get("kpdwyhzh");
+                        String payOpenBank = detail.get("kpdwkhh");
+                        WbBanks unitBank;
+                        if (StringUtils.isBlank(payAccount)) {
+                            List<WbBanks> unitBanks = this.wbBanksMapper.selectByBillingUnitId(payUnitId);
+                            if(CollectionUtils.isEmpty(unitBanks)){
+                                throw new RuntimeException("付款单位【" + payUnitId + "】不存在或已停用");
+                            }
+                            unitBank = unitBanks.get(0);
+                        } else {
+                            unitBank = this.wbBanksMapper.selectByUnitAccount(payAccount);
+                        }
+                        if (unitBank == null) {
+                            throw new RuntimeException("付款单位账户【" + payAccount + "】不存在或已停用");
+                        }
 
-                    // 生成付款单
-                    BudgetPaymoney payMoney = new BudgetPaymoney();
-                    payMoney.setId(null);
-                    payMoney.setPaymoneytype(PaymoneyTypeEnum.LEND_PAY.type);
-                    payMoney.setPaymoneystatus(PaymoneyStatusEnum.RECEIVE_PAY.type);
-                    payMoney.setReceivetime(new Date());
-                    payMoney.setPaymoney(new BigDecimal(je));
-                    payMoney.setLendtype(lendMoney.getLendtype());
-                    payMoney.setPaytype(Integer.parseInt(payType));
-                    payMoney.setMonth(Constants.FORMAT_6.format(new Date()));
-                    payMoney.setCreatetime(new Date());
-                    payMoney.setBunitname(unitBank.getBillingUnitName());
-                    payMoney.setBunitbankaccount(unitBank.getBankAccount());
-                    payMoney.setBunitaccountbranchcode(unitBank.getSubBranchCode());
-                    payMoney.setBunitaccountbranchname(unitBank.getBankName());
+                        // 借款单(合同借款为外部人员借款与经办人的关系，实际上并不是经办人的借款)
+                        BudgetLendmoney lendMoney = new BudgetLendmoney();
+                        lendMoney.setEmpno(bank.getBankCode());
+                        lendMoney.setEmpname(bank.getAccountName());
+                        lendMoney.setOperatorEmpId(user.getUserId());
+                        lendMoney.setOperatorEmpNo(user.getUserName());
+                        lendMoney.setOperatorEmpName(user.getDisplayName());
+                        lendMoney.setLendmoneycode(this.distributedNumber.getLendNum());
+                        lendMoney.setLendmoney(new BigDecimal(je));
+                        lendMoney.setContractid(budgetContract.getId());
+                        lendMoney.setLendtype(lendType);
+                        lendMoney.setRepaidmoney(BigDecimal.ZERO);
+                        try {
+                            lendMoney.setLenddate(Constants.FORMAT_10.parse(lendDateStr));
+                            lendMoney.setPlanpaydate(Constants.FORMAT_10.parse(planDateStr));
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                            throw new RuntimeException("时间格式转换出错！");
+                        }
+                        lendMoney.setCreatetime(new Date());
+                        lendMoney.setRemark(finalPayRemark);
+                        lendMoney.setRequestid(requestId);
+                        lendMoney.setDeleteflag(false);
+                        lendMoney.setYearid(Long.valueOf(yearId));
+                        lendMoney.setInterestmoney(BigDecimal.ZERO);
+                        lendMoney.setFlushingflag(false);
+                        lendMoney.setEffectflag(true);
+                        lendMoney.setChargebillflag(false);
+                        lendMoney.setMakeaccountflag(false);
+                        lendMoney.setRequestcode(requestCode);
+                        this.budgetLendmoneyMapper.insert(lendMoney);
 
-                    BudgetBillingUnit budgetBillingUnit = this.budgetBillingUnitMapper.selectById(payUnitId);
-                    if (budgetBillingUnit != null) {
-                        payMoney.setBunitname(budgetBillingUnit.getName());
-                    }
+                        // 生成付款单
+                        BudgetPaymoney payMoney = new BudgetPaymoney();
+                        payMoney.setId(null);
+                        payMoney.setPaymoneytype(PaymoneyTypeEnum.LEND_PAY.type);
+                        payMoney.setPaymoneystatus(PaymoneyStatusEnum.RECEIVE_PAY.type);
+                        payMoney.setReceivetime(new Date());
+                        payMoney.setPaymoney(new BigDecimal(je));
+                        payMoney.setLendtype(lendMoney.getLendtype());
+                        payMoney.setPaytype(Integer.parseInt(payType));
+                        payMoney.setMonth(Constants.FORMAT_6.format(new Date()));
+                        payMoney.setCreatetime(new Date());
+                        payMoney.setBunitname(unitBank.getBillingUnitName());
+                        payMoney.setBunitbankaccount(unitBank.getBankAccount());
+                        payMoney.setBunitaccountbranchcode(unitBank.getSubBranchCode());
+                        payMoney.setBunitaccountbranchname(unitBank.getBankName());
 
-                    payMoney.setBankaccount(bank.getBankAccount());
-                    payMoney.setBankaccountbranchcode(bank.getSubBranchCode());
-                    payMoney.setBankaccountbranchname(bank.getBankName());
-                    payMoney.setBankaccountname(bank.getAccountName());
-                    payMoney.setOpenbank(openBank);
-                    payMoney.setPaymoneycode(this.distributedNumber.getPaymoneyNum());
-                    payMoney.setPaymoneyobjectid(lendMoney.getId());
-                    payMoney.setPaymoneyobjectcode(lendMoney.getLendmoneycode());
-                    this.budgetPaymoneyMapper.insert(payMoney);
+                        BudgetBillingUnit budgetBillingUnit = this.budgetBillingUnitMapper.selectById(payUnitId);
+                        if (budgetBillingUnit != null) {
+                            payMoney.setBunitname(budgetBillingUnit.getName());
+                        }
+
+                        payMoney.setBankaccount(bank.getBankAccount());
+                        payMoney.setBankaccountbranchcode(bank.getSubBranchCode());
+                        payMoney.setBankaccountbranchname(bank.getBankName());
+                        payMoney.setBankaccountname(bank.getAccountName());
+                        payMoney.setOpenbank(openBank);
+                        payMoney.setPaymoneycode(this.distributedNumber.getPaymoneyNum());
+                        payMoney.setPaymoneyobjectid(lendMoney.getId());
+                        payMoney.setPaymoneyobjectcode(lendMoney.getLendmoneycode());
+                        this.budgetPaymoneyMapper.insert(payMoney);
+                    });
                 });
-            });
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            throw new RuntimeException("合同借款归档错误!");
+        }finally {
+            redisClient.delete("contractLendMoney:" + requestId);
         }
     }
 

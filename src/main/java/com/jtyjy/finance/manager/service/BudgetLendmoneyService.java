@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jtyjy.core.local.DefaultChangeLogThreadLocal;
+import com.jtyjy.core.redis.RedisClient;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.service.DefaultBaseService;
 import com.jtyjy.ecology.EcologyClient;
@@ -26,7 +27,6 @@ import com.jtyjy.finance.manager.vo.BudgetPayMoneyDetailVO;
 import com.jtyjy.finance.manager.vo.BudgetRepayMoneyDetailVO;
 import com.jtyjy.finance.manager.vo.ExcelBean;
 import com.klcwqy.easy.lock.impl.ZookeeperShareLock;
-import com.klcwqy.easy.strategy.Strategy;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
@@ -65,6 +65,7 @@ public class BudgetLendmoneyService extends DefaultBaseService<BudgetLendmoneyMa
     private final DistributedNumber distributedNumber;
     private final BudgetSysService budgetSysService;
     private final CuratorFramework client;
+    private final RedisClient redisClient;
 
     @Override
     public BaseMapper<TabChangeLog> getLoggerMapper() {
@@ -433,26 +434,39 @@ public class BudgetLendmoneyService extends DefaultBaseService<BudgetLendmoneyMa
      */
     public void personalLendMoney(EcologyParams params) throws Exception {
         String requestId = params.getRequestid();
-        Integer count = this.budgetLendmoneyMapper.selectCount(new QueryWrapper<BudgetLendmoney>().eq("requestid", requestId));
-        if (count > 0) {
+
+        if (redisClient.exist("personalLendMoney:" + requestId)) {
+            throw new RuntimeException("流程正在归档中，请勿重复点击!");
+        }
+        redisClient.set("personalLendMoney:" + requestId, "personalLendMoney",60);
+
+        try{
+            Integer count = this.budgetLendmoneyMapper.selectCount(new QueryWrapper<BudgetLendmoney>().eq("requestid", requestId));
+            if (count > 0) {
+                throw new RuntimeException("个人借款归档错误!");
+            }
+
+            EcologyWorkFlowValue value = EcologyClient.getWorkflowValue(params);
+            Map<String, String> mainTableValue = value.getMaintablevalue();
+            Map<String, List<Map<String, String>>> detailTableValues = value.getDetailtablevalues();
+            if (detailTableValues == null || detailTableValues.isEmpty()) {
+                throw new RuntimeException("个人借款数据错误");
+            }
+
+            // 创建借款单
+            BudgetLendmoney lendMoney = createLendMoney(requestId, mainTableValue, LendTypeEnum.LEND_TYPE_11);
+
+            // 创建付款单（未付款状态）
+            createPayMoney(lendMoney, mainTableValue, detailTableValues, "1".equals(mainTableValue.get("flag")));
+
+            // 借款
+            this.budgetSysService.lendMoney(lendMoney);
+        }catch (Exception e){
+            e.printStackTrace();
             throw new RuntimeException("个人借款归档错误!");
+        }finally {
+            redisClient.delete("personalLendMoney:" + requestId);
         }
-
-        EcologyWorkFlowValue value = EcologyClient.getWorkflowValue(params);
-        Map<String, String> mainTableValue = value.getMaintablevalue();
-        Map<String, List<Map<String, String>>> detailTableValues = value.getDetailtablevalues();
-        if (detailTableValues == null || detailTableValues.isEmpty()) {
-            throw new RuntimeException("个人借款数据错误");
-        }
-
-        // 创建借款单
-        BudgetLendmoney lendMoney = createLendMoney(requestId, mainTableValue, LendTypeEnum.LEND_TYPE_11);
-
-        // 创建付款单（未付款状态）
-        createPayMoney(lendMoney, mainTableValue, detailTableValues, "1".equals(mainTableValue.get("flag")));
-
-        // 借款
-        this.budgetSysService.lendMoney(lendMoney);
     }
 
     /**
@@ -460,27 +474,40 @@ public class BudgetLendmoneyService extends DefaultBaseService<BudgetLendmoneyMa
      */
     public void costLendMoney(EcologyParams params) throws Exception {
         String requestId = params.getRequestid();
-        Integer count = this.budgetLendmoneyMapper.selectCount(new QueryWrapper<BudgetLendmoney>().eq("requestid", requestId));
-        if (count > 0) {
+
+        if (redisClient.exist("costLendMoney:" + requestId)) {
+            throw new RuntimeException("流程正在归档中，请勿重复点击!");
+        }
+        redisClient.set("costLendMoney:" + requestId, "costLendMoney",60);
+
+        try{
+            Integer count = this.budgetLendmoneyMapper.selectCount(new QueryWrapper<BudgetLendmoney>().eq("requestid", requestId));
+            if (count > 0) {
+                throw new RuntimeException("费用借款归档错误!");
+            }
+
+            EcologyWorkFlowValue value = EcologyClient.getWorkflowValue(params);
+            Map<String, String> mainTableValue = value.getMaintablevalue();
+            Map<String, List<Map<String, String>>> detailTableValues = value.getDetailtablevalues();
+            if (detailTableValues == null || detailTableValues.isEmpty()) {
+                throw new RuntimeException("费用借款数据错误");
+            }
+
+            // 创建借款单
+            String lendType = mainTableValue.get("jklx");
+            BudgetLendmoney lendMoney = createLendMoney(requestId, mainTableValue, "1".equals(lendType) ? LendTypeEnum.LEND_TYPE_14 : LendTypeEnum.LEND_TYPE_12);
+
+            // 创建付款单（未付款状态）
+            createPayMoney(lendMoney, mainTableValue, detailTableValues, true);
+
+            // 借款
+            this.budgetSysService.lendMoney(lendMoney);
+        }catch (Exception e){
+            e.printStackTrace();
             throw new RuntimeException("费用借款归档错误!");
+        }finally {
+            redisClient.delete("costLendMoney:" + requestId);
         }
-
-        EcologyWorkFlowValue value = EcologyClient.getWorkflowValue(params);
-        Map<String, String> mainTableValue = value.getMaintablevalue();
-        Map<String, List<Map<String, String>>> detailTableValues = value.getDetailtablevalues();
-        if (detailTableValues == null || detailTableValues.isEmpty()) {
-            throw new RuntimeException("费用借款数据错误");
-        }
-
-        // 创建借款单
-        String lendType = mainTableValue.get("jklx");
-        BudgetLendmoney lendMoney = createLendMoney(requestId, mainTableValue, "1".equals(lendType) ? LendTypeEnum.LEND_TYPE_14 : LendTypeEnum.LEND_TYPE_12);
-
-        // 创建付款单（未付款状态）
-        createPayMoney(lendMoney, mainTableValue, detailTableValues, true);
-
-        // 借款
-        this.budgetSysService.lendMoney(lendMoney);
     }
 
     private void createPayMoney(BudgetLendmoney lendMoney, Map<String, String> mainTableValue, Map<String, List<Map<String, String>>> detailTableValues, boolean isMultiple) {
