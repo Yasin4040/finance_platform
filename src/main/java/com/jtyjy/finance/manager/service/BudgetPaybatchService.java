@@ -633,16 +633,26 @@ public class BudgetPaybatchService extends DefaultBaseService<BudgetPaybatchMapp
         if (users == null) {
             //查询预算单位下的预算管理员
             BudgetUnit unit = this.unitService.getById(order.getUnitid());
-            if (unit != null) {
-                List<KVBean> unitUserIds = new ArrayList<KVBean>();
-                unitUserIds.add(new KVBean(unit.getId().toString(), unit.getManagers()));
-                //将预算单位主键和预算管理员工号映射
-                this.mappingUnitAndEmpNo(unitUserIds, unitEmpNoMap);
+
+            String empNo = "";
+            if(unit!=null && StringUtils.isNotBlank(unit.getManagers())){
+                WbUser user = userService.getById(unit.getManagers().split(",")[0]);
+                empNo = user.getUserName();
             }
+
+            //if (unit != null) {
+            //    List<KVBean> unitUserIds = new ArrayList<KVBean>();
+            //    unitUserIds.add(new KVBean(unit.getId().toString(), unit.getManagers()));
+                //将预算单位主键和预算管理员工号映射
+            //    this.mappingUnitAndEmpNo(unitUserIds, unitEmpNoMap);
+           // }
             //发送消息
-            DecimalFormat df = new DecimalFormat("#0.00");
-            StringJoiner to = unitEmpNoMap.get(unit.getId().toString());
-            this.sendMessage(commonBxFormat, to.toString().split(",")[0], order.getReimcode(), bean.getPaymoneycode().substring(bean.getPaymoneycode().length() - 4), bean.getPaymoney().setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+            if(StringUtils.isNotBlank(empNo)){
+                DecimalFormat df = new DecimalFormat("#0.00");
+                //StringJoiner to = unitEmpNoMap.get(unit.getId().toString());
+                this.sendMessage(commonBxFormat, empNo, order.getReimcode(), bean.getPaymoneycode().substring(bean.getPaymoneycode().length() - 4), bean.getPaymoney().setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+
+            }
         }
     }
 
