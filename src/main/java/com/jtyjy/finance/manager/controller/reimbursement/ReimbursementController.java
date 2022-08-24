@@ -1068,6 +1068,32 @@ public class ReimbursementController {
 		return ResponseEntity.ok("操作成功！");
 	}
 
+
+	@GetMapping("showScanErrorMsg")
+	@ApiOperation(value = "显示报销单扫码错误消息", httpMethod = "GET")
+	@ApiImplicitParams(value = {
+			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
+			@ApiImplicitParam(value = "报销单流程环节【1：单据接收  2：预算审核 3：分单扫描 4：分单确认 5：出纳付款 6：会计做账 7：凭证审核 8：法人公司抽单 9：财务经理审核 10：总经理审核】", name = "step", dataType = "String", required = true)
+	})
+	public ResponseEntity<String> showScanErrorMsg(@RequestParam(value = "step",required = true) String step) throws Exception{
+
+		WbUser user = UserThreadLocal.get();
+		String stepAndOpt = this.redis.get(this.bx_step_key + user.getUserName());
+		if (StringUtils.isNotBlank(stepAndOpt)) {
+			String[] values = stepAndOpt.split(STEP_OPT_SPLIT);
+			String setStep = values[0];
+			String setOpt = values[1];
+			if (setStep.equals(step)) {
+				String errorMsg = this.redis.get(bx_step_key + user.getUserName() + "_" + values[0]);
+				if(StringUtils.isNotBlank(errorMsg)){
+					this.redis.delete(bx_step_key + user.getUserName() + "_" + values[0]);
+					return ResponseEntity.ok(errorMsg);
+				}
+			}
+		}
+		return ResponseEntity.ok(null);
+	}
+
     
 	/**
 	 * 扫码
@@ -1092,7 +1118,7 @@ public class ReimbursementController {
 		//是否企业微信
 		boolean weChat = DeviceTools.iswxWork(request);
 		if(mobileDevice && !weChat) {
-			HtmlUtil.draw(HtmlUtil.html("报销审核", "扫码", "失败", "请使用企业微信或扫码枪扫码！！", FULL_FORMAT.format(new Date())), response);
+			HtmlUtil.draw(HtmlUtil.html("报销审核", "扫码", "失败", "请使用企业微信或扫码枪扫码！！", FULL_FORMAT.format(new Date())), response);this.redis.get(this.bx_step_key + codeRequest.getEmpNo());
 			return;
 			//throw new Exception("请使用企业微信或扫码枪扫码！！");
 		}
@@ -1144,17 +1170,18 @@ public class ReimbursementController {
 		//校验
 		BudgetReimbursementorder order = this.service.getById(codeRequest.getOrderId());
 		String result = this.flowWorker.flowValidate(codeRequest,stepAndOpt,order);
+		String[] values = stepAndOpt.split(STEP_OPT_SPLIT);
 		if(StringUtils.isNotBlank(result)) {
 			messageSender.sendQywxMsg(new QywxTextMsg(codeRequest.getEmpNo(), null, null, 0, result, 0));
 			HtmlUtil.draw(HtmlUtil.html("报销审核", "扫码", "失败", result, FULL_FORMAT.format(new Date())), response);
+			this.redis.set(bx_step_key + codeRequest.getEmpNo()+"_"+values[0], result);
 			return;
 		}
-		
-		String[] values = stepAndOpt.split(STEP_OPT_SPLIT);
+
+
         String setStep = ReimbursementStepHelper.getName(values[0]);
         //String setOpt = "1".equals(values[1]) ? "接收" : "审核";
-        
-        /**
+        /*
          * add by minzhq 
          * 增加结束流转标志
          */
@@ -1175,7 +1202,6 @@ public class ReimbursementController {
 		this.redis.set(REDIS_BXDID + codeRequest.getEmpNo(), order.getId().toString());
 		HtmlUtil.draw(HtmlUtil.html("报销审核", setStep, "成功", content, FULL_FORMAT.format(new Date())), response);
 		UserThreadLocal.remove();
-		return;
 	}
 	   
     @GetMapping("updateLevel")

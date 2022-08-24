@@ -1,6 +1,8 @@
 package com.jtyjy.finance.manager.bean;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -19,6 +21,11 @@ import java.io.Serializable;
 public class WbBanks implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+
+    @ApiModelProperty(value = "id")
+    @TableId(type = IdType.AUTO)
+    private Long id;
 
     /**
      * 银行名称

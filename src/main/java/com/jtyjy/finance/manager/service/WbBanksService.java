@@ -25,13 +25,13 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @Transactional(transactionManager = "defaultTransactionManager", rollbackFor = Exception.class)
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 @JdbcSelector(value = "defaultJdbcTemplateService")
 public class WbBanksService extends DefaultBaseService<WbBanksMapper, WbBanks> {
 
-	private final TabChangeLogMapper loggerMapper;
-	
-	private final WbBanksMapper wbMapper;
+	@Autowired
+	private TabChangeLogMapper loggerMapper;
+	@Autowired
+	private  WbBanksMapper wbMapper;
 
 	@Override
 	public BaseMapper<TabChangeLog> getLoggerMapper() {
