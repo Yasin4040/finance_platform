@@ -8,7 +8,9 @@ public enum ExtractTypeEnum {
 	RETURN(1,"期间提成"),
 	DRAFT(2,"扎账总提成"),
 	VERIFYING(3,"扎账后提成"),
-	APPROVED(4,"坏账明细");
+    APPROVED(4,"坏账明细"),
+    PERFORMANCE_AWARD_COMMISSION(5,"绩效奖提成"),
+    ACCRUED_PERFORMANCE_AWARD(6,"预提绩效奖");
 
 	public String value;
     public int type;

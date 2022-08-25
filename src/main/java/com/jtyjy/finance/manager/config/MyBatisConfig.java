@@ -80,6 +80,7 @@ public class MyBatisConfig {
      * 事务管理器
      */
     @Bean("defaultTransactionManager")
+    @Primary
     public PlatformTransactionManager primaryTransactionManager() {
         return new DataSourceTransactionManager(this.dataSource);
     }

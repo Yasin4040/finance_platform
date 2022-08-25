@@ -139,7 +139,18 @@ public class BudgetExtractImportdetail implements Serializable {
     @ApiModelProperty(hidden = false, value = "发票超额税金减免(2021-12月新增)")
     @TableField(value = "invoice_excess_tax_reduction")
     private BigDecimal invoiceExcessTaxReduction= BigDecimal.ZERO;
-
+    /**
+     * 员工个体户id
+     */
+    @ApiModelProperty(value = "员工个体户id", hidden = false)
+    @TableField(value = "individual_employee_id")
+    private Integer individualEmployeeId;
+    /**
+     * 是否坏账
+     */
+    @ApiModelProperty(value = "是否坏账  1坏 2 不坏", hidden = false)
+    @TableField(value = "if_bad_debt")
+    private Integer ifBadDebt;
     /**
      * 未知参数
      */
