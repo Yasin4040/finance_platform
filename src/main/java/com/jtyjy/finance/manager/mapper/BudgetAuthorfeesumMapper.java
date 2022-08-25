@@ -1,6 +1,7 @@
 package com.jtyjy.finance.manager.mapper;
 
 import com.jtyjy.finance.manager.bean.BudgetAuthorfeesum;
+import com.jtyjy.finance.manager.controller.authorfee.excel.ContributionFeeExportExcelDetail;
 import com.jtyjy.finance.manager.easyexcel.AuthorFeeCalTaxDetailExcelData;
 import com.jtyjy.finance.manager.vo.AuthorFeeDetailVO;
 import com.jtyjy.finance.manager.vo.AuthorFeeMainVO;
@@ -35,5 +36,6 @@ public interface BudgetAuthorfeesumMapper extends BaseMapper<BudgetAuthorfeesum>
 			@Param("params")Map<String, Object> params);
 
 	void setAuthormergeidIsNull(@Param("detailIdList")List<Long> detailIdList);
-	
+
+	List<ContributionFeeExportExcelDetail> getBatchContributionFee(@Param("period")String period, @Param("feeMonth")String feeMonth);
 }

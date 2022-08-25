@@ -7,7 +7,9 @@ import com.jtyjy.core.anno.ResultSql;
 import com.jtyjy.core.anno.Select;
 import com.jtyjy.core.anno.SelectLike;
 import io.swagger.annotations.ApiParam;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
@@ -17,6 +19,8 @@ import java.io.Serializable;
  */
 @TableName(value = "tab_dm")
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class TabDm implements Serializable {
 
     private static final long serialVersionUID = 1L;

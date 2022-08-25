@@ -38,11 +38,7 @@ public class WbUserService extends DefaultBaseService<WbUserMapper, WbUser> {
     @Autowired
     private  BudgetUnitMapper unitMapper;
     @Autowired
-    private  WbUserService userService;
-    @Autowired
     private  WbPersonService personService;
-    @Autowired
-    private WbPersonMapper personMapper;
     @Autowired
     private  WbDeptService deptService;
 
@@ -153,7 +149,7 @@ public class WbUserService extends DefaultBaseService<WbUserMapper, WbUser> {
     }
 
     private void userSync(Map<String, WbDept> budgetDeptMap,List<Map<String,Object>> hrUserList){
-        Map<String, WbUser> wbUserMap = userService.list(null).stream().collect(Collectors.toMap(WbUser::getUserName, e -> e, (e1, e2) -> e1));
+        Map<String, WbUser> wbUserMap = this.list(null).stream().collect(Collectors.toMap(WbUser::getUserName, e -> e, (e1, e2) -> e1));
         Map<String, WbPerson> wbPersonMap = personService.list(null).stream().collect(Collectors.toMap(WbPerson::getPersonCode, e -> e, (e1, e2) -> e1));
         List<WbUser> updateUserList = new ArrayList<>();
         List<WbPerson> undatePersonList = new ArrayList<>();
@@ -185,7 +181,7 @@ public class WbUserService extends DefaultBaseService<WbUserMapper, WbUser> {
                     displayname = e.get("empName").toString();
                 }
                 wbuser.setDisplayName(displayname);
-                userService.save(wbuser);
+                this.save(wbuser);
                 wbUserMap.put(empNo,wbuser);
             }else{
                 wbuser = wbUserMap.get(empNo);
@@ -245,7 +241,7 @@ public class WbUserService extends DefaultBaseService<WbUserMapper, WbUser> {
             }
         });
         if(!CollectionUtils.isEmpty(updateUserList)){
-            userService.updateBatchById(updateUserList);
+            this.updateBatchById(updateUserList);
         }
         if(!CollectionUtils.isEmpty(undatePersonList)){
             personService.updateBatchById(undatePersonList);

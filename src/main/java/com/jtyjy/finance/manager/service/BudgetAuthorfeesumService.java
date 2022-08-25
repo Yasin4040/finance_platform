@@ -21,6 +21,7 @@ import com.jtyjy.finance.manager.controller.authorfee.calpay.AuthorFeeCalCommonD
 import com.jtyjy.finance.manager.controller.authorfee.calpay.AuthorFeeReimCommonData;
 import com.jtyjy.finance.manager.controller.authorfee.excel.ContributionFeeExcelDetail;
 import com.jtyjy.finance.manager.controller.authorfee.excel.ContributionFeeExcelHead;
+import com.jtyjy.finance.manager.controller.authorfee.excel.ContributionFeeExportExcelDetail;
 import com.jtyjy.finance.manager.controller.authorfee.excel.ContributionFeeImportCommonData;
 import com.jtyjy.finance.manager.dto.ReimbursementRequest;
 import com.jtyjy.finance.manager.easyexcel.AuthorFeeCalTaxDetailExcelData;
@@ -2060,5 +2061,9 @@ public class BudgetAuthorfeesumService extends DefaultBaseService<BudgetAuthorfe
 			e.setStatus(AuthorFeeStatusEnum.STATUS_UNAUDITED.type);
 			this.budgetAuthorfeesumMapper.updateById(e);
 		});
+	}
+
+	public List<ContributionFeeExportExcelDetail> getBatchContributionFee(String period, String feeMonth) {
+		return this.budgetAuthorfeesumMapper.getBatchContributionFee(period,feeMonth);
 	}
 }

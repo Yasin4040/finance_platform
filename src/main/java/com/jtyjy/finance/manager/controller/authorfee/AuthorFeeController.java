@@ -16,6 +16,7 @@ import com.jtyjy.finance.manager.cache.PersonCache;
 import com.jtyjy.finance.manager.cache.UserCache;
 import com.jtyjy.finance.manager.controller.BaseController;
 import com.jtyjy.finance.manager.controller.authorfee.excel.ContributionFeeExcelDetail;
+import com.jtyjy.finance.manager.controller.authorfee.excel.ContributionFeeExportExcelDetail;
 import com.jtyjy.finance.manager.controller.authorfee.excel.ContributionFeeImportCommonData;
 import com.jtyjy.finance.manager.easyexcel.AuthorFeeCalTaxDetailExcelData;
 import com.jtyjy.finance.manager.easyexcel.AuthorFeePreTaxSumExcelData;
@@ -41,7 +42,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
@@ -224,12 +224,58 @@ public class AuthorFeeController extends BaseController {
 			e.printStackTrace();
 			throw e;
 		} finally {
-			//if (fis != null) fis.close();
 			if (bos != null) bos.close();
 			if (is != null) is.close();
 			if(workbook!=null) workbook.close();
 		}
 	}
+
+
+
+	@ApiOperation(value = "导出月稿费明细", httpMethod = "GET")
+	@ApiImplicitParams(value = {
+			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
+			@ApiImplicitParam(value = "导航栏查询条件(必传)", name = "query", dataType = "String", required = true)
+	})
+	@GetMapping("/exportBatchContributionFee")
+	public void exportBatchContributionFee(@RequestParam(name = "query", required = true) String query,HttpServletResponse response) throws Exception{
+
+		String[] queryArr = query.split("-");
+
+		BudgetYearPeriod yearPeriod = null;
+		String name = "";
+		String feeMonth = null;
+		if(queryArr.length == 1){
+			yearPeriod = yearService.getOne(new QueryWrapper<BudgetYearPeriod>().eq("period", queryArr[0]));
+			name = queryArr[0];
+		}else if(queryArr.length == 2){
+			yearPeriod = yearService.getOne(new QueryWrapper<BudgetYearPeriod>().eq("period", queryArr[0]));
+			//稿费月份  202105
+			feeMonth = BudgetExtractsumService.getExtractMonth(Integer.valueOf(yearPeriod.getCode()), Integer.valueOf(queryArr[1]));
+			name = feeMonth;
+		}else{
+			throw new RuntimeException("参数错误！");
+		}
+		InputStream is = null;
+
+		try {
+			List<ContributionFeeExportExcelDetail> details = authorfeesumService.getBatchContributionFee(yearPeriod.getPeriod(),feeMonth);
+			is = this.getClass().getClassLoader().getResourceAsStream("template/exportMonthContributionFee.xlsx");
+			ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream(name+"稿费汇总表", response), ContributionFeeExportExcelDetail.class).withTemplate(is).build();
+			WriteSheet sheet = EasyExcel.writerSheet(0).build();
+			sheet.setSheetName("稿费【"+feeMonth+"】汇总表");
+			workBook.fill(details, sheet);
+			workBook.finish();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		} finally {
+			if (is != null) is.close();
+		}
+	}
+
+
 
 	@ApiOperation(value = "导入稿费明细", httpMethod = "POST")
 	@ApiImplicitParams(value = {

@@ -31,6 +31,7 @@ public class FilterConfig {
         apis.add("/api/budgetAuthorfee/importDetail");
         apis.add("/api/budgetAuthorfee/downAuthorFeeImportErrorDetail");
         apis.add("/api/budgetAuthorfee/exportAuthorFeeSumList");
+        apis.add("/api/budgetAuthorfee/exportBatchContributionFee");
         //稿费报表
         apis.add("/api/authorfeeReport/exportAuthorFeeEntyDetails");
         apis.add("/api/authorfeeReport/exportDeptAuthorFeePayDetails");

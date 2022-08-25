@@ -212,6 +212,50 @@
 		</where>
 		order by bam.feemonth desc
     </select>
+    <select id="getBatchContributionFee" resultType="com.jtyjy.finance.manager.controller.authorfee.excel.ContributionFeeExportExcelDetail">
+		SELECT
+			bad.yearperiod,
+			bad.feemonth,
+		IF
+			( bad.authortype = 1, '是', '否' ) authortype,
+			bad.authorname,
+			bad.authoridnumber,
+			bad.taxpayeridnumber,
+			bad.authorcompany,
+			bad.authorprovince,
+			bad.authorcity,
+			bad.bankaccount,
+			bad.bankaccountbranchname,
+			bad.feestandard,
+			bad.copefee,
+			bad.taxtype,
+			bad.tax,
+			bad.agentname,
+			bad.reimbursesubject,
+			bad.producttype,
+			bad.productbgtcls,
+			bad.empno,
+			bad.empname,
+			bad.`subject`,
+			bad.context,
+			bad.paperquality,
+			bad.pageorcopy,
+			bad.feebdgdept,
+			bad.businessgroup,
+			IF
+			( bad.needzz = 1, '是', '否' ) needzz
+		FROM
+			budget_authorfeesum baf
+			LEFT JOIN budget_authorfeedetail bad ON baf.id = bad.authorfeesumid
+		WHERE
+		    1=1
+		    <if test="period!=null and period!=''">
+				and baf.yearperiod = #{period}
+			</if>
+			<if test="feeMonth!=null and feeMonth!=''">
+				and baf.feemonth = #{feeMonth}
+			</if>
+	</select>
     <update id="setAuthormergeidIsNull">
     	update budget_authorfeedetail set authormergeid=null 
     	where id in 
