@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,23 +22,23 @@ import com.jtyjy.finance.manager.hrbean.HrSalaryYearTaxUser;
 import com.jtyjy.finance.manager.hrmapper.HrSalaryYearTaxUserMapper;
 import com.jtyjy.finance.manager.mapper.TabChangeLogMapper;
 
-import lombok.RequiredArgsConstructor;
-
 /**
  * @author Admin
  */
 @Service
 @Transactional(transactionManager = "hrTransactionManager", rollbackFor = Exception.class)
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class HrService extends DefaultBaseService<HrSalaryYearTaxUserMapper, HrSalaryYearTaxUser> {
 
     private final TabChangeLogMapper loggerMapper;
+    private final HrSalaryYearTaxUserMapper mapper;
 
-    @Autowired
-    private HrSalaryYearTaxUserMapper mapper;
-    
-    
-    @Override
+	public HrService(TabChangeLogMapper loggerMapper, HrSalaryYearTaxUserMapper mapper) {
+		this.loggerMapper = loggerMapper;
+		this.mapper = mapper;
+	}
+
+
+	@Override
     public BaseMapper<TabChangeLog> getLoggerMapper() {
         return loggerMapper;
     }

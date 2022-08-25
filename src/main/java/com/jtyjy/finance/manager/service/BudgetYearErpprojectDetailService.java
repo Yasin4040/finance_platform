@@ -7,8 +7,6 @@ import com.jtyjy.finance.manager.mapper.TabChangeLogMapper;
 import com.jtyjy.finance.manager.bean.TabChangeLog;
 import com.jtyjy.core.local.DefaultChangeLogThreadLocal;
 import com.jtyjy.core.service.DefaultBaseService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,10 +15,13 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @Transactional(transactionManager = "defaultTransactionManager", rollbackFor = Exception.class)
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class BudgetYearErpprojectDetailService extends DefaultBaseService<BudgetYearErpprojectDetailMapper, BudgetYearErpprojectDetail> {
 
 	private final TabChangeLogMapper loggerMapper;
+
+	public BudgetYearErpprojectDetailService(TabChangeLogMapper loggerMapper) {
+		this.loggerMapper = loggerMapper;
+	}
 
 	@Override
 	public BaseMapper<TabChangeLog> getLoggerMapper() {

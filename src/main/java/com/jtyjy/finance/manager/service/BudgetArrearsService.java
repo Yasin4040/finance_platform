@@ -14,9 +14,7 @@ import com.jtyjy.finance.manager.mapper.BudgetLendmoneyMapper;
 import com.jtyjy.finance.manager.mapper.TabChangeLogMapper;
 import com.jtyjy.finance.manager.vo.ArrearsDetailsVO;
 import com.jtyjy.finance.manager.vo.ExcelBean;
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
@@ -30,13 +28,20 @@ import java.util.List;
  */
 @Service
 @Transactional(transactionManager = "defaultTransactionManager", rollbackFor = Exception.class)
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
+//@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class BudgetArrearsService extends DefaultBaseService<BudgetArrearsMapper, BudgetArrears> {
 
     private final TabChangeLogMapper loggerMapper;
     private final BudgetArrearsMapper budgetArrearsMapper;
     private final BudgetLendmoneyMapper budgetLendmoneyMapper;
     private final WbUserService wbUserService;
+
+    public BudgetArrearsService(TabChangeLogMapper loggerMapper, BudgetArrearsMapper budgetArrearsMapper, BudgetLendmoneyMapper budgetLendmoneyMapper, WbUserService wbUserService) {
+        this.loggerMapper = loggerMapper;
+        this.budgetArrearsMapper = budgetArrearsMapper;
+        this.budgetLendmoneyMapper = budgetLendmoneyMapper;
+        this.wbUserService = wbUserService;
+    }
 
     @Override
     public BaseMapper<TabChangeLog> getLoggerMapper() {
