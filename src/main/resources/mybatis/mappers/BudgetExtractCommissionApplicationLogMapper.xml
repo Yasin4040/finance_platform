@@ -10,7 +10,6 @@
             <result property="node" column="node" jdbcType="INTEGER"/>
             <result property="status" column="status" jdbcType="INTEGER"/>
             <result property="remarks" column="remarks" jdbcType="VARCHAR"/>
-            <result property="financialDirectorNodeOperateTime" column="financial_director_node_operate_time" jdbcType="TIMESTAMP"/>
             <result property="createBy" column="create_by" jdbcType="VARCHAR"/>
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
     </resultMap>
