@@ -5,11 +5,16 @@ package com.jtyjy.finance.manager.enmus;
  * 提成状态
  */
 public enum ExtractStatusEnum {
+	REJECT(-2,"作废"),
 	RETURN(-1,"已退回"),
 	DRAFT(0,"草稿"),
 	VERIFYING(1,"已提交"),
 	APPROVED(2,"审核通过"),
-	CALCULATION_COMPLETE(3,"计算完成");
+	CALCULATION_COMPLETE(3,"税筹组计算完成"),
+	ACCOUNT(4,"会计做账完成"),
+	PAY(5,"出纳付款完成"),
+	VOUCHER_ENTRY(6,"凭证录入完成");
+
 	
 	public String value;
     public int type;
