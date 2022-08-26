@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetExtractCommissionApplicationBudgetDetailsMapper">
+
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetExtractCommissionApplicationBudgetDetails">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="applicationId" column="application_id" jdbcType="BIGINT"/>
+            <result property="subjectCode" column="subject_code" jdbcType="VARCHAR"/>
+            <result property="subjectName" column="subject_name" jdbcType="VARCHAR"/>
+            <result property="deductionAmount" column="deduction_amount" jdbcType="DECIMAL"/>
+            <result property="createBy" column="create_by" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="VARCHAR"/>
+            <result property="udpateTime" column="udpate_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+</mapper>
