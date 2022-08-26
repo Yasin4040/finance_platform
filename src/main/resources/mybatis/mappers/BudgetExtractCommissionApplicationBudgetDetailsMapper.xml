@@ -13,7 +13,7 @@
             <result property="createBy" column="create_by" jdbcType="VARCHAR"/>
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
             <result property="updateBy" column="update_by" jdbcType="VARCHAR"/>
-            <result property="udpateTime" column="udpate_time" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
     </resultMap>
 
 </mapper>
