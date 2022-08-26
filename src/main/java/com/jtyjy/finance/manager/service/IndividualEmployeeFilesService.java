@@ -1,7 +1,10 @@
 package com.jtyjy.finance.manager.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jtyjy.finance.manager.bean.IndividualEmployeeFiles;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.jtyjy.finance.manager.query.IndividualFilesQuery;
+import com.jtyjy.finance.manager.vo.IndividualEmployeeFilesVO;
 
 /**
 * @author User
@@ -10,4 +13,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface IndividualEmployeeFilesService extends IService<IndividualEmployeeFiles> {
 
+    Page<IndividualEmployeeFilesVO> selectPage(IndividualFilesQuery query);
 }

@@ -1,9 +1,12 @@
 package com.jtyjy.finance.manager.service.impl;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jtyjy.finance.manager.bean.IndividualEmployeeFiles;
+import com.jtyjy.finance.manager.query.IndividualFilesQuery;
 import com.jtyjy.finance.manager.service.IndividualEmployeeFilesService;
 import com.jtyjy.finance.manager.mapper.IndividualEmployeeFilesMapper;
+import com.jtyjy.finance.manager.vo.IndividualEmployeeFilesVO;
 import org.springframework.stereotype.Service;
 
 /**
@@ -15,6 +18,10 @@ import org.springframework.stereotype.Service;
 public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEmployeeFilesMapper, IndividualEmployeeFiles>
     implements IndividualEmployeeFilesService{
 
+    @Override
+    public Page<IndividualEmployeeFilesVO> selectPage(IndividualFilesQuery query) {
+        return null;
+    }
 }
 
 

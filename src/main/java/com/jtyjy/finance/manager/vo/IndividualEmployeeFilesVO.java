@@ -1,176 +1,172 @@
-package com.jtyjy.finance.manager.bean;
+package com.jtyjy.finance.manager.vo;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import java.io.Serializable;
-import java.util.Date;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.util.Date;
+
 /**
- * 员工个体户档案
- * @TableName budget_individual_employee_files
+ * Description:
+ * Created by ZiYao Lee on 2022/08/26.
+ * Time: 13:59
  */
-@TableName(value ="budget_individual_employee_files")
 @Data
-public class IndividualEmployeeFiles implements Serializable {
+public class IndividualEmployeeFilesVO {
     /**
      * id
      */
-    @TableId(value = "id", type = IdType.AUTO)
+    @ApiModelProperty(value = "id")
     private Long id;
 
     /**
      * 员工工号
      */
-    @TableField(value = "employee_job_num")
+    @ApiModelProperty(value = "员工工号")
     private Integer employeeJobNum;
 
     /**
      * 联系电话
 
      */
-    @TableField(value = "phone")
+    @ApiModelProperty(value = "联系电话")
     private Integer phone;
 
     /**
      * 账户类型  1个人 2 公户
      */
-    @TableField(value = "account_type")
+    @ApiModelProperty(value = " 账户类型  1个人 2 公户")
     private Integer accountType;
 
     /**
      * 户名
 
      */
-    @TableField(value = "account_name")
+    @ApiModelProperty(value = "户名")
     private String accountName;
 
     /**
      * 开户行
      */
-    @TableField(value = "deposit_bank")
+    @ApiModelProperty(value = "开户行")
     private String depositBank;
 
     /**
      * 发放单位
      */
-    @TableField(value = "issued_unit")
+    @ApiModelProperty(value = "发放单位")
     private String issuedUnit;
 
     /**
      * 发放意见
      */
-    @TableField(value = "release_opinions")
+    @ApiModelProperty(value = "发放意见")
     private String releaseOpinions;
 
     /**
      * 社保停发日期
      */
-    @TableField(value = "social_security_stop_date")
+    @ApiModelProperty(value = "社保停发日期")
     private Date socialSecurityStopDate;
 
     /**
      * 离职日期
      */
-    @TableField(value = "leave_date")
+    @ApiModelProperty(value = "离职日期")
     private Date leaveDate;
 
     /**
      * 服务协议
      */
-    @TableField(value = "service_agreement")
+    @ApiModelProperty(value = "服务协议")
     private String serviceAgreement;
 
     /**
      * 自办还是代办  1自办 2 代办
      */
-    @TableField(value = "self_or_agency")
+    @ApiModelProperty(value = "自办还是代办  1自办 2 代办")
     private Integer selfOrAgency;
 
     /**
      * 平台公司
      */
-    @TableField(value = "platform_company")
+    @ApiModelProperty(value = "平台公司")
     private String platformCompany;
 
     /**
      * 核定/查账
      */
-    @TableField(value = "verification_audit")
+    @ApiModelProperty(value = "核定/查账")
     private String verificationAudit;
 
     /**
      * 年额度
      */
-    @TableField(value = "annual_quota")
+    @ApiModelProperty(value = "年额度")
     private Integer annualQuota;
 
     /**
      * 创建人
      */
-    @TableField(value = "create_by")
+    @ApiModelProperty(value = "创建人")
     private String createBy;
 
     /**
      * 创建时间
      */
-    @TableField(value = "create_time")
+    @ApiModelProperty(value = "创建时间")
     private Date createTime;
 
     /**
      * 更新人
      */
-    @TableField(value = "update_by")
+    @ApiModelProperty(value = "更新人")
     private String updateBy;
 
     /**
      * 更新时间
      */
-    @TableField(value = "update_time")
+    @ApiModelProperty(value = "更新时间")
     private Date updateTime;
 
     /**
      * 状态 1 正常  2停用
      */
-    @TableField(value = "status")
+    @ApiModelProperty(value = "状态 1 正常  2停用")
     private Integer status;
 
     /**
      * 批次
      */
-    @TableField(value = "batch_no")
+    @ApiModelProperty(value = "批次")
     private String batchNo;
 
     /**
      * 部门
      */
-    @TableField(value = "department_no")
+    @ApiModelProperty(value = " 部门")
     private String departmentNo;
 
     /**
      * 部门名称
      */
-    @TableField(value = "department_name")
+    @ApiModelProperty(value = "部门名称")
     private String departmentName;
 
     /**
      * 省区/大区
      */
-    @TableField(value = "province_or_region")
+    @ApiModelProperty(value = "省区/大区")
     private String provinceOrRegion;
 
     /**
      * 员工名称
      */
-    @TableField(value = "employee_name")
+    @ApiModelProperty(value = "员工名称")
     private String employeeName;
     /**
      * account 账号
      */
-    @TableField(value = "account")
+    @ApiModelProperty(value = "账号")
     private String account;
-    @TableField(exist = false)
-    private static final long serialVersionUID = 1L;
+
 }
