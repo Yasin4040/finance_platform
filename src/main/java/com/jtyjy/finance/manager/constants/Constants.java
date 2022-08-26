@@ -44,6 +44,14 @@ public class Constants {
     public static final int CHECK_CODE_EXPIRE = 180;
 
     /**
+     * 通用  通过1
+     */
+    public static final int COMMON_OPERATION_PASS = 1;
+    /**
+     * 通用  拒绝2
+     */
+    public static final int COMMON_OPERATION_REJECT = 2;
+    /**
      * 支付类型
      */
     public interface PAY_TYPE {
