@@ -173,7 +173,17 @@
     <springProfile name="dev">
         <logger name="com.nmys.view" level="debug"/>
     </springProfile>
-
+    <!-- 测试环境,多个使用逗号隔开,测试环境输出INFO级别日志,只以文件形式输出-->
+    <springProfile name="test">
+        <logger name="com.jtyjy.finance" level="INFO" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+        <logger name="com.jtyjy.printappnew.mapper" level="DEBUG" />-->
+        <!--        <logger name="com.jtyjy.printappnew.controller" level="DEBUG" />-->
+    </springProfile>
     <root level="info">
         <appender-ref ref="CONSOLE" />
         <appender-ref ref="DEBUG_FILE" />

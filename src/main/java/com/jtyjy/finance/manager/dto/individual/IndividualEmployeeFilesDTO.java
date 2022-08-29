@@ -1,23 +1,20 @@
-package com.jtyjy.finance.manager.vo;
+package com.jtyjy.finance.manager.dto.individual;
 
-import com.alibaba.excel.annotation.ExcelProperty;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.util.Date;
 
 /**
- * Description:
- * Created by ZiYao Lee on 2022/08/26.
- * Time: 13:59
+ * Description: 新增实体类
+ * Created by ZiYao Lee on 2022/08/29.
+ * Time: 09:23
  */
 @Data
-public class IndividualEmployeeFilesVO {
-    /**
-     * id
-     */
-    @ApiModelProperty(value = "id")
-    private Long id;
+@ApiModel(value = "新增实体类")
+public class IndividualEmployeeFilesDTO {
+
 
     /**
      * 员工工号
@@ -35,12 +32,11 @@ public class IndividualEmployeeFilesVO {
     /**
      * 账户类型  1个人 2 公户
      */
-    @ApiModelProperty(value = " 账户类型  1个人 2 公户")
+    @ApiModelProperty(value = "账户类型  1个人 2 公户")
     private Integer accountType;
 
     /**
      * 户名
-
      */
     @ApiModelProperty(value = "户名")
     private String accountName;
@@ -85,12 +81,12 @@ public class IndividualEmployeeFilesVO {
      * 自办还是代办  1自办 2 代办
      */
     @ApiModelProperty(value = "自办还是代办  1自办 2 代办")
-    private String selfOrAgency;
+    private Integer selfOrAgency;
 
     /**
      * 平台公司
      */
-    @ApiModelProperty(value = "平台公司")
+    @ApiModelProperty(value = "platform_company")
     private String platformCompany;
 
     /**
@@ -105,29 +101,7 @@ public class IndividualEmployeeFilesVO {
     @ApiModelProperty(value = "年额度")
     private Integer annualQuota;
 
-    /**
-     * 创建人
-     */
-    @ApiModelProperty(value = "创建人")
-    private String createBy;
 
-    /**
-     * 创建时间
-     */
-    @ApiModelProperty(value = "创建时间")
-    private Date createTime;
-
-    /**
-     * 更新人
-     */
-    @ApiModelProperty(value = "更新人")
-    private String updateBy;
-
-    /**
-     * 更新时间
-     */
-    @ApiModelProperty(value = "更新时间")
-    private Date updateTime;
 
     /**
      * 状态 1 正常  2停用
@@ -139,13 +113,12 @@ public class IndividualEmployeeFilesVO {
      * 批次
      */
     @ApiModelProperty(value = "批次")
-    @ExcelProperty(value = "*批次",index = 1)
     private String batchNo;
 
     /**
      * 部门
      */
-    @ApiModelProperty(value = " 部门")
+    @ApiModelProperty(value = "部门")
     private String departmentNo;
 
     /**
@@ -168,9 +141,8 @@ public class IndividualEmployeeFilesVO {
     /**
      * account 账号
      */
-    @ApiModelProperty(value = "账号")
+    @ApiModelProperty(value = " account 账号")
     private String account;
     @ApiModelProperty(value = "备注")
     private String remarks;
-
 }

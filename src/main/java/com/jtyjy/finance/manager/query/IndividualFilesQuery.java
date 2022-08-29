@@ -1,10 +1,13 @@
 package com.jtyjy.finance.manager.query;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+
 /**
  * Description:
  * Created by ZiYao Lee on 2022/08/26.
  * Time: 11:57
  */
+@Data
 public class IndividualFilesQuery extends PageQuery{
     @ApiModelProperty(value = "批次")
     private String batchNo;

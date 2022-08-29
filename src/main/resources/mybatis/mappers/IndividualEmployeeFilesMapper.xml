@@ -7,7 +7,7 @@
     <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.IndividualEmployeeFiles">
             <id property="id" column="id" jdbcType="BIGINT"/>
             <result property="employeeJobNum" column="employee_job_num" jdbcType="INTEGER"/>
-            <result property="phone" column="phone" jdbcType="INTEGER"/>
+            <result property="phone" column="phone" jdbcType="VARCHAR"/>
             <result property="accountType" column="account_type" jdbcType="INTEGER"/>
             <result property="accountName" column="account_name" jdbcType="VARCHAR"/>
             <result property="depositBank" column="deposit_bank" jdbcType="VARCHAR"/>

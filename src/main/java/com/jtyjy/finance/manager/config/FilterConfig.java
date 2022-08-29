@@ -24,6 +24,11 @@ public class FilterConfig {
     @Bean
     public FilterRegistrationBean<RequestResponseFilter> requestResponseFilter() throws Exception {
         List<String> apis = new ArrayList<>();
+        //个人维护档案
+        apis.add("/api/individualEmployee/downLoadTemplate");
+        apis.add("/api/individualEmployee/exportIndividual");
+        apis.add("/api/individualEmployee/importIndividual");
+
         apis.add("/api/test/upload");
         //稿费信息
         apis.add("/api/budgetAuthorfee/downAuthorFeeImportTemplate");
@@ -102,6 +107,10 @@ public class FilterConfig {
 
         //基础模块
         apis.add("/api/base/author/downloadTemplate");
+
+        //基础模块
+        apis.add("/api/base/author/downloadTemplate");
+
         apis.add("/api/base/author/importSave");
         apis.add("/api/base/author/exportErrors");
         apis.add("/api/base/bankAccount/export");

@@ -1,28 +1,18 @@
 package com.jtyjy.finance.manager.utils;
 
 import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.ExcelReader;
 import com.alibaba.excel.ExcelWriter;
-import com.alibaba.excel.context.AnalysisContext;
-import com.alibaba.excel.event.AnalysisEventListener;
-import com.alibaba.excel.metadata.BaseRowModel;
-import com.alibaba.excel.metadata.Sheet;
+import com.alibaba.excel.read.listener.PageReadListener;
 import com.alibaba.excel.support.ExcelTypeEnum;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
-import org.apache.poi.EmptyFileException;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.poifs.filesystem.DocumentFactoryHelper;
-import org.apache.poi.poifs.filesystem.NPOIFSFileSystem;
+import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
-import org.apache.poi.util.IOUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PushbackInputStream;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +52,9 @@ public abstract class EasyExcelUtil {
         //设置内容靠左对齐
         contentWriteCellStyle.setHorizontalAlignment(HorizontalAlignment.LEFT);
         HorizontalCellStyleStrategy horizontalCellStyleStrategy = new HorizontalCellStyleStrategy(headWriteCellStyle, contentWriteCellStyle);
-        EasyExcel.write(getOutputStream(fileName, response), clazz).excelType(ExcelTypeEnum.XLSX).sheet(sheetName).registerWriteHandler(horizontalCellStyleStrategy).doWrite(data);
+        EasyExcel.write(getOutputStream(fileName, response), clazz).excelType(ExcelTypeEnum.XLSX).sheet(sheetName).registerWriteHandler(horizontalCellStyleStrategy)
+                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .doWrite(data);
     }
 
     public static InputStream getTemplateInputStream(String templateName) {
@@ -89,67 +81,67 @@ public abstract class EasyExcelUtil {
         return response.getOutputStream();
     }
     
-    /**
-     * @param in            文件输入流
-     * @param customContent 自定义模型可以在 AnalysisContext中获取用于监听者回调使用
-     * @param eventListener 用户监听
-     * @throws IOException
-     * @throws EmptyFileException
-     * @throws InvalidFormatException
-     */
-    public static ExcelReader getExcelReader(InputStream in, Object customContent,
-                                             AnalysisEventListener<?> eventListener) throws EmptyFileException, IOException, InvalidFormatException {
-        // 如果输入流不支持mark/reset，需要对其进行包裹
-        if (!in.markSupported()) {
-            in = new PushbackInputStream(in, 8);
-        }
-        // 确保至少有一些数据
-        byte[] header8 = IOUtils.peekFirst8Bytes(in);
-        ExcelTypeEnum excelTypeEnum = null;
-        if (NPOIFSFileSystem.hasPOIFSHeader(header8)) {
-            excelTypeEnum = ExcelTypeEnum.XLS;
-        }
-        if (DocumentFactoryHelper.hasOOXMLHeader(in)) {
-            excelTypeEnum = ExcelTypeEnum.XLSX;
-        }
-        if (excelTypeEnum != null) {
-            return new ExcelReader(in, excelTypeEnum, customContent, eventListener);
-        }
-        throw new InvalidFormatException("Your InputStream was neither an OLE2 stream, nor an OOXML stream");
+//    /**
+//     * @param in            文件输入流
+//     * @param customContent 自定义模型可以在 AnalysisContext中获取用于监听者回调使用
+//     * @param eventListener 用户监听
+//     * @throws IOException
+//     * @throws EmptyFileException
+//     * @throws InvalidFormatException
+//     */
+//    public static ExcelReader getExcelReader(InputStream in, Object customContent,
+//                                             AnalysisEventListener<?> eventListener) throws EmptyFileException, IOException, InvalidFormatException {
+//        // 如果输入流不支持mark/reset，需要对其进行包裹
+//        if (!in.markSupported()) {
+//            in = new PushbackInputStream(in, 8);
+//        }
+//        // 确保至少有一些数据
+//        byte[] header8 = IOUtils.peekFirst8Bytes(in);
+//        ExcelTypeEnum excelTypeEnum = null;
+//        if (NPOIFSFileSystem.hasPOIFSHeader(header8)) {
+//            excelTypeEnum = ExcelTypeEnum.XLS;
+//        }
+//        if (DocumentFactoryHelper.hasOOXMLHeader(in)) {
+//            excelTypeEnum = ExcelTypeEnum.XLSX;
+//        }
+//        if (excelTypeEnum != null) {
+//            return new ExcelReader(in, excelTypeEnum, customContent, eventListener);
+//        }
+//        throw new InvalidFormatException("Your InputStream was neither an OLE2 stream, nor an OOXML stream");
+//
+//    }
 
-    }
-
-    /**
-     * @param in            文件输入流
-     * @param customContent 自定义模型可以在 AnalysisContext中获取用于监听者回调使用
-     * @param eventListener 用户监听
-     * @param trim          是否对解析的String做trim()默认true,用于防止 excel中空格引起的装换报错。
-     * @throws IOException
-     * @throws EmptyFileException
-     * @throws InvalidFormatException
-     */
-    public static ExcelReader getExcelReader(InputStream in, Object customContent,
-                                             AnalysisEventListener<?> eventListener, boolean trim)
-            throws EmptyFileException, IOException, InvalidFormatException {
-        // 如果输入流不支持mark/reset，需要对其进行包裹
-        if (!in.markSupported()) {
-            in = new PushbackInputStream(in, 8);
-        }
-
-        // 确保至少有一些数据
-        byte[] header8 = IOUtils.peekFirst8Bytes(in);
-        ExcelTypeEnum excelTypeEnum = null;
-        if (NPOIFSFileSystem.hasPOIFSHeader(header8)) {
-            excelTypeEnum = ExcelTypeEnum.XLS;
-        }
-        if (DocumentFactoryHelper.hasOOXMLHeader(in)) {
-            excelTypeEnum = ExcelTypeEnum.XLSX;
-        }
-        if (excelTypeEnum != null) {
-            return new ExcelReader(in, excelTypeEnum, customContent, eventListener, trim);
-        }
-        throw new InvalidFormatException("Your InputStream was neither an OLE2 stream, nor an OOXML stream");
-    }
+//    /**
+//     * @param in            文件输入流
+//     * @param customContent 自定义模型可以在 AnalysisContext中获取用于监听者回调使用
+//     * @param eventListener 用户监听
+//     * @param trim          是否对解析的String做trim()默认true,用于防止 excel中空格引起的装换报错。
+//     * @throws IOException
+//     * @throws EmptyFileException
+//     * @throws InvalidFormatException
+//     */
+//    public static ExcelReader getExcelReader(InputStream in, Object customContent,
+//                                             AnalysisEventListener<?> eventListener, boolean trim)
+//            throws EmptyFileException, IOException, InvalidFormatException {
+//        // 如果输入流不支持mark/reset，需要对其进行包裹
+//        if (!in.markSupported()) {
+//            in = new PushbackInputStream(in, 8);
+//        }
+//
+//        // 确保至少有一些数据
+//        byte[] header8 = IOUtils.peekFirst8Bytes(in);
+//        ExcelTypeEnum excelTypeEnum = null;
+//        if (NPOIFSFileSystem.hasPOIFSHeader(header8)) {
+//            excelTypeEnum = ExcelTypeEnum.XLS;
+//        }
+//        if (DocumentFactoryHelper.hasOOXMLHeader(in)) {
+//            excelTypeEnum = ExcelTypeEnum.XLSX;
+//        }
+//        if (excelTypeEnum != null) {
+//            return new ExcelReader(in, excelTypeEnum, customContent, eventListener, trim);
+//        }
+//        throw new InvalidFormatException("Your InputStream was neither an OLE2 stream, nor an OOXML stream");
+//    }
 
     /**
      * 读取Excel文件内容
@@ -162,20 +154,21 @@ public abstract class EasyExcelUtil {
     public static <T> List<T> getExcelContent(InputStream in, Class<T> tClass) {
         List<T> excelPropertyIndexModelList = new ArrayList<>();
         try {
-            AnalysisEventListener<T> listener = new AnalysisEventListener<T>() {
-                @Override
-                public void invoke(T excelPropertyIndexModel, AnalysisContext analysisContext) {
-                    excelPropertyIndexModelList.add(excelPropertyIndexModel);
-                }
-
-                @Override
-                public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-                    // 读取之后的操作
-                }
-            };
-            ExcelReader excelReader = EasyExcelUtil.getExcelReader(in, null, listener);
-            // 第二个参数为表头行数，按照实际设置
-            excelReader.read(new Sheet(1, 1, (Class<? extends BaseRowModel>) tClass));
+//            AnalysisEventListener<T> listener = new AnalysisEventListener<T>() {
+//                @Override
+//                public void invoke(T excelPropertyIndexModel, AnalysisContext analysisContext) {
+//                    excelPropertyIndexModelList.add(excelPropertyIndexModel);
+//                }
+//
+//                @Override
+//                public void doAfterAllAnalysed(AnalysisContext analysisContext) {
+//                    // 读取之后的操作
+//                }
+//            };
+////            ExcelReader excelReader = EasyExcelUtil.getExcelReader(in, null, listener);
+//            // 第二个参数为表头行数，按照实际设置
+//            excelReader.read(new Sheet(1, 1, (Class<? extends BaseRowModel>) tClass));
+            EasyExcel.read(in,tClass,new PageReadListener(x->excelPropertyIndexModelList.add((T) x))).sheet().doRead();
         } catch (Exception e) {
             e.printStackTrace();
         }

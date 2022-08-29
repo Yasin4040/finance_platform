@@ -646,7 +646,8 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
         WriteSheet sheet = EasyExcel.writerSheet("冲账支付信息").build();
         sheet.setAutoTrim(true);
         sheet.setAutomaticMergeHead(true);
-        sheet.setColumnWidthMap(columnWidthMap);
+//        sheet.setCustomWriteHandlerList();
+//        sheet.setColumnWidthMap(columnWidthMap);
         ExcelWriter excelWriter = EasyExcel.write(EasyExcelUtil.getOutputStream(order.getReimcode() + "_冲账支付表", response)).build();
         //冲账列表
         List<List<String>> czList = new ArrayList<>();

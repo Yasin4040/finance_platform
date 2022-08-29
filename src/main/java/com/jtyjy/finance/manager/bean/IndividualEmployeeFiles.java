@@ -32,7 +32,7 @@ public class IndividualEmployeeFiles implements Serializable {
 
      */
     @TableField(value = "phone")
-    private Integer phone;
+    private String phone;
 
     /**
      * 账户类型  1个人 2 公户
@@ -87,7 +87,7 @@ public class IndividualEmployeeFiles implements Serializable {
      * 自办还是代办  1自办 2 代办
      */
     @TableField(value = "self_or_agency")
-    private Integer selfOrAgency;
+    private String selfOrAgency;
 
     /**
      * 平台公司
@@ -171,6 +171,8 @@ public class IndividualEmployeeFiles implements Serializable {
      */
     @TableField(value = "account")
     private String account;
+    @TableField(value = "remarks")
+    private String remarks;
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

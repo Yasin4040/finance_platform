@@ -241,7 +241,7 @@ public class PoiExcelUtil {
     private static String getCellValue(FormulaEvaluator evaluator, SimpleDateFormat dateFormat, Cell cell) {
         String value = "";
         if (cell != null) {
-            switch (cell.getCellTypeEnum()) {
+            switch (cell.getCellType()) {
                 case NUMERIC:
                     // 数值型
                     if (org.apache.poi.ss.usermodel.DateUtil.isCellDateFormatted(cell)) {

@@ -1,10 +1,17 @@
 package com.jtyjy.finance.manager.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jtyjy.finance.manager.bean.IndividualEmployeeFiles;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.jtyjy.finance.manager.dto.individual.IndividualEmployeeFilesDTO;
+import com.jtyjy.finance.manager.dto.individual.IndividualEmployeeFilesStatusDTO;
+import com.jtyjy.finance.manager.dto.individual.IndividualExportDTO;
 import com.jtyjy.finance.manager.query.IndividualFilesQuery;
 import com.jtyjy.finance.manager.vo.IndividualEmployeeFilesVO;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 /**
 * @author User
@@ -13,5 +20,15 @@ import com.jtyjy.finance.manager.vo.IndividualEmployeeFilesVO;
 */
 public interface IndividualEmployeeFilesService extends IService<IndividualEmployeeFiles> {
 
-    Page<IndividualEmployeeFilesVO> selectPage(IndividualFilesQuery query);
+    IPage<IndividualEmployeeFilesVO> selectPage(IndividualFilesQuery query);
+
+    void addIndividual(IndividualEmployeeFilesDTO dto);
+
+    void updateIndividual(IndividualEmployeeFiles file);
+
+    void updateIndividualStatus(IndividualEmployeeFilesStatusDTO statusDTO);
+
+    List<IndividualExportDTO> exportIndividual(IndividualFilesQuery query);
+
+    void importIndividual(MultipartFile multipartFile);
 }
