@@ -28,11 +28,8 @@ public interface IndividualEmployeeFilesConverter {
 
     IndividualEmployeeFiles dtoToEntity(IndividualEmployeeFilesDTO dto);
 
-    IndividualExportDTO toExportDTO(IndividualEmployeeFiles files);
-
-
-    IndividualEmployeeFiles exportDTOToEntity(IndividualExportDTO exportDTO);
-    List<IndividualEmployeeFiles> exportDTOToEntities(List<IndividualExportDTO> exportDTOList);
+    IndividualExportDTO entityToExportDTO(IndividualEmployeeFiles entity);
+    List<IndividualExportDTO> entityToExportDTOList(List<IndividualEmployeeFiles> entities);
 
     IndividualEmployeeFiles importDTOToEntity(IndividualImportDTO importDTO);
     List<IndividualEmployeeFiles> importDTOToEntities(List<IndividualImportDTO> importDTOList);

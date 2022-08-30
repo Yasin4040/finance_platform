@@ -95,9 +95,9 @@ public class IndividualEmployeeController {
     /**
      *  新增发票。获取基础信息
      */
-    @ApiOperation(value = "新增发票。获取基础信息", httpMethod = "POST")
-    @PostMapping("/getIndividualInfoList")
-    public ResponseEntity getIndividualInfoList(@RequestBody @ModelAttribute String name) throws Exception {
+    @ApiOperation(value = "新增发票。获取基础信息", httpMethod = "GET")
+    @GetMapping("/getIndividualInfoList")
+    public ResponseEntity getIndividualInfoList(@RequestParam String name) throws Exception {
             IndividualFilesQuery query = new IndividualFilesQuery();
             query.setAccountName(name);
             query.setPageNum(1);

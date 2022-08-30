@@ -51,12 +51,22 @@ public class IndividualEmployeeFilesVO {
      */
     @ApiModelProperty(value = "开户行")
     private String depositBank;
+    /**
+     * 开户行Id
+     */
+    @ApiModelProperty(value = "开户行名称")
+    private String depositBankName;
 
     /**
      * 发放单位
      */
     @ApiModelProperty(value = "发放单位")
     private String issuedUnit;
+    /**
+     * 发放单位Id
+     */
+    @ApiModelProperty(value = "发放单位名称")
+    private String issuedUnitName;
 
     /**
      * 发放意见

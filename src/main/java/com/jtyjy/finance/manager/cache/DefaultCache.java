@@ -23,7 +23,8 @@ public class DefaultCache {
 
 	@Autowired
 	private PersonCache personCache;
-	
+	@Autowired
+	private UnitCache unitCache;
 	@PostConstruct
 	public void create() throws Exception {
 		deptCache.cache();
@@ -34,6 +35,8 @@ public class DefaultCache {
 		LOGGER.info("缓存银行成功......");
 		personCache.cache();
 		LOGGER.info("缓存人员成功......");
+		unitCache.cache();
+		LOGGER.info("缓存开票单位成功......");
 	}
 	
 	/**

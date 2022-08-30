@@ -22,12 +22,14 @@ public class BankCache extends BaseCache{
 	
 
 	public static Map<String, WbBanks> BANK_MAP = new HashMap<String, WbBanks>();
-
+	public static Map<String, WbBanks> BANK_NAME_MAP = new HashMap<String, WbBanks>();
 
 	public static WbBanks getBankByBranchCode(String key) {
 		return BANK_MAP.get(key);
 	}
-
+	public static WbBanks getBankByBranchName(String key) {
+		return BANK_NAME_MAP.get(key);
+	}
 
 	@Override
 	public void cache() throws Exception {
@@ -43,6 +45,7 @@ public class BankCache extends BaseCache{
 		String sql = "SELECT * FROM wb_banks";
 		List<WbBanks> banks = banksService.query(sql, WbBanks.class);
 		setMapByList(banks, BANK_MAP, "subBranchCode", WbBanks.class);
+		setMapByList(banks, BANK_NAME_MAP, "subBranchName", WbBanks.class);
 	}
 	
 }

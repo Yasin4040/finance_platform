@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.iamxiongx.util.message.exception.BusinessException;
 import com.jtyjy.finance.manager.bean.IndividualEmployeeFiles;
+import com.jtyjy.finance.manager.cache.BankCache;
+import com.jtyjy.finance.manager.cache.UnitCache;
 import com.jtyjy.finance.manager.converter.IndividualEmployeeFilesConverter;
 import com.jtyjy.finance.manager.dto.individual.IndividualEmployeeFilesDTO;
 import com.jtyjy.finance.manager.dto.individual.IndividualEmployeeFilesStatusDTO;
@@ -23,10 +25,10 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
 * @author User
@@ -55,12 +57,20 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
         if(CollectionUtils.isEmpty(page.getRecords()) ){
             return new Page<>();
         }
-        return page.convert(IndividualEmployeeFilesConverter.INSTANCE::toVO);
+        IPage<IndividualEmployeeFilesVO> convert = page.convert(IndividualEmployeeFilesConverter.INSTANCE::toVO);
+
+        List<IndividualEmployeeFilesVO> records = convert.getRecords();
+        for (IndividualEmployeeFilesVO record : records) {
+            record.setDepositBankName(BankCache.getBankByBranchCode(record.getDepositBank()).getSubBranchName());
+            record.setIssuedUnitName(UnitCache.get(record.getIssuedUnit()).getName());
+        }
+        return convert;
 
     }
 
     @Override
     public void addIndividual(IndividualEmployeeFilesDTO dto) {
+        //银行和单位 都是放id
         Optional<IndividualEmployeeFiles> existsOptional = this.lambdaQuery().eq(IndividualEmployeeFiles::getEmployeeJobNum, dto.getEmployeeJobNum())
                 .eq(IndividualEmployeeFiles::getAccountName, dto.getAccountName()).oneOpt();
 
@@ -91,16 +101,22 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
 
     @Override
     public void updateIndividualStatus(IndividualEmployeeFilesStatusDTO statusDTO) {
-        IndividualEmployeeFiles employeeFiles = this.getById(statusDTO.getId());
-        employeeFiles.setStatus(statusDTO.getStatus());
-        employeeFiles.setUpdateTime(new Date());
-        employeeFiles.setUpdateBy(UserThreadLocal.get().getUserName());
-        this.saveOrUpdate(employeeFiles);
+        List<Long> ids = statusDTO.getIds();
+        List<IndividualEmployeeFiles> filesList = new ArrayList<>();
+        for (Long id : ids) {
+            IndividualEmployeeFiles employeeFiles = this.getById(id);
+            employeeFiles.setStatus(statusDTO.getStatus());
+            employeeFiles.setUpdateTime(new Date());
+            employeeFiles.setUpdateBy(UserThreadLocal.get().getUserName());
+            filesList.add(employeeFiles);
+        }
+        this.saveOrUpdateBatch(filesList);
     }
 
     @Override
     public List<IndividualExportDTO> exportIndividual(IndividualFilesQuery query) {
-        return this.lambdaQuery()
+
+        List<IndividualEmployeeFiles> list = this.lambdaQuery()
                 .like(StringUtils.isNotBlank(query.getAccount()), IndividualEmployeeFiles::getAccount, query.getAccount())
                 .like(StringUtils.isNotBlank(query.getAccountName()), IndividualEmployeeFiles::getAccountName, query.getAccountName())
                 .like(StringUtils.isNotBlank(query.getEmployeeName()), IndividualEmployeeFiles::getEmployeeName, query.getEmployeeName())
@@ -111,8 +127,13 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
                 .like(StringUtils.isNotBlank(query.getProvinceOrRegion()), IndividualEmployeeFiles::getProvinceOrRegion, query.getProvinceOrRegion())
                 .like(StringUtils.isNotBlank(query.getReleaseOpinions()), IndividualEmployeeFiles::getReleaseOpinions, query.getReleaseOpinions())
                 .like(query.getEmployeeJobNum() != null, IndividualEmployeeFiles::getEmployeeJobNum, query.getEmployeeJobNum())
-                .eq(query.getStatus() != null, IndividualEmployeeFiles::getStatus, query.getStatus())
-                .list().stream().map(IndividualEmployeeFilesConverter.INSTANCE::toExportDTO).collect(Collectors.toList());
+                .eq(query.getStatus() != null, IndividualEmployeeFiles::getStatus, query.getStatus()).list();
+        List<IndividualExportDTO> dtoList = IndividualEmployeeFilesConverter.INSTANCE.entityToExportDTOList(list);
+        for (IndividualExportDTO dto : dtoList) {
+            dto.setDepositBank(BankCache.getBankByBranchCode(dto.getDepositBank()).getSubBranchName());
+            dto.setIssuedUnit(UnitCache.get(dto.getIssuedUnit()).getName());
+        }
+        return dtoList;
     }
 
     @SneakyThrows
@@ -128,6 +149,12 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
 //                        }
                         //新增--
                         List<IndividualEmployeeFiles> entities = IndividualEmployeeFilesConverter.INSTANCE.importDTOToEntities(dataList);
+                        for (IndividualEmployeeFiles entity : entities) {
+                            //通过名称 找id
+                            entity.setDepositBank(BankCache.getBankByBranchName(entity.getDepositBank()).getSubBranchCode());
+                            entity.setIssuedUnit(UnitCache.getByName(entity.getIssuedUnit()).getName());
+                        }
+
                         System.out.println(dataList);
                         this.saveBatch(entities);
                     })).sheet().doRead();

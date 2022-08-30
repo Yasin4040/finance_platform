@@ -2,6 +2,8 @@ package com.jtyjy.finance.manager.service;
 
 import com.jtyjy.finance.manager.bean.BudgetExtractCommissionApplication;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.jtyjy.finance.manager.bean.BudgetExtractsum;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
 * @author User
@@ -10,4 +12,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface BudgetExtractCommissionApplicationService extends IService<BudgetExtractCommissionApplication> {
 
+    void importIndividual(MultipartFile multipartFile);
+
+    void saveEntity(BudgetExtractsum extract);
 }

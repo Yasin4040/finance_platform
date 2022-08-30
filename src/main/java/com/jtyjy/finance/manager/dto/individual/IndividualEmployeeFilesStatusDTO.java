@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * Description: 新增实体类
@@ -17,12 +18,11 @@ import java.util.Date;
 @ApiModel(value = "新增实体类")
 public class IndividualEmployeeFilesStatusDTO {
 
-
     /**
      * id
      */
-    @ApiModelProperty(value = "id")
-    private Long id;
+    @ApiModelProperty(value = "ids")
+    private List<Long> ids;
     /**
      * 状态 1 正常  2停用
      */

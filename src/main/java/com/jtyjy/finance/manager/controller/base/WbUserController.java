@@ -3,8 +3,14 @@ package com.jtyjy.finance.manager.controller.base;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jtyjy.common.enmus.StatusCodeEnmus;
 import com.jtyjy.finance.manager.bean.BudgetAgentExecuteView;
+import com.jtyjy.finance.manager.bean.WbDept;
+import com.jtyjy.finance.manager.bean.WbPerson;
 import com.jtyjy.finance.manager.bean.WbUser;
+import com.jtyjy.finance.manager.cache.DeptCache;
+import com.jtyjy.finance.manager.cache.PersonCache;
+import com.jtyjy.finance.manager.cache.UserCache;
 import com.jtyjy.finance.manager.controller.BaseController;
+import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.service.WbUserService;
 import com.jtyjy.core.result.ResponseEntity;
 import com.jtyjy.core.result.ResponseResult;
@@ -117,4 +123,19 @@ public class WbUserController extends BaseController<BudgetAgentExecuteView> {
     public ResponseResult getById(Serializable id) {
         return ResponseResult.ok(this.service.getById(id));
     }
+    /**
+     * 按照工号查询
+     */
+    @ApiOperation(value = "按照工号查询", httpMethod = "GET")
+    @ApiImplicitParams(value = {
+            @ApiImplicitParam(value = "主键", name = "jobNum", dataType = "String", required = true),
+            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
+    })
+    @GetMapping("getByJobNum")
+    public ResponseResult getByJobNum(String jobNum) {
+        WbPerson personByEmpNo = PersonCache.getPersonByEmpNo(jobNum);
+        WbDept byDeptId = DeptCache.getByDeptId(personByEmpNo.getDeptId());
+        return ResponseResult.ok(byDeptId);
+    }
+
 }

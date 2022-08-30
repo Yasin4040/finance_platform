@@ -83,6 +83,8 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 
 	@Autowired
 	private BudgetExtractsumMapper budgetExtractsumMapper;
+	@Autowired
+	private BudgetExtractCommissionApplicationService applicationService;
 
 	@Autowired
 	private BudgetExtractsumService sumService;
@@ -646,6 +648,10 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				//表头信息有错误直接return
 				return;
 			}
+
+			//生成提成明细申请单
+			//支付+“届别”+“月份”+“批次”+“提成/坏账”
+			applicationService.saveEntity(extractsum);
 
 			if (Objects.nonNull(extractsum)) {
 				/**
