@@ -14,10 +14,9 @@ import com.jtyjy.finance.manager.dto.individual.IndividualImportDTO;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.listener.easyexcel.PageReadListener;
 import com.jtyjy.finance.manager.mapper.IndividualEmployeeFilesMapper;
-import com.jtyjy.finance.manager.query.IndividualFilesQuery;
+import com.jtyjy.finance.manager.query.individual.IndividualFilesQuery;
 import com.jtyjy.finance.manager.service.IndividualEmployeeFilesService;
-import com.jtyjy.finance.manager.utils.EasyExcelUtil;
-import com.jtyjy.finance.manager.vo.IndividualEmployeeFilesVO;
+import com.jtyjy.finance.manager.vo.individual.IndividualEmployeeFilesVO;
 import lombok.SneakyThrows;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -119,9 +118,7 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
     @SneakyThrows
     @Override
     public void importIndividual(MultipartFile multipartFile) {
-
-//        List<IndividualImportDTO> excelContent = EasyExcelUtil.getExcelContent(multipartFile.getInputStream(), IndividualImportDTO.class);
-//        System.out.println(excelContent);
+;
         try {
             EasyExcel.read(multipartFile.getInputStream(), IndividualImportDTO.class,
                     new PageReadListener<IndividualImportDTO>(dataList -> {

@@ -24,6 +24,12 @@ public class FilterConfig {
     @Bean
     public FilterRegistrationBean<RequestResponseFilter> requestResponseFilter() throws Exception {
         List<String> apis = new ArrayList<>();
+        //个体户发票维护
+        apis.add("/api/individualTicket/downLoadTemplate");
+        apis.add("/api/individualTicket/exportTicket");
+        apis.add("/api/individualTicket/importTicket");
+
+
         //个人维护档案
         apis.add("/api/individualEmployee/downLoadTemplate");
         apis.add("/api/individualEmployee/exportIndividual");

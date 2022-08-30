@@ -4,7 +4,7 @@ import com.jtyjy.finance.manager.bean.IndividualEmployeeFiles;
 import com.jtyjy.finance.manager.dto.individual.IndividualEmployeeFilesDTO;
 import com.jtyjy.finance.manager.dto.individual.IndividualExportDTO;
 import com.jtyjy.finance.manager.dto.individual.IndividualImportDTO;
-import com.jtyjy.finance.manager.vo.IndividualEmployeeFilesVO;
+import com.jtyjy.finance.manager.vo.individual.IndividualEmployeeFilesVO;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;

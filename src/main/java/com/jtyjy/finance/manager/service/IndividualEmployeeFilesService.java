@@ -1,14 +1,13 @@
 package com.jtyjy.finance.manager.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jtyjy.finance.manager.bean.IndividualEmployeeFiles;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.jtyjy.finance.manager.dto.individual.IndividualEmployeeFilesDTO;
 import com.jtyjy.finance.manager.dto.individual.IndividualEmployeeFilesStatusDTO;
 import com.jtyjy.finance.manager.dto.individual.IndividualExportDTO;
-import com.jtyjy.finance.manager.query.IndividualFilesQuery;
-import com.jtyjy.finance.manager.vo.IndividualEmployeeFilesVO;
+import com.jtyjy.finance.manager.query.individual.IndividualFilesQuery;
+import com.jtyjy.finance.manager.vo.individual.IndividualEmployeeFilesVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;

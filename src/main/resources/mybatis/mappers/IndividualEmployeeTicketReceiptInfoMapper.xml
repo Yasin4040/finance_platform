@@ -11,11 +11,56 @@
             <result property="individualName" column="individual_name" jdbcType="VARCHAR"/>
             <result property="year" column="year" jdbcType="INTEGER"/>
             <result property="month" column="month" jdbcType="INTEGER"/>
-            <result property="invoiceAmount" column="invoice_amount" jdbcType="INTEGER"/>
+            <result property="invoiceAmount" column="invoice_amount" jdbcType="DECIMAL"/>
             <result property="remarks" column="remarks" jdbcType="INTEGER"/>
             <result property="createBy" column="create_by" jdbcType="VARCHAR"/>
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
             <result property="updateBy" column="update_by" jdbcType="VARCHAR"/>
             <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
     </resultMap>
+        <select id="selectTicketPage" resultType="com.jtyjy.finance.manager.vo.individual.IndividualTicketVO">
+            select
+                bief.batch_no,
+                bief.department_name,
+                bief.province_or_region,
+                bief.employee_job_num,
+                bief.employee_name,
+                bietri.individual_name,
+                bietri.`year`,
+                bietri.`month`,
+                bietri.invoice_amount,
+                bietri.create_time
+            from budget_individual_employee_ticket_receipt_info bietri
+                left join budget_individual_employee_files bief
+                    on bietri.individual_employee_info_id  = bief.id
+            <where>
+                <if test="query.batchNo !=null and query.batchNo != ''">
+                   and  bief.batch_no like concat('%',#{query.batchNo},%)
+                </if>
+                <if test="query.provinceOrRegion !=null and query.provinceOrRegion != ''">
+                    and bief.province_or_region like concat('%',#{query.provinceOrRegion},'%')
+                </if>
+                <if test="query.employeeJobNum !=null and query.employeeJobNum != ''">
+                    and bief.employee_job_num like concat('%',#{query.employeeJobNum},'%')
+                </if>
+                <if test="query.employeeName !=null and query.employeeName != ''">
+                    and bief.employee_name like concat('%',#{query.employeeName},'%')
+                </if>
+                <if test="query.individualName !=null and query.individualName != ''">
+                    and bietri.individual_name like concat('%',#{query.individualName},'%')
+                </if>
+                <if test="query.year !=null and query.year != ''">
+                    and bietri.`year` like concat('%',#{query.year},'%')
+                </if>
+                <if test="query.month !=null and query.month != ''">
+                    and bietri.`month` like concat('%',#{query.month},'%')
+                </if>
+                <if test="query.startDate !=null and query.startDate != '' ">
+                    and  date_format(bietri.create_time ,'%Y-%m-%d')  &gt; #{query.startDate}
+                </if>
+                <if test="query.endDate !=null and query.endDate != ''">
+                    and date_format(bietri.create_time ,'%Y-%m-%d' ) &lt; #{query.endDate}
+                </if>
+            </where>
+        </select>
 </mapper>

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 import lombok.Data;
 
@@ -31,7 +32,7 @@ public class IndividualEmployeeTicketReceiptInfo implements Serializable {
      * 员工档案id
      */
     @TableField(value = "individual_employee_info_id")
-    private Integer individualEmployeeInfoId;
+    private Long individualEmployeeInfoId;
 
     /**
      * 个体户名称
@@ -55,13 +56,13 @@ public class IndividualEmployeeTicketReceiptInfo implements Serializable {
      * 发票金额
      */
     @TableField(value = "invoice_amount")
-    private Integer invoiceAmount;
+    private BigDecimal invoiceAmount;
 
     /**
      * 备注
      */
     @TableField(value = "remarks")
-    private Integer remarks;
+    private String remarks;
 
     /**
      * 创建人

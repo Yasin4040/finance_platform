@@ -1,6 +1,7 @@
-package com.jtyjy.finance.manager.vo;
+package com.jtyjy.finance.manager.vo.individual;
 
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -106,30 +107,6 @@ public class IndividualEmployeeFilesVO {
     private Integer annualQuota;
 
     /**
-     * 创建人
-     */
-    @ApiModelProperty(value = "创建人")
-    private String createBy;
-
-    /**
-     * 创建时间
-     */
-    @ApiModelProperty(value = "创建时间")
-    private Date createTime;
-
-    /**
-     * 更新人
-     */
-    @ApiModelProperty(value = "更新人")
-    private String updateBy;
-
-    /**
-     * 更新时间
-     */
-    @ApiModelProperty(value = "更新时间")
-    private Date updateTime;
-
-    /**
      * 状态 1 正常  2停用
      */
     @ApiModelProperty(value = "状态 1 正常  2停用")
@@ -172,5 +149,31 @@ public class IndividualEmployeeFilesVO {
     private String account;
     @ApiModelProperty(value = "备注")
     private String remarks;
+    /**
+     * 创建人
+     */
+    @ApiModelProperty(value = "创建人")
+    private String createBy;
+
+    /**
+     * 创建时间
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "UTC+8")
+    @ApiModelProperty(value = "创建时间")
+    private Date createTime;
+
+    /**
+     * 更新人
+     */
+    @ApiModelProperty(value = "更新人")
+    private String updateBy;
+
+    /**
+     * 更新时间
+     */
+    @ApiModelProperty(value = "更新时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "UTC+8")
+    private Date updateTime;
+
 
 }

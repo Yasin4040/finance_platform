@@ -1,4 +1,5 @@
-package com.jtyjy.finance.manager.query;
+package com.jtyjy.finance.manager.query.individual;
+import com.jtyjy.finance.manager.query.PageQuery;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -8,7 +9,7 @@ import lombok.Data;
  * Time: 11:57
  */
 @Data
-public class IndividualFilesQuery extends PageQuery{
+public class IndividualFilesQuery extends PageQuery {
     @ApiModelProperty(value = "批次")
     private String batchNo;
     @ApiModelProperty(value = "部门名称")

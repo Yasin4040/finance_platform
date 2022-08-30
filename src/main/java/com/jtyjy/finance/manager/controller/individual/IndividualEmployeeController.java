@@ -1,6 +1,5 @@
 package com.jtyjy.finance.manager.controller.individual;
 
-import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.EasyExcelFactory;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.jtyjy.core.result.PageResult;
@@ -9,12 +8,11 @@ import com.jtyjy.finance.manager.bean.IndividualEmployeeFiles;
 import com.jtyjy.finance.manager.dto.individual.IndividualEmployeeFilesDTO;
 import com.jtyjy.finance.manager.dto.individual.IndividualEmployeeFilesStatusDTO;
 import com.jtyjy.finance.manager.dto.individual.IndividualExportDTO;
-import com.jtyjy.finance.manager.easyexcel.ExtractDeductionReportExcelData;
-import com.jtyjy.finance.manager.query.IndividualFilesQuery;
+import com.jtyjy.finance.manager.dto.individual.IndividualImportDTO;
+import com.jtyjy.finance.manager.query.individual.IndividualFilesQuery;
 import com.jtyjy.finance.manager.service.IndividualEmployeeFilesService;
 import com.jtyjy.finance.manager.utils.EasyExcelUtil;
-import com.jtyjy.finance.manager.vo.ExpenseInfoVO;
-import com.jtyjy.finance.manager.vo.IndividualEmployeeFilesVO;
+import com.jtyjy.finance.manager.vo.individual.IndividualEmployeeFilesVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.web.bind.annotation.*;
@@ -93,6 +91,20 @@ public class IndividualEmployeeController {
         }
         return ResponseEntity.ok();
     }
+
+    /**
+     *  新增发票。获取基础信息
+     */
+    @ApiOperation(value = "新增发票。获取基础信息", httpMethod = "POST")
+    @PostMapping("/getIndividualInfoList")
+    public ResponseEntity getIndividualInfoList(@RequestBody @ModelAttribute String name) throws Exception {
+            IndividualFilesQuery query = new IndividualFilesQuery();
+            query.setAccountName(name);
+            query.setPageNum(1);
+            query.setPageSize(-1);
+        return this.selectPage(query);
+    }
+
     /**
      * 导出
      */
@@ -143,6 +155,6 @@ public class IndividualEmployeeController {
         // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
         String fileName = URLEncoder.encode("员工个体户信息模板", "UTF-8").replaceAll("\\+", "%20");
         response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
-        EasyExcelFactory.write(response.getOutputStream(), IndividualExportDTO.class).sheet("员工个体户信息模板").doWrite(new ArrayList<>());
+        EasyExcelFactory.write(response.getOutputStream(), IndividualImportDTO.class).sheet("员工个体户信息模板").doWrite(new ArrayList<>());
     }
 }

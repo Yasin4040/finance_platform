@@ -1,18 +1,25 @@
 package com.jtyjy.finance.manager.controller.individual;
 
+import com.alibaba.excel.EasyExcelFactory;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.result.ResponseEntity;
-import com.jtyjy.finance.manager.query.IndividualFilesQuery;
-import com.jtyjy.finance.manager.service.IndividualEmployeeFilesService;
+import com.jtyjy.finance.manager.bean.IndividualEmployeeFiles;
+import com.jtyjy.finance.manager.dto.individual.*;
+import com.jtyjy.finance.manager.query.individual.IndividualFilesQuery;
+import com.jtyjy.finance.manager.query.individual.IndividualTicketQuery;
 import com.jtyjy.finance.manager.service.IndividualEmployeeTicketReceiptInfoService;
-import com.jtyjy.finance.manager.vo.IndividualEmployeeFilesVO;
+import com.jtyjy.finance.manager.utils.EasyExcelUtil;
+import com.jtyjy.finance.manager.vo.individual.IndividualTicketVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Description:
@@ -31,13 +38,108 @@ public class IndividualEmployeeTicketController {
         this.ticketService = ticketService;
     }
 
-//    /**
-//     * 员工个体户 分页模糊查询
-//     */
-//    @ApiOperation(value = "分页模糊查询", httpMethod = "GET")
-//    @GetMapping("/selectPage")
-//    public ResponseEntity<PageResult<IndividualEmployeeFilesVO>> selectPage(@ModelAttribute IndividualFilesQuery query) throws Exception {
-//        IPage<IndividualEmployeeFilesVO> page = ticketService.selectPage(query);
-//        return ResponseEntity.ok(PageResult.apply(page.getTotal(), page.getRecords()));
-//    }
+    /**
+     * 员工个体户 档案 分页模糊查询
+     */
+    @ApiOperation(value = "分页模糊查询", httpMethod = "GET")
+    @GetMapping("/selectPage")
+    public ResponseEntity<PageResult<IndividualTicketVO>> selectPage(@ModelAttribute IndividualTicketQuery query) throws Exception {
+        IPage<IndividualTicketVO> page = ticketService.selectPage(query);
+        return ResponseEntity.ok(PageResult.apply(page.getTotal(), page.getRecords()));
+    }
+
+    /**
+     * add 新增收票信息
+     */
+    @ApiOperation(value = " add 新增收票信息", httpMethod = "POST")
+    @PostMapping("/addTicket")
+    public ResponseEntity addTicket(@RequestBody IndividualTicketDTO dto) {
+
+        try {
+            ticketService.addTicket(dto);
+        } catch (Exception e) {
+            return ResponseEntity.error(e.getMessage());
+        }
+        return ResponseEntity.ok();
+    }
+
+
+    /**
+     * 员工个体户  修改信息
+     */
+    @ApiOperation(value = "员工个体户  修改信息", httpMethod = "POST")
+    @PostMapping("/updateTicket")
+    public ResponseEntity updateTicket(@RequestBody IndividualTicketDTO dto) {
+        try {
+            ticketService.updateTicket(dto);
+        } catch (Exception e) {
+            return ResponseEntity.error(e.getMessage());
+        }
+        return ResponseEntity.ok();
+    }
+
+
+    /**
+     * 员工个体户发票维护  删除
+     */
+    @ApiOperation(value = "个体户收票信息模板    删除信息", httpMethod = "POST")
+    @PostMapping("/deleteTicket")
+    public ResponseEntity deleteTicket(String id) {
+        try {
+            ticketService.removeById(id);
+        } catch (Exception e) {
+            return ResponseEntity.error(e.getMessage());
+        }
+        return ResponseEntity.ok();
+    }
+
+    /**
+     * 导出
+     */
+    @ApiOperation(value = "个体户收票信息  导出", httpMethod = "GET")
+    @GetMapping("/exportTicket")
+    public ResponseEntity exportTicket(@ModelAttribute IndividualTicketQuery query, HttpServletResponse response) throws Exception {
+        try {
+            query.setPageNum(1);
+            query.setPageSize(-1);
+            IPage<IndividualTicketVO> individualTicketVOIPage = ticketService.selectPage(query);
+            List<IndividualTicketVO> records = individualTicketVOIPage.getRecords();
+
+            EasyExcelUtil.writeExcel(response,records,"员工个体户信息","员工个体户信息", IndividualTicketVO.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.error(e.getMessage());
+        }
+        return ResponseEntity.ok();
+    }
+
+    /**
+     * 导入。
+     */
+    @ApiOperation(value = "个体户收票信息 导入", httpMethod = "POST")
+    @PostMapping("/importTicket")
+    public ResponseEntity importTicket(@RequestParam("file") MultipartFile multipartFile) throws Exception {
+        try {
+            ticketService.importTicket(multipartFile);
+        } catch (Exception e) {
+            return ResponseEntity.error(e.getMessage());
+        }
+        return ResponseEntity.ok();
+    }
+
+    /**
+     * 下载模板。
+     */
+    @ApiOperation(value = "个体户收票信息模板  下载模板", httpMethod = "GET",produces = "application/octet-stream")
+    @GetMapping("/downLoadTemplate")
+    public void downLoadTemplate(HttpServletResponse response) throws Exception {
+        // 这里注意 有同学反应使用swagger 会导致各种问题，请直接用浏览器或者用postman
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("个体户收票信息模板", "UTF-8").replaceAll("\\+", "%20");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        EasyExcelFactory.write(response.getOutputStream(), IndividualTicketImportDTO.class).sheet("个体户收票信息模板").doWrite(new ArrayList<>());
+    }
+
 }

@@ -1,7 +1,10 @@
 package com.jtyjy.finance.manager.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.jtyjy.finance.manager.bean.IndividualEmployeeTicketReceiptInfo;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.jtyjy.finance.manager.query.individual.IndividualTicketQuery;
+import com.jtyjy.finance.manager.vo.individual.IndividualTicketVO;
 
 /**
 * @author User
@@ -11,6 +14,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 */
 public interface IndividualEmployeeTicketReceiptInfoMapper extends BaseMapper<IndividualEmployeeTicketReceiptInfo> {
 
+    IPage<IndividualTicketVO> selectTicketPage(IPage<?> page,IndividualTicketQuery query);
 }
 
 
