@@ -63,7 +63,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.util.*;
@@ -646,8 +645,7 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
         WriteSheet sheet = EasyExcel.writerSheet("冲账支付信息").build();
         sheet.setAutoTrim(true);
         sheet.setAutomaticMergeHead(true);
-//        sheet.setCustomWriteHandlerList();
-//        sheet.setColumnWidthMap(columnWidthMap);
+        sheet.setColumnWidthMap(columnWidthMap);
         ExcelWriter excelWriter = EasyExcel.write(EasyExcelUtil.getOutputStream(order.getReimcode() + "_冲账支付表", response)).build();
         //冲账列表
         List<List<String>> czList = new ArrayList<>();
@@ -777,7 +775,7 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
     /**
      * 解锁借款单
      *
-     * @param request
+     * @param orderId orderId
      */
     private boolean unLockBorrow(Long orderId) {
         QueryWrapper<BudgetLendmoneyUselog> wrapper = new QueryWrapper<BudgetLendmoneyUselog>();
@@ -850,7 +848,6 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
     /**
      * 获取校验标准信息
      *
-     * @param request
      * @param agentIds
      * @return type 1:年度动因控制 2：月度科目控制 3：年度科目控制
      * @throws Exception
@@ -1001,8 +998,8 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
      *
      * @param orderId
      * @param transList
-     * @param billingUnitIdList
-     * @param string
+     * @param detailList
+     * @param transList
      * @throws Exception
      */
     public String checkPass(Long orderId, String step, List<BudgetReimbursementorderDetail> detailList, List<BudgetReimbursementorderTrans> transList,List<Long> deletedTranIdList,boolean isBxVerify) throws Exception {
@@ -1675,8 +1672,7 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
      * @param rows
      * @param authSql
      * @param authSql
-     * @param order
-     * @return
+
      * @throws Exception
      */
     public Page<ReimbursementInfoVO> pageLike(Integer page, Integer rows, Map<String, Object> conditionMap, String authSql) throws Exception {
@@ -1932,9 +1928,7 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
 
     /**
      * 报销明细
-     *
-     * @param id
-     * @return
+
      * @throws Exception
      */
     public Page<BxDetailVO> agentDetail(Integer page, Integer rows, Map<String, Object> conditionMap) throws Exception {
@@ -1946,8 +1940,8 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
     /**
      * 报销明细不分页（导出）
      *
-     * @param id
-     * @return
+     * @param conditionMap conditionMap
+     * @return List<BxDetailVO> List<BxDetailVO>
      * @throws Exception
      */
     public List<BxDetailVO> agentDetailNoPage(Map<String, Object> conditionMap) throws Exception {
