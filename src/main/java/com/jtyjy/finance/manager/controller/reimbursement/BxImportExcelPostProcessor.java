@@ -144,7 +144,7 @@ public class BxImportExcelPostProcessor implements ImportPostProcessor{
 		        BudgetSubject subjectInfo = this.subjectService.getOne(new QueryWrapper<BudgetSubject>().eq("yearid", this.yearId).eq("name", detail.getSubjectName()));
 		        if (null == subjectInfo) throw new Exception("预算科目【"+ detail.getSubjectName() +"】不存在！");
 		        BudgetMonthAgent monthAgent =  this.monthAgentService.getOne(new QueryWrapper<BudgetMonthAgent>().eq("unitid", unitId).eq("monthid", monthId).eq("subjectid", subjectInfo.getId()).eq("name", detail.getAgentName()));
-		        if (null == monthAgent) throw new Exception("动因【"+ detail.getSubjectName() +"】不存在！");
+		        if (null == monthAgent) throw new Exception("动因【"+ detail.getAgentName() +"】不存在！");
 		        MonthAgentMoneyInfo monthAgentMoneyInfo = new MonthAgentMoneyInfo();
 		        monthAgentMoneyInfo.setMonthAgentId(monthAgent.getId());
 		        monthAgentMoneyInfo.setMonthId(this.monthId);
