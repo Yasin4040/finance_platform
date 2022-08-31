@@ -5,16 +5,14 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.result.ResponseEntity;
 import com.jtyjy.finance.manager.bean.IndividualEmployeeFiles;
-import com.jtyjy.finance.manager.dto.individual.IndividualEmployeeFilesDTO;
-import com.jtyjy.finance.manager.dto.individual.IndividualEmployeeFilesStatusDTO;
-import com.jtyjy.finance.manager.dto.individual.IndividualExportDTO;
-import com.jtyjy.finance.manager.dto.individual.IndividualImportDTO;
+import com.jtyjy.finance.manager.dto.individual.*;
 import com.jtyjy.finance.manager.query.individual.IndividualFilesQuery;
 import com.jtyjy.finance.manager.service.IndividualEmployeeFilesService;
 import com.jtyjy.finance.manager.utils.EasyExcelUtil;
 import com.jtyjy.finance.manager.vo.individual.IndividualEmployeeFilesVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -132,9 +130,13 @@ public class IndividualEmployeeController {
      */
     @ApiOperation(value = "员工个体户 导入", httpMethod = "POST")
     @PostMapping("/importIndividual")
-    public ResponseEntity importIndividual(@RequestParam("file") MultipartFile multipartFile) throws Exception {
+    public ResponseEntity importIndividual(@RequestParam("file") MultipartFile multipartFile,HttpServletResponse response) {
         try {
-            filesService.importIndividual(multipartFile);
+            List<IndividualImportErrorDTO> errorDTOList = filesService.importIndividual(multipartFile);
+            if(CollectionUtils.isNotEmpty(errorDTOList)) {
+                EasyExcelUtil.writeExcel(response, errorDTOList, "员工个体户错误明细", "员工个体户错误明细", IndividualImportErrorDTO.class);
+                return null;
+            }
         } catch (Exception e) {
             return ResponseEntity.error(e.getMessage());
         }

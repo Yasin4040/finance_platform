@@ -86,9 +86,9 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
             info.setMonth(singleDTO.getMonth());
             info.setInvoiceAmount(singleDTO.getInvoiceAmount());
 
-            info.setEmployeeJobNum(dto.getEmployeeJobNum());
-            info.setIndividualEmployeeInfoId(dto.getIndividualEmployeeInfoId());
-            info.setIndividualName(dto.getIndividualName());
+//            info.setEmployeeJobNum(dto.getEmployeeJobNum());
+//            info.setIndividualEmployeeInfoId(dto.getIndividualEmployeeInfoId());
+//            info.setIndividualName(dto.getIndividualName());
             info.setRemarks(dto.getRemarks());
 
             info.setUpdateTime(new Date());

@@ -26,7 +26,9 @@ public class IndividualTicketVO {
     @ApiModelProperty(value = "id")
     @ExcelIgnore
     private Long id;
-
+    @ApiModelProperty(value = "个体户档案id")
+    @ExcelIgnore
+    private Long individualEmployeeInfoId;
 
     @ApiModelProperty(value = "批次")
     @ExcelProperty(value = "批次")

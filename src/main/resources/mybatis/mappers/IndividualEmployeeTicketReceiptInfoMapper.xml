@@ -20,6 +20,8 @@
     </resultMap>
         <select id="selectTicketPage" resultType="com.jtyjy.finance.manager.vo.individual.IndividualTicketVO">
             select
+            bietri.id,
+            bietri.individual_employee_info_id,
                 bief.batch_no,
                 bief.department_name,
                 bief.province_or_region,

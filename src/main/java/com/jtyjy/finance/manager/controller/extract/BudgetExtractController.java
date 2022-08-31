@@ -247,11 +247,11 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
 	})
 	@PostMapping("/importExtractDetail")
-	public ResponseEntity importExtractDetail(@RequestParam(name = "file") MultipartFile file, HttpServletResponse response, HttpServletRequest request) throws IOException {
+	public ResponseEntity importExtractDetail(@RequestParam(name = "file") MultipartFile file,@RequestParam(name = "batchNo") String batchNo, HttpServletResponse response, HttpServletRequest request) throws IOException {
 		InputStream is = null;
 		int headRows = 2; //表示表头有3行
 		int colNum = 13; //列数
-		EasyExcelImportListener extractListener = new EasyExcelImportListener(extractsumService, TCIMPORT, headRows ,colNum);
+		EasyExcelImportListener extractListener = new EasyExcelImportListener(extractsumService, TCIMPORT, headRows ,colNum,batchNo);
 		try {
 			is = file.getInputStream();
 			EasyExcel.read(is, extractListener).sheet(0).doReadSync();

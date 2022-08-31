@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.jtyjy.finance.manager.bean.BudgetExtractsum;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Map;
+
 /**
 * @author User
 * @description 针对表【budget_extract_commission_application(提成支付申请单  主表 )】的数据库操作Service
@@ -14,5 +16,7 @@ public interface BudgetExtractCommissionApplicationService extends IService<Budg
 
     void importIndividual(MultipartFile multipartFile);
 
-    void saveEntity(BudgetExtractsum extract);
+    void saveEntity(BudgetExtractsum extract, String badDebt,Object... params);
+
+    void saveExtractImportDetails(Map<Integer, String> detailMap, BudgetExtractsum extractSum);
 }

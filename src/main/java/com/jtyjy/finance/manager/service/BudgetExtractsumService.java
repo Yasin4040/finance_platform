@@ -84,6 +84,8 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	@Autowired
 	private BudgetExtractsumMapper budgetExtractsumMapper;
 	@Autowired
+	private IndividualEmployeeFilesService individualService;
+	@Autowired
 	private BudgetExtractCommissionApplicationService applicationService;
 
 	@Autowired
@@ -641,30 +643,29 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			//插入表头数据--保存提成主表数据		
 			Map<Integer, String> headMap = successMap.get(1);
 			try {
-				extractsum = saveExtractSum(headMap);
+				extractsum =  saveExtractSum(headMap);
 			} catch (Exception e) {
 				e.printStackTrace();
 				headErrorMsg.add(e.getMessage());
 				//表头信息有错误直接return
 				return;
 			}
-
-			//生成提成明细申请单
-			//支付+“届别”+“月份”+“批次”+“提成/坏账”
-			applicationService.saveEntity(extractsum);
-
 			if (Objects.nonNull(extractsum)) {
 				/**
 				 * 提成明细数据
 				 */
 				List<Integer> errorKeyList = new ArrayList<>();
-
+				String badDebt = "提成";
 				for (int i = 3; i <= successMap.size(); i++) {
 					Map<Integer, String> detailMap = successMap.get(i);
 					if (detailMap == null) continue;
 					try {
+						//@ApiModelProperty(value = "是否坏账 0否1是")
+						//"是".equals(isDebt) ? true : false
+						badDebt = successMap.get(3).get(6).equals("是")?"提成":"坏账";
 						//插入提成明细
-						saveExtractImportDetails(detailMap, extractsum);
+						applicationService.saveExtractImportDetails(detailMap, extractsum);
+//						saveExtractImportDetails(detailMap, extractsum);
 					} catch (Exception e) {
 						e.printStackTrace();
 						detailMap.put(detailMap.size(), e.getMessage());
@@ -672,6 +673,11 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 						errorKeyList.add(i);
 					}
 				}
+				//生成提成明细申请单
+				//支付+“届别”+“月份”+“批次”+“提成/坏账”
+				applicationService.saveEntity(extractsum,badDebt,params);
+
+
 				errorKeyList.stream().forEach(e -> successMap.remove(e));
 				//获取人数
 				Integer personNum = this.extractImportDetailMapper.selectCount(new LambdaQueryWrapper<BudgetExtractImportdetail>().eq(BudgetExtractImportdetail::getExtractsumid, extractsum.getId()));
@@ -960,6 +966,9 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 
 	private void saveExtractImportDetails(Map<Integer, String> data, BudgetExtractsum extractsum) {
 		String isCompanyEmp = data.get(0); //是否公司员工
+		//新增员工个体户。
+
+
 		String empNo = data.get(1); //工号
 		String empName = data.get(2); //姓名
 		String sftc = data.get(3); //实发提成
@@ -974,6 +983,13 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		String invoiceExcessTax = data.get(11);//发票超额税金
 		String invoiceExcessTaxReduction = data.get(12);//发票超额税金减免
 
+
+
+
+
+
+
+
 		BudgetYearPeriod yearPeriod = getPeriodByName(tcPeriod);
 		//判断是否存在
 		BudgetExtractImportdetail extractImportdetail = null;
@@ -986,15 +1002,21 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			extractImportdetail = new BudgetExtractImportdetail();
 			extractImportdetail.setId(null);
 			extractImportdetail.setExtractsumid(extractsum.getId());
-			if ("是".equals(isCompanyEmp)) {
-				WbUser user = getUserByEmpno(empNo);
-				extractImportdetail.setEmpid(user.getUserId());
-				extractImportdetail.setIdnumber(user.getIdNumber());
-			} else {
-				BudgetExtractOuterperson outerPerson = getExtractOuterpersonByEmpnoAndEmpname(empNo, empName);
-				extractImportdetail.setEmpid(outerPerson.getId().toString());
-				extractImportdetail.setIdnumber(outerPerson.getIdnumber());
-			}
+			//赋值 员工类型
+			setUserTypeValue(isCompanyEmp, empNo, empName, extractImportdetail);
+
+//			if ("是".equals(isCompanyEmp)) {
+//				WbUser user = getUserByEmpno(empNo);
+//				extractImportdetail.setEmpid(user.getUserId());
+//				extractImportdetail.setIdnumber(user.getIdNumber());
+//			} else {
+//				BudgetExtractOuterperson outerPerson = getExtractOuterpersonByEmpnoAndEmpname(empNo, empName);
+//				extractImportdetail.setEmpid(outerPerson.getId().toString());
+//				extractImportdetail.setIdnumber(outerPerson.getIdnumber());
+//			}
+
+
+
 			extractImportdetail.setEmpno(empNo);
 			extractImportdetail.setEmpname(empName);
 			extractImportdetail.setConsotax(new BigDecimal(zhs)); // 综合税
@@ -1013,6 +1035,31 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			extractImportDetailMapper.insert(extractImportdetail);
 		}
 
+	}
+
+	private void setUserTypeValue(String isCompanyEmp, String empNo, String empName, BudgetExtractImportdetail extractImportdetail) {
+		switch (ExtractUserTypeEnum.valueOf(isCompanyEmp)) {
+			case COMPANY_STAFF:
+				WbUser user = getUserByEmpno(empNo);
+				extractImportdetail.setEmpid(user.getUserId());
+				extractImportdetail.setIdnumber(user.getIdNumber());
+				break;
+			case EXTERNAL_STAFF:
+				BudgetExtractOuterperson outerPerson = getExtractOuterpersonByEmpnoAndEmpname(empNo, empName);
+				extractImportdetail.setEmpid(outerPerson.getId().toString());
+				extractImportdetail.setIdnumber(outerPerson.getIdnumber());
+				break;
+			case SELF_EMPLOYED_EMPLOYEES:
+				//todo 个体户
+				IndividualEmployeeFiles employeeFiles = individualService.lambdaQuery().eq(IndividualEmployeeFiles::getEmployeeJobNum, empNo).eq(IndividualEmployeeFiles::getAccountName, empName).last("limit 1").one();
+				WbUser user2 = getUserByEmpno(empNo);
+				extractImportdetail.setEmpid(user2.getUserId());
+				extractImportdetail.setIdnumber(user2.getIdNumber());
+				extractImportdetail.setIndividualEmployeeId(employeeFiles.getId());
+			break;
+			default:
+				break;
+		}
 	}
 
 	private BudgetExtractsum saveExtractSum(Map<Integer, String> data) {

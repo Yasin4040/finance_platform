@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.jtyjy.finance.manager.dto.individual.IndividualEmployeeFilesDTO;
 import com.jtyjy.finance.manager.dto.individual.IndividualEmployeeFilesStatusDTO;
 import com.jtyjy.finance.manager.dto.individual.IndividualExportDTO;
+import com.jtyjy.finance.manager.dto.individual.IndividualImportErrorDTO;
 import com.jtyjy.finance.manager.query.individual.IndividualFilesQuery;
 import com.jtyjy.finance.manager.vo.individual.IndividualEmployeeFilesVO;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,5 +30,5 @@ public interface IndividualEmployeeFilesService extends IService<IndividualEmplo
 
     List<IndividualExportDTO> exportIndividual(IndividualFilesQuery query);
 
-    void importIndividual(MultipartFile multipartFile);
+    List<IndividualImportErrorDTO> importIndividual(MultipartFile multipartFile);
 }

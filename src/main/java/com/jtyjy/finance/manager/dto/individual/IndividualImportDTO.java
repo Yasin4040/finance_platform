@@ -2,9 +2,11 @@ package com.jtyjy.finance.manager.dto.individual;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.format.DateTimeFormat;
+import com.jtyjy.finance.manager.annotation.ExcelValid;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
 import java.util.Date;
 
 /**
@@ -21,6 +23,7 @@ public class IndividualImportDTO {
      */
     @ApiModelProperty(value = "批次")
     @ExcelProperty(value = "*批次")
+    @ExcelValid(message = "批次不能为空")
     private String batchNo;
 //
 //    @ApiModelProperty(value = "事业群")
@@ -30,14 +33,17 @@ public class IndividualImportDTO {
 
     @ApiModelProperty(value = "部门名称")
     @ExcelProperty(value = "*事业群")
+    @NotBlank
     private String departmentName;
 
     @ApiModelProperty(value = "省区/大区")
     @ExcelProperty(value = "*省区/大区")
+    @NotBlank
     private String provinceOrRegion;
 
     @ApiModelProperty(value = "员工工号")
     @ExcelProperty(value = "*工号")
+    @NotBlank
     private Integer employeeJobNum;
 
     @ApiModelProperty(value = "员工名称")
@@ -48,8 +54,8 @@ public class IndividualImportDTO {
     @ExcelProperty(value = "*联系电话")
     private String phone;
 
-    @ApiModelProperty(value = "*账户类型  1个人 2 公户")
-    @ExcelProperty(value = "*账户类型(个人/公户)")
+    @ApiModelProperty(value = "*账户类型  1个卡 2 公户")
+    @ExcelProperty(value = "*账户类型(个卡/公户)")
     private String accountType;
 
     @ApiModelProperty(value = "户名")

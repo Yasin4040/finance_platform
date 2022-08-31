@@ -21,11 +21,11 @@ public class BudgetExtractCommissionApplication implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    /**
-     * 员工工号
-     */
-    @TableField(value = "employee_job_num")
-    private Integer employeeJobNum;
+//    /**
+//     * 员工工号
+//     */
+//    @TableField(value = "employee_job_num")
+//    private Integer employeeJobNum;
 
     /**
      * 部门
@@ -52,11 +52,11 @@ public class BudgetExtractCommissionApplication implements Serializable {
     @TableField(value = "remarks")
     private String remarks;
 
-    /**
-     * 年额度
-     */
-    @TableField(value = "annual_quota")
-    private Integer annualQuota;
+//    /**
+//     * 年额度
+//     */
+//    @TableField(value = "annual_quota")
+//    private Integer annualQuota;
 
     /**
      * 创建人

@@ -9,10 +9,7 @@ import com.jtyjy.finance.manager.bean.IndividualEmployeeFiles;
 import com.jtyjy.finance.manager.cache.BankCache;
 import com.jtyjy.finance.manager.cache.UnitCache;
 import com.jtyjy.finance.manager.converter.IndividualEmployeeFilesConverter;
-import com.jtyjy.finance.manager.dto.individual.IndividualEmployeeFilesDTO;
-import com.jtyjy.finance.manager.dto.individual.IndividualEmployeeFilesStatusDTO;
-import com.jtyjy.finance.manager.dto.individual.IndividualExportDTO;
-import com.jtyjy.finance.manager.dto.individual.IndividualImportDTO;
+import com.jtyjy.finance.manager.dto.individual.*;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.listener.easyexcel.PageReadListener;
 import com.jtyjy.finance.manager.mapper.IndividualEmployeeFilesMapper;
@@ -20,15 +17,18 @@ import com.jtyjy.finance.manager.query.individual.IndividualFilesQuery;
 import com.jtyjy.finance.manager.service.IndividualEmployeeFilesService;
 import com.jtyjy.finance.manager.vo.individual.IndividualEmployeeFilesVO;
 import lombok.SneakyThrows;
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.beanutils.ConvertUtils;
+import org.apache.commons.beanutils.PropertyUtils;
+import org.apache.commons.beanutils.locale.converters.DateLocaleConverter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 
 /**
 * @author User
@@ -61,9 +61,12 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
 
         List<IndividualEmployeeFilesVO> records = convert.getRecords();
         for (IndividualEmployeeFilesVO record : records) {
-            record.setDepositBankName(BankCache.getBankByBranchCode(record.getDepositBank()).getSubBranchName());
-            record.setIssuedUnitName(UnitCache.get(record.getIssuedUnit()).getName());
+            record.setDepositBankName(BankCache.getBankByBranchCode(record.getDepositBank())!=null
+                    ?BankCache.getBankByBranchCode(record.getDepositBank()).getSubBranchName():record.getDepositBank());
+            record.setIssuedUnitName(UnitCache.get(record.getIssuedUnit())!=null?
+                    UnitCache.get(record.getIssuedUnit()).getName():record.getIssuedUnit());
         }
+
         return convert;
 
     }
@@ -130,16 +133,21 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
                 .eq(query.getStatus() != null, IndividualEmployeeFiles::getStatus, query.getStatus()).list();
         List<IndividualExportDTO> dtoList = IndividualEmployeeFilesConverter.INSTANCE.entityToExportDTOList(list);
         for (IndividualExportDTO dto : dtoList) {
-            dto.setDepositBank(BankCache.getBankByBranchCode(dto.getDepositBank()).getSubBranchName());
-            dto.setIssuedUnit(UnitCache.get(dto.getIssuedUnit()).getName());
+            dto.setDepositBank(BankCache.getBankByBranchCode(dto.getDepositBank())!=null
+                    ?BankCache.getBankByBranchCode(dto.getDepositBank()).getSubBranchName():dto.getDepositBank());
+            dto.setIssuedUnit(UnitCache.get(dto.getIssuedUnit())!=null?
+                    UnitCache.get(dto.getIssuedUnit()).getName():dto.getIssuedUnit());
         }
         return dtoList;
     }
 
     @SneakyThrows
     @Override
-    public void importIndividual(MultipartFile multipartFile) {
+    public List<IndividualImportErrorDTO> importIndividual(MultipartFile multipartFile) {
 ;
+        List<IndividualImportErrorDTO> errList = new ArrayList<>();
+        List<Map> errorMap = new ArrayList<>();
+        List<String> errorList = new ArrayList<>();
         try {
             EasyExcel.read(multipartFile.getInputStream(), IndividualImportDTO.class,
                     new PageReadListener<IndividualImportDTO>(dataList -> {
@@ -148,20 +156,56 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
 //                            log.info("读取到一条数据{}", JSON.toJSONString(demoData));
 //                        }
                         //新增--
-                        List<IndividualEmployeeFiles> entities = IndividualEmployeeFilesConverter.INSTANCE.importDTOToEntities(dataList);
-                        for (IndividualEmployeeFiles entity : entities) {
-                            //通过名称 找id
-                            entity.setDepositBank(BankCache.getBankByBranchName(entity.getDepositBank()).getSubBranchCode());
-                            entity.setIssuedUnit(UnitCache.getByName(entity.getIssuedUnit()).getName());
-                        }
+//                            List<IndividualEmployeeFiles> entities = IndividualEmployeeFilesConverter.INSTANCE.importDTOToEntities(dataList);
+                        for (IndividualImportDTO dto : dataList) {
+                            try {
+                                    IndividualEmployeeFiles entity = IndividualEmployeeFilesConverter.INSTANCE.importDTOToEntity(dto);
+                                    //通过名称 找id
+                                    entity.setDepositBank(BankCache.getBankByBranchName(entity.getDepositBank()) != null ?
+                                            BankCache.getBankByBranchName(entity.getDepositBank()).getSubBranchCode() : entity.getDepositBank());
+                                    entity.setIssuedUnit(UnitCache.getByName(entity.getIssuedUnit()) != null ?
+                                            UnitCache.getByName(entity.getIssuedUnit()).getName() : entity.getIssuedUnit());
 
+                                    entity.setCreateTime(new Date());
+                                    entity.setCreateBy(UserThreadLocal.get().getUserName());
+
+                                    entity.setUpdateTime(new Date());
+                                    entity.setUpdateBy(UserThreadLocal.get().getUserName());
+                                    entity.setStatus(1);
+                                    this.save(entity);
+                                }
+                               catch (Exception e) {
+                                IndividualImportErrorDTO errorDTO = new IndividualImportErrorDTO();
+
+                                try {
+                                    PropertyUtils.copyProperties(errorDTO,dto);
+                                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException ex) {
+                                    ex.printStackTrace();
+                                }
+                                errorDTO.setInsertDatabaseError(e.getCause().getMessage());
+                                errList.add(errorDTO);
+                            }
+                        }
                         System.out.println(dataList);
-                        this.saveBatch(entities);
-                    })).sheet().doRead();
+                    }, errorMap)).sheet().doRead();
+
+            for (Map map : errorMap) {
+                IndividualImportErrorDTO errorDTO = new IndividualImportErrorDTO();
+                try {
+                    ConvertUtils.register(new DateLocaleConverter(), Date.class);//BeanUtils.populate对日期类型进行处理，否则无法封装
+                    BeanUtils.populate(errorDTO,map);
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+                errList.add(errorDTO);
+            }
         } catch (Exception e) {
             e.printStackTrace();
+            throw e;
         }
+        return errList;
     }
+
 }
 
 
