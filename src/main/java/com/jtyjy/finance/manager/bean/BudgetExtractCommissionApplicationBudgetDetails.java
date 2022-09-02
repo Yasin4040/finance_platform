@@ -27,7 +27,11 @@ public class BudgetExtractCommissionApplicationBudgetDetails implements Serializ
      */
     @TableField(value = "application_id")
     private Long applicationId;
-
+    /**
+     * 科目id
+     */
+    @TableField(value = "subject_Id")
+    private Long subjectId;
     /**
      * 科目编码
      */
@@ -43,8 +47,19 @@ public class BudgetExtractCommissionApplicationBudgetDetails implements Serializ
     /**
      * 金额 根据提成类型+届别取提成明细所在行的“申请提成”
      */
-    @TableField(value = "deduction_amount")
-    private BigDecimal deductionAmount;
+    @TableField(value = "budget_amount")
+    private BigDecimal budgetAmount;
+    /**
+     * 动因id
+     */
+    @TableField(value = "motivation_id")
+    private Long motivationId;
+
+    /**
+     * 动因名称
+     */
+    @TableField(value = "motivation_name")
+    private String motivationName;
 
     /**
      * 创建人

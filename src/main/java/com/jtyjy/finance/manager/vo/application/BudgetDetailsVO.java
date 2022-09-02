@@ -15,13 +15,15 @@ public class BudgetDetailsVO {
   // `subject_code` varchar(20) DEFAULT NULL COMMENT '科目编码',
   //`subject_name` varchar(20) DEFAULT NULL COMMENT '科目名称',
   //`deduction_amount`  decimal(10,2) DEFAULT NULL COMMENT '金额 根据提成类型+届别取提成明细所在行的“申请提成”',
+    @ApiModelProperty(value = "id")
+    private Long id;
     @ApiModelProperty(value = "科目编码")
     private String subjectCode;
     @ApiModelProperty(value = "科目名称")
-    private String category;
+    private String subjectName;
     @ApiModelProperty(value = "动因名称")
-    private String reason;
+    private String motivationName;
     @ApiModelProperty(value = "金额")
-    private BigDecimal amount;
+    private BigDecimal budgetAmount;
 
 }

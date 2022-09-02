@@ -103,16 +103,16 @@ public class BudgetExtractImportdetail implements Serializable {
     /**
      * 实发提成
      */
-    @NotNull(message = "应发提成不能为空")
-    @ApiModelProperty(hidden = false, value = "应发提成")
+    @NotNull(message = "实发提成不能为空")
+    @ApiModelProperty(hidden = false, value = "实发提成")
     @TableField(value = "copeextract")
     private BigDecimal copeextract;
 
     /**
      * 综合税
      */
-    @NotNull(message = "综合税不能为空")
-    @ApiModelProperty(hidden = false, value = "综合税")
+    @NotNull(message = "提成个税不能为空")
+    @ApiModelProperty(hidden = false, value = "提成个税")
     @TableField(value = "consotax")
     private BigDecimal consotax;
 

@@ -428,6 +428,7 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 			@ApiImplicitParam(value = "ids", name = "ids", dataType = "String", required = true)
 	})
 	@GetMapping("/submit")
+	//提交提成明细导入。
 	public ResponseEntity submit(@RequestParam(name = "ids", required = true) String ids) throws Exception {
 		try {
 			String lockKey = "/finance-platform/extract/submit/" + ids;

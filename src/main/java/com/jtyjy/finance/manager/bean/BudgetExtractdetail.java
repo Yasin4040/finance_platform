@@ -171,7 +171,7 @@ public class BudgetExtractdetail implements Serializable {
      */
     @ApiModelProperty(value = "员工个体户id", hidden = false)
     @TableField(value = "individual_employee_id")
-    private Integer individualEmployeeId;
+    private Long individualEmployeeId;
     @ApiModelProperty(value = "提成批次", hidden = false)
     @TableField(exist = false)
     private String extractmonth;

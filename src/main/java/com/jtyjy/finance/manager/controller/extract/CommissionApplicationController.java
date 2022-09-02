@@ -1,21 +1,44 @@
 package com.jtyjy.finance.manager.controller.extract;
 
-import com.alibaba.excel.EasyExcelFactory;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.metadata.WriteSheet;
+import com.jtyjy.common.enmus.StatusCodeEnmus;
+import com.jtyjy.core.redis.RedisClient;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.result.ResponseEntity;
-import com.jtyjy.finance.manager.dto.individual.IndividualImportDTO;
+import com.jtyjy.finance.manager.easyexcel.EasyExcelImportListener;
+import com.jtyjy.finance.manager.easyexcel.ExtractInfoExportExcelData;
+import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationService;
+import com.jtyjy.finance.manager.service.BudgetExtractsumService;
+import com.jtyjy.finance.manager.utils.EasyExcelUtil;
+import com.jtyjy.finance.manager.vo.ExtractImportDetailVO;
+import com.jtyjy.finance.manager.vo.ExtractInfoVO;
 import com.jtyjy.finance.manager.vo.application.CommissionApplicationInfoVO;
+import com.klcwqy.easy.lock.impl.ZookeeperShareLock;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.curator.framework.CuratorFramework;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.net.URLEncoder;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Description: 支付申请单
@@ -25,49 +48,369 @@ import java.util.ArrayList;
 @Api(tags = {"提成支付申请单"})
 @RestController
 @RequestMapping("/api/commissionApplication")
+@Slf4j
 public class CommissionApplicationController {
     private final BudgetExtractCommissionApplicationService applicationService;
+    private final BudgetExtractsumService extractsumService;
+    private final RedisClient redisClient;
 
-    public CommissionApplicationController(BudgetExtractCommissionApplicationService applicationService) {
+    private final CuratorFramework curatorFramework;
+    private final static String IMPORT_TYPE = "tc";
+    public final static String TCIMPORT = "TCIMPORT";
+
+    @Value("${file.shareDir}")
+    private String fileShareDir;
+
+    @Value("${redis.file.key.expiretime}")
+    private Integer expiretime;
+
+    public CommissionApplicationController(BudgetExtractCommissionApplicationService applicationService, BudgetExtractsumService extractsumService, RedisClient redisClient, CuratorFramework curatorFramework) {
         this.applicationService = applicationService;
+        this.extractsumService = extractsumService;
+        this.redisClient = redisClient;
+        this.curatorFramework = curatorFramework;
     }
 
-    /**
-     * 提成支付申请单
-     */
-    @ApiOperation(value = "提成支付申请单", httpMethod = "GET")
-    @ApiImplicitParam(value = "提成单号", name = "extractSumId", dataType = "String", required = true)
+
+//    @ApiOperation(value = "获取提成主数据列表", httpMethod = "GET")
+//    @ApiImplicitParams(value = {
+//            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
+//            @ApiImplicitParam(value = "导航栏查询条件", name = "query", dataType = "String"),
+//            @ApiImplicitParam(value = "单据状态", name = "status", dataType = "Integer"),
+//            @ApiImplicitParam(value = "提成单号", name = "code", dataType = "String"),
+//            @ApiImplicitParam(value = "预算单位", name = "unitname", dataType = "String"),
+//            @ApiImplicitParam(value = "当前页（默认1）", name = "page", dataType = "Integer"),
+//            @ApiImplicitParam(value = "每页条数（默认20）", name = "rows", dataType = "Integer")
+//    })
+//    @GetMapping("/getExtractInfoList")
+//    public ResponseEntity<PageResult<ExtractInfoVO>> getExtractInfoList(@RequestParam(name = "query") String query,
+//                                                                        @RequestParam(defaultValue = "1") Integer page,
+//                                                                        @RequestParam(defaultValue = "20") Integer rows,
+//                                                                        @RequestParam(name = "status", required = false) Integer status,
+//                                                                        @RequestParam(name = "code", required = false) String code,
+//                                                                        @RequestParam(name = "unitname", required = false) String unitname) {
+//        try {
+//            if (StringUtils.isBlank(query)) throw new RuntimeException("请先选择导航栏的一个参数。");
+//            Map<String, Object> params = new HashMap<>();
+//            params.put("query", query);
+//            params.put("status", status);
+//            params.put("code", code);
+//            params.put("unitname", unitname);
+//            PageResult<ExtractInfoVO> pageList = extractsumService.getExtractInfoList(params, page, rows);
+//            return ResponseEntity.ok(pageList);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            log.error(e.getMessage(), e);
+//            return ResponseEntity.error(e.getMessage());
+//        }
+//    }
+@ApiOperation(value = "获取导入明细列表", httpMethod = "GET")
+@GetMapping("/getExtractImportDetails")
+public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails(@RequestParam(name = "id", required = true) Long sumId,
+                                                                                 @RequestParam(defaultValue = "1") Integer page,
+                                                                                 @RequestParam(defaultValue = "20") Integer rows,
+                                                                                 @RequestParam(name = "yearid", required = false) Long yearid,
+                                                                                 @RequestParam(name = "iscompanyemp", required = false) Integer iscompanyemp,
+                                                                                 @RequestParam(name = "isbaddebt", required = false) Integer isbaddebt,
+                                                                                 @RequestParam(name = "empno", required = false) String empno,
+                                                                                 @RequestParam(name = "idnumber", required = false) String idnumber) {
+
+
+    try {
+        Map<String, Object> params = new HashMap<>();
+        params.put("sumId", sumId);
+        params.put("yearid", yearid);
+        params.put("iscompanyemp", iscompanyemp);
+        params.put("isbaddebt", isbaddebt);
+        params.put("empno", empno);
+        params.put("idnumber", idnumber);
+        PageResult<ExtractImportDetailVO> pageList = extractsumService.getExtractImportDetails(params, page, rows);
+        return ResponseEntity.ok(pageList);
+    } catch (Exception e) {
+        e.printStackTrace();
+        log.error(e.getMessage(), e);
+        return ResponseEntity.error(e.getMessage());
+    }
+
+}
+
+    @ApiOperation(value = "获取申请单 单据详情", httpMethod = "GET")
     @GetMapping("/getApplicationInfo")
-    public ResponseEntity<PageResult<CommissionApplicationInfoVO>> getApplicationInfo(Integer extractSumId) throws Exception {
-        Page<CommissionApplicationInfoVO> page = new Page<>();
-//        Commission
-        return ResponseEntity.ok(PageResult.apply(page.getTotal(), page.getRecords()));
-    }
-
-    /**
-     * 下载模板。
-     */
-    @ApiOperation(value = "提成明细  下载模板", httpMethod = "GET",produces = "application/octet-stream")
-    @GetMapping("/downLoadTemplate")
-    public void downLoadTemplate(HttpServletResponse response) throws Exception {
-        // 这里注意 有同学反应使用swagger 会导致各种问题，请直接用浏览器或者用postman
-        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        response.setCharacterEncoding("utf-8");
-        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
-        String fileName = URLEncoder.encode("员工个体户信息模板", "UTF-8").replaceAll("\\+", "%20");
-        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
-        EasyExcelFactory.write(response.getOutputStream(), IndividualImportDTO.class).sheet("员工个体户信息模板").doWrite(new ArrayList<>());
-    }
-
-    @ApiOperation(value = "提成导入模板（商务提成组）", httpMethod = "POST")
-    @PostMapping("/importTemplate")
-    public ResponseEntity importTemplate(@RequestParam("file") MultipartFile multipartFile) {
+    public ResponseEntity getApplicationInfo(@RequestParam String sumId) {
         try {
-            applicationService.importIndividual(multipartFile);
+            CommissionApplicationInfoVO applicationInfoVO = applicationService.getApplicationInfo(sumId);
+            return ResponseEntity.ok(applicationInfoVO);
         } catch (Exception e) {
             return ResponseEntity.error(e.getMessage());
         }
-        return ResponseEntity.ok();
     }
+    @ApiOperation(value = "撤回申请单", httpMethod = "GET")
+    @GetMapping("/backApplicationInfo")
+    public ResponseEntity backApplicationInfo(@RequestParam String sumId) {
+        try {
+            //撤回申请单。 0草稿
+            Integer status = 0;
+            applicationService.updateStatusBySumId(sumId,status);
+            return ResponseEntity.ok();
+        } catch (Exception e) {
+            return ResponseEntity.error(e.getMessage());
+        }
+    }
+    @ApiOperation(value = "作废申请单", httpMethod = "GET")
+    @GetMapping("/abolishApplicationInfo")
+    public ResponseEntity abolishApplicationInfo(@RequestParam String sumId) {
+        try {
+            //撤回申请单。 -2 作废 。
+            Integer status = -2;
+            applicationService.updateStatusBySumId(sumId,status);
+            return ResponseEntity.ok();
+        } catch (Exception e) {
+            return ResponseEntity.error(e.getMessage());
+        }
+    }
+//
+//
+//    /**
+//     * 下载模板。
+//     */
+//    @ApiOperation(value = "提成明细  下载模板", httpMethod = "GET")
+//    @GetMapping("/downLoadTemplate")
+//    public void downExtractImportTemplate(HttpServletResponse response) throws Exception {
+//        try (InputStream is = this.getClass().getClassLoader().getResourceAsStream("template/extractImportTemplateNew.xlsx")) {
+//            ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream("提成导入模板", response)).withTemplate(is).build();
+//            WriteSheet sheet = EasyExcel.writerSheet(0).build();
+//            List<Map<String, Object>> list = new ArrayList<>();
+//            workBook.fill(list, sheet);
+//            workBook.finish();
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            log.error(e.getMessage(), e);
+//            throw e;
+//        }
+//    }
+//
+//
+//    @ApiOperation(value = "导入提成明细", httpMethod = "POST")
+//    @ApiImplicitParams(value = {
+//            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
+//    })
+//    @PostMapping("/importTemplate")
+//    public ResponseEntity importTemplate(@RequestParam(name = "file") MultipartFile file, @RequestParam(name = "batchNo") String batchNo, HttpServletResponse response, HttpServletRequest request) throws IOException {
+//        InputStream is = null;
+//        int headRows = 2; //表示表头有3行
+//        int colNum = 13; //列数
+//        EasyExcelImportListener extractListener = new EasyExcelImportListener(extractsumService, TCIMPORT, headRows, colNum, batchNo);
+//        try {
+//            is = file.getInputStream();
+//            EasyExcel.read(is, extractListener).sheet(0).doReadSync();
+//        } catch (IOException e1) {
+//            e1.printStackTrace();
+//            log.error(e1.getMessage(), e1);
+//            return ResponseEntity.error(e1.getMessage());
+//        } finally {
+//            try {
+//                is.close();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//                log.error(e.getMessage(), e);
+//                return ResponseEntity.error(e.getMessage());
+//            }
+//        }
+//        //表头错误明细（如果表头报错明细数据将不会校验）
+//        List<String> headErrorMsg = extractListener.getHeadErrorMsg();
+//        //明细数据的错误明细
+//        Map<Integer, Map<Integer, String>> errorMap = extractListener.getErrorMap();
+//        //导入的所有的数据
+//        Map<Integer, Map<Integer, String>> allDataMap = extractListener.getAllDataMap();
+//        if (!headErrorMsg.isEmpty() || !errorMap.isEmpty()) {
+//
+//            List<ExtractInfoExportExcelData> details = new ArrayList<>();
+//            //最终的表头数据
+//            Map<String, String> heads = new HashMap<>();
+//            //填充错误明细数据
+//            populateData(details, heads, allDataMap, headErrorMsg, errorMap);
+//
+//            InputStream iss = null;
+//            try {
+//                iss = this.getClass().getClassLoader().getResourceAsStream("template/extractImportTemplate.xlsx");
+//                String key = IMPORT_TYPE + "_" + UserThreadLocal.get().getUserName();
+//                String errorFileName = fileShareDir + File.separator + System.currentTimeMillis() + "_错误信息.xlsx";
+//                ExcelWriter workBook = EasyExcel.write(new File(errorFileName), ExtractInfoExportExcelData.class).withTemplate(iss).build();
+//                WriteSheet sheet = EasyExcel.writerSheet(0).build();
+//                sheet.setSheetName("提成导入错误明细");
+//                workBook.fill(heads, sheet);
+//                workBook.fill(details, sheet);
+//                workBook.finish();
+//                redisClient.set(key, errorFileName, expiretime);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//                log.error(e.getMessage(), e);
+//            } finally {
+//                if (iss != null) iss.close();
+//            }
+//            return ResponseEntity.apply(StatusCodeEnmus.ERROR_FORMAT, "文件导入有错误,请点击此处下载");
+//        }
+//        return ResponseEntity.ok("导入成功");
+//    }
+//    @ApiOperation(value = "下载导入提成错误明细", httpMethod = "GET")
+//    @ApiImplicitParams(value = {
+//            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
+//    })
+//    @GetMapping("/downImportExtractErrorDetail")
+//    public void downImportExtractErrorDetail(HttpServletResponse response, HttpServletRequest request) throws Exception {
+//
+//        InputStream is = null;
+//        try {
+//            if (redisClient.get(IMPORT_TYPE + "_" + UserThreadLocal.get().getUserName()) == null) {
+//                throw new RuntimeException("没有提成错误明细可供下载。");
+//            }
+//            String errorFileName = redisClient.get(IMPORT_TYPE + "_" + UserThreadLocal.get().getUserName());
+//            is = new FileInputStream(errorFileName);
+//            ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream("提成导入错误明细", response)).withTemplate(is).build();
+//            WriteSheet sheet = EasyExcel.writerSheet(0).build();
+//            workBook.finish();
+//            File file = new File(errorFileName);
+//            if (file.exists()) file.delete();
+//            redisClient.delete(IMPORT_TYPE + "_" + UserThreadLocal.get().getUserName());
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            log.error(e.getMessage(), e);
+//            throw e;
+//        } finally {
+//            if (is != null) is.close();
+//        }
+//    }
+//
+//
+//    @ApiOperation(value = "提交", httpMethod = "GET")
+//    @ApiImplicitParams(value = {
+//            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
+//            @ApiImplicitParam(value = "ids", name = "ids", dataType = "String", required = true)
+//    })
+//    @GetMapping("/submit")
+//    //提交提成明细导入。
+//    public ResponseEntity submit(@RequestParam(name = "ids", required = true) String ids) throws Exception {
+//        try {
+//            String lockKey = "/finance-platform/extract/submit/" + ids;
+//            ZookeeperShareLock zookeeperShareLock = new ZookeeperShareLock(this.curatorFramework, lockKey, null);
+//            try {
+//                zookeeperShareLock.tryLock();
+//                this.extractsumService.submit(ids);
+//            } catch (Exception e) {
+//                throw e;
+//            } finally {
+//                zookeeperShareLock.unLock();
+//            }
+//            return ResponseEntity.ok();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            log.error(e.getMessage(), e);
+//            return ResponseEntity.error(e.getMessage());
+//        }
+//    }
+
+//    @ApiOperation(value = "删除提成主数据", httpMethod = "GET")
+//    @ApiImplicitParams(value = {
+//            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
+//            @ApiImplicitParam(value = "id", name = "id", dataType = "Long", required = true)
+//    })
+//    @GetMapping("/deleteExtractSum")
+//    public ResponseEntity deleteExtractSum(@RequestParam(name = "id", required = true) Long sumId) throws Exception {
+//        try {
+//            this.extractsumService.deleteExtractSum(sumId);
+//            return ResponseEntity.ok();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            log.error(e.getMessage(), e);
+//            return ResponseEntity.error(e.getMessage());
+//        }
+//    }
+//    /**
+//     * 填充导入提成错误的数据
+//     *
+//     * @param details
+//     * @param heads
+//     * @param allDataMap
+//     * @param headErrorMsg
+//     * @param errorMap
+//     */
+//    private void populateData(List<ExtractInfoExportExcelData> details,
+//                              Map<String, String> heads, Map<Integer, Map<Integer, String>> allDataMap, List<String> headErrorMsg, Map<Integer, Map<Integer, String>> errorMap) {
+//        Map<Integer, String> headMap = allDataMap.get(1);
+//        String year = headMap.get(1); //届别
+//        String extractMonth = headMap.get(3); //提成期间
+//        String unitname = headMap.get(5); //预算单位
+//        if (!headErrorMsg.isEmpty()) {
+//            for (int i = 3; i <= allDataMap.size(); i++) {
+//                ExtractInfoExportExcelData ed = new ExtractInfoExportExcelData();
+//                Map<Integer, String> data = allDataMap.get(i);
+//                String isCompanyEmp = data.get(0); //是否公司员工
+//                ed.setIsCompanyEmp(isCompanyEmp);
+//                String empNo = data.get(1); //工号
+//                ed.setEmpNo(empNo);
+//                String empName = data.get(2); //姓名
+//                ed.setEmpName(empName);
+//                String sftc = data.get(3); //实发提成
+//                ed.setCopeextract(sftc);
+//                String zhs = data.get(4); //综合税
+//                ed.setConsotax(zhs);
+//                String tcPeriod = data.get(5); //提成届别
+//                ed.setExtractPeriod(tcPeriod);
+//                String isDebt = data.get(6); //是否坏账
+//                ed.setIsBadDebt(isDebt);
+//                String extractType = data.get(7);//提成类型
+//                ed.setExtractType(extractType);
+//                String shouldSendExtract = data.get(8);//应发提成
+//                ed.setShouldSendExtract(shouldSendExtract);
+//                String tax = data.get(9);//个税
+//                ed.setTax(tax);
+//                String taxReduction = data.get(10);//个税减免
+//                ed.setTaxReduction(taxReduction);
+//                String invoiceExcessTax = data.get(11);//发票超额税金
+//                ed.setInvoiceExcessTax(invoiceExcessTax);
+//                String invoiceExcessTaxReduction = data.get(12);//发票超额税金减免
+//                ed.setInvoiceExcessTaxReduction(invoiceExcessTaxReduction);
+//                ed.setErrMsg(headErrorMsg.stream().collect(Collectors.joining(",")));
+//                details.add(ed);
+//            }
+//        } else if (!errorMap.isEmpty()) {
+//            errorMap.forEach((i, data) -> {
+//                ExtractInfoExportExcelData ed = new ExtractInfoExportExcelData();
+//                String isCompanyEmp = data.get(0); //是否公司员工
+//                ed.setIsCompanyEmp(isCompanyEmp);
+//                String empNo = data.get(1); //工号
+//                ed.setEmpNo(empNo);
+//                String empName = data.get(2); //姓名
+//                ed.setEmpName(empName);
+//                String sftc = data.get(3); //实发提成
+//                ed.setCopeextract(sftc);
+//                String zhs = data.get(4); //综合税
+//                ed.setConsotax(zhs);
+//                String tcPeriod = data.get(5); //提成届别
+//                ed.setExtractPeriod(tcPeriod);
+//                String isDebt = data.get(6); //是否坏账
+//                ed.setIsBadDebt(isDebt);
+//                String extractType = data.get(7);//提成类型
+//                ed.setExtractType(extractType);
+//                String shouldSendExtract = data.get(8);//应发提成
+//                ed.setShouldSendExtract(shouldSendExtract);
+//                String tax = data.get(9);//个税
+//                ed.setTax(tax);
+//                String taxReduction = data.get(10);//个税减免
+//                ed.setTaxReduction(taxReduction);
+//                String invoiceExcessTax = data.get(11);//发票超额税金
+//                ed.setInvoiceExcessTax(invoiceExcessTax);
+//                String invoiceExcessTaxReduction = data.get(12);//发票超额税金减免
+//                ed.setInvoiceExcessTaxReduction(invoiceExcessTaxReduction);
+//                String errmsg = data.get(13);
+//                ed.setErrMsg(errmsg);
+//                details.add(ed);
+//            });
+//        }
+//        heads.put("yearPeriod", year);
+//        heads.put("extractMonth", extractMonth);
+//        heads.put("unitName", unitname);
+//    }
 
 }

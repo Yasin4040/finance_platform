@@ -20,10 +20,12 @@ public class CommissionDetailsVO {
     //`deduction_amount`  decimal(10,2) DEFAULT NULL COMMENT '扣款金额 申请提成”-“实发金额”',
     //`actual_amount`  decimal(10,2) DEFAULT NULL COMMENT '实发金额 取导入数据中的“实发提成”',
     // `create_by` varchar(20) DEFAULT NULL COMMENT '创建人',
+    @ApiModelProperty(value = "id")
+    private Long id;
     @ApiModelProperty(value = "提成类型名称")
     private String commissionTypeName;
     @ApiModelProperty(value = "归属届别")
-    private String category;
+    private String yearId;
     @ApiModelProperty(value = "申请提成")
     private BigDecimal applyAmount;
     @ApiModelProperty(value = "扣款金额")

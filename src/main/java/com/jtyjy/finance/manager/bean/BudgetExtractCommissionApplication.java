@@ -83,7 +83,7 @@ public class BudgetExtractCommissionApplication implements Serializable {
     private Date updateTime;
 
     /**
-     * 状态 1 正常  2拒绝
+     * -2 作废（退回才可以作废）,-1(退回，仍可以修改。可以作废)  ，0 草稿（撤回）,1已提交,2审核通过
      */
     @TableField(value = "status")
     private Integer status;

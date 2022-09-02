@@ -3,25 +3,32 @@ package com.jtyjy.finance.manager.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.iamxiongx.util.message.exception.BusinessException;
 import com.jtyjy.finance.manager.bean.*;
 import com.jtyjy.finance.manager.cache.UserCache;
+import com.jtyjy.finance.manager.controller.reimbursement.ReimbursementController;
+import com.jtyjy.finance.manager.dto.ReimbursementRequest;
+import com.jtyjy.finance.manager.enmus.ExtractStatusEnum;
+import com.jtyjy.finance.manager.enmus.ExtractTypeEnum;
 import com.jtyjy.finance.manager.enmus.ExtractUserTypeEnum;
+import com.jtyjy.finance.manager.enmus.ReimbursementFromEnmu;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
-import com.jtyjy.finance.manager.mapper.BudgetExtractImportdetailMapper;
-import com.jtyjy.finance.manager.mapper.BudgetExtractOuterpersonMapper;
-import com.jtyjy.finance.manager.mapper.BudgetYearPeriodMapper;
+import com.jtyjy.finance.manager.mapper.*;
+import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationBudgetDetailsService;
+import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationLogService;
 import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationService;
-import com.jtyjy.finance.manager.mapper.BudgetExtractCommissionApplicationMapper;
 import com.jtyjy.finance.manager.service.IndividualEmployeeFilesService;
+import com.jtyjy.finance.manager.vo.application.BudgetDetailsVO;
+import com.jtyjy.finance.manager.vo.application.CommissionApplicationInfoVO;
+import com.jtyjy.finance.manager.vo.application.CommissionDetailsVO;
+import com.jtyjy.finance.manager.vo.application.DistributionDetailsVO;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
 * @author User
@@ -32,17 +39,179 @@ import java.util.Objects;
 public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<BudgetExtractCommissionApplicationMapper, BudgetExtractCommissionApplication>
     implements BudgetExtractCommissionApplicationService{
 
-
+    private final BudgetExtractsumMapper extractSumMapper;
     private final BudgetExtractOuterpersonMapper outPersonMapper;
     private final IndividualEmployeeFilesService individualService;
     private final BudgetExtractImportdetailMapper extractImportDetailMapper;
     private final BudgetYearPeriodMapper yearMapper;
-
-    public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractOuterpersonMapper outPersonMapper, IndividualEmployeeFilesService individualService, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper) {
+    private final BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService;
+    private final BudgetExtractCommissionApplicationLogService applicationLogService;
+    private final ReimbursementController reimbursementController;
+    public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractsumMapper extractSumMapper, BudgetExtractOuterpersonMapper outPersonMapper, IndividualEmployeeFilesService individualService, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, ReimbursementController reimbursementController) {
+        this.extractSumMapper = extractSumMapper;
         this.outPersonMapper = outPersonMapper;
         this.individualService = individualService;
         this.extractImportDetailMapper = extractImportDetailMapper;
         this.yearMapper = yearMapper;
+        this.budgetDetailsService = budgetDetailsService;
+        this.applicationLogService = applicationLogService;
+        this.reimbursementController = reimbursementController;
+    }
+
+    @Override
+    public CommissionApplicationInfoVO getApplicationInfo(String sumId) {
+        BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
+        CommissionApplicationInfoVO infoVO = new CommissionApplicationInfoVO();
+        Optional<BudgetExtractCommissionApplication> applicationOptional = getApplicationBySumId(sumId);
+        if (applicationOptional.isPresent()) {
+            BudgetExtractCommissionApplication application = applicationOptional.get();
+
+            infoVO.setPaymentReason(application.getPaymentReason());
+            infoVO.setDepartmentName(application.getDepartmentName());
+            infoVO.setExtractSumNo(budgetExtractsum.getCode());
+            infoVO.setExtractSumId(budgetExtractsum.getId());
+            infoVO.setCreateTime(application.getCreateTime());
+            infoVO.setRemarks(application.getRemarks());
+            //set提成明细
+            List<CommissionDetailsVO> commissionList = new ArrayList<>();
+            infoVO.setCommissionList(commissionList);
+            //提成明细for
+            List<BudgetExtractImportdetail> importDetails = extractImportDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractImportdetail>()
+                    .eq(BudgetExtractImportdetail::getExtractsumid, budgetExtractsum.getId()));
+            for (BudgetExtractImportdetail importDetail : importDetails) {
+                CommissionDetailsVO detailsVO = new CommissionDetailsVO();
+                detailsVO.setId(importDetail.getId());
+                detailsVO.setCommissionTypeName(importDetail.getExtractType());
+                detailsVO.setYearId(importDetail.getYearid().toString()+"届");
+                detailsVO.setApplyAmount(importDetail.getShouldSendExtract());
+                detailsVO.setActualAmount(importDetail.getCopeextract());
+                detailsVO.setDeductionAmount(importDetail.getCopeextract().subtract(importDetail.getShouldSendExtract()));
+                commissionList.add(detailsVO);
+            }
+            //set预算明细
+            List<BudgetDetailsVO> budgetList = new ArrayList<>();
+            infoVO.setBudgetList(budgetList);
+            //提成明细for
+            List<BudgetExtractCommissionApplicationBudgetDetails> budgetDetails = budgetDetailsService.list(new LambdaQueryWrapper<BudgetExtractCommissionApplicationBudgetDetails>()
+                    .eq(BudgetExtractCommissionApplicationBudgetDetails::getApplicationId, application.getId()));
+            for (BudgetExtractCommissionApplicationBudgetDetails budgetDetail : budgetDetails) {
+                BudgetDetailsVO budgetDetailsVO = new BudgetDetailsVO();
+                budgetDetailsVO.setId(budgetDetail.getId());
+                budgetDetailsVO.setSubjectCode(budgetDetail.getSubjectCode());
+                budgetDetailsVO.setSubjectName(budgetDetail.getSubjectName());
+                budgetDetailsVO.setMotivationName(budgetDetail.getMotivationName());
+                budgetDetailsVO.setBudgetAmount(budgetDetail.getBudgetAmount());
+                budgetList.add(budgetDetailsVO);
+            }
+            //发放明细。。。
+            //set预算明细
+            List<DistributionDetailsVO> distributionList = new ArrayList<>();
+            infoVO.setDistributionList(distributionList);
+        }
+
+        return infoVO;
+    }
+    @Override
+    public Optional<BudgetExtractCommissionApplication> getApplicationBySumId(String sumId) {
+        return this.lambdaQuery().eq(BudgetExtractCommissionApplication::getExtractSumId, sumId).last("limit 1").oneOpt();
+    }
+
+    @Override
+    public void updateStatusBySumId(String sumId, Integer status) {
+        Optional<BudgetExtractCommissionApplication> applicationOptional = getApplicationBySumId(sumId);
+        if (applicationOptional.isPresent()) {
+            BudgetExtractCommissionApplication application = applicationOptional.get();
+            switch (status) {
+                case -2:
+                    //作废操作  申请单状态必须是-1
+                    if (!application.getStatus().equals(-1)) {
+                        throw new BusinessException("作废失败,申请单必须是退回状态！");
+                    }
+                    break;
+                case 0:
+                    //撤回  申请单必须没有人审批过
+                    if (application.getStatus().equals(1)) {
+                        //1 已提交
+                        Integer count = applicationLogService.lambdaQuery()
+                                .eq(BudgetExtractCommissionApplicationLog::getApplicationId, application.getId())
+                                .eq(BudgetExtractCommissionApplicationLog::getStatus, 1).count();
+                        if (count>0) {
+                            throw new BusinessException("撤回失败,申请单已审批！");
+                        }
+                    }else{
+                        throw new BusinessException("撤回失败,申请单不是提交状态！");
+                    }
+                    break;
+                default:
+                    break;
+            }
+            this.lambdaUpdate().eq(BudgetExtractCommissionApplication::getExtractSumId,sumId).set(BudgetExtractCommissionApplication::getStatus,status);
+            BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
+            budgetExtractsum.setStatus(ExtractStatusEnum.DRAFT.getType());
+            extractSumMapper.updateById(budgetExtractsum);
+        }
+    }
+
+
+    @SneakyThrows
+    @Override
+    public void generateReimbursement(Long sumId) {
+        Optional<BudgetExtractCommissionApplication> applicationBySumId = this.getApplicationBySumId(String.valueOf(sumId));
+        if (applicationBySumId.isPresent()) {
+            BudgetExtractCommissionApplication application = applicationBySumId.get();
+            Long applicationId = application.getId();
+            //
+            List<BudgetExtractImportdetail> importDetails = extractImportDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractImportdetail>()
+                    .eq(BudgetExtractImportdetail::getExtractsumid, sumId));
+
+            //存在 提成。
+            Boolean ifExistsCommission = importDetails.stream().anyMatch(x-> {
+                return ExtractTypeEnum.PERFORMANCE_AWARD_COMMISSION.value.equals(x.getExtractType()) || ExtractTypeEnum.ACCRUED_PERFORMANCE_AWARD.value.equals(x.getExtractType());
+            });
+            if(ifExistsCommission){
+                List<BudgetExtractCommissionApplicationBudgetDetails> budgetDetailsList =
+                        budgetDetailsService.lambdaQuery().eq(BudgetExtractCommissionApplicationBudgetDetails::getApplicationId, applicationId).list();
+
+                //报销单 生成
+                ReimbursementRequest reimbursementRequest = new ReimbursementRequest();
+                List<BudgetReimbursementorderDetail> orderDetailList = new ArrayList<>();
+
+                BigDecimal otherTotalMoney = BigDecimal.ZERO;
+                for (BudgetExtractCommissionApplicationBudgetDetails budgetDetails : budgetDetailsList) {
+                    BudgetReimbursementorderDetail reimbursement = new BudgetReimbursementorderDetail();
+                    reimbursement.setSubjectid(budgetDetails.getSubjectId());
+                    reimbursement.setSubjectCode(budgetDetails.getSubjectCode());
+                    reimbursement.setSubjectname(budgetDetails.getSubjectName());
+                    //动因
+                    reimbursement.setMonthagentname(budgetDetails.getMotivationName());
+                    reimbursement.setMonthagentid(budgetDetails.getMotivationId());
+                    //U0068,陈彩莲(无票) 默认
+                    reimbursement.setBunitid(68l);
+                    reimbursement.setBunitname("陈彩莲(无票)");
+                    //默认执行
+                    reimbursement.setReimflag(true);
+
+                    reimbursement.setReimmoney(budgetDetails.getBudgetAmount());
+                    otherTotalMoney.add(budgetDetails.getBudgetAmount());
+                    orderDetailList.add(reimbursement);
+                }
+                BudgetReimbursementorder order = new BudgetReimbursementorder();
+                //报销单来源 0：普通报销单（预算员手动填写的）1：稿费 2：提成 3：工资 4:项目预领
+                order.setOrderscrtype(ReimbursementFromEnmu.COMMISSION.getCode());
+                order.setOthermoney(otherTotalMoney);
+                reimbursementRequest.setSubmit("1");
+                reimbursementRequest.setOrder(order);
+                reimbursementRequest.setOrderDetail(orderDetailList);
+
+                try {
+                    reimbursementController.opt(reimbursementRequest);
+                } catch (Exception e) {
+                    throw e;
+                }
+            }
+
+        }
+
     }
 
     @Override
@@ -175,6 +344,9 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         }
 
     }
+
+
+
     private BigDecimal getBigDecimal(String object){
         if (StringUtils.isNotBlank(object)) {
             return new BigDecimal(object);

@@ -10,4 +10,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface BudgetExtractCommissionApplicationLogService extends IService<BudgetExtractCommissionApplicationLog> {
 
+    void saveLog(Long applicationId);
 }

@@ -19,6 +19,11 @@ import java.util.List;
 @Data
 public class CommissionApplicationInfoVO {
     /**
+     * 申请单id
+     */
+    @ApiModelProperty(value = "申请单id")
+    private Long applicationId;
+    /**
      * 提成id主表
      */
     @ApiModelProperty(value = "提成主表订单id")
@@ -27,7 +32,7 @@ public class CommissionApplicationInfoVO {
      * 提成编码
      */
     @ApiModelProperty(value = "提成编码")
-    private Long extractSumNo;
+    private String extractSumNo;
 
     //基本信息
     /**
@@ -47,6 +52,11 @@ public class CommissionApplicationInfoVO {
      */
     @ApiModelProperty(value = "制表日期")
     private Date createTime;
+    /**
+     * 备注
+     */
+    @ApiModelProperty(value = "备注")
+    private String remarks;
 
     //提成明细
     List<CommissionDetailsVO> commissionList;

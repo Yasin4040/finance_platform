@@ -9,7 +9,7 @@
             <result property="applicationId" column="application_id" jdbcType="BIGINT"/>
             <result property="subjectCode" column="subject_code" jdbcType="VARCHAR"/>
             <result property="subjectName" column="subject_name" jdbcType="VARCHAR"/>
-            <result property="deductionAmount" column="deduction_amount" jdbcType="DECIMAL"/>
+            <result property="budgetAmount" column="budget_amount" jdbcType="DECIMAL"/>
             <result property="createBy" column="create_by" jdbcType="VARCHAR"/>
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
             <result property="updateBy" column="update_by" jdbcType="VARCHAR"/>

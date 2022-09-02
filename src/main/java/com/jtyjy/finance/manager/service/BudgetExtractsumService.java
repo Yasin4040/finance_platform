@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
@@ -81,6 +82,10 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 
 	private static String QRCODE_PREFIX = "TC";
 
+	@Autowired
+	private BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService;
+	@Autowired
+	private BudgetExtractCommissionApplicationLogService applicationLogService;
 	@Autowired
 	private BudgetExtractsumMapper budgetExtractsumMapper;
 	@Autowired
@@ -1119,9 +1124,27 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			//合并
 			combine(extractsum.getId(), allimportDetails);
 			extractsum.setStatus(ExtractStatusEnum.VERIFYING.getType());
+			//申请单 改为待审核。
+			Optional<BudgetExtractCommissionApplication> applicationOptional =
+					applicationService.lambdaQuery().eq(BudgetExtractCommissionApplication::getExtractSumId, extractsum.getId()).last("limit 1").oneOpt();
+			if (applicationOptional.isPresent()) {
+				BudgetExtractCommissionApplication application = applicationOptional.get();
+				//根据预算明细。生成报销单。
+				applicationService.generateReimbursement(application.getExtractSumId());
+				//更新时间  1 已提交
+				application.setStatus(ExtractStatusEnum.VERIFYING.getType());
+				application.setUpdateTime(new Date());
+				application.setUpdateBy(UserThreadLocal.getEmpNo());
+				applicationService.updateById(application);
+
+				//日志记录
+				applicationLogService.saveLog(application.getId());
+			}
 		});
 		if (!allimportDetails.isEmpty()) this.extractImportDetailService.updateBatchById(allimportDetails);
 		this.updateBatchById(budgetExtractsums);
+
+
 		budgetExtractsums.forEach(extractsum -> {
 			try {
 				TabDm dm = dmMapper.selectOne(new QueryWrapper<TabDm>().eq("dm_type", EXTRACTVERIFY).eq("dm", extractsum.getDeptname()));
@@ -1140,33 +1163,68 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		//获取所有的提成导入明细
 		List<BudgetExtractImportdetail> importDetails = extractImportDetailMapper.selectList(new QueryWrapper<BudgetExtractImportdetail>().eq("extractsumid", sumId));
 		if (!CollectionUtils.isEmpty(importDetails)) {
-			importDetails.stream().collect(Collectors.groupingBy(BudgetExtractImportdetail::getIdnumber)).forEach((idnumber, importdetailByEmpnoList) -> {
-				BudgetExtractdetail bed = new BudgetExtractdetail();
-				bed.setExtractsumid(sumId);
-				BudgetExtractImportdetail beid = importdetailByEmpnoList.get(0);
-				bed.setEmpid(beid.getEmpid());
-				bed.setEmpno(beid.getEmpno());
-				bed.setIdnumber(beid.getIdnumber());
-				bed.setEmpname(beid.getEmpname());
-				BigDecimal copeextract = importdetailByEmpnoList.stream().map(e -> e.getCopeextract()).reduce(BigDecimal.ZERO, BigDecimal::add);
-				BigDecimal consotax = importdetailByEmpnoList.stream().map(e -> e.getConsotax()).reduce(BigDecimal.ZERO, BigDecimal::add);
-				bed.setCopeextract(copeextract);
-				bed.setConsotax(consotax);
-				bed.setCreatetime(new Date());
-				bed.setUpdatetime(bed.getCreatetime());
-				bed.setDeleteflag(0);
-				bed.setIscompanyemp(beid.getIscompanyemp());
-				bed.setExcesstype(-1);
-				bed.setExcessmoney(BigDecimal.ZERO);
-				extractDetailMapper.insert(bed);
-				importdetailByEmpnoList.stream().forEach(importdetail -> {
-					importdetail.setExtractdetailid(bed.getId());
-					importdetail.setUpdatetime(new Date());
-				});
+			 //先把员工个体户找出来。
+			List<BudgetExtractImportdetail> IndividualList = new ArrayList<>();
+			List<BudgetExtractImportdetail> InnerOuterList = new ArrayList<>();
+			importDetails.forEach(x->{
+				if(x.getIndividualEmployeeId()==null){
+					//个体户id为空   用原来的。
+					InnerOuterList.add(x);
+				}else{
+					IndividualList.add(x);
+				}
 			});
-			allimportDetails.addAll(importDetails);
+
+			InnerOuterList.stream().collect(Collectors.groupingBy(BudgetExtractImportdetail::getIdnumber)).forEach((key, importdetailByEmpnoList) -> {
+				//插入数据
+				insertExtractDetailEntity(sumId, importdetailByEmpnoList);
+			});
+			IndividualList.stream().collect(Collectors.groupingBy(BudgetExtractImportdetail::getIndividualEmployeeId)).forEach((key, importdetailByEmpnoList) -> {
+				//插入数据
+				insertExtractDetailEntity(sumId, importdetailByEmpnoList);
+			});
+			allimportDetails.addAll(InnerOuterList);
+			allimportDetails.addAll(IndividualList);
+//			importDetails.stream().collect(Collectors.groupingBy(BudgetExtractImportdetail::getIdnumber)).forEach((idnumber, importdetailByEmpnoList) ->
+//			{
+//				//插入数据
+//				insertExtractDetailEntity(sumId, importdetailByEmpnoList);
+//			}
+//			);
+//			allimportDetails.addAll(importDetails);
 		} else {
 			throw new RuntimeException("提交失败！该批次没有提成，请将其删除");
+		}
+	}
+
+	private void insertExtractDetailEntity(Long sumId, List<BudgetExtractImportdetail> importdetailByEmpnoList) {
+		if (!CollectionUtils.isEmpty(importdetailByEmpnoList)) {
+			BudgetExtractdetail bed = new BudgetExtractdetail();
+			bed.setExtractsumid(sumId);
+			BudgetExtractImportdetail beid = importdetailByEmpnoList.get(0);
+			bed.setEmpid(beid.getEmpid());
+			bed.setEmpno(beid.getEmpno());
+			bed.setIdnumber(beid.getIdnumber());
+			bed.setEmpname(beid.getEmpname());
+			BigDecimal copeextract = importdetailByEmpnoList.stream().map(e -> e.getCopeextract()).reduce(BigDecimal.ZERO, BigDecimal::add);
+			BigDecimal consotax = importdetailByEmpnoList.stream().map(e -> e.getConsotax()).reduce(BigDecimal.ZERO, BigDecimal::add);
+			bed.setCopeextract(copeextract);
+			bed.setConsotax(consotax);
+			bed.setCreatetime(new Date());
+			bed.setUpdatetime(bed.getCreatetime());
+			bed.setDeleteflag(0);
+			bed.setIscompanyemp(beid.getIscompanyemp());
+			bed.setExcesstype(-1);
+			bed.setExcessmoney(BigDecimal.ZERO);
+			//判空
+			if (importdetailByEmpnoList.get(0).getIndividualEmployeeId()!=null) {
+				bed.setIndividualEmployeeId(importdetailByEmpnoList.get(0).getIndividualEmployeeId());
+			}
+			extractDetailMapper.insert(bed);
+			importdetailByEmpnoList.stream().forEach(importdetail -> {
+				importdetail.setExtractdetailid(bed.getId());
+				importdetail.setUpdatetime(new Date());
+			});
 		}
 	}
 
@@ -1179,9 +1237,31 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		BudgetExtractsum extractsum = this.budgetExtractsumMapper.selectById(sumId);
 		if (extractsum.getStatus() >= ExtractStatusEnum.VERIFYING.getType())
 			throw new RuntimeException("操作失败!该单据不允许删除");
+		//导入明细
 		extractImportDetailMapper.delete(new QueryWrapper<BudgetExtractImportdetail>().eq("extractsumid", sumId));
+		//导入 合并明细  提成明细1
 		extractDetailMapper.delete(new QueryWrapper<BudgetExtractdetail>().eq("extractsumid", sumId));
+		//提成主表
 		budgetExtractsumMapper.deleteById(sumId);
+		//申请单删除
+		// 基本信息 提成明细1 预算明细1  发放明细
+		Optional<BudgetExtractCommissionApplication> applicationOptional = applicationService.lambdaQuery().eq(BudgetExtractCommissionApplication::getExtractSumId, sumId).last("limit 1").oneOpt();
+		if (applicationOptional.isPresent()) {
+			BudgetExtractCommissionApplication application = applicationOptional.get();
+			//0草稿（-1 退回 不能 -2 作废）
+			if (application.getStatus()==0) {
+				applicationService.removeById(application.getId());
+				//预算明细
+				budgetDetailsService.remove(new QueryWrapper<BudgetExtractCommissionApplicationBudgetDetails>()
+						.lambda().eq(BudgetExtractCommissionApplicationBudgetDetails::getApplicationId, application.getId()));
+				//申请单删除 todo 发放明细
+				//发放明细
+
+			}
+		}
+
+
+
 	}
 
 	/**
@@ -1189,7 +1269,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	 *
 	 * @param params
 	 * @param page
-	 * @param rows
+	 * @param r
 	 * @return
 	 */
 	public PageResult<ExtractImportDetailVO> getExtractImportDetails(Map<String, Object> params, Integer page, Integer rows) {
