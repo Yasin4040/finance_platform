@@ -37,7 +37,7 @@
                     on bietri.individual_employee_info_id  = bief.id
             <where>
                 <if test="query.batchNo !=null and query.batchNo != ''">
-                   and  bief.batch_no like concat('%',#{query.batchNo},%)
+                   and  bief.batch_no like concat('%',#{query.batchNo},'%')
                 </if>
                 <if test="query.provinceOrRegion !=null and query.provinceOrRegion != ''">
                     and bief.province_or_region like concat('%',#{query.provinceOrRegion},'%')
@@ -57,6 +57,10 @@
                 <if test="query.month !=null and query.month != ''">
                     and bietri.`month` like concat('%',#{query.month},'%')
                 </if>
+                <if test="query.invoiceAmount !=null and query.invoiceAmount != ''">
+                    and bietri.invoice_amount like concat('%',#{query.invoiceAmount},'%')
+                </if>
+
                 <if test="query.startDate !=null and query.startDate != '' ">
                     and  date_format(bietri.create_time ,'%Y-%m-%d')  &gt; #{query.startDate}
                 </if>

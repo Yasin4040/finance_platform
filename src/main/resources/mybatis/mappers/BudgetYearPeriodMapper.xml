@@ -45,4 +45,9 @@
 		where ms.yearid = #{yearId}
 		order by orderno
     </select>
+    <select id="getNameById" resultType="java.lang.String">
+        select yp.period
+        from
+            budget_year_period yp where id = #{yearId}
+    </select>
 </mapper>

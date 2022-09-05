@@ -32,11 +32,4 @@ public class DistributionDetailsVO {
     @ApiModelProperty(value = "(员工个体户发放金额)-个卡")
     private BigDecimal individualPersonAmount;
 
-    @ApiModelProperty(value = "合计发放 费用发放+提成发放+公户+个卡")
-    private BigDecimal totalDistributionAmount;
-    @ApiModelProperty(value = "员工个体户未发放金额")
-    private BigDecimal individualUnissuedAmount;
-    @ApiModelProperty(value = "外部户发放金额")
-    private BigDecimal outerDistributionAmount;
-
 }

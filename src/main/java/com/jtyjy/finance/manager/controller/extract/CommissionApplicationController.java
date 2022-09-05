@@ -15,6 +15,7 @@ import com.jtyjy.finance.manager.service.BudgetExtractsumService;
 import com.jtyjy.finance.manager.utils.EasyExcelUtil;
 import com.jtyjy.finance.manager.vo.ExtractImportDetailVO;
 import com.jtyjy.finance.manager.vo.ExtractInfoVO;
+import com.jtyjy.finance.manager.vo.application.CommissionApplicationInfoUpdateVO;
 import com.jtyjy.finance.manager.vo.application.CommissionApplicationInfoVO;
 import com.klcwqy.easy.lock.impl.ZookeeperShareLock;
 import io.swagger.annotations.Api;
@@ -136,7 +137,7 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
 
     @ApiOperation(value = "获取申请单 单据详情", httpMethod = "GET")
     @GetMapping("/getApplicationInfo")
-    public ResponseEntity getApplicationInfo(@RequestParam String sumId) {
+    public ResponseEntity<CommissionApplicationInfoVO> getApplicationInfo(@RequestParam String sumId) {
         try {
             CommissionApplicationInfoVO applicationInfoVO = applicationService.getApplicationInfo(sumId);
             return ResponseEntity.ok(applicationInfoVO);
@@ -144,6 +145,18 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
             return ResponseEntity.error(e.getMessage());
         }
     }
+
+    @ApiOperation(value = "修改申请单 单据详情", httpMethod = "POST")
+    @PostMapping("/updateApplicationInfo")
+    public ResponseEntity updateApplicationInfo(@RequestBody CommissionApplicationInfoUpdateVO updateVO) {
+        try {
+            applicationService.updateApplicationInfo(updateVO);
+            return ResponseEntity.ok();
+        } catch (Exception e) {
+            return ResponseEntity.error(e.getMessage());
+        }
+    }
+
     @ApiOperation(value = "撤回申请单", httpMethod = "GET")
     @GetMapping("/backApplicationInfo")
     public ResponseEntity backApplicationInfo(@RequestParam String sumId) {

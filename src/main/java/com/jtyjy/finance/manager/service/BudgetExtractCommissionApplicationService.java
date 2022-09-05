@@ -3,6 +3,7 @@ package com.jtyjy.finance.manager.service;
 import com.jtyjy.finance.manager.bean.BudgetExtractCommissionApplication;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.jtyjy.finance.manager.bean.BudgetExtractsum;
+import com.jtyjy.finance.manager.vo.application.CommissionApplicationInfoUpdateVO;
 import com.jtyjy.finance.manager.vo.application.CommissionApplicationInfoVO;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,4 +31,5 @@ public interface BudgetExtractCommissionApplicationService extends IService<Budg
 
     Optional<BudgetExtractCommissionApplication> getApplicationBySumId(String sumId);
 
+    void updateApplicationInfo(CommissionApplicationInfoUpdateVO updateVO);
 }

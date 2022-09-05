@@ -36,7 +36,7 @@ public class CommissionApplicationLogController {
 
     @ApiOperation(value = "获取申请单 流转记录", httpMethod = "GET")
     @GetMapping("/getList")
-    public ResponseEntity getList(@RequestParam String sumId,@ModelAttribute PageQuery query) {
+    public ResponseEntity<PageResult<BudgetExtractCommissionApplicationLog>> getList(@RequestParam String sumId,@ModelAttribute PageQuery query) {
         try {
             Optional<BudgetExtractCommissionApplication> applicationBySumId = applicationService.getApplicationBySumId(sumId);
             if (applicationBySumId.isPresent()) {

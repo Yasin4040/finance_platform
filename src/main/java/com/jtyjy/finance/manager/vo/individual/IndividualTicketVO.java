@@ -36,7 +36,7 @@ public class IndividualTicketVO {
 
 
     @ApiModelProperty(value = "部门")
-    @ExcelProperty(value = "事业群")
+    @ExcelProperty(value = "部门")
     private String departmentName;
 
     @ApiModelProperty(value = "省区/大区")
@@ -50,7 +50,9 @@ public class IndividualTicketVO {
     @ApiModelProperty(value = "姓名")
     @ExcelProperty(value = "姓名")
     private String employeeName;
-
+    @ApiModelProperty(value = "个体户名称")
+    @ExcelProperty(value = "个体户名称")
+    private String individualName;
     @ApiModelProperty(value = "年份")
     @ExcelProperty(value = "年份")
     private Integer year;
@@ -58,10 +60,6 @@ public class IndividualTicketVO {
     @ApiModelProperty(value = "月份")
     @ExcelProperty(value = "月份")
     private Integer month;
-
-    @ApiModelProperty(value = "个体户名称")
-    @ExcelProperty(value = "个体户名称")
-    private String individualName;
 
     @ApiModelProperty(value = "发票金额")
     @ExcelProperty(value = "发票金额")

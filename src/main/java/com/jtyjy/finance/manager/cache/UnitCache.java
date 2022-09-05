@@ -8,9 +8,12 @@ import com.jtyjy.finance.manager.service.WbBanksService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -33,6 +36,11 @@ public class UnitCache extends BaseCache{
 	public static BudgetBillingUnit getByName(String key) {
 		return UNIT_NAME_MAP.get(key);
 	}
+	public static List<String> getByFuzzyName(String key) {
+		List<String> ids = UNIT_MAP.entrySet().stream().filter(x -> x.getValue().getName().contains(key)).map(x -> x.getKey()).collect(Collectors.toList());
+		return ids;
+	}
+
 
 	@Override
 	public void cache() throws Exception {

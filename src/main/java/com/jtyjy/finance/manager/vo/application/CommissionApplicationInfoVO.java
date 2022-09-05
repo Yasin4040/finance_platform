@@ -8,6 +8,7 @@ import com.jtyjy.finance.manager.vo.application.CommissionDetailsVO;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -62,6 +63,13 @@ public class CommissionApplicationInfoVO {
     List<CommissionDetailsVO> commissionList;
     //预算明细
     List<BudgetDetailsVO> budgetList;
+
+    @ApiModelProperty(value = "合计发放 费用发放+提成发放+公户+个卡")
+    private BigDecimal totalDistributionAmount;
+    @ApiModelProperty(value = "员工个体户未发放金额")
+    private BigDecimal individualUnissuedAmount;
+    @ApiModelProperty(value = "外部户发放金额")
+    private BigDecimal outerDistributionAmount;
     //发放 明细
     List<DistributionDetailsVO> distributionList;
 }

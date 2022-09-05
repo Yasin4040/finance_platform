@@ -41,19 +41,7 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
 
     @Override
     public IPage<IndividualEmployeeFilesVO> selectPage(IndividualFilesQuery query) {
-        Page<IndividualEmployeeFiles> page = this.lambdaQuery()
-                .like(StringUtils.isNotBlank(query.getAccount()), IndividualEmployeeFiles::getAccount, query.getAccount())
-                .like(StringUtils.isNotBlank(query.getAccountName()), IndividualEmployeeFiles::getAccountName, query.getAccountName())
-                .like(StringUtils.isNotBlank(query.getEmployeeName()), IndividualEmployeeFiles::getEmployeeName, query.getEmployeeName())
-                .like(StringUtils.isNotBlank(query.getBatchNo()), IndividualEmployeeFiles::getBatchNo, query.getBatchNo())
-                .like(StringUtils.isNotBlank(query.getDepartmentName()), IndividualEmployeeFiles::getDepartmentName, query.getDepartmentName())
-                .like(StringUtils.isNotBlank(query.getDepositBank()), IndividualEmployeeFiles::getDepositBank, query.getDepositBank())
-                .like(StringUtils.isNotBlank(query.getIssuedUnit()), IndividualEmployeeFiles::getIssuedUnit, query.getIssuedUnit())
-                .like(StringUtils.isNotBlank(query.getProvinceOrRegion()), IndividualEmployeeFiles::getProvinceOrRegion, query.getProvinceOrRegion())
-                .like(StringUtils.isNotBlank(query.getReleaseOpinions()), IndividualEmployeeFiles::getReleaseOpinions, query.getReleaseOpinions())
-                .like(query.getEmployeeJobNum() != null, IndividualEmployeeFiles::getEmployeeJobNum, query.getEmployeeJobNum())
-                .eq(query.getStatus() != null, IndividualEmployeeFiles::getStatus, query.getStatus())
-                .page(new Page<>(query.getPageNum(), query.getPageSize()));
+        Page<IndividualEmployeeFiles> page = getSimplePage(query);
         if(CollectionUtils.isEmpty(page.getRecords()) ){
             return new Page<>();
         }
@@ -69,6 +57,28 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
 
         return convert;
 
+    }
+
+    private Page<IndividualEmployeeFiles>  getSimplePage(IndividualFilesQuery query){
+        List<String> unitsIds = new ArrayList<>();
+        if(StringUtils.isNotBlank(query.getIssuedUnit())){
+            unitsIds = UnitCache.getByFuzzyName(query.getIssuedUnit());
+        }
+        Page<IndividualEmployeeFiles> page = this.lambdaQuery()
+                .like(StringUtils.isNotBlank(query.getAccount()), IndividualEmployeeFiles::getAccount, query.getAccount())
+                .like(StringUtils.isNotBlank(query.getAccountName()), IndividualEmployeeFiles::getAccountName, query.getAccountName())
+                .like(StringUtils.isNotBlank(query.getEmployeeName()), IndividualEmployeeFiles::getEmployeeName, query.getEmployeeName())
+                .like(StringUtils.isNotBlank(query.getBatchNo()), IndividualEmployeeFiles::getBatchNo, query.getBatchNo())
+                .like(StringUtils.isNotBlank(query.getDepartmentName()), IndividualEmployeeFiles::getDepartmentName, query.getDepartmentName())
+                .like(StringUtils.isNotBlank(query.getDepositBank()), IndividualEmployeeFiles::getDepositBank, query.getDepositBank())
+                .in(CollectionUtils.isNotEmpty(unitsIds), IndividualEmployeeFiles::getIssuedUnit, unitsIds)
+                .like(StringUtils.isNotBlank(query.getProvinceOrRegion()), IndividualEmployeeFiles::getProvinceOrRegion, query.getProvinceOrRegion())
+                .like(StringUtils.isNotBlank(query.getReleaseOpinions()), IndividualEmployeeFiles::getReleaseOpinions, query.getReleaseOpinions())
+                .like(query.getEmployeeJobNum() != null, IndividualEmployeeFiles::getEmployeeJobNum, query.getEmployeeJobNum())
+                .eq(query.getStatus() != null, IndividualEmployeeFiles::getStatus, query.getStatus())
+                .eq(query.getAccountType() != null, IndividualEmployeeFiles::getAccountType, query.getAccountType())
+                .page(new Page<>(query.getPageNum(), query.getPageSize()));
+        return page;
     }
 
     @Override
@@ -118,21 +128,12 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
 
     @Override
     public List<IndividualExportDTO> exportIndividual(IndividualFilesQuery query) {
-
-        List<IndividualEmployeeFiles> list = this.lambdaQuery()
-                .like(StringUtils.isNotBlank(query.getAccount()), IndividualEmployeeFiles::getAccount, query.getAccount())
-                .like(StringUtils.isNotBlank(query.getAccountName()), IndividualEmployeeFiles::getAccountName, query.getAccountName())
-                .like(StringUtils.isNotBlank(query.getEmployeeName()), IndividualEmployeeFiles::getEmployeeName, query.getEmployeeName())
-                .like(StringUtils.isNotBlank(query.getBatchNo()), IndividualEmployeeFiles::getBatchNo, query.getBatchNo())
-                .like(StringUtils.isNotBlank(query.getDepartmentName()), IndividualEmployeeFiles::getDepartmentName, query.getDepartmentName())
-                .like(StringUtils.isNotBlank(query.getDepositBank()), IndividualEmployeeFiles::getDepositBank, query.getDepositBank())
-                .like(StringUtils.isNotBlank(query.getIssuedUnit()), IndividualEmployeeFiles::getIssuedUnit, query.getIssuedUnit())
-                .like(StringUtils.isNotBlank(query.getProvinceOrRegion()), IndividualEmployeeFiles::getProvinceOrRegion, query.getProvinceOrRegion())
-                .like(StringUtils.isNotBlank(query.getReleaseOpinions()), IndividualEmployeeFiles::getReleaseOpinions, query.getReleaseOpinions())
-                .like(query.getEmployeeJobNum() != null, IndividualEmployeeFiles::getEmployeeJobNum, query.getEmployeeJobNum())
-                .eq(query.getStatus() != null, IndividualEmployeeFiles::getStatus, query.getStatus()).list();
+        query.setPageSize(-1);
+        Page<IndividualEmployeeFiles> page = getSimplePage(query);
+        List<IndividualEmployeeFiles> list = page.getRecords();
         List<IndividualExportDTO> dtoList = IndividualEmployeeFilesConverter.INSTANCE.entityToExportDTOList(list);
         for (IndividualExportDTO dto : dtoList) {
+            dto.setAccountType(dto.getAccountType().equals("1")?"个卡":"公户");
             dto.setDepositBank(BankCache.getBankByBranchCode(dto.getDepositBank())!=null
                     ?BankCache.getBankByBranchCode(dto.getDepositBank()).getSubBranchName():dto.getDepositBank());
             dto.setIssuedUnit(UnitCache.get(dto.getIssuedUnit())!=null?
@@ -160,6 +161,7 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
                         for (IndividualImportDTO dto : dataList) {
                             try {
                                     IndividualEmployeeFiles entity = IndividualEmployeeFilesConverter.INSTANCE.importDTOToEntity(dto);
+                                    entity.setAccountType(dto.getAccountType().equals("个卡")?1:2);
                                     //通过名称 找id
                                     entity.setDepositBank(BankCache.getBankByBranchName(entity.getDepositBank()) != null ?
                                             BankCache.getBankByBranchName(entity.getDepositBank()).getSubBranchCode() : entity.getDepositBank());

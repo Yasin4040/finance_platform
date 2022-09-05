@@ -4,9 +4,12 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.jtyjy.finance.manager.bean.IndividualEmployeeTicketReceiptInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.jtyjy.finance.manager.dto.individual.IndividualTicketDTO;
+import com.jtyjy.finance.manager.dto.individual.IndividualTicketImportErrorDTO;
 import com.jtyjy.finance.manager.query.individual.IndividualTicketQuery;
 import com.jtyjy.finance.manager.vo.individual.IndividualTicketVO;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 /**
 * @author User
@@ -21,5 +24,5 @@ public interface IndividualEmployeeTicketReceiptInfoService extends IService<Ind
 
     void updateTicket(IndividualTicketDTO dto);
 
-    void importTicket(MultipartFile multipartFile);
+    List<IndividualTicketImportErrorDTO> importTicket(MultipartFile multipartFile);
 }

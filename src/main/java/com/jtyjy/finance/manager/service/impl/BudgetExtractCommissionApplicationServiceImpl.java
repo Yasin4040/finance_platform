@@ -18,13 +18,11 @@ import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationBudge
 import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationLogService;
 import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationService;
 import com.jtyjy.finance.manager.service.IndividualEmployeeFilesService;
-import com.jtyjy.finance.manager.vo.application.BudgetDetailsVO;
-import com.jtyjy.finance.manager.vo.application.CommissionApplicationInfoVO;
-import com.jtyjy.finance.manager.vo.application.CommissionDetailsVO;
-import com.jtyjy.finance.manager.vo.application.DistributionDetailsVO;
+import com.jtyjy.finance.manager.vo.application.*;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
@@ -82,6 +80,11 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                 CommissionDetailsVO detailsVO = new CommissionDetailsVO();
                 detailsVO.setId(importDetail.getId());
                 detailsVO.setCommissionTypeName(importDetail.getExtractType());
+
+                //用 cache mapper层缓存
+                String yearName = yearMapper.getNameById(importDetail.getYearid());
+                detailsVO.setYearId(yearName);
+
                 detailsVO.setYearId(importDetail.getYearid().toString()+"届");
                 detailsVO.setApplyAmount(importDetail.getShouldSendExtract());
                 detailsVO.setActualAmount(importDetail.getCopeextract());
@@ -117,6 +120,40 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateApplicationInfo(CommissionApplicationInfoUpdateVO updateVO) {
+        BudgetExtractCommissionApplication application = this.getById(updateVO.getApplicationId());
+        application.setRemarks(updateVO.getRemarks());
+        application.setPaymentReason(updateVO.getPaymentReason());
+        List<BudgetDetailsVO> budgetList = updateVO.getBudgetList();
+        for (BudgetDetailsVO budgetDetailsVO : budgetList) {
+            Long budgetId = budgetDetailsVO.getId();
+            BudgetExtractCommissionApplicationBudgetDetails budgetDetail = new BudgetExtractCommissionApplicationBudgetDetails();
+            if(budgetId != null){
+                budgetDetail = budgetDetailsService.getById(budgetId);
+                budgetDetail.setUpdateBy(UserThreadLocal.getEmpNo());
+                budgetDetail.setUpdateTime(new Date());
+//                budgetDetail.setu
+            }else{
+                budgetDetail.setApplicationId(updateVO.getApplicationId());
+
+                budgetDetail.setCreateBy(UserThreadLocal.getEmpNo());
+                budgetDetail.setCreateTime(new Date());
+                budgetDetail.setUpdateBy(UserThreadLocal.getEmpNo());
+                budgetDetail.setUpdateTime(new Date());
+            }
+
+            budgetDetail.setMotivationId(budgetDetailsVO.getMotivationId());
+            budgetDetail.setMotivationName(budgetDetailsVO.getMotivationName());
+
+            budgetDetail.setSubjectId(budgetDetailsVO.getSubjectId());
+            budgetDetail.setSubjectCode(budgetDetailsVO.getSubjectCode());
+            budgetDetail.setSubjectName(budgetDetailsVO.getSubjectName());
+            budgetDetail.setBudgetAmount(budgetDetailsVO.getBudgetAmount());
+            budgetDetailsService.saveOrUpdate(budgetDetail);
+        }
+    }
+    @Override
     public void updateStatusBySumId(String sumId, Integer status) {
         Optional<BudgetExtractCommissionApplication> applicationOptional = getApplicationBySumId(sumId);
         if (applicationOptional.isPresent()) {
@@ -150,6 +187,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             budgetExtractsum.setStatus(ExtractStatusEnum.DRAFT.getType());
             extractSumMapper.updateById(budgetExtractsum);
         }
+        throw new BusinessException("申请单不存在");
     }
 
 

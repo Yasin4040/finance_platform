@@ -13,6 +13,7 @@ import com.jtyjy.finance.manager.utils.EasyExcelUtil;
 import com.jtyjy.finance.manager.vo.individual.IndividualTicketVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -118,10 +119,14 @@ public class IndividualEmployeeTicketController {
      */
     @ApiOperation(value = "个体户收票信息 导入", httpMethod = "POST")
     @PostMapping("/importTicket")
-    public ResponseEntity importTicket(@RequestParam("file") MultipartFile multipartFile) throws Exception {
+    public ResponseEntity importTicket(@RequestParam("file") MultipartFile multipartFile,HttpServletResponse response) throws Exception {
         try {
-            ticketService.importTicket(multipartFile);
-        } catch (Exception e) {
+            List<IndividualTicketImportErrorDTO> errorDTOList = ticketService.importTicket(multipartFile);
+            if (CollectionUtils.isNotEmpty(errorDTOList)) {
+                EasyExcelUtil.writeExcel(response, errorDTOList, "个体户收票信息错误明细", "个体户收票信息错误明细", IndividualImportErrorDTO.class);
+                return null;
+            }
+        }catch (Exception e) {
             return ResponseEntity.error(e.getMessage());
         }
         return ResponseEntity.ok();
