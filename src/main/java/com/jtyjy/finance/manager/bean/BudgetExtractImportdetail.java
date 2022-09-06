@@ -1,175 +1,110 @@
 package com.jtyjy.finance.manager.bean;
 
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.util.Date;
-
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-
-import io.swagger.annotations.ApiModelProperty;
-import io.swagger.annotations.ApiParam;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Date;
 import lombok.Data;
 
 /**
- * @author Admin
+ * 导入明细
+ * @TableName budget_extract_importdetail
  */
-@TableName(value = "budget_extract_importdetail")
+@TableName(value ="budget_extract_importdetail")
 @Data
 public class BudgetExtractImportdetail implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
     /**
-     * 未知参数
+     * 
      */
-    @ApiParam(hidden = true)
-    @TableId(type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
     /**
      * 提成主表id
      */
-    @ApiParam(hidden = true)
     @TableField(value = "extractsumid")
+
     private Long extractsumid;
 
     /**
      * 提成明细id
      */
-    @ApiParam(hidden = true)
     @TableField(value = "extractdetailid")
     private Long extractdetailid;
 
     /**
      * 届别
      */
-    @NotNull(message = "提成届别不能为空")
-    @ApiModelProperty(hidden = false, value = "提成届别")
     @TableField(value = "yearid")
+//    @ExcelProperty(value = "届别")
     private Long yearid;
 
     /**
      * 是否是公司员工
      */
-    @NotNull(message = "是否公司员工不能为空")
-    @ApiModelProperty(hidden = false, value = "是否公司员工")
     @TableField(value = "iscompanyemp")
     private Boolean iscompanyemp;
 
     /**
      * 是否是坏账
      */
-    @NotNull(message = "是否坏账不能为空")
-    @ApiModelProperty(hidden = false, value = "是否坏账")
     @TableField(value = "isbaddebt")
     private Boolean isbaddebt;
 
     /**
-     * 员工id
+     * 
      */
-    @NotBlank(message = "提成人员不能为空")
-    @ApiModelProperty(hidden = false, value = "提成人员")
     @TableField(value = "empid")
     private String empid;
 
     /**
-     * 未知参数
+     * 
      */
-    @ApiParam(hidden = true)
     @TableField(value = "idnumber")
     private String idnumber;
 
     /**
      * 工号
      */
-    @ApiParam(hidden = true)
     @TableField(value = "empno")
     private String empno;
 
     /**
      * 名称
      */
-    @ApiParam(hidden = true)
     @TableField(value = "empname")
     private String empname;
 
     /**
-     * 实发提成
+     * 
      */
-    @NotNull(message = "实发提成不能为空")
-    @ApiModelProperty(hidden = false, value = "实发提成")
-    @TableField(value = "copeextract")
-    private BigDecimal copeextract;
-
-    /**
-     * 综合税
-     */
-    @NotNull(message = "提成个税不能为空")
-    @ApiModelProperty(hidden = false, value = "提成个税")
-    @TableField(value = "consotax")
-    private BigDecimal consotax;
-
-
-    @ApiModelProperty(hidden = false, value = "提成类型(2021-12月新增)")
-    @TableField(value = "extract_type")
-    private String extractType;
-
-    @ApiModelProperty(hidden = false, value = "应发提成(2021-12月新增)")
-    @TableField(value = "should_send_extract")
-    private BigDecimal shouldSendExtract = BigDecimal.ZERO;
-
-    @ApiModelProperty(hidden = false, value = "个税(2021-12月新增)")
-    @TableField(value = "tax")
-    private BigDecimal tax = BigDecimal.ZERO;
-
-    @ApiModelProperty(hidden = false, value = "个税减免(2021-12月新增)")
-    @TableField(value = "tax_reduction")
-    private BigDecimal taxReduction= BigDecimal.ZERO;
-
-    @ApiModelProperty(hidden = false, value = "发票超额税金(2021-12月新增)")
-    @TableField(value = "invoice_excess_tax")
-    private BigDecimal invoiceExcessTax= BigDecimal.ZERO;
-
-    @ApiModelProperty(hidden = false, value = "发票超额税金减免(2021-12月新增)")
-    @TableField(value = "invoice_excess_tax_reduction")
-    private BigDecimal invoiceExcessTaxReduction= BigDecimal.ZERO;
-    /**
-     * 员工个体户id
-     */
-    @ApiModelProperty(value = "员工个体户id", hidden = false)
-    @TableField(value = "individual_employee_id")
-    private Long individualEmployeeId;
-    /**
-     * 未知参数
-     */
-    @ApiParam(hidden = true)
     @TableField(value = "createtime")
     private Date createtime;
 
-    //创建人 工号"
-    @TableField(value = "create_by")
-    private String createBy;
-
     /**
-     * 未知参数
+     * 
      */
-    @ApiParam(hidden = true)
     @TableField(value = "updatetime")
     private Date updatetime;
 
+    /**
+     * 提成类型(2021-12月新增)
+提成类型(2022-8月新增 两个状态)
 
-    @TableField(value = "update_by")
-    private String updateBy;
-    //新增
+   “1期间提成”、 “2扎账总提成”、“3扎帐后提成”、“4坏账明细”、“5绩效奖提成”、“6预提绩效奖”
+     */
+    @TableField(value = "extract_type")
+    private String extractType;
 
-
+    /**
+     * 员工个体户id
+     */
+    @TableField(value = "individual_employee_id")
+    private Long individualEmployeeId;
 
     /**
      * 码洋
@@ -178,22 +113,64 @@ public class BudgetExtractImportdetail implements Serializable {
     private BigDecimal totalPrice;
 
     /**
-     * 本期回款
+     * 实洋
      */
-    @TableField(value = "current_collection")
-    private BigDecimal currentCollection;
+    @TableField(value = "actual_price")
+    private BigDecimal actualPrice;
 
     /**
-     * 底价
+     * 回款
      */
-    @TableField(value = "floor_price")
-    private BigDecimal floorPrice;
+    @TableField(value = "collection")
+    private BigDecimal collection;
 
     /**
-     * 结算提成
+     * 收入
      */
-    @TableField(value = "settlement_commission")
-    private BigDecimal settlementCommission;
+    @TableField(value = "income")
+    private BigDecimal income;
+
+    /**
+     * 在职帮离职回款成本
+     */
+    @TableField(value = "help_collection_host")
+    private BigDecimal helpCollectionHost;
+
+    /**
+     * 到款剥离
+     */
+    @TableField(value = "stripping_received_funds")
+    private BigDecimal strippingReceivedFunds;
+
+    /**
+     * 常规提成
+     */
+    @TableField(value = "regular_commission")
+    private BigDecimal regularCommission;
+
+    /**
+     * 接手提成
+     */
+    @TableField(value = "take_over_the_commission")
+    private BigDecimal takeOverTheCommission;
+
+    /**
+     * 特价提成
+     */
+    @TableField(value = "special_commission")
+    private BigDecimal specialCommission;
+
+    /**
+     * 总提成
+     */
+    @TableField(value = "total_royalty")
+    private BigDecimal totalRoyalty;
+
+    /**
+     * 已发提成
+     */
+    @TableField(value = "paid_commission")
+    private BigDecimal paidCommission;
 
     /**
      * 预留提成
@@ -202,34 +179,115 @@ public class BudgetExtractImportdetail implements Serializable {
     private BigDecimal reservedCommission;
 
     /**
+     * 应发提成(2021-12月新增)
+申请提成
+     */
+    @TableField(value = "should_send_extract")
+    private BigDecimal shouldSendExtract;
+
+    /**
+     * 提成个税
+     */
+    @TableField(value = "tax")
+    private BigDecimal tax;
+
+    /**
      * 返提成个税
      */
-    @TableField(value = "return_commission_income_tax")
-    private BigDecimal returnCommissionIncomeTax;
+    @TableField(value = "tax_reduction")
+    private BigDecimal taxReduction;
 
     /**
-     * 扣往届扎帐成本
+     * 综合税
      */
-    @TableField(value = "deduct_cost_previous_accounts")
-    private BigDecimal deductCostPreviousAccounts;
+    @TableField(value = "consotax")
+    private BigDecimal consotax;
 
     /**
-     * 扣发票超额税金
+     * 发票超额税金(2021-12月新增)
      */
-    @TableField(value = "deduct_excess_tax_invoice")
-    private BigDecimal deductExcessTaxInvoice;
+    @TableField(value = "invoice_excess_tax")
+    private BigDecimal invoiceExcessTax;
 
     /**
      * 返发票超额税金
      */
-    @TableField(value = "refund_excess_tax_invoice")
-    private BigDecimal refundExcessTaxInvoice;
+    @TableField(value = "invoice_excess_tax_reduction")
+    private BigDecimal invoiceExcessTaxReduction;
 
     /**
-     * 扣退货品承担
+     * 往届发票超额税金
      */
-    @TableField(value = "dutyHoldingReturningGoods")
-    private BigDecimal dutyholdingreturninggoods;
+    @TableField(value = "excess_tax_previous_invoices")
+    private BigDecimal excessTaxPreviousInvoices;
+
+    /**
+     * 滞纳金
+     */
+    @TableField(value = "late_fee")
+    private BigDecimal lateFee;
+
+    /**
+     * 发货物流费
+     */
+    @TableField(value = "delivery_logistics_fee")
+    private BigDecimal deliveryLogisticsFee;
+
+    /**
+     * 发件费用
+     */
+    @TableField(value = "shipping_cost")
+    private BigDecimal shippingCost;
+
+    /**
+     * 发样成本
+     */
+    @TableField(value = "sample_issuing_cost")
+    private BigDecimal sampleIssuingCost;
+
+    /**
+     * 退货物流费
+     */
+    @TableField(value = "return_logistics_fee")
+    private BigDecimal returnLogisticsFee;
+
+    /**
+     * 退货成本
+     */
+    @TableField(value = "return_cost")
+    private BigDecimal returnCost;
+
+    /**
+     * 铺货成本
+
+     */
+    @TableField(value = "distribution_cost")
+    private BigDecimal distributionCost;
+
+    /**
+     * 分班打包费
+     */
+    @TableField(value = "shift_packing_fee")
+    private BigDecimal shiftPackingFee;
+
+    /**
+     * 礼品费
+     */
+    @TableField(value = "gift_fee")
+    private BigDecimal giftFee;
+
+    /**
+     * 坏账考核
+
+     */
+    @TableField(value = "bad_debt_assessment")
+    private BigDecimal badDebtAssessment;
+
+    /**
+     * 未达标罚款
+     */
+    @TableField(value = "non_conformance_penalty")
+    private BigDecimal nonConformancePenalty;
 
     /**
      * 往来扣款
@@ -250,8 +308,43 @@ public class BudgetExtractImportdetail implements Serializable {
     private BigDecimal deductCreditInformation;
 
     /**
+     * 业务员垫支
+
+     */
+    @TableField(value = "salesman_advance")
+    private BigDecimal salesmanAdvance;
+
+    /**
+     * 其他类型 扣款
+     */
+    @TableField(value = "other_types_deduction")
+    private BigDecimal otherTypesDeduction;
+
+    /**
      * 扣款小计
      */
     @TableField(value = "subtotal_deduction")
     private BigDecimal subtotalDeduction;
+
+    /**
+     *实发金额
+     */
+    @TableField(value = "copeextract")
+    private BigDecimal copeextract;
+
+    /**
+     * 更新人 工号
+     */
+    @TableField(value = "update_by")
+    private String updateBy;
+
+    /**
+     * 创建人 工号
+     */
+    @TableField(value = "create_by")
+    private String createBy;
+
+    @TableField(exist = false)
+    private static final long serialVersionUID = 1L;
+
 }

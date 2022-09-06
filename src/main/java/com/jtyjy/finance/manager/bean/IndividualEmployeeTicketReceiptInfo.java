@@ -22,6 +22,9 @@ public class IndividualEmployeeTicketReceiptInfo implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
+    @TableField(value = "ticket_id")
+    private Long ticketId;
+
     /**
      * 员工工号
      */

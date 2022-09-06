@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetCommonAttachmentMapper">
+
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetCommonAttachment">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="contactId" column="contact_id" jdbcType="BIGINT"/>
+            <result property="fileType" column="file_type" jdbcType="INTEGER"/>
+            <result property="fileUrl" column="file_url" jdbcType="VARCHAR"/>
+            <result property="fileExtName" column="file_ext_name" jdbcType="VARCHAR"/>
+            <result property="fileName" column="file_name" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="creator" column="creator" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,contact_id,file_type,
+        file_url,file_ext_name,file_name,
+        create_time,creator
+    </sql>
+</mapper>

@@ -4,17 +4,22 @@ import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.jtyjy.common.enmus.StatusCodeEnmus;
+import com.jtyjy.core.auth.anno.ApiDataAuthAnno;
+import com.jtyjy.core.local.JdbcSqlThreadLocal;
 import com.jtyjy.core.redis.RedisClient;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.result.ResponseEntity;
+import com.jtyjy.finance.manager.dto.commission.CommissionDetailsImportDTO;
 import com.jtyjy.finance.manager.easyexcel.EasyExcelImportListener;
 import com.jtyjy.finance.manager.easyexcel.ExtractInfoExportExcelData;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationService;
 import com.jtyjy.finance.manager.service.BudgetExtractsumService;
 import com.jtyjy.finance.manager.utils.EasyExcelUtil;
+import com.jtyjy.finance.manager.vo.BudgetSubjectAgentVO;
 import com.jtyjy.finance.manager.vo.ExtractImportDetailVO;
 import com.jtyjy.finance.manager.vo.ExtractInfoVO;
+import com.jtyjy.finance.manager.vo.application.BudgetSubjectVO;
 import com.jtyjy.finance.manager.vo.application.CommissionApplicationInfoUpdateVO;
 import com.jtyjy.finance.manager.vo.application.CommissionApplicationInfoVO;
 import com.klcwqy.easy.lock.impl.ZookeeperShareLock;
@@ -23,6 +28,7 @@ import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +41,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -181,120 +189,135 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
             return ResponseEntity.error(e.getMessage());
         }
     }
-//
-//
-//    /**
-//     * 下载模板。
-//     */
-//    @ApiOperation(value = "提成明细  下载模板", httpMethod = "GET")
-//    @GetMapping("/downLoadTemplate")
-//    public void downExtractImportTemplate(HttpServletResponse response) throws Exception {
-//        try (InputStream is = this.getClass().getClassLoader().getResourceAsStream("template/extractImportTemplateNew.xlsx")) {
-//            ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream("提成导入模板", response)).withTemplate(is).build();
-//            WriteSheet sheet = EasyExcel.writerSheet(0).build();
-//            List<Map<String, Object>> list = new ArrayList<>();
-//            workBook.fill(list, sheet);
-//            workBook.finish();
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            log.error(e.getMessage(), e);
-//            throw e;
-//        }
-//    }
-//
-//
-//    @ApiOperation(value = "导入提成明细", httpMethod = "POST")
-//    @ApiImplicitParams(value = {
-//            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
-//    })
-//    @PostMapping("/importTemplate")
-//    public ResponseEntity importTemplate(@RequestParam(name = "file") MultipartFile file, @RequestParam(name = "batchNo") String batchNo, HttpServletResponse response, HttpServletRequest request) throws IOException {
-//        InputStream is = null;
-//        int headRows = 2; //表示表头有3行
-//        int colNum = 13; //列数
-//        EasyExcelImportListener extractListener = new EasyExcelImportListener(extractsumService, TCIMPORT, headRows, colNum, batchNo);
-//        try {
-//            is = file.getInputStream();
-//            EasyExcel.read(is, extractListener).sheet(0).doReadSync();
-//        } catch (IOException e1) {
-//            e1.printStackTrace();
-//            log.error(e1.getMessage(), e1);
-//            return ResponseEntity.error(e1.getMessage());
-//        } finally {
-//            try {
-//                is.close();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//                log.error(e.getMessage(), e);
-//                return ResponseEntity.error(e.getMessage());
-//            }
-//        }
-//        //表头错误明细（如果表头报错明细数据将不会校验）
-//        List<String> headErrorMsg = extractListener.getHeadErrorMsg();
-//        //明细数据的错误明细
-//        Map<Integer, Map<Integer, String>> errorMap = extractListener.getErrorMap();
-//        //导入的所有的数据
-//        Map<Integer, Map<Integer, String>> allDataMap = extractListener.getAllDataMap();
-//        if (!headErrorMsg.isEmpty() || !errorMap.isEmpty()) {
-//
-//            List<ExtractInfoExportExcelData> details = new ArrayList<>();
-//            //最终的表头数据
-//            Map<String, String> heads = new HashMap<>();
-//            //填充错误明细数据
-//            populateData(details, heads, allDataMap, headErrorMsg, errorMap);
-//
-//            InputStream iss = null;
-//            try {
-//                iss = this.getClass().getClassLoader().getResourceAsStream("template/extractImportTemplate.xlsx");
-//                String key = IMPORT_TYPE + "_" + UserThreadLocal.get().getUserName();
-//                String errorFileName = fileShareDir + File.separator + System.currentTimeMillis() + "_错误信息.xlsx";
-//                ExcelWriter workBook = EasyExcel.write(new File(errorFileName), ExtractInfoExportExcelData.class).withTemplate(iss).build();
-//                WriteSheet sheet = EasyExcel.writerSheet(0).build();
-//                sheet.setSheetName("提成导入错误明细");
-//                workBook.fill(heads, sheet);
-//                workBook.fill(details, sheet);
-//                workBook.finish();
-//                redisClient.set(key, errorFileName, expiretime);
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//                log.error(e.getMessage(), e);
-//            } finally {
-//                if (iss != null) iss.close();
-//            }
-//            return ResponseEntity.apply(StatusCodeEnmus.ERROR_FORMAT, "文件导入有错误,请点击此处下载");
-//        }
-//        return ResponseEntity.ok("导入成功");
-//    }
-//    @ApiOperation(value = "下载导入提成错误明细", httpMethod = "GET")
-//    @ApiImplicitParams(value = {
-//            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
-//    })
-//    @GetMapping("/downImportExtractErrorDetail")
-//    public void downImportExtractErrorDetail(HttpServletResponse response, HttpServletRequest request) throws Exception {
-//
-//        InputStream is = null;
-//        try {
-//            if (redisClient.get(IMPORT_TYPE + "_" + UserThreadLocal.get().getUserName()) == null) {
-//                throw new RuntimeException("没有提成错误明细可供下载。");
-//            }
-//            String errorFileName = redisClient.get(IMPORT_TYPE + "_" + UserThreadLocal.get().getUserName());
-//            is = new FileInputStream(errorFileName);
-//            ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream("提成导入错误明细", response)).withTemplate(is).build();
-//            WriteSheet sheet = EasyExcel.writerSheet(0).build();
-//            workBook.finish();
-//            File file = new File(errorFileName);
-//            if (file.exists()) file.delete();
-//            redisClient.delete(IMPORT_TYPE + "_" + UserThreadLocal.get().getUserName());
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            log.error(e.getMessage(), e);
-//            throw e;
-//        } finally {
-//            if (is != null) is.close();
-//        }
-//    }
-//
+    @ApiOperation(value = "税务退回", httpMethod = "GET")
+    @GetMapping("/taxReturn")
+    public ResponseEntity taxReturn(@RequestParam String sumId) {
+        try {
+            //撤回申请单。 -2 作废 。
+            Integer status = -1;
+            applicationService.updateStatusBySumId(sumId,status);
+            return ResponseEntity.ok();
+        } catch (Exception e) {
+            return ResponseEntity.error(e.getMessage());
+        }
+    }
+
+
+    @ApiOperation(value = "导入提成明细", httpMethod = "POST")
+    @ApiImplicitParams(value = {
+            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
+    })
+    @PostMapping("/importTemplate")
+    public ResponseEntity importTemplate(@RequestParam(name = "file") MultipartFile file,@RequestParam(name = "batchNo",required = false) String batchNo, HttpServletResponse response, HttpServletRequest request) throws IOException {
+        InputStream is = null;
+        int headRows = 3; //表示表头有4行
+        int colNum = 42; //43列数
+        EasyExcelImportListener extractListener = new EasyExcelImportListener(extractsumService, TCIMPORT, headRows ,colNum,batchNo);
+        try {
+            is = file.getInputStream();
+            EasyExcel.read(is, extractListener).sheet(0).doReadSync();
+        } catch (IOException e1) {
+            e1.printStackTrace();
+            log.error(e1.getMessage(), e1);
+            return ResponseEntity.error(e1.getMessage());
+        } finally {
+            try {
+                is.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+                log.error(e.getMessage(), e);
+                return ResponseEntity.error(e.getMessage());
+            }
+        }
+        //表头错误明细（如果表头报错明细数据将不会校验）
+        List<String> headErrorMsg = extractListener.getHeadErrorMsg();
+        //明细数据的错误明细
+        Map<Integer, Map<Integer, String>> errorMap = extractListener.getErrorMap();
+        //导入的所有的数据
+        Map<Integer, Map<Integer, String>> allDataMap = extractListener.getAllDataMap();
+        if (!headErrorMsg.isEmpty() || !errorMap.isEmpty()) {
+
+            List<CommissionDetailsImportDTO> details = new ArrayList<>();
+            //最终的表头数据
+            Map<String, String> heads = new HashMap<>();
+            //填充错误明细数据
+            populateData(details, heads, allDataMap, headErrorMsg, errorMap);
+
+            InputStream iss = null;
+            try {
+                iss = this.getClass().getClassLoader().getResourceAsStream("template/extractImportTemplateNew.xlsx");
+                String key = IMPORT_TYPE + "_" + UserThreadLocal.get().getUserName();
+                String errorFileName = fileShareDir + File.separator + System.currentTimeMillis() + "_错误信息.xlsx";
+                ExcelWriter workBook = EasyExcel.write(new File(errorFileName), CommissionDetailsImportDTO.class).withTemplate(iss).build();
+                WriteSheet sheet = EasyExcel.writerSheet(0).build();
+                sheet.setSheetName("提成导入错误明细");
+                workBook.fill(heads, sheet);
+                workBook.fill(details, sheet);
+                workBook.finish();
+                redisClient.set(key, errorFileName, expiretime);
+            } catch (Exception e) {
+                e.printStackTrace();
+                log.error(e.getMessage(), e);
+            } finally {
+                if (iss != null) iss.close();
+            }
+            return ResponseEntity.apply(StatusCodeEnmus.ERROR_FORMAT, "文件导入有错误,请点击此处下载");
+        }
+        return ResponseEntity.ok("导入成功");
+    }
+
+
+
+    /**
+     * 下载模板。
+     */
+    @ApiOperation(value = "提成明细  下载模板", httpMethod = "GET")
+    @GetMapping("/downLoadTemplate")
+    public void downLoadTemplate(HttpServletResponse response) throws Exception {
+        try (InputStream is = this.getClass().getClassLoader().getResourceAsStream("template/extractImportTemplateNew.xlsx")) {
+            ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream("提成导入模板", response)).withTemplate(is).build();
+            WriteSheet sheet = EasyExcel.writerSheet(0).build();
+            List<Map<String, Object>> list = new ArrayList<>();
+            workBook.fill(list, sheet);
+            workBook.finish();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+
+    @ApiOperation(value = "下载导入提成错误明细", httpMethod = "GET")
+    @ApiImplicitParams(value = {
+            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
+    })
+    @GetMapping("/downImportExtractErrorDetail")
+    public void downImportExtractErrorDetail(HttpServletResponse response, HttpServletRequest request) throws Exception {
+
+        InputStream is = null;
+        try {
+            if (redisClient.get(IMPORT_TYPE + "_" + UserThreadLocal.get().getUserName()) == null) {
+                throw new RuntimeException("没有提成错误明细可供下载。");
+            }
+            String errorFileName = redisClient.get(IMPORT_TYPE + "_" + UserThreadLocal.get().getUserName());
+            is = new FileInputStream(errorFileName);
+            ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream("提成导入错误明细", response)).withTemplate(is).build();
+            WriteSheet sheet = EasyExcel.writerSheet(0).build();
+            workBook.finish();
+            File file = new File(errorFileName);
+            if (file.exists()) file.delete();
+            redisClient.delete(IMPORT_TYPE + "_" + UserThreadLocal.get().getUserName());
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage(), e);
+            throw e;
+        } finally {
+            if (is != null) is.close();
+        }
+    }
+
 //
 //    @ApiOperation(value = "提交", httpMethod = "GET")
 //    @ApiImplicitParams(value = {
@@ -339,91 +362,212 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
 //            return ResponseEntity.error(e.getMessage());
 //        }
 //    }
-//    /**
-//     * 填充导入提成错误的数据
-//     *
-//     * @param details
-//     * @param heads
-//     * @param allDataMap
-//     * @param headErrorMsg
-//     * @param errorMap
-//     */
-//    private void populateData(List<ExtractInfoExportExcelData> details,
-//                              Map<String, String> heads, Map<Integer, Map<Integer, String>> allDataMap, List<String> headErrorMsg, Map<Integer, Map<Integer, String>> errorMap) {
-//        Map<Integer, String> headMap = allDataMap.get(1);
-//        String year = headMap.get(1); //届别
-//        String extractMonth = headMap.get(3); //提成期间
-//        String unitname = headMap.get(5); //预算单位
-//        if (!headErrorMsg.isEmpty()) {
-//            for (int i = 3; i <= allDataMap.size(); i++) {
-//                ExtractInfoExportExcelData ed = new ExtractInfoExportExcelData();
-//                Map<Integer, String> data = allDataMap.get(i);
-//                String isCompanyEmp = data.get(0); //是否公司员工
-//                ed.setIsCompanyEmp(isCompanyEmp);
-//                String empNo = data.get(1); //工号
-//                ed.setEmpNo(empNo);
-//                String empName = data.get(2); //姓名
-//                ed.setEmpName(empName);
-//                String sftc = data.get(3); //实发提成
-//                ed.setCopeextract(sftc);
-//                String zhs = data.get(4); //综合税
-//                ed.setConsotax(zhs);
-//                String tcPeriod = data.get(5); //提成届别
-//                ed.setExtractPeriod(tcPeriod);
-//                String isDebt = data.get(6); //是否坏账
-//                ed.setIsBadDebt(isDebt);
-//                String extractType = data.get(7);//提成类型
-//                ed.setExtractType(extractType);
-//                String shouldSendExtract = data.get(8);//应发提成
-//                ed.setShouldSendExtract(shouldSendExtract);
-//                String tax = data.get(9);//个税
-//                ed.setTax(tax);
-//                String taxReduction = data.get(10);//个税减免
-//                ed.setTaxReduction(taxReduction);
-//                String invoiceExcessTax = data.get(11);//发票超额税金
-//                ed.setInvoiceExcessTax(invoiceExcessTax);
-//                String invoiceExcessTaxReduction = data.get(12);//发票超额税金减免
-//                ed.setInvoiceExcessTaxReduction(invoiceExcessTaxReduction);
-//                ed.setErrMsg(headErrorMsg.stream().collect(Collectors.joining(",")));
-//                details.add(ed);
-//            }
-//        } else if (!errorMap.isEmpty()) {
-//            errorMap.forEach((i, data) -> {
-//                ExtractInfoExportExcelData ed = new ExtractInfoExportExcelData();
-//                String isCompanyEmp = data.get(0); //是否公司员工
-//                ed.setIsCompanyEmp(isCompanyEmp);
-//                String empNo = data.get(1); //工号
-//                ed.setEmpNo(empNo);
-//                String empName = data.get(2); //姓名
-//                ed.setEmpName(empName);
-//                String sftc = data.get(3); //实发提成
-//                ed.setCopeextract(sftc);
-//                String zhs = data.get(4); //综合税
-//                ed.setConsotax(zhs);
-//                String tcPeriod = data.get(5); //提成届别
-//                ed.setExtractPeriod(tcPeriod);
-//                String isDebt = data.get(6); //是否坏账
-//                ed.setIsBadDebt(isDebt);
-//                String extractType = data.get(7);//提成类型
-//                ed.setExtractType(extractType);
-//                String shouldSendExtract = data.get(8);//应发提成
-//                ed.setShouldSendExtract(shouldSendExtract);
-//                String tax = data.get(9);//个税
-//                ed.setTax(tax);
-//                String taxReduction = data.get(10);//个税减免
-//                ed.setTaxReduction(taxReduction);
-//                String invoiceExcessTax = data.get(11);//发票超额税金
-//                ed.setInvoiceExcessTax(invoiceExcessTax);
-//                String invoiceExcessTaxReduction = data.get(12);//发票超额税金减免
-//                ed.setInvoiceExcessTaxReduction(invoiceExcessTaxReduction);
-//                String errmsg = data.get(13);
-//                ed.setErrMsg(errmsg);
-//                details.add(ed);
-//            });
-//        }
-//        heads.put("yearPeriod", year);
-//        heads.put("extractMonth", extractMonth);
-//        heads.put("unitName", unitname);
-//    }
 
+    /**
+     * 填充导入提成错误的数据
+     *
+     * @param details
+     * @param heads
+     * @param allDataMap
+     * @param headErrorMsg
+     * @param errorMap
+     */
+    private void populateData(List<CommissionDetailsImportDTO> details,
+                              Map<String, String> heads, Map<Integer, Map<Integer, String>> allDataMap, List<String> headErrorMsg, Map<Integer, Map<Integer, String>> errorMap) {
+        Map<Integer, String> headMap = allDataMap.get(1);
+        String year = headMap.get(1); //届别
+        String extractMonth = headMap.get(5); //提成期间
+        String unitname = headMap.get(9); //预算单位
+        if (!headErrorMsg.isEmpty()) {
+            for (int i = 4; i <= allDataMap.size(); i++) {
+                CommissionDetailsImportDTO dto = new CommissionDetailsImportDTO();
+                dto  =  setValue(allDataMap.get(i));
+                dto.setErrMsg(headErrorMsg.stream().collect(Collectors.joining(",")));
+                details.add(dto);
+            }
+        } else if (!errorMap.isEmpty()) {
+            errorMap.forEach((i, data) -> {
+                CommissionDetailsImportDTO dto = new CommissionDetailsImportDTO();
+                dto  =  setValue(allDataMap.get(i));
+                details.add(dto);
+            });
+        }
+        heads.put("yearPeriod", year);
+        heads.put("extractMonth", extractMonth);
+        heads.put("unitName", unitname);
+    }
+
+    private CommissionDetailsImportDTO setValue(Map<Integer, String> data){
+        CommissionDetailsImportDTO extractImportdetail = new CommissionDetailsImportDTO();
+        String isCompanyEmp = data.get(0); //业务类型  是否是公司员工？？
+        //新增员工个体户。
+
+        String empNo = data.get(1); //工号
+        String empName = data.get(2); //姓名
+        String isDebt = data.get(3); //是否坏账   index = 3,实际是第4列
+
+        String extractType = data.get(4);//提成类型
+        String tcPeriod = data.get(5); //提成届别 第6列
+
+        //应发提成计算
+        String totalPrice = data.get(6);//码洋  实际是第7列,index= 6
+        String actualPrice = data.get(7);//实洋
+        String collection = data.get(8);//回款
+        String income = data.get(9);  //收入  第10列
+
+        String helpCollectionHost = data.get(10);//   在职帮离职回款成本
+        String strippingReceivedFunds = data.get(11);//到款剥离
+        String regularCommission = data.get(12);//常规提成
+        String takeOverTheCommission = data.get(13);//接手提成
+        String specialCommission = data.get(14);//特价提成
+
+        String totalRoyalty = data.get(15);//总提成  16列
+
+        String paidCommission = data.get(16);//已发提成
+        String reservedCommission = data.get(17);//预留提成
+        String shouldSendExtract = data.get(18);//应发提成
+
+
+        //代收代缴款
+        String tax = data.get(19);//提成个税
+        String taxReduction = data.get(20);//返提成个税
+        String consotax = data.get(21);//综合税
+        String invoiceExcessTax = data.get(22);//发票超额税金
+        String invoiceExcessTaxReduction = data.get(23);//返发票超额税金
+        String excessTaxPreviousInvoices = data.get(24);//往届发票超额税金  第25列
+
+        //业务扣款
+        String lateFee = data.get(25);//滞纳金
+        String deliveryLogisticsFee = data.get(26);//发货物流费
+        String shippingCost = data.get(27);//发件费用
+        String sampleIssuingCost = data.get(28);//发样成本
+        String returnLogisticsFee = data.get(29);//退货物流费   30 列
+
+        //业务扣款--费用
+        String returnCost = data.get(30);//退货成本
+        String distributionCost = data.get(31);//铺货成本
+        String shiftPackingFee = data.get(32);//分班打包费
+        String giftFee = data.get(33);//礼品费
+        String badDebtAssessment = data.get(34);//坏账考核   30 列
+        String nonConformancePenalty = data.get(35);//未达标罚款   30 列
+
+        //其他罚款
+        String currentDeduction = data.get(36);//往来扣款
+        String deductionGuarantee = data.get(37);//扣担保
+        String deductCreditInformation = data.get(38);//扣征信
+
+        String salesmanAdvance = data.get(39);//业务员垫支
+        String otherTypesDeduction = data.get(40);//其他类型 扣款
+        String subtotalOfDeduction = data.get(41);//扣款小计
+        String copeextract = data.get(42);//实发金额
+
+
+//        extractImportdetail.setExtractsumid(extractSum.getId());
+        //赋值 员工类型
+//        setUserTypeValue(isCompanyEmp, empNo, empName, extractImportdetail);
+
+        extractImportdetail.setEmpno(empNo);
+        extractImportdetail.setEmpname(empName);
+        extractImportdetail.setIfBadDebt(isDebt);
+        extractImportdetail.setYearName(tcPeriod);
+        extractImportdetail.setBusinessType(isCompanyEmp);
+        extractImportdetail.setExtractType(extractType);
+
+
+
+        //应发提成计算
+        extractImportdetail.setTotalPrice(getBigDecimal(totalPrice));
+        extractImportdetail.setActualPrice(getBigDecimal(actualPrice));
+        extractImportdetail.setCollection(getBigDecimal(collection));
+        extractImportdetail.setIncome(getBigDecimal(income));
+
+        extractImportdetail.setHelpCollectionHost(getBigDecimal(helpCollectionHost));
+        extractImportdetail.setStrippingReceivedFunds(getBigDecimal(strippingReceivedFunds));
+        extractImportdetail.setRegularCommission(getBigDecimal(regularCommission));
+        extractImportdetail.setTakeOverTheCommission(getBigDecimal(takeOverTheCommission));
+        extractImportdetail.setSpecialCommission(getBigDecimal(specialCommission));
+        extractImportdetail.setTotalRoyalty(getBigDecimal(totalRoyalty));
+
+
+        extractImportdetail.setPaidCommission(getBigDecimal(paidCommission));
+        extractImportdetail.setReservedCommission(getBigDecimal(reservedCommission));
+        extractImportdetail.setShouldSendExtract(getBigDecimal(shouldSendExtract));
+
+
+        //代收代缴款
+        extractImportdetail.setTax(getBigDecimal(tax));
+        extractImportdetail.setTaxReduction(getBigDecimal(taxReduction));
+        extractImportdetail.setConsotax(getBigDecimal(consotax));
+        extractImportdetail.setInvoiceExcessTax(getBigDecimal(invoiceExcessTax));
+        extractImportdetail.setInvoiceExcessTaxReduction(getBigDecimal(invoiceExcessTaxReduction));
+        extractImportdetail.setExcessTaxPreviousInvoices(getBigDecimal(excessTaxPreviousInvoices));
+
+
+        //业务扣款
+        extractImportdetail.setLateFee(getBigDecimal(lateFee));
+        extractImportdetail.setDeliveryLogisticsFee(getBigDecimal(deliveryLogisticsFee));
+        extractImportdetail.setShippingCost(getBigDecimal(shippingCost));
+        extractImportdetail.setSampleIssuingCost(getBigDecimal(sampleIssuingCost));
+        extractImportdetail.setReturnLogisticsFee(getBigDecimal(returnLogisticsFee));
+
+        //业务扣款--费用
+        extractImportdetail.setReturnCost(getBigDecimal(returnCost));
+        extractImportdetail.setDistributionCost(getBigDecimal(distributionCost));
+        extractImportdetail.setShiftPackingFee(getBigDecimal(shiftPackingFee));
+        extractImportdetail.setGiftFee(getBigDecimal(giftFee));
+        extractImportdetail.setBadDebtAssessment(getBigDecimal(badDebtAssessment));
+        extractImportdetail.setNonConformancePenalty(getBigDecimal(nonConformancePenalty));
+
+        //其他罚款
+        extractImportdetail.setCurrentDeduction(getBigDecimal(currentDeduction));
+        extractImportdetail.setDeductionGuarantee(getBigDecimal(deductionGuarantee));
+        extractImportdetail.setDeductCreditInformation(getBigDecimal(deductCreditInformation));
+        extractImportdetail.setSalesmanAdvance(getBigDecimal(salesmanAdvance));
+        extractImportdetail.setOtherTypesDeduction(getBigDecimal(otherTypesDeduction));
+        extractImportdetail.setSubtotalOfDeduction(getBigDecimal(subtotalOfDeduction));
+        extractImportdetail.setCopeextract(getBigDecimal(copeextract));
+
+        extractImportdetail.setErrMsg( data.get(43)!=null?data.get(43).toString():"");
+        return extractImportdetail;
+    }
+    private BigDecimal getBigDecimal(String object){
+        if (StringUtils.isNotBlank(object)) {
+            return new BigDecimal(object);
+        }else {
+            return BigDecimal.ZERO;
+        }
+    }
+
+
+
+    @ApiOperation(value = "根据预算单位及月份查询动因", httpMethod = "GET")
+    @ApiImplicitParams(value = {
+            @ApiImplicitParam(value = "届别Id", name = "yearId", dataType = "Long", required = true),
+            @ApiImplicitParam(value = "预算单位Id", name = "budgetUnitId", dataType = "Long"),
+            @ApiImplicitParam(value = "搜索名称", name = "name", dataType = "String"),
+            @ApiImplicitParam(value = "权限认证", name = "oauth", dataType = "Boolean"),
+            @ApiImplicitParam(value = "月份Id", name = "monthId", dataType = "Integer", required = true),
+            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
+    })
+    @ApiDataAuthAnno
+    @GetMapping(value = "/listSubjectMonthAgent")
+    public ResponseEntity<PageResult<BudgetSubjectVO>> listSubjectMonthAgent(Long budgetUnitId,
+                                                                             String name,
+                                                                             Boolean oauth,
+                                                                             @RequestParam Long yearId,
+                                                                             @RequestParam Integer monthId,
+                                                                             @RequestParam(value = "page", defaultValue = "1") Integer page,
+                                                                             @RequestParam(value = "rows", defaultValue = "20") Integer rows) {
+
+        HashMap<String, Object> paramMap = new HashMap<>(10);
+        paramMap.put("yearId", yearId);
+        paramMap.put("budgetUnitId", budgetUnitId);
+        paramMap.put("monthId", monthId);
+        paramMap.put("name", name);
+        if (oauth == null || oauth) {
+            paramMap.put("userId", UserThreadLocal.get().getUserId());
+            paramMap.put("authSql", JdbcSqlThreadLocal.get());
+        }
+        return ResponseEntity.ok(applicationService.listSubjectMonthAgent(paramMap, page, rows));
+    }
 }

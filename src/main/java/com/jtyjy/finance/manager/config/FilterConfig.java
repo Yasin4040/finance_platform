@@ -24,9 +24,13 @@ public class FilterConfig {
     @Bean
     public FilterRegistrationBean<RequestResponseFilter> requestResponseFilter() throws Exception {
         List<String> apis = new ArrayList<>();
+
+        //上传文件
+        apis.add("/api/common/uploadFile");
         //提成明细导入导出
         apis.add("/api/commissionApplication/downLoadTemplate");
         apis.add("/api/commissionApplication/importTemplate");
+//        apis.add("/api/commissionApplication/importExtractDetail");
         apis.add("/api/commissionApplication/downImportExtractErrorDetail");
         //个体户发票维护
         apis.add("/api/individualTicket/downLoadTemplate");

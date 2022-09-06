@@ -1,23 +1,38 @@
 package com.jtyjy.finance.manager.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.jtyjy.core.anno.JdbcSelector;
+import com.jtyjy.core.interceptor.LoginThreadLocal;
 import com.jtyjy.core.log.DefaultChangeLog;
 import com.jtyjy.core.log.LoggerAction;
 import com.jtyjy.core.service.BaseService;
 import com.jtyjy.core.service.DefaultBaseService;
+import com.jtyjy.finance.manager.bean.BudgetCommonAttachment;
 import com.jtyjy.finance.manager.bean.TabDm;
 import com.jtyjy.finance.manager.bean.WbBanks;
 import com.jtyjy.finance.manager.dto.TabPayOrderVO;
 import com.jtyjy.finance.manager.mapper.WbBanksMapper;
+import com.jtyjy.finance.manager.query.UploadQuery;
+import com.jtyjy.finance.manager.utils.FileUtils;
 import com.jtyjy.finance.manager.utils.HttpUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.csource.fastdfs.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +48,10 @@ public class CommonService extends DefaultBaseService<WbBanksMapper, WbBanks> {
 
     @Autowired
     private TabDmService dmService;
+    @Autowired
+    private StorageClient storageClient;
+    @Autowired
+    private BudgetCommonAttachmentService attachmentService;
 
     @Value("${sunpay.add.url}")
     private String sunPayUrl;
@@ -76,7 +95,7 @@ public class CommonService extends DefaultBaseService<WbBanksMapper, WbBanks> {
      * @author minzhq
      * @date 2022/8/6 10:15
      * @param opt 1 追加  2 拆借
-     * @param remark 罚款原因
+     * @param fineCount 罚款原因
      */
     public void createBudgetFine(int opt,int fineCount,String empNo,String creator){
         try{
@@ -91,5 +110,52 @@ public class CommonService extends DefaultBaseService<WbBanksMapper, WbBanks> {
         }catch (Exception e){
             e.printStackTrace();
         }
+    }
+    /*
+     * Java文件操作 获取不带扩展名的文件名
+     */
+    public static String getFileNameNoEx(String filename) {
+        if ((filename != null) && (filename.length() > 0)) {
+            int dot = filename.lastIndexOf('.');
+            if ((dot > -1) && (dot < (filename.length()))) {
+                return filename.substring(0, dot);
+            }
+        }
+        return filename;
+    }
+    @SneakyThrows
+    public void uploadFile(UploadQuery query) {
+
+        String loginUser = LoginThreadLocal.get().getEmpno();
+        for (MultipartFile file : query.getFiles()) {
+            String[] urls = storageClient.upload_file("group1", file.getSize(), new UploadCallback() {
+
+                @Override
+                public int send(OutputStream outputStream) throws IOException {
+                    outputStream.write(file.getBytes());
+                    return 0;
+                }
+            }, FileUtils.getFileType(file.getOriginalFilename()), null);
+
+            String printUrl = StringUtils.join(urls, "/");
+            BudgetCommonAttachment attachment = new BudgetCommonAttachment();
+            attachment.setFileUrl(printUrl);
+            attachment.setFileType(1);//默认1 普通文件
+            attachment.setFileExtName(FileUtils.getFileType(file.getOriginalFilename()));
+            attachment.setFileName(getFileNameNoEx(file.getOriginalFilename()));
+            attachment.setContactId(query.getContactId());
+            attachment.setCreator(loginUser);
+            attachment.setCreateTime(new Date());
+            attachmentService.save(attachment);
+        }
+
+    }
+
+    public List<BudgetCommonAttachment> viewAttachment(String contactId) {
+        return attachmentService.lambdaQuery().eq(BudgetCommonAttachment::getContactId,contactId).list();
+    }
+
+    public void delAttachment(String id) {
+        attachmentService.removeById(id);
     }
 }

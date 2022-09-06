@@ -1,5 +1,7 @@
 package com.jtyjy.finance.manager.dto.individual;
 
+import com.jtyjy.finance.manager.vo.individual.IndividualEmployeeFilesVO;
+import com.jtyjy.finance.manager.vo.individual.IndividualTicketVO;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -11,7 +13,7 @@ import java.util.List;
  * Time: 13:59
  */
 @Data
-public class IndividualTicketDTO {
+public class IndividualTicketInfoDTO {
 
 //
 //    @ApiModelProperty(value = "姓名")
@@ -30,15 +32,8 @@ public class IndividualTicketDTO {
 //    @ApiModelProperty(value = "省区/大区")
 //    @ExcelProperty(value = "*省区/大区")
 //    private String provinceOrRegion;
-    @ApiModelProperty(value = "工号")
-    private Integer employeeJobNum;
-    @ApiModelProperty(value = "个体户档案id")
-    private Long individualEmployeeInfoId;
-    @ApiModelProperty(value = "个体户名称")
-    private String individualName;
-    @ApiModelProperty(value = "备注")
-    private String remarks;
-    @ApiModelProperty(value = "票据主单id")
     private Long ticketId;
+    private String ticketCode;
+    private IndividualEmployeeFilesVO filesVO;
     List<IndividualTicketDetailsDTO> detailsDTOList;
 }

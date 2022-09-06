@@ -2,10 +2,7 @@ package com.jtyjy.finance.manager.converter;
 
 import com.jtyjy.finance.manager.bean.IndividualEmployeeFiles;
 import com.jtyjy.finance.manager.bean.IndividualEmployeeTicketReceiptInfo;
-import com.jtyjy.finance.manager.dto.individual.IndividualEmployeeFilesDTO;
-import com.jtyjy.finance.manager.dto.individual.IndividualExportDTO;
-import com.jtyjy.finance.manager.dto.individual.IndividualImportDTO;
-import com.jtyjy.finance.manager.dto.individual.IndividualTicketImportDTO;
+import com.jtyjy.finance.manager.dto.individual.*;
 import com.jtyjy.finance.manager.vo.individual.IndividualEmployeeFilesVO;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
@@ -28,4 +25,11 @@ public interface IndividualTicketConverter {
 
     IndividualEmployeeTicketReceiptInfo importDTOToEntity(IndividualTicketImportDTO importDTO);
     List<IndividualEmployeeTicketReceiptInfo> importDTOToEntities(List<IndividualTicketImportDTO> importDTOList);
+
+
+    IndividualTicketDetailsDTO toDetailDTO(IndividualEmployeeTicketReceiptInfo info);
+    List<IndividualTicketDetailsDTO> toDetailDTOList(List<IndividualEmployeeTicketReceiptInfo> infoList);
+
+
+
 }

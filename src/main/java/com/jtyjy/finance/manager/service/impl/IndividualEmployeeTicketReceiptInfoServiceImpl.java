@@ -4,9 +4,10 @@ import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.iamxiongx.util.message.exception.BusinessException;
 import com.jtyjy.finance.manager.bean.IndividualEmployeeFiles;
+import com.jtyjy.finance.manager.bean.IndividualEmployeeTicketReceipt;
 import com.jtyjy.finance.manager.bean.IndividualEmployeeTicketReceiptInfo;
+import com.jtyjy.finance.manager.converter.IndividualEmployeeFilesConverter;
 import com.jtyjy.finance.manager.converter.IndividualTicketConverter;
 import com.jtyjy.finance.manager.dto.individual.*;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
@@ -15,50 +16,81 @@ import com.jtyjy.finance.manager.query.individual.IndividualTicketQuery;
 import com.jtyjy.finance.manager.service.IndividualEmployeeFilesService;
 import com.jtyjy.finance.manager.service.IndividualEmployeeTicketReceiptInfoService;
 import com.jtyjy.finance.manager.mapper.IndividualEmployeeTicketReceiptInfoMapper;
+import com.jtyjy.finance.manager.service.IndividualEmployeeTicketReceiptService;
+import com.jtyjy.finance.manager.vo.individual.IndividualEmployeeFilesVO;
 import com.jtyjy.finance.manager.vo.individual.IndividualTicketVO;
 import lombok.SneakyThrows;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.beanutils.locale.converters.DateLocaleConverter;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
-* @author User
-* @description 针对表【budget_individual_employee_ticket_receipt_info(员工个体户收票信息维护档案)】的数据库操作Service实现
-* @createDate 2022-08-25 13:28:19
-*/
+ * @author User
+ * @description 针对表【budget_individual_employee_ticket_receipt_info(员工个体户收票信息维护档案)】的数据库操作Service实现
+ * @createDate 2022-08-25 13:28:19
+ */
 @Service
 public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<IndividualEmployeeTicketReceiptInfoMapper, IndividualEmployeeTicketReceiptInfo>
-    implements IndividualEmployeeTicketReceiptInfoService{
+        implements IndividualEmployeeTicketReceiptInfoService {
 
     private final IndividualEmployeeFilesService employeeFilesService;
+    private final IndividualEmployeeTicketReceiptService mainService;
 
-    public IndividualEmployeeTicketReceiptInfoServiceImpl(IndividualEmployeeFilesService employeeFilesService) {
+    public IndividualEmployeeTicketReceiptInfoServiceImpl(IndividualEmployeeFilesService employeeFilesService, IndividualEmployeeTicketReceiptService mainService) {
         this.employeeFilesService = employeeFilesService;
+        this.mainService = mainService;
     }
 
     @Override
     public IPage<IndividualTicketVO> selectPage(IndividualTicketQuery query) {
-        return this.baseMapper.selectTicketPage(new Page<>(query.getPageNum(),query.getPageSize()),query);
+        return this.baseMapper.selectTicketPage(new Page<>(query.getPageNum(), query.getPageSize()), query);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void addTicket(IndividualTicketDTO dto) {
         List<IndividualTicketDetailsDTO> detailsDTOList = dto.getDetailsDTOList();
         List<IndividualEmployeeTicketReceiptInfo> infoList = new ArrayList<>();
+        IndividualEmployeeTicketReceipt receipt = new IndividualEmployeeTicketReceipt();
+        BigDecimal invoiceAmount = receipt.getInvoiceAmount() != null ? receipt.getInvoiceAmount() : BigDecimal.ZERO;
+
+        //SP+年月日+4位流水号
+        //SP 2022 09 06  10
+
+        receipt.setTicketCode(generateWaterCode());
+        receipt.setInvoiceAmount(invoiceAmount);
+        receipt.setEmployeeJobNum(dto.getEmployeeJobNum());
+        receipt.setIndividualEmployeeInfoId(dto.getIndividualEmployeeInfoId());
+        receipt.setIndividualName(dto.getIndividualName());
+        receipt.setRemarks(dto.getRemarks());
+        receipt.setCreateTime(new Date());
+        receipt.setCreateBy(UserThreadLocal.getEmpNo());
+        receipt.setUpdateTime(new Date());
+        receipt.setUpdateBy(UserThreadLocal.getEmpNo());
+
         for (int i = 0; i < detailsDTOList.size(); i++) {
-            Integer count = this.lambdaQuery()
-                    .eq(IndividualEmployeeTicketReceiptInfo::getIndividualEmployeeInfoId, dto.getIndividualEmployeeInfoId())
-                    .eq(IndividualEmployeeTicketReceiptInfo::getYear, detailsDTOList.get(i).getYear())
-                    .eq(IndividualEmployeeTicketReceiptInfo::getMonth, detailsDTOList.get(i).getMonth()).count();
-            if (count>0) {
-                throw new BusinessException("该档案下,存在重复的同年同月的记录。");
-            }
+//            Integer count = this.lambdaQuery()
+//                    .eq(IndividualEmployeeTicketReceiptInfo::getIndividualEmployeeInfoId, dto.getIndividualEmployeeInfoId())
+//                    .eq(IndividualEmployeeTicketReceiptInfo::getYear, detailsDTOList.get(i).getYear())
+//                    .eq(IndividualEmployeeTicketReceiptInfo::getMonth, detailsDTOList.get(i).getMonth()).count();
+//            if (count>0) {
+//                throw new BusinessException("该档案下,存在重复的同年同月的记录。");
+//            }
             IndividualEmployeeTicketReceiptInfo info = new IndividualEmployeeTicketReceiptInfo();
 
             IndividualTicketDetailsDTO singleDTO = detailsDTOList.get(i);
@@ -77,8 +109,26 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
             info.setUpdateTime(new Date());
             info.setUpdateBy(UserThreadLocal.getEmpNo());
             infoList.add(info);
+            invoiceAmount = invoiceAmount.add(singleDTO.getInvoiceAmount());
         }
+
+        mainService.save(receipt);
+        infoList.forEach(x -> x.setTicketId(receipt.getId()));
         this.saveBatch(infoList);
+    }
+
+    private String generateWaterCode() {
+        DateTimeFormatter yyyyMMdd = DateTimeFormatter.ofPattern("yyyyMMdd");
+        String yearMd = LocalDate.now().format(yyyyMMdd);
+        List<String> ticketCodeList = mainService.getAllCodes();
+        String waterCode = "0001";
+        if (CollectionUtils.isNotEmpty(ticketCodeList)) {
+            Optional<Integer> max = ticketCodeList.stream().filter(x -> x.contains("SP" + yearMd)).map(x -> Integer.valueOf(x.substring(10))).max(Comparator.comparing(Integer::new));
+            DecimalFormat g1 = new DecimalFormat("0000");
+            waterCode = g1.format(max.get() + 1);
+        }
+        String ticketCode = MessageFormat.format("SP{0}{1}", yearMd, waterCode);
+        return ticketCode;
     }
 
     @Override
@@ -86,18 +136,21 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
         List<IndividualTicketDetailsDTO> detailsDTOList = dto.getDetailsDTOList();
         List<IndividualEmployeeTicketReceiptInfo> infoList = new ArrayList<>();
         for (int i = 0; i < detailsDTOList.size(); i++) {
-
-            IndividualEmployeeTicketReceiptInfo info = this.getById(detailsDTOList.get(i).getId());
-
+            Long id = detailsDTOList.get(i).getId();
+            IndividualEmployeeTicketReceiptInfo info = new IndividualEmployeeTicketReceiptInfo();
+            if(id == null){
+                info = this.getById(id);
+            }
             IndividualTicketDetailsDTO singleDTO = detailsDTOList.get(i);
             info.setYear(singleDTO.getYear());
             info.setMonth(singleDTO.getMonth());
             info.setInvoiceAmount(singleDTO.getInvoiceAmount());
+            info.setTicketId(dto.getTicketId());
 
 //            info.setEmployeeJobNum(dto.getEmployeeJobNum());
 //            info.setIndividualEmployeeInfoId(dto.getIndividualEmployeeInfoId());
 //            info.setIndividualName(dto.getIndividualName());
-            info.setRemarks(dto.getRemarks());
+            info.setRemarks(detailsDTOList.get(i).getRemarks());
 
             info.setUpdateTime(new Date());
             info.setUpdateBy(UserThreadLocal.getEmpNo());
@@ -105,6 +158,7 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
         }
         this.saveOrUpdateBatch(infoList);
     }
+
     @SneakyThrows
     @Override
     public List<IndividualTicketImportErrorDTO> importTicket(MultipartFile multipartFile) {
@@ -113,39 +167,68 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
         try {
             EasyExcel.read(multipartFile.getInputStream(), IndividualTicketImportDTO.class,
                     new PageReadListener<IndividualTicketImportDTO>(dataList -> {
-                        //获取相应的档案信息
-                        for (int i = 0; i < dataList.size(); i++) {
-                            try {
-                                String individualName = dataList.get(i).getIndividualName();
-                                Optional<IndividualEmployeeFiles> individualEmployeeFiles = employeeFilesService.lambdaQuery().like(IndividualEmployeeFiles::getAccountName, individualName).last("limit 1").oneOpt();
-                                if(individualEmployeeFiles.isPresent()){
-                                    IndividualEmployeeFiles file = individualEmployeeFiles.get();
-                                    IndividualEmployeeTicketReceiptInfo info = IndividualTicketConverter.INSTANCE.importDTOToEntity(dataList.get(i));
-                                    info.setIndividualEmployeeInfoId(file.getId());
-                                    info.setIndividualName(file.getAccountName());
-                                    info.setEmployeeJobNum(file.getEmployeeJobNum());
-                                    this.save(info);
-                                }
-                            } catch (Exception e) {
-                                IndividualTicketImportErrorDTO errorDTO = new IndividualTicketImportErrorDTO();
 
-                                try {
-                                    PropertyUtils.copyProperties(errorDTO,dataList.get(i));
-                                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException ex) {
-                                    ex.printStackTrace();
+                        Map<String, List<IndividualTicketImportDTO>> listMap = dataList.stream().collect(Collectors.groupingBy(x -> x.getEmployeeJobNum() + "-" + x.getIndividualName()));
+                        for (String key : listMap.keySet()) {
+
+                            String individualName = key.split("-")[1];
+                            Integer employeeJobNum = Integer.valueOf(key.split("-")[0]);
+                            Optional<IndividualEmployeeFiles> individualEmployeeFiles = employeeFilesService.lambdaQuery().like(IndividualEmployeeFiles::getAccountName, individualName).last("limit 1").oneOpt();
+                            if (individualEmployeeFiles.isPresent()) {
+                                IndividualEmployeeFiles file = individualEmployeeFiles.get();
+
+                                IndividualEmployeeTicketReceipt receipt = new IndividualEmployeeTicketReceipt();
+                                BigDecimal invoiceAmount = receipt.getInvoiceAmount() != null ? receipt.getInvoiceAmount() : BigDecimal.ZERO;
+                                //SP+年月日+4位流水号
+                                //SP 2022 09 06  10
+                                receipt.setTicketCode(generateWaterCode());
+                                receipt.setInvoiceAmount(invoiceAmount);
+
+                                receipt.setIndividualEmployeeInfoId(file.getId());
+                                receipt.setIndividualName(file.getAccountName());
+                                receipt.setEmployeeJobNum(file.getEmployeeJobNum());
+
+                                receipt.setCreateTime(new Date());
+                                receipt.setCreateBy(UserThreadLocal.getEmpNo());
+                                receipt.setUpdateTime(new Date());
+                                receipt.setUpdateBy(UserThreadLocal.getEmpNo());
+
+                                mainService.save(receipt);
+                                List<IndividualTicketImportDTO> importDTOList = listMap.get(key);
+                                for (IndividualTicketImportDTO dto : importDTOList) {
+                                    try {
+                                        IndividualEmployeeTicketReceiptInfo info = IndividualTicketConverter.INSTANCE.importDTOToEntity(dto);
+
+                                        info.setIndividualEmployeeInfoId(file.getId());
+                                        info.setIndividualName(file.getAccountName());
+                                        info.setEmployeeJobNum(file.getEmployeeJobNum());
+
+                                        info.setTicketId(receipt.getId());
+                                        info.setCreateTime(new Date());
+                                        info.setCreateBy(UserThreadLocal.getEmpNo());
+                                        info.setUpdateTime(new Date());
+                                        info.setUpdateBy(UserThreadLocal.getEmpNo());
+                                        this.save(info);
+                                    } catch (Exception e) {
+                                        IndividualTicketImportErrorDTO errorDTO = new IndividualTicketImportErrorDTO();
+                                        try {
+                                            PropertyUtils.copyProperties(errorDTO, dto);
+                                        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException ex) {
+                                            ex.printStackTrace();
+                                        }
+                                        errorDTO.setInsertDatabaseError(e.getCause().getMessage());
+                                        errorDTOList.add(errorDTO);
+                                    }
                                 }
-                                errorDTO.setInsertDatabaseError(e.getCause().getMessage());
-                                errorDTOList.add(errorDTO);
                             }
                         }
-
-                    },errorMap)).sheet().doRead();
+                    }, errorMap)).sheet().doRead();
 
             for (Map map : errorMap) {
                 IndividualTicketImportErrorDTO errorDTO = new IndividualTicketImportErrorDTO();
                 try {
                     ConvertUtils.register(new DateLocaleConverter(), Date.class);//BeanUtils.populate对日期类型进行处理，否则无法封装
-                    BeanUtils.populate(errorDTO,map);
+                    BeanUtils.populate(errorDTO, map);
                 } catch (IllegalAccessException | InvocationTargetException e) {
                     e.printStackTrace();
                 }
@@ -155,6 +238,24 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
             e.printStackTrace();
         }
         return errorDTOList;
+    }
+
+    @Override
+    public IndividualTicketInfoDTO getIndividualInfo(String ticketId) {
+        IndividualEmployeeTicketReceipt ticketReceipt = mainService.getById(ticketId);
+        IndividualEmployeeFiles files = employeeFilesService.getById(ticketReceipt.getIndividualEmployeeInfoId());
+
+        IndividualTicketInfoDTO dto = new IndividualTicketInfoDTO();
+
+        IndividualEmployeeFilesVO individualEmployeeFilesVO = IndividualEmployeeFilesConverter.INSTANCE.toVO(files);
+        dto.setFilesVO(individualEmployeeFilesVO);
+        dto.setTicketId(ticketReceipt.getId());
+        dto.setTicketCode(ticketReceipt.getTicketCode());
+        List<IndividualEmployeeTicketReceiptInfo> list = this.lambdaQuery().eq(IndividualEmployeeTicketReceiptInfo::getTicketId, ticketId).list();
+        List<IndividualTicketDetailsDTO> individualTicketDetailsDTOS = IndividualTicketConverter.INSTANCE.toDetailDTOList(list);
+
+        dto.setDetailsDTOList(individualTicketDetailsDTOS);
+        return dto;
     }
 }
 

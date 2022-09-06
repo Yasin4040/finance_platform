@@ -2,8 +2,10 @@ package com.jtyjy.finance.manager.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.iamxiongx.util.message.exception.BusinessException;
+import com.jtyjy.core.result.PageResult;
 import com.jtyjy.finance.manager.bean.*;
 import com.jtyjy.finance.manager.cache.UserCache;
 import com.jtyjy.finance.manager.controller.reimbursement.ReimbursementController;
@@ -18,6 +20,7 @@ import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationBudge
 import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationLogService;
 import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationService;
 import com.jtyjy.finance.manager.service.IndividualEmployeeFilesService;
+import com.jtyjy.finance.manager.vo.BudgetSubjectAgentVO;
 import com.jtyjy.finance.manager.vo.application.*;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
@@ -26,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.text.MessageFormat;
 import java.util.*;
 
 /**
@@ -59,11 +63,20 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     @Override
     public CommissionApplicationInfoVO getApplicationInfo(String sumId) {
         BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
+
+        String extractMonth = budgetExtractsum.getExtractmonth();
+        Long yearid = budgetExtractsum.getYearid();
+        String deptid = budgetExtractsum.getDeptid();
         CommissionApplicationInfoVO infoVO = new CommissionApplicationInfoVO();
         Optional<BudgetExtractCommissionApplication> applicationOptional = getApplicationBySumId(sumId);
         if (applicationOptional.isPresent()) {
             BudgetExtractCommissionApplication application = applicationOptional.get();
-
+            infoVO.setApplicationId(application.getId());
+            infoVO.setUnitId(deptid);
+            infoVO.setYearId(yearid);
+            //2020 11 08
+            String monthId = extractMonth.substring(4, 6);
+            infoVO.setMonthId(Integer.valueOf(monthId));
             infoVO.setPaymentReason(application.getPaymentReason());
             infoVO.setDepartmentName(application.getDepartmentName());
             infoVO.setExtractSumNo(budgetExtractsum.getCode());
@@ -100,6 +113,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             for (BudgetExtractCommissionApplicationBudgetDetails budgetDetail : budgetDetails) {
                 BudgetDetailsVO budgetDetailsVO = new BudgetDetailsVO();
                 budgetDetailsVO.setId(budgetDetail.getId());
+                budgetDetailsVO.setSubjectId(budgetDetail.getSubjectId());
                 budgetDetailsVO.setSubjectCode(budgetDetail.getSubjectCode());
                 budgetDetailsVO.setSubjectName(budgetDetail.getSubjectName());
                 budgetDetailsVO.setMotivationName(budgetDetail.getMotivationName());
@@ -153,19 +167,39 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             budgetDetailsService.saveOrUpdate(budgetDetail);
         }
     }
+
     @Override
+    /**
+     * 根据预算单位及月份查询动因
+     */
+    public PageResult<BudgetSubjectVO> listSubjectMonthAgent(HashMap<String, Object> paramMap, Integer page, Integer rows) {
+        Page<BudgetSubjectVO> pageBean = new Page<>(page, rows);
+        List<BudgetSubjectVO> resultList = this.baseMapper.listSubjectMonthAgentByMap(pageBean, paramMap);
+        return PageResult.apply(pageBean.getTotal(), resultList);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateStatusBySumId(String sumId, Integer status) {
         Optional<BudgetExtractCommissionApplication> applicationOptional = getApplicationBySumId(sumId);
         if (applicationOptional.isPresent()) {
             BudgetExtractCommissionApplication application = applicationOptional.get();
-            switch (status) {
-                case -2:
+            ExtractStatusEnum willEnum = ExtractStatusEnum.getTypeEnume(status);
+            switch (willEnum) {
+                case REJECT:
                     //作废操作  申请单状态必须是-1
                     if (!application.getStatus().equals(-1)) {
                         throw new BusinessException("作废失败,申请单必须是退回状态！");
                     }
                     break;
-                case 0:
+                case RETURN:
+                    //税务退回
+                    if (!application.getStatus().equals(2)) {
+                        throw new BusinessException("税务退回失败,申请单必须是审核状态！");
+//                        退回失败！任务已计算！
+                    }
+                    break;
+                case DRAFT:
                     //撤回  申请单必须没有人审批过
                     if (application.getStatus().equals(1)) {
                         //1 已提交
@@ -186,8 +220,9 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
             budgetExtractsum.setStatus(ExtractStatusEnum.DRAFT.getType());
             extractSumMapper.updateById(budgetExtractsum);
+        }else {
+            throw new BusinessException("申请单不存在");
         }
-        throw new BusinessException("申请单不存在");
     }
 
 
@@ -198,7 +233,10 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         if (applicationBySumId.isPresent()) {
             BudgetExtractCommissionApplication application = applicationBySumId.get();
             Long applicationId = application.getId();
-            //
+            //todo 清空报销单
+//            BudgetExtractImportdetail
+
+
             List<BudgetExtractImportdetail> importDetails = extractImportDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractImportdetail>()
                     .eq(BudgetExtractImportdetail::getExtractsumid, sumId));
 
@@ -267,8 +305,12 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         BudgetExtractCommissionApplication application = new BudgetExtractCommissionApplication();
         //合并逻辑问题
 //        extract.getStatus()
-//
-        String paymentReason = "支付"+extract.getYearid()+extract.getExtractmonth()+ Arrays.stream(params).findFirst().orElse("") +badDebt;
+//              2020 10 06
+
+        String yearName = yearMapper.getNameById(extract.getYearid());
+        Integer month = Integer.valueOf(extract.getExtractmonth().substring(4, 6));
+        Integer batchNo = Integer.valueOf(extract.getExtractmonth().substring(6));
+        String paymentReason = MessageFormat.format("支付{0}{1}月第{2}批{3}",yearName,month,batchNo,badDebt);
         //0 草稿。
 
         application.setPaymentReason(paymentReason);
@@ -282,53 +324,81 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         application.setCreateBy(UserThreadLocal.getEmpNo());
         application.setUpdateTime(new Date());
         application.setUpdateBy(UserThreadLocal.getEmpNo());
-
         this.save(application);
     }
 
 
     @Override
     public void saveExtractImportDetails(Map<Integer, String> data, BudgetExtractsum extractSum) {
-        String isCompanyEmp = data.get(0); //业务类型
+        String isCompanyEmp = data.get(0); //业务类型  是否是公司员工？？
         //新增员工个体户。
 
         String empNo = data.get(1); //工号
         String empName = data.get(2); //姓名
         String isDebt = data.get(3); //是否坏账   index = 3,实际是第4列
-        String tcPeriod = data.get(4); //提成届别
 
-        String extractType = data.get(5);//提成类型
+        String extractType = data.get(4);//提成类型
+        String tcPeriod = data.get(5); //提成届别 第6列
+
+        //应发提成计算
         String totalPrice = data.get(6);//码洋  实际是第7列,index= 6
+        String actualPrice = data.get(7);//实洋
+        String collection = data.get(8);//回款
+        String income = data.get(9);  //收入  第10列
 
-        String currentCollection = data.get(7);//本期回款  实际是第8列,index= 7
-        String floorPrice = data.get(8);//   底价9 index= 8
-        String settlementCommission = data.get(9);//结算提成
-        String reservedCommission = data.get(10);//预留提成
+        String helpCollectionHost = data.get(10);//   在职帮离职回款成本
+        String strippingReceivedFunds = data.get(11);//到款剥离
+        String regularCommission = data.get(12);//常规提成
+        String takeOverTheCommission = data.get(13);//接手提成
+        String specialCommission = data.get(14);//特价提成
 
-        String shouldSendExtract = data.get(11);//申请提成
-        String tax = data.get(12);//提成个税
+        String totalRoyalty = data.get(15);//总提成  16列
 
-        //综合税
+        String paidCommission = data.get(16);//已发提成
+        String reservedCommission = data.get(17);//预留提成
+        String shouldSendExtract = data.get(18);//应发提成
 
-        String returnCommissionIncomeTax = data.get(13);//返提成个税
-        String deductTheCostPreviousAccounts = data.get(14);//扣往届扎帐成本
-        String deductExcessTaxOnInvoice = data.get(15);//扣发票超额税金
-        String refundExcessTaxInvoice = data.get(16);//返发票超额税金
 
-        String dutyWithholdingReturningGoods = data.get(17);//扣退货品承担
-        String currentDeduction = data.get(18);//往来扣款
-        String deductionGuarantee = data.get(19);//扣担保
-        String deductCreditInformation = data.get(20);//扣征信
+        //代收代缴款
+        String tax = data.get(19);//提成个税
+        String taxReduction = data.get(20);//返提成个税
+        String consotax = data.get(21);//综合税
+        String invoiceExcessTax = data.get(22);//发票超额税金
+        String invoiceExcessTaxReduction = data.get(23);//返发票超额税金
+        String excessTaxPreviousInvoices = data.get(24);//往届发票超额税金  第25列
 
-        String subtotalOfDeduction = data.get(21);//扣款小计
-        String copeextract = data.get(22);//实发金额
+        //业务扣款
+        String lateFee = data.get(25);//滞纳金
+        String deliveryLogisticsFee = data.get(26);//发货物流费
+        String shippingCost = data.get(27);//发件费用
+        String sampleIssuingCost = data.get(28);//发样成本
+        String returnLogisticsFee = data.get(29);//退货物流费   30 列
+
+        //业务扣款--费用
+        String returnCost = data.get(30);//退货成本
+        String distributionCost = data.get(31);//铺货成本
+        String shiftPackingFee = data.get(32);//分班打包费
+        String giftFee = data.get(33);//礼品费
+        String badDebtAssessment = data.get(34);//坏账考核   30 列
+        String nonConformancePenalty = data.get(35);//未达标罚款   30 列
+
+        //其他罚款
+        String currentDeduction = data.get(36);//往来扣款
+        String deductionGuarantee = data.get(37);//扣担保
+        String deductCreditInformation = data.get(38);//扣征信
+
+        String salesmanAdvance = data.get(39);//业务员垫支
+        String otherTypesDeduction = data.get(40);//其他类型 扣款
+        String subtotalOfDeduction = data.get(41);//扣款小计
+        String copeextract = data.get(42);//实发金额
 
 
         BudgetYearPeriod yearPeriod = getPeriodByName(tcPeriod);
         //判断是否存在
         BudgetExtractImportdetail extractImportdetail = null;
         if (Objects.nonNull(extractImportdetail)) {
-            extractImportdetail.setConsotax(new BigDecimal(tax)); // 综合税
+            extractImportdetail.setTax(new BigDecimal(tax)); // 个税
+            extractImportdetail.setConsotax(new BigDecimal(consotax)); // 综合税
             extractImportdetail.setCopeextract(new BigDecimal(copeextract));// 实发金额
             extractImportdetail.setUpdatetime(new Date());
             extractImportdetail.setUpdateBy(UserThreadLocal.getEmpNo());
@@ -348,31 +418,58 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
 
 
 
+            //应发提成计算
             extractImportdetail.setTotalPrice(getBigDecimal(totalPrice));
-            extractImportdetail.setCurrentCollection(getBigDecimal(currentCollection));
-            extractImportdetail.setFloorPrice(getBigDecimal(floorPrice));
-            extractImportdetail.setSettlementCommission(getBigDecimal(settlementCommission));
+            extractImportdetail.setActualPrice(getBigDecimal(actualPrice));
+            extractImportdetail.setCollection(getBigDecimal(collection));
+            extractImportdetail.setIncome(getBigDecimal(income));
+
+            extractImportdetail.setHelpCollectionHost(getBigDecimal(helpCollectionHost));
+            extractImportdetail.setStrippingReceivedFunds(getBigDecimal(strippingReceivedFunds));
+            extractImportdetail.setRegularCommission(getBigDecimal(regularCommission));
+            extractImportdetail.setTakeOverTheCommission(getBigDecimal(takeOverTheCommission));
+            extractImportdetail.setSpecialCommission(getBigDecimal(specialCommission));
+            extractImportdetail.setTotalRoyalty(getBigDecimal(totalRoyalty));
+
+
+            extractImportdetail.setPaidCommission(getBigDecimal(paidCommission));
             extractImportdetail.setReservedCommission(getBigDecimal(reservedCommission));
             extractImportdetail.setShouldSendExtract(getBigDecimal(shouldSendExtract));
 
+
+            //代收代缴款
             extractImportdetail.setTax(getBigDecimal(tax));
+            extractImportdetail.setTaxReduction(getBigDecimal(taxReduction));
+            extractImportdetail.setConsotax(getBigDecimal(consotax));
+            extractImportdetail.setInvoiceExcessTax(getBigDecimal(invoiceExcessTax));
+            extractImportdetail.setInvoiceExcessTaxReduction(getBigDecimal(invoiceExcessTaxReduction));
+            extractImportdetail.setExcessTaxPreviousInvoices(getBigDecimal(excessTaxPreviousInvoices));
 
 
-            extractImportdetail.setReturnCommissionIncomeTax(getBigDecimal(returnCommissionIncomeTax));
-            //字段有差别
-            extractImportdetail.setDeductCostPreviousAccounts(getBigDecimal(deductTheCostPreviousAccounts));
-            extractImportdetail.setDeductExcessTaxInvoice(getBigDecimal(deductExcessTaxOnInvoice));
-            extractImportdetail.setRefundExcessTaxInvoice(getBigDecimal(refundExcessTaxInvoice));
+            //业务扣款
+            extractImportdetail.setLateFee(getBigDecimal(lateFee));
+            extractImportdetail.setDeliveryLogisticsFee(getBigDecimal(deliveryLogisticsFee));
+            extractImportdetail.setShippingCost(getBigDecimal(shippingCost));
+            extractImportdetail.setSampleIssuingCost(getBigDecimal(sampleIssuingCost));
+            extractImportdetail.setReturnLogisticsFee(getBigDecimal(returnLogisticsFee));
 
-            extractImportdetail.setDutyholdingreturninggoods(getBigDecimal(dutyWithholdingReturningGoods));
+            //业务扣款--费用
+            extractImportdetail.setReturnCost(getBigDecimal(returnCost));
+            extractImportdetail.setDistributionCost(getBigDecimal(distributionCost));
+            extractImportdetail.setShiftPackingFee(getBigDecimal(shiftPackingFee));
+            extractImportdetail.setGiftFee(getBigDecimal(giftFee));
+            extractImportdetail.setBadDebtAssessment(getBigDecimal(badDebtAssessment));
+            extractImportdetail.setNonConformancePenalty(getBigDecimal(nonConformancePenalty));
+
+            //其他罚款
             extractImportdetail.setCurrentDeduction(getBigDecimal(currentDeduction));
             extractImportdetail.setDeductionGuarantee(getBigDecimal(deductionGuarantee));
             extractImportdetail.setDeductCreditInformation(getBigDecimal(deductCreditInformation));
-
+            extractImportdetail.setSalesmanAdvance(getBigDecimal(salesmanAdvance));
+            extractImportdetail.setOtherTypesDeduction(getBigDecimal(otherTypesDeduction));
             extractImportdetail.setSubtotalDeduction(getBigDecimal(subtotalOfDeduction));
+            extractImportdetail.setCopeextract(getBigDecimal(copeextract));
 
-//            extractImportdetail.setConsotax(new BigDecimal(tax)); // 综合税
-            extractImportdetail.setCopeextract(new BigDecimal(copeextract));// 实发提成
 
             extractImportdetail.setCreatetime(new Date());
             extractImportdetail.setCreateBy(UserThreadLocal.getEmpNo());
@@ -394,7 +491,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     }
     private void setUserTypeValue(String isCompanyEmp, String empNo, String empName, BudgetExtractImportdetail extractImportdetail) {
         extractImportdetail.setIscompanyemp("是".equals(isCompanyEmp) ? true : false);
-        switch (ExtractUserTypeEnum.valueOf(isCompanyEmp)) {
+        switch ( ExtractUserTypeEnum.getEnumByValue(isCompanyEmp)) {
             case COMPANY_STAFF:
                 WbUser user = getUserByEmpno(empNo);
                 extractImportdetail.setEmpid(user.getUserId());

@@ -6,12 +6,10 @@
 
     <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetExtractCommissionApplication">
             <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="employeeJobNum" column="employee_job_num" jdbcType="INTEGER"/>
             <result property="departmentNo" column="department_no" jdbcType="VARCHAR"/>
             <result property="departmentName" column="department_name" jdbcType="VARCHAR"/>
             <result property="paymentReason" column="payment_reason" jdbcType="VARCHAR"/>
             <result property="remarks" column="remarks" jdbcType="VARCHAR"/>
-            <result property="annualQuota" column="annual_quota" jdbcType="INTEGER"/>
             <result property="createBy" column="create_by" jdbcType="VARCHAR"/>
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
             <result property="updateBy" column="update_by" jdbcType="VARCHAR"/>
@@ -19,5 +17,48 @@
             <result property="status" column="status" jdbcType="INTEGER"/>
             <result property="extractSumId" column="extract_sum_id" jdbcType="BIGINT"/>
     </resultMap>
+        <select id="listSubjectMonthAgentByMap" resultType="com.jtyjy.finance.manager.vo.application.BudgetSubjectVO">
+                SELECT unit.id AS unitId,
+                unit.name AS unitName,
+                subject.code AS subjectCode,
+                subject.jindiecode as jindieCode,
+                subject.jindiename as jindieName,
+                subject.id AS subjectId,
+                subject.name AS subjectName,
+                bma.id AS agentId,
+                bma.name AS agentName
+                FROM budget_subject AS subject
+                INNER JOIN budget_unit_subject AS unitsubject ON unitsubject.subjectid = subject.id
+                INNER JOIN budget_unit unit ON unitsubject.unitid = unit.id
+                INNER JOIN budget_month_agent bma on unit.id = bma.unitid and bma.subjectid = subject.id
+                WHERE formulaflag != 1
+                and unit.yearId = #{map.yearId}
+                and bma.monthid = #{map.monthId}
+                <if test="map.budgetUnitId != null">
+                        and unit.id = #{map.budgetUnitId}
+                </if>
+                <if test="map.budgetUnitId == null and map.authSql != null">
+                        AND ( unit.baseunitid IN (SELECT _unit.baseunitid FROM budget_unit _unit WHERE _unit.managers is NOT NULL AND CONCAT(',',_unit.managers,',') LIKE CONCAT('%,', #{map.userId}, ',%') )
+                        or (1=1 ${map.authSql})
+                        )
+                </if>
+                <if test="map.budgetUnitId != null and map.name != null and map.name != '' ">
+                        and (
+                        subject.name like concat('%',#{map.name},'%')
+                        OR
+                        bma.name like concat('%',#{map.name},'%')
+                        )
+                </if>
+                <if test="map.budgetUnitId == null and map.name != null and map.name != '' ">
+                        and (
+                        unit.name like concat('%',#{map.name},'%')
+                        OR
+                        subject.name like concat('%',#{map.name},'%')
+                        OR
+                        bma.name like concat('%',#{map.name},'%')
+                        )
+                </if>
+                order by unit.id, subject.id, bma.id
+        </select>
 
 </mapper>

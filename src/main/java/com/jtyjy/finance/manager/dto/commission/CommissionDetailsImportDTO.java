@@ -1,6 +1,7 @@
 package com.jtyjy.finance.manager.dto.commission;
 
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -51,63 +52,104 @@ public class CommissionDetailsImportDTO {
 
     @ExcelProperty(value = "*坏账(是/否)")
     private String  ifBadDebt;
-    @ExcelProperty(value = "*提成届别")
-    private Long yearid;
 
     @ExcelProperty(value = "*提成类型")
     private String extractType;
+//    @ExcelProperty(value = "*提成届别")
+//    private Long yearid;
+    @ExcelProperty(value = "*提成届别")
+    private String yearName;
 
     @ExcelProperty(value = "码洋")
     private BigDecimal totalPrice;
+    @ExcelProperty(value = "实洋")
+    private BigDecimal actualPrice;
+    @ExcelProperty(value = "回款")
+    private BigDecimal collection;
+    @ExcelProperty(value = "收入")
+    private BigDecimal income;
 
-    @ExcelProperty(value = "本期回款")
-    private BigDecimal currentCollection;
-    @ExcelProperty(value = "低价")
-    private BigDecimal floorPrice;
-    @ExcelProperty(value = "结算提成")
-    private BigDecimal settlementCommission;
+
+    @ExcelProperty(value = "在职帮离职回款成本")
+    private  BigDecimal helpCollectionHost;
+    @ExcelProperty(value = "到款剥离")
+    private  BigDecimal strippingReceivedFunds;
+    @ExcelProperty(value = "常规提成")
+    private BigDecimal regularCommission;
+    @ExcelProperty(value = "接手提成")
+    private BigDecimal takeOverTheCommission;
+    @ExcelProperty(value = "特价提成")
+    private BigDecimal specialCommission;
+
+
+
+    @ExcelProperty(value = "总提成")
+    private  BigDecimal totalRoyalty;
+
+    @ExcelProperty(value = "已发提成")
+    private BigDecimal paidCommission;
     @ExcelProperty(value = "预留提成")
     private BigDecimal reservedCommission;
-
-    @ExcelProperty(value = "申请提成")
-    //申请提成 = 应发提成
+    @ExcelProperty(value = "应发提成")
     private BigDecimal shouldSendExtract;
+
+    //代收代缴款
     @ExcelProperty(value = "提成个税")
-    private BigDecimal tax;
-
+    private  BigDecimal tax;
     @ExcelProperty(value = "返提成个税")
-    private BigDecimal returnCommissionIncomeTax;
-
-    @ExcelProperty(value = "扣往届扎帐成本")
-    private BigDecimal deductTheCostPreviousAccounts;
-
-    @ExcelProperty(value = "扣发票超额税金")
-    private BigDecimal deductExcessTaxOnInvoice;
-
+    private BigDecimal taxReduction;
+    @ExcelProperty(value = "综合税")
+    private BigDecimal consotax;
+    @ExcelProperty(value = "发票超额税金")
+    private BigDecimal invoiceExcessTax;
     @ExcelProperty(value = "返发票超额税金")
-    private BigDecimal refundExcessTaxInvoice;
+    private BigDecimal invoiceExcessTaxReduction;
+    @ExcelProperty(value = "往届发票超额税金")
+    private BigDecimal excessTaxPreviousInvoices;
+
+    //业务扣款
+    @ExcelProperty(value = "滞纳金")
+    private  BigDecimal lateFee;
+    @ExcelProperty(value = "发货物流费")
+    private BigDecimal deliveryLogisticsFee;
+    @ExcelProperty(value = "发件费用")
+    private BigDecimal shippingCost;
+    @ExcelProperty(value = "发样成本")
+    private BigDecimal sampleIssuingCost;
+    @ExcelProperty(value = "退货物流费")
+    private BigDecimal returnLogisticsFee;
+    //业务扣款--费用
+    @ExcelProperty(value = "退货成本")
+    private  BigDecimal returnCost;
+    @ExcelProperty(value = "铺货成本")
+    private BigDecimal distributionCost;
+    @ExcelProperty(value = "分班打包费")
+    private BigDecimal shiftPackingFee;
+    @ExcelProperty(value = "礼品费")
+    private BigDecimal giftFee;
+    @ExcelProperty(value = "坏账考核")
+    private BigDecimal badDebtAssessment;
+    @ExcelProperty(value = "未达标罚款")
+    private BigDecimal nonConformancePenalty;
 
 
-    @ExcelProperty(value = "扣退货品承担")
-    private BigDecimal dutyWithholdingReturningGoods;
+    //其他罚款
+
     @ExcelProperty(value = "往来扣款")
     private BigDecimal currentDeduction;
     @ExcelProperty(value = "扣担保")
     private BigDecimal deductionGuarantee;
     @ExcelProperty(value = "扣征信")
     private BigDecimal deductCreditInformation;
+    @ExcelProperty(value = "业务员垫支")
+    private BigDecimal salesmanAdvance;
+    @ExcelProperty(value = "其他类型扣款")
+    private BigDecimal otherTypesDeduction;
     @ExcelProperty(value = "扣款小计")
     private BigDecimal subtotalOfDeduction;
     @ExcelProperty(value = "实发金额")
-    //实发金额 = 实发提成
     private BigDecimal copeextract;
 
-//
-//    private BigDecimal consotax;
-//
-//    @ApiModelProperty(hidden = false, value = "个税(2021-12月新增)")
-//    @TableField(value = "tax")
-//    private BigDecimal tax = BigDecimal.ZERO;
-
-
+    @ExcelProperty(value="错误明细")
+    private String errMsg;
 }

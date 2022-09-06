@@ -1,5 +1,7 @@
 package com.jtyjy.finance.manager.enmus;
 
+import javax.validation.constraints.NotNull;
+
 /**
  * 消息类型枚举
  * @author minzhq
@@ -29,18 +31,32 @@ public enum ExtractUserTypeEnum {
         }
         return null;
     }
-	
-	public static Integer getCode(String msg) {
+
+
+	@NotNull
+	public static ExtractUserTypeEnum getEnumByValue(String msg) {
 		ExtractUserTypeEnum[] payWayTypes = ExtractUserTypeEnum.values();
         if (payWayTypes != null && payWayTypes.length > 0){
             for (ExtractUserTypeEnum payWayType : payWayTypes){
                 if (payWayType.msg.equals(msg)){
-                    return payWayType.code;
+                    return payWayType;
                 }
             }
         }
         return null;
     }
+	public static Integer getCode(String msg) {
+		ExtractUserTypeEnum[] payWayTypes = ExtractUserTypeEnum.values();
+		if (payWayTypes != null && payWayTypes.length > 0){
+			for (ExtractUserTypeEnum payWayType : payWayTypes){
+				if (payWayType.msg.equals(msg)){
+					return payWayType.code;
+				}
+			}
+		}
+		return null;
+	}
+
 
 	public Integer getCode() {
 		return code;

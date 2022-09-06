@@ -27,5 +27,6 @@ public class IndividualTicketDetailsDTO {
     @ApiModelProperty(value = "发票金额")
     private BigDecimal invoiceAmount;
 
-
+    @ApiModelProperty(value = "备注")
+    private String remarks;
 }

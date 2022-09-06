@@ -77,6 +77,7 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
                 .like(query.getEmployeeJobNum() != null, IndividualEmployeeFiles::getEmployeeJobNum, query.getEmployeeJobNum())
                 .eq(query.getStatus() != null, IndividualEmployeeFiles::getStatus, query.getStatus())
                 .eq(query.getAccountType() != null, IndividualEmployeeFiles::getAccountType, query.getAccountType())
+                .orderByDesc(IndividualEmployeeFiles::getCreateTime)
                 .page(new Page<>(query.getPageNum(), query.getPageSize()));
         return page;
     }

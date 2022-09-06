@@ -8,12 +8,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.jtyjy.core.auth.anno.NoLoginAnno;
+import com.jtyjy.finance.manager.bean.BudgetCommonAttachment;
+import com.jtyjy.finance.manager.query.UploadQuery;
+import io.swagger.annotations.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -35,11 +36,7 @@ import com.jtyjy.finance.manager.mapper.WbBanksMapper;
 import com.jtyjy.finance.manager.service.BudgetAuthorfeesumService;
 import com.jtyjy.finance.manager.service.CommonService;
 import com.jtyjy.finance.manager.service.WbDeptService;
-
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
-import io.swagger.annotations.ApiOperation;
+import org.springframework.web.multipart.MultipartFile;
 
 /*
  * Author: ldw
@@ -233,5 +230,34 @@ public class CommonController extends BaseController {
     		map.put("value", MsgTypeEnum.getValue(e.getCode()));
     		return map;
     	}).collect(Collectors.toList());
+    }
+
+    //    @NoLoginAnno
+    @ApiOperation(value = "上传文件",httpMethod="POST")
+    @PostMapping(value = "/uploadFile")
+    public ResponseEntity uploadFile(@ModelAttribute UploadQuery query) {
+
+        if(query.getFiles()==null || query.getFiles().size() ==0) {
+            return ResponseEntity.error("文件不存在");
+        }
+        commonService.uploadFile(query);
+        return ResponseEntity.ok();
+    }
+    @ApiOperation(value = "查看附件",httpMethod="GET")
+    @GetMapping(value = "/viewAttachment")
+    public ResponseEntity viewAttachment(String contactId) {
+        List<BudgetCommonAttachment> result = commonService.viewAttachment(contactId);
+        return ResponseEntity.ok(result);
+    }
+    @ApiOperation(value = "删除附件",httpMethod="POST")
+    @PostMapping(value = "/delAttachment")
+    public ResponseEntity delAttachment(String id) {
+        try {
+            commonService.delAttachment(id);
+            return ResponseEntity.ok();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.error(e.getMessage());
+        }
     }
 }

@@ -4,12 +4,12 @@ import com.alibaba.excel.EasyExcelFactory;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.result.ResponseEntity;
-import com.jtyjy.finance.manager.bean.IndividualEmployeeFiles;
 import com.jtyjy.finance.manager.dto.individual.*;
-import com.jtyjy.finance.manager.query.individual.IndividualFilesQuery;
 import com.jtyjy.finance.manager.query.individual.IndividualTicketQuery;
 import com.jtyjy.finance.manager.service.IndividualEmployeeTicketReceiptInfoService;
+import com.jtyjy.finance.manager.service.IndividualEmployeeTicketReceiptService;
 import com.jtyjy.finance.manager.utils.EasyExcelUtil;
+import com.jtyjy.finance.manager.vo.individual.IndividualTicketPageVO;
 import com.jtyjy.finance.manager.vo.individual.IndividualTicketVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -35,8 +35,13 @@ public class IndividualEmployeeTicketController {
     //员工个体户
     private  final IndividualEmployeeTicketReceiptInfoService ticketService;
 
-    public IndividualEmployeeTicketController(IndividualEmployeeTicketReceiptInfoService ticketService) {
+    //员工个体户收票信息
+    //员工个体户
+    private  final IndividualEmployeeTicketReceiptService mainService;
+
+    public IndividualEmployeeTicketController(IndividualEmployeeTicketReceiptInfoService ticketService, IndividualEmployeeTicketReceiptService mainService) {
         this.ticketService = ticketService;
+        this.mainService = mainService;
     }
 
     /**
@@ -47,6 +52,26 @@ public class IndividualEmployeeTicketController {
     public ResponseEntity<PageResult<IndividualTicketVO>> selectPage(@ModelAttribute IndividualTicketQuery query) throws Exception {
         IPage<IndividualTicketVO> page = ticketService.selectPage(query);
         return ResponseEntity.ok(PageResult.apply(page.getTotal(), page.getRecords()));
+    }
+
+    /**
+     * 员工个体户 档案 分页模糊查询
+     */
+    @ApiOperation(value = "新 分页模糊查询", httpMethod = "GET")
+    @GetMapping("/selectMainPage")
+    public ResponseEntity<PageResult<IndividualTicketPageVO>> selectMainPage(@ModelAttribute IndividualTicketQuery query) throws Exception {
+        IPage<IndividualTicketPageVO> page = mainService.selectPage(query);
+        return ResponseEntity.ok(PageResult.apply(page.getTotal(), page.getRecords()));
+    }
+    /**
+     * 获取个体户 收票明细
+     */
+    @ApiOperation(value = "获取个体户 收票明细", httpMethod = "GET")
+    //individualId
+    @GetMapping("/getIndividualInfo")
+    public ResponseEntity<IndividualTicketInfoDTO> getIndividualInfo(@RequestParam String ticketId){
+        IndividualTicketInfoDTO dto  = ticketService.getIndividualInfo(ticketId);
+        return ResponseEntity.ok(dto);
     }
 
     /**
@@ -63,6 +88,8 @@ public class IndividualEmployeeTicketController {
         }
         return ResponseEntity.ok();
     }
+
+
 
 
     /**

@@ -359,8 +359,9 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	private void validateImportTableHead(Map<Integer, String> data) {
 		//表头
 		String year = data.get(1); //届别
-		String extractMonth = data.get(3); //提成期间
-		String unitname = data.get(5); //预算单位
+		String extractMonth = data.get(5); //提成期间
+		String unitname = data.get(9); //预算单位
+
 		if (StringUtils.isBlank(year)) throw new RuntimeException("届别不能为空");
 		if (StringUtils.isBlank(extractMonth)) throw new RuntimeException("提成期间不能为空");
 		if (StringUtils.isBlank(unitname)) throw new RuntimeException("预算单位不能为空");
@@ -413,12 +414,14 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	@Override
 	public Object validate(Integer row, Map<Integer, String> data, String importType,Object head, Object... params) {
 		if (BudgetExtractController.TCIMPORT.equals(importType)) {
+			//第2行
 			if (row == 1) {
 				//校验导入的表头
-				validateImportTableHead(data);
-			} else if (row >= 3) {
+//				validateImportTableHead(data);
+				//第5行
+			} else if (row >= 4) {
 				//校验明细数据
-				validateImportTableDetails(data);
+//				validateImportTableDetails(data);
 			}
 		} else if (BudgetExtractController.TCEXCESS.equals(importType)) {
 			/**
@@ -520,17 +523,18 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		String isCompanyEmp = data.get(0); //是否公司员工
 		String empNo = data.get(1); //工号
 		String empName = data.get(2); //姓名
-		String sftc = data.get(3); //实发提成
-		String zhs = data.get(4); //综合税
-		String tcPeriod = data.get(5); //提成届别
-		String isDebt = data.get(6); //是否坏账
+		String isDebt = data.get(3); //是否坏账   index = 3,实际是第4列
 
-		String extractType = data.get(7);//提成类型
-		String shouldSendExtract = data.get(8);//应发提成
-		String tax = data.get(9);//个税
-		String taxReduction = data.get(10);//个税减免
-		String invoiceExcessTax = data.get(11);//发票超额税金
-		String invoiceExcessTaxReduction = data.get(12);//发票超额税金减免
+		String extractType = data.get(4);//提成类型
+		String tcPeriod = data.get(5); //提成届别 第6列
+
+
+
+		String sftc = data.get(42);//实发金额
+		String zhs = data.get(21); //综合税
+//		String consotax = data.get(21);//综合税
+
+
 
 
 		if (StringUtils.isBlank(isCompanyEmp)) {
@@ -595,44 +599,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		//2021-12月新增
 		if (StringUtils.isBlank(extractType)) throw new RuntimeException("提成类型不能为空!");
 		if (ExtractTypeEnum.getEnumeByvalue(extractType) == null)
-			throw new RuntimeException("提成类型填写错误【期间提成，扎账总提成，扎账后提成，坏账明细】");
-		if (StringUtils.isBlank(shouldSendExtract)) {
-			throw new RuntimeException("应发提成不能为空!");
-		} else {
-			try {
-				new BigDecimal(shouldSendExtract);
-			} catch (Exception e) {
-				throw new RuntimeException("应发提成格式不正确!");
-			}
-		}
-		if (StringUtils.isNotBlank(tax)) {
-			try {
-				new BigDecimal(tax);
-			} catch (Exception e) {
-				throw new RuntimeException("个税格式不正确!");
-			}
-		}
-		if (StringUtils.isNotBlank(taxReduction)) {
-			try {
-				new BigDecimal(taxReduction);
-			} catch (Exception e) {
-				throw new RuntimeException("个税减免格式不正确!");
-			}
-		}
-		if (StringUtils.isNotBlank(invoiceExcessTax)) {
-			try {
-				new BigDecimal(invoiceExcessTax);
-			} catch (Exception e) {
-				throw new RuntimeException("发票超额税金格式不正确!");
-			}
-		}
-		if (StringUtils.isNotBlank(invoiceExcessTaxReduction)) {
-			try {
-				new BigDecimal(invoiceExcessTaxReduction);
-			} catch (Exception e) {
-				throw new RuntimeException("发票超额税金减免格式不正确!");
-			}
-		}
+			throw new RuntimeException("提成类型填写错误【期间提成，扎账总提成，扎账后提成，坏账明细，绩效奖提成，预提绩效奖】");
 	}
 
 
@@ -661,13 +628,15 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				 */
 				List<Integer> errorKeyList = new ArrayList<>();
 				String badDebt = "提成";
-				for (int i = 3; i <= successMap.size(); i++) {
+				for (int i = 4; i <= successMap.size(); i++) {
 					Map<Integer, String> detailMap = successMap.get(i);
 					if (detailMap == null) continue;
 					try {
+						//第5行，第4列
 						//@ApiModelProperty(value = "是否坏账 0否1是")
 						//"是".equals(isDebt) ? true : false
-						badDebt = successMap.get(3).get(6).equals("是")?"提成":"坏账";
+//						badDebt = successMap.get(3).get(6).equals("是")?"提成":"坏账";
+						badDebt = successMap.get(4).get(3).equals("是")?"提成":"坏账";
 						//插入提成明细
 						applicationService.saveExtractImportDetails(detailMap, extractsum);
 //						saveExtractImportDetails(detailMap, extractsum);
@@ -989,12 +958,6 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		String invoiceExcessTaxReduction = data.get(12);//发票超额税金减免
 
 
-
-
-
-
-
-
 		BudgetYearPeriod yearPeriod = getPeriodByName(tcPeriod);
 		//判断是否存在
 		BudgetExtractImportdetail extractImportdetail = null;
@@ -1069,9 +1032,9 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 
 	private BudgetExtractsum saveExtractSum(Map<Integer, String> data) {
 
-		String year = data.get(1); //届别
-		String extractMonth = data.get(3); //提成期间
-		String unitname = data.get(5); //预算单位
+		String year = data.get(1); //届别   第2列
+		String extractMonth = data.get(5); //提成期间   第6列
+		String unitname = data.get(9); //预算单位  第10列
 		BudgetYearPeriod yearPeriod = getPeriodByName(year);
 		BudgetUnit unit = getBudgetUnitByYearAndName(yearPeriod.getId(), unitname);
 		BudgetExtractsum bes = new BudgetExtractsum();
@@ -1159,7 +1122,6 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	}
 
 	private void combine(Long sumId, List<BudgetExtractImportdetail> allimportDetails) {
-
 		//获取所有的提成导入明细
 		List<BudgetExtractImportdetail> importDetails = extractImportDetailMapper.selectList(new QueryWrapper<BudgetExtractImportdetail>().eq("extractsumid", sumId));
 		if (!CollectionUtils.isEmpty(importDetails)) {

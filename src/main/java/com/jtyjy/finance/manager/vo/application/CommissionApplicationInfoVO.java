@@ -35,6 +35,12 @@ public class CommissionApplicationInfoVO {
     @ApiModelProperty(value = "提成编码")
     private String extractSumNo;
 
+    @ApiModelProperty(value = "预算部门id")
+    private String unitId;
+    @ApiModelProperty(value = "届别Id")
+    private Long yearId;
+    @ApiModelProperty(value = "月份id")
+    private Integer monthId;
     //基本信息
     /**
      * 部门名称

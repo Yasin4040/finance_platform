@@ -184,8 +184,14 @@ public class ReimbursementController {
 		this.service.checkIsMonthEnd(request.getOrder(),request.getOrderAllocated());
 		String result = null;
 
-		Integer hireDay = hrService.getEmpHireDay(UserCache.getUserByUserId(request.getOrder().getReimperonsid()).getUserName());
-		if(hireDay>180){
+        Integer hireDay = null;
+        try {
+            hireDay  = hrService.getEmpHireDay(UserCache.getUserByUserId(request.getOrder().getReimperonsid()).getUserName());
+        } catch (Exception e) {
+            request.setIsHireHalfYear(false);
+        }
+
+        if(hireDay!=null&&hireDay>180){
 			request.setIsHireHalfYear(true);
 		}
 

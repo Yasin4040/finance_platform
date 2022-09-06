@@ -38,11 +38,6 @@ public class IndividualTicketQuery extends PageQuery {
     @ExcelProperty(value = "*姓名")
     private String employeeName;
 
-    @ApiModelProperty(value = "年份")
-    private Integer year;
-
-    @ApiModelProperty(value = "月份")
-    private Integer month;
 
     @ApiModelProperty(value = "个体户名称")
     private String individualName;
