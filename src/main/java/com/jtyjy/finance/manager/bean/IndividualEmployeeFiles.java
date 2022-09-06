@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 import lombok.Data;
 
@@ -105,7 +106,7 @@ public class IndividualEmployeeFiles implements Serializable {
      * 年额度
      */
     @TableField(value = "annual_quota")
-    private Integer annualQuota;
+    private BigDecimal annualQuota;
 
     /**
      * 创建人

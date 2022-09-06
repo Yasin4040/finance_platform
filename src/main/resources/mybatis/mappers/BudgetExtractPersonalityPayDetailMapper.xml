@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetExtractPersonalityPayDetailMapper">
+
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetExtractPersonalityPayDetail">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="personalityId" column="personality_id" jdbcType="BIGINT"/>
+            <result property="extractMonth" column="extract_month" jdbcType="VARCHAR"/>
+            <result property="receiptSum" column="receipt_sum" jdbcType="DECIMAL"/>
+            <result property="extractSum" column="extract_sum" jdbcType="DECIMAL"/>
+            <result property="curExtract" column="cur_extract" jdbcType="DECIMAL"/>
+            <result property="curRealExtract" column="cur_real_extract" jdbcType="VARCHAR"/>
+            <result property="salarySum" column="salary_sum" jdbcType="DECIMAL"/>
+            <result property="curSalary" column="cur_salary" jdbcType="DECIMAL"/>
+            <result property="welfareSum" column="welfare_sum" jdbcType="DECIMAL"/>
+            <result property="curWelfare" column="cur_welfare" jdbcType="DECIMAL"/>
+            <result property="billingUnitId" column="billing_unit_id" jdbcType="BIGINT"/>
+            <result property="payStatus" column="pay_status" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,personality_id,extract_month,
+        receipt_sum,extract_sum,cur_extract,
+        cur_real_extract,salary_sum,cur_salary,
+        welfare_sum,cur_welfare,billing_unit_id,
+        pay_status
+    </sql>
+    <select id="getValidLastExtractBatch" resultType="java.lang.String">
+        SELECT
+            b.extract_month
+            FROM
+            budget_extract_tax_handle_record b
+            WHERE
+            b.extract_month &lt; #{extractBatch}
+            AND b.is_cal_complete = 1
+            AND b.is_set_excess_complete = 1
+            AND b.is_personality_complete = 1
+            ORDER BY
+            b.extract_month DESC
+            LIMIT 1
+    </select>
+    <select id="getExtractPersonalityPayDetailVO"
+            resultType="com.jtyjy.finance.manager.vo.ExtractPersonalityPayDetailVO">
+        SELECT
+            bepd.id,
+            bief.batch_no batch,
+            bief.department_name firstDept,
+          bief.province_or_region secondDept,
+          bief.employee_job_num empNo,
+          bief.employee_name empName,
+          bepd.cur_extract 'extract',
+            bief.account_name personalityName,
+            if(bief.account_type=1,'个卡','公户') userType,
+            bepd.receipt_sum receiptSum,
+            bepd.extract_sum extractSum,
+            bepd.cur_real_extract curExtract,
+            bepd.salary_sum salarySum,
+            bepd.cur_salary curSalary,
+            bepd.welfare_sum welfareSum,
+            bepd.cur_welfare curWelfare,
+            bepd.personality_id personalityId,
+            bepd.extract_sum+bepd.salary_sum+bepd.welfare_sum moneySum,
+            bepd.cur_extract+bepd.cur_salary+bepd.cur_welfare curPaySum,
+            bepd.remaining_invoices remainingInvoices,
+            bepd.remaining_pay_limit_money remainingPayLimitMoney,
+            bbu.`name` billingUnitName,
+            bepd.pay_status payStatus,
+            bepd.billing_unit_id billingUnitId,
+            DATE_FORMAT(bepd.update_time, '%Y-%m-%d %H:%i:%S') updateTime,
+            DATE_FORMAT(bepd.operate_time, '%Y-%m-%d %H:%i:%S') operateTime,
+            bepd.is_send isSend
+        FROM
+            budget_extract_personality_pay_detail bepd
+            LEFT JOIN budget_individual_employee_files bief ON bepd.personality_id = bief.id
+            left join budget_billing_unit bbu on bbu.id = bepd.billing_unit_id
+        WHERE
+            1=1
+            <if test="extractBatch !=null and extractBatch != ''">
+                and bepd.extract_month = #{extractBatch}
+            </if>
+            <if test="params.batch !=null and params.batch != ''">
+                and bief.batch_no like concat('%',#{params.batch},'%')
+            </if>
+            <if test="params.firstDept !=null and params.firstDept != ''">
+                and bief.department_name like concat('%',#{params.firstDept},'%')
+            </if>
+            <if test="params.secondDept !=null and params.secondDept != ''">
+                and bief.province_or_region like concat('%',#{params.secondDept},'%')
+            </if>
+            <if test="params.empNo !=null and params.empNo != ''">
+                and bief.employee_job_num like concat('%',#{params.empNo},'%')
+            </if>
+            <if test="params.empName !=null and params.empName != ''">
+                and bief.employee_name like concat('%',#{params.empName},'%')
+            </if>
+            <if test="params.personalityName !=null and params.personalityName != ''">
+                and bief.account_name like concat('%',#{params.personalityName},'%')
+            </if>
+            <if test="params.userType !=null">
+                and bief.account_type = #{params.userType}
+            </if>
+            <if test="params.payStatus !=null">
+                and bepd.pay_status = #{params.payStatus}
+            </if>
+            <if test="params.unitName !=null and params.unitName != ''">
+                and bbu.`name` like concat('%',#{params.unitName},'%')
+            </if>
+            <if test="params.remainingInvoices !=null and params.remainingInvoices != ''">
+                and bepd.remaining_invoices like concat('%',#{params.remainingInvoices},'%')
+            </if>
+            <if test="params.remainingPayLimitMoney !=null and params.remainingPayLimitMoney != ''">
+                and bepd.remaining_pay_limit_money like concat('%',#{params.remainingPayLimitMoney},'%')
+            </if>
+            order by bief.employee_job_num,bbu.billingunittype desc
+    </select>
+</mapper>

@@ -20,29 +20,31 @@ import lombok.NoArgsConstructor;
 public class ExtractExcessExcelData {
 	@ExcelProperty(value="身份证号")
 	private String idNumber;
+
+	@ExcelProperty(value="是否公司员工")
+	private String isCompanyEmp;
 	
-	@ExcelProperty(value="编号")
+	@ExcelProperty(value="工号")
 	private String empNo;
 	
 	@ExcelProperty(value="姓名")
 	private String empName;
-	
-	@ExcelProperty(value={"是否公司员工(是/否)"})
-	@ColumnWidth(30)
-	private String isCompanyEmp;
-	
+
 	@ExcelProperty(value="工资单位")
 	private String billingUnitName;
-	
+
 	@ExcelProperty(value="超额提成")
 	private BigDecimal excessMoney;
-	
-	@ExcelProperty(value="法人公司费用")
-	private BigDecimal fee;
-	
+
 	@ExcelProperty(value="避税发放")
-	private BigDecimal avoidTaxMoney;
-	
+	private BigDecimal avoidTaxMoney = BigDecimal.ZERO;
+
+	@ExcelProperty(value="外部户发放单位")
+	private String outUnit;
+
+	@ExcelProperty(value="外部户发放金额")
+	private BigDecimal outUnitPayMoney = BigDecimal.ZERO;
+
 	@ExcelProperty(value="错误明细")
 	@ColumnWidth(30)
 	private String errMsg;
