@@ -96,6 +96,10 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	private BudgetReimbursementorderService reimbursementorderService;
 	@Autowired
 	private BudgetExtractsumService sumService;
+	@Autowired
+	private BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService;
+	@Autowired
+	private BudgetExtractCommissionApplicationLogService applicationLogService;
 
 	@Autowired
 	private TabChangeLogMapper loggerMapper;
