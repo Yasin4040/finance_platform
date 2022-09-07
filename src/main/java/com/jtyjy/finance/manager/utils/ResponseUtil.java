@@ -602,9 +602,9 @@ public class ResponseUtil {
     public static void exportAuthor(List<List<String>> dataList, OutputStream outputStream, String filePath) throws Exception {
         List<String> columnNames = new ArrayList<>();
         columnNames.add("作者名字");
-        columnNames.add("身份证号\r\n（个人作者必填）");
-        columnNames.add("纳税人识别号\r\n（单位作者必填）");
-        columnNames.add("是否公司员工\r\n（是或否）");
+        columnNames.add("身份证号");
+        columnNames.add("纳税人识别号");
+        columnNames.add("是否公司员工");
         columnNames.add("所在单位");
         columnNames.add("收款银行账号");
         columnNames.add("银行");
