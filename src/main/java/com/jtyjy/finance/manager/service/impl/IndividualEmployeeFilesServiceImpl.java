@@ -209,6 +209,12 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
         return errList;
     }
 
+    @Override
+    public Integer findRepeat(IndividualRepeatDTO dto) {
+        return  this.lambdaQuery().eq(IndividualEmployeeFiles::getAccountName,dto.getAccountName())
+                .ne(dto.getId()!=null,IndividualEmployeeFiles::getId,dto.getId()).count();
+    }
+
 }
 
 

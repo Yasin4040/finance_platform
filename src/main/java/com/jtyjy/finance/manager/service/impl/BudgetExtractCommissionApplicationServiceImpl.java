@@ -9,6 +9,8 @@ import com.jtyjy.core.result.PageResult;
 import com.jtyjy.finance.manager.bean.*;
 import com.jtyjy.finance.manager.cache.UserCache;
 import com.jtyjy.finance.manager.controller.reimbursement.ReimbursementController;
+import com.jtyjy.finance.manager.controller.reimbursement.ReimbursementWorker;
+import com.jtyjy.finance.manager.converter.CommonAttachmentConverter;
 import com.jtyjy.finance.manager.dto.ReimbursementRequest;
 import com.jtyjy.finance.manager.enmus.ExtractStatusEnum;
 import com.jtyjy.finance.manager.enmus.ExtractTypeEnum;
@@ -16,21 +18,22 @@ import com.jtyjy.finance.manager.enmus.ExtractUserTypeEnum;
 import com.jtyjy.finance.manager.enmus.ReimbursementFromEnmu;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.mapper.*;
-import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationBudgetDetailsService;
-import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationLogService;
-import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationService;
-import com.jtyjy.finance.manager.service.IndividualEmployeeFilesService;
-import com.jtyjy.finance.manager.vo.BudgetSubjectAgentVO;
+import com.jtyjy.finance.manager.service.*;
+import com.jtyjy.finance.manager.utils.FileUtils;
 import com.jtyjy.finance.manager.vo.application.*;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
+import org.csource.common.MyException;
+import org.csource.fastdfs.StorageClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
 * @author User
@@ -49,7 +52,13 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     private final BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService;
     private final BudgetExtractCommissionApplicationLogService applicationLogService;
     private final ReimbursementController reimbursementController;
-    public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractsumMapper extractSumMapper, BudgetExtractOuterpersonMapper outPersonMapper, IndividualEmployeeFilesService individualService, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, ReimbursementController reimbursementController) {
+    private final BudgetCommonAttachmentService attachmentService;
+    private final StorageClient storageClient;
+    private final ReimbursementWorker reimbursementWorker;
+    private final BudgetReimbursementorderService reimbursementorderService;
+    private final BudgetExtractFeePayDetailMapper feePayDetailMapper;
+
+    public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractsumMapper extractSumMapper, BudgetExtractOuterpersonMapper outPersonMapper, IndividualEmployeeFilesService individualService, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, ReimbursementController reimbursementController, BudgetCommonAttachmentService attachmentService, StorageClient storageClient, ReimbursementWorker reimbursementWorker, BudgetReimbursementorderService reimbursementorderService, BudgetExtractFeePayDetailMapper feePayDetailMapper) {
         this.extractSumMapper = extractSumMapper;
         this.outPersonMapper = outPersonMapper;
         this.individualService = individualService;
@@ -58,6 +67,11 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         this.budgetDetailsService = budgetDetailsService;
         this.applicationLogService = applicationLogService;
         this.reimbursementController = reimbursementController;
+        this.attachmentService = attachmentService;
+        this.storageClient = storageClient;
+        this.reimbursementWorker = reimbursementWorker;
+        this.reimbursementorderService = reimbursementorderService;
+        this.feePayDetailMapper = feePayDetailMapper;
     }
 
     @Override
@@ -124,6 +138,12 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             //set预算明细
             List<DistributionDetailsVO> distributionList = new ArrayList<>();
             infoVO.setDistributionList(distributionList);
+            //附件明細
+            List<BudgetCommonAttachment> attachmentList = attachmentService.lambdaQuery().eq(BudgetCommonAttachment::getContactId, application.getId()).list();
+
+            List<BudgetCommonAttachmentVO> attachmentVOList = CommonAttachmentConverter.INSTANCE.toVOList(attachmentList);
+            infoVO.setAttachmentList(attachmentVOList);
+
         }
 
         return infoVO;
@@ -166,8 +186,44 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             budgetDetail.setBudgetAmount(budgetDetailsVO.getBudgetAmount());
             budgetDetailsService.saveOrUpdate(budgetDetail);
         }
-    }
+//        UserThreadLocal.get()
 
+        //先删除。
+        //附件逻辑
+        List<BudgetCommonAttachment> attachments = new ArrayList<>();
+        List<BudgetCommonAttachment> oldAttachments = attachmentService.lambdaQuery().eq(BudgetCommonAttachment::getContactId, application.getId()).list();
+        List<BudgetCommonAttachmentVO> giveAttachmentList = updateVO.getAttachmentList();
+
+        List<BudgetCommonAttachmentVO> addAttachmentList = giveAttachmentList.stream().filter(x -> x.getId() == null).collect(Collectors.toList());
+        List<Long> nowIdList = giveAttachmentList.stream()
+                .map(BudgetCommonAttachmentVO::getId).filter(Objects::nonNull).collect(Collectors.toList());
+
+        List<BudgetCommonAttachment> deleteAttachments = oldAttachments.stream().filter(x -> !nowIdList.contains(x.getId())).collect(Collectors.toList());
+         List<Long> delIds = deleteAttachments.stream().map(BudgetCommonAttachment::getId).collect(Collectors.toList());
+        //原来有id，1、保留下来就保留下来。2、没有保留下来，就删除
+        //原来没有id，新增。
+         attachmentService.removeByIds(delIds);
+         //删除资源
+         deleteAttachments.forEach(x->{
+            try {
+                storageClient.delete_file("group1",x.getFileUrl());
+            } catch (IOException | MyException e) {
+                e.printStackTrace();
+            }
+        });
+        for (BudgetCommonAttachmentVO attachmentVO : addAttachmentList) {
+            BudgetCommonAttachment attachment = new BudgetCommonAttachment();
+            attachment.setContactId(application.getId());
+            attachment.setFileName(attachmentVO.getFileName());
+            attachment.setFileType(1);
+            attachment.setFileUrl(attachmentVO.getFileUrl());
+            attachment.setFileExtName(FileUtils.getFileType(attachmentVO.getFileName()));
+            attachment.setCreator(UserThreadLocal.getEmpNo());
+            attachment.setCreateTime(new Date());
+            attachments.add(attachment);
+        }
+        attachmentService.saveOrUpdateBatch(attachments);
+    }
     @Override
     /**
      * 根据预算单位及月份查询动因
@@ -198,6 +254,14 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                         throw new BusinessException("税务退回失败,申请单必须是审核状态！");
 //                        退回失败！任务已计算！
                     }
+                    //有费用导入。就不能税务退回
+//                    Integer count =  feePayDetailMapper.selectCount(new LambdaQueryWrapper<BudgetExtractFeePayDetailBeforeCal>()
+//                            .eq(BudgetExtractFeePayDetailBeforeCal::getExtractMonth,application.get))
+//
+//                    if (count>0) {
+//                        throw new BusinessException("撤回失败,申请单已审批！");
+//                    }
+//处理状态都为1
                     break;
                 case DRAFT:
                     //撤回  申请单必须没有人审批过
@@ -215,6 +279,11 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                     break;
                 default:
                     break;
+            }
+            //删除报销表
+            if (application.getReimbursementId()!=null) {
+                BudgetReimbursementorder reimbursementorder = reimbursementorderService.getById(application.getReimbursementId());
+                reimbursementorderService.removeById(reimbursementorder);
             }
             this.lambdaUpdate().eq(BudgetExtractCommissionApplication::getExtractSumId,sumId).set(BudgetExtractCommissionApplication::getStatus,status);
             BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
@@ -268,7 +337,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                     reimbursement.setReimflag(true);
 
                     reimbursement.setReimmoney(budgetDetails.getBudgetAmount());
-                    otherTotalMoney.add(budgetDetails.getBudgetAmount());
+                    otherTotalMoney =  otherTotalMoney.add(budgetDetails.getBudgetAmount());
                     orderDetailList.add(reimbursement);
                 }
                 BudgetReimbursementorder order = new BudgetReimbursementorder();
@@ -280,7 +349,13 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                 reimbursementRequest.setOrderDetail(orderDetailList);
 
                 try {
-                    reimbursementController.opt(reimbursementRequest);
+                    //报销id
+                    String returnId = reimbursementWorker.saveReturnId(reimbursementRequest, true);
+                    if (StringUtils.isNotBlank(returnId)) {
+                        application.setReimbursementId(Long.valueOf(returnId));
+                        this.save(application);
+                    }
+//                    reimbursementController.opt(reimbursementRequest);
                 } catch (Exception e) {
                     throw e;
                 }

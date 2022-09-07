@@ -92,7 +92,8 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	private IndividualEmployeeFilesService individualService;
 	@Autowired
 	private BudgetExtractCommissionApplicationService applicationService;
-
+	@Autowired
+	private BudgetReimbursementorderService reimbursementorderService;
 	@Autowired
 	private BudgetExtractsumService sumService;
 
@@ -417,11 +418,11 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			//第2行
 			if (row == 1) {
 				//校验导入的表头
-//				validateImportTableHead(data);
+				validateImportTableHead(data);
 				//第5行
 			} else if (row >= 4) {
 				//校验明细数据
-//				validateImportTableDetails(data);
+				validateImportTableDetails(data);
 			}
 		} else if (BudgetExtractController.TCEXCESS.equals(importType)) {
 			/**
@@ -532,36 +533,41 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 
 		String sftc = data.get(42);//实发金额
 		String zhs = data.get(21); //综合税
-//		String consotax = data.get(21);//综合税
-
-
-
 
 		if (StringUtils.isBlank(isCompanyEmp)) {
 			throw new RuntimeException("是否公司员工不能为空!");
-		} else if (!"是".equals(isCompanyEmp) && !"否".equals(isCompanyEmp)) {
-			throw new RuntimeException("是否公司员工请填写是或否!");
 		}
+		switch (ExtractUserTypeEnum.getEnumByValue(isCompanyEmp)){
+			case COMPANY_STAFF:
+				WbUser user = getUserByEmpno(empNo);
+				if (user == null) {
+					throw new RuntimeException("工号【" + empNo + "】不存在!");
+				} else {
+					if (!empName.equals(user.getDisplayName())) {
+						throw new RuntimeException("工号与姓名不匹配!正确姓名为【" + user.getDisplayName() + "】");
+					}
+				}
+				break;
+			case EXTERNAL_STAFF:
+				BudgetExtractOuterperson outerPerson = getExtractOuterpersonByEmpnoAndEmpname(empNo, empName);
+				if (outerPerson == null) throw new RuntimeException("外部人员【" + empNo + "," + empName + "】不存在!");
+				if (outerPerson.getStopflag()) throw new RuntimeException("外部人员【" + empNo + "," + empName + "】已被停用!");
+				break;
+			case SELF_EMPLOYED_EMPLOYEES:
+				IndividualEmployeeFiles employeeFiles = individualService.lambdaQuery().eq(IndividualEmployeeFiles::getEmployeeJobNum, empNo).eq(IndividualEmployeeFiles::getAccountName, empName).last("limit 1").one();
+				if (employeeFiles == null) throw new RuntimeException("个体户【" + empNo + "," + empName + "】不存在!");
+				if (employeeFiles.getStatus()==2) throw new RuntimeException("个体户【" + empNo + "," + empName + "】已被停用!");
+				//个体户不存在
+			default:
+				throw new RuntimeException("业务类型 请填写公司员工，外部人员，员工个体户!");
+		}
+
+
 		if (StringUtils.isBlank(empNo)) {
 			throw new RuntimeException("工号不能为空!");
 		}
 		if (StringUtils.isBlank(empName)) {
 			throw new RuntimeException("姓名不能为空!");
-		}
-
-		if ("是".equals(isCompanyEmp)) {
-			WbUser user = getUserByEmpno(empNo);
-			if (user == null) {
-				throw new RuntimeException("工号【" + empNo + "】不存在!");
-			} else {
-				if (!empName.equals(user.getDisplayName())) {
-					throw new RuntimeException("工号与姓名不匹配!正确姓名为【" + user.getDisplayName() + "】");
-				}
-			}
-		} else if ("否".equals(isCompanyEmp)) {
-			BudgetExtractOuterperson outerPerson = getExtractOuterpersonByEmpnoAndEmpname(empNo, empName);
-			if (outerPerson == null) throw new RuntimeException("外部人员【" + empNo + "," + empName + "】不存在!");
-			if (outerPerson.getStopflag()) throw new RuntimeException("外部人员【" + empNo + "," + empName + "】已被停用!");
 		}
 
 		if (StringUtils.isBlank(sftc)) {
@@ -1123,7 +1129,8 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 
 	private void combine(Long sumId, List<BudgetExtractImportdetail> allimportDetails) {
 		//获取所有的提成导入明细
-		List<BudgetExtractImportdetail> importDetails = extractImportDetailMapper.selectList(new QueryWrapper<BudgetExtractImportdetail>().eq("extractsumid", sumId));
+		List<BudgetExtractImportdetail> importDetails = extractImportDetailMapper
+				.selectList(new QueryWrapper<BudgetExtractImportdetail>().eq("extractsumid", sumId));
 		if (!CollectionUtils.isEmpty(importDetails)) {
 			 //先把员工个体户找出来。
 			List<BudgetExtractImportdetail> IndividualList = new ArrayList<>();
@@ -1196,33 +1203,51 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	 * @param sumId
 	 */
 	public void deleteExtractSum(Long sumId) {
+		//先行条件 作废和审核状态  且报销表 没有审核通过
+		//后续操作
+		//1、删除导入明细
+		//2、删除 导入合并明细。
+		//3、删除提成主表。
+		//4、删除报销表。
+		//5、删除预算表。
+		//6、删除日志记录
+
+
 		BudgetExtractsum extractsum = this.budgetExtractsumMapper.selectById(sumId);
-		if (extractsum.getStatus() >= ExtractStatusEnum.VERIFYING.getType())
-			throw new RuntimeException("操作失败!该单据不允许删除");
-		//导入明细
-		extractImportDetailMapper.delete(new QueryWrapper<BudgetExtractImportdetail>().eq("extractsumid", sumId));
-		//导入 合并明细  提成明细1
-		extractDetailMapper.delete(new QueryWrapper<BudgetExtractdetail>().eq("extractsumid", sumId));
-		//提成主表
-		budgetExtractsumMapper.deleteById(sumId);
-		//申请单删除
-		// 基本信息 提成明细1 预算明细1  发放明细
+		if (extractsum.getStatus() == ExtractStatusEnum.VERIFYING.getType()||extractsum.getStatus() == ExtractStatusEnum.REJECT.getType())
+			throw new RuntimeException("操作失败!作废和审核状态，该单据不允许删除");
 		Optional<BudgetExtractCommissionApplication> applicationOptional = applicationService.lambdaQuery().eq(BudgetExtractCommissionApplication::getExtractSumId, sumId).last("limit 1").oneOpt();
-		if (applicationOptional.isPresent()) {
-			BudgetExtractCommissionApplication application = applicationOptional.get();
+		if (!applicationOptional.isPresent()) {
+			throw new RuntimeException("申请单不存在");
+		}
+		BudgetExtractCommissionApplication application = applicationOptional.get();
+		Long reimbursementId = application.getReimbursementId();
+		BudgetReimbursementorder reimbursementorder = reimbursementorderService.getById(reimbursementId);
+		Integer reuqeststatus = reimbursementorder.getReuqeststatus();
+		//审核状态，-1：退回，0：保存，1：已提交（待审核），2：审核通过
+		if (reuqeststatus == 2) {
+			throw new RuntimeException("报销单已经审核通过，该单据不允许删除");
+		}
+		//1、导入明细
+		extractImportDetailMapper.delete(new QueryWrapper<BudgetExtractImportdetail>().eq("extractsumid", sumId));
+		//2、导入 合并明细  提成明细1
+		extractDetailMapper.delete(new QueryWrapper<BudgetExtractdetail>().eq("extractsumid", sumId));
+		//3、提成主表
+		budgetExtractsumMapper.deleteById(sumId);
+		//4、删除报销表
+		reimbursementorderService.removeById(reimbursementorder);
 			//0草稿（-1 退回 不能 -2 作废）
-			if (application.getStatus()==0) {
+			if (application.getStatus()== ExtractStatusEnum.DRAFT.getType()||application.getStatus()== ExtractStatusEnum.RETURN.getType()) {
+				//5、申请单删除
 				applicationService.removeById(application.getId());
-				//预算明细
+				//6、预算明细
 				budgetDetailsService.remove(new QueryWrapper<BudgetExtractCommissionApplicationBudgetDetails>()
 						.lambda().eq(BudgetExtractCommissionApplicationBudgetDetails::getApplicationId, application.getId()));
-				//申请单删除 todo 发放明细
+				//7、日志删除
+				applicationLogService.remove(new QueryWrapper<BudgetExtractCommissionApplicationLog>()
+						.lambda().eq(BudgetExtractCommissionApplicationLog::getApplicationId, application.getId()));
 				//发放明细
-
 			}
-		}
-
-
 
 	}
 

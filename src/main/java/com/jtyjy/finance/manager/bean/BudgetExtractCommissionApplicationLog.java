@@ -38,7 +38,7 @@ public class BudgetExtractCommissionApplicationLog implements Serializable {
     private Integer node;
 
     /**
-     * 操作状态  1 同意 2拒绝
+     * 操作状态  （本系统操作）0已完成   1 同意 2退回
      */
     @TableField(value = "status")
     @ApiModelProperty(value = "操作状态")

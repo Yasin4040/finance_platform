@@ -22,6 +22,9 @@ public class UploadQuery {
     private Integer fileType = 1;
 //    @ApiModelProperty(value = "是否覆盖",required = false)
 //    private boolean isCover;
+//    @ApiModelProperty(value = "文件list",required = false)
+//    private List<MultipartFile> files;
+
     @ApiModelProperty(value = "文件list",required = false)
-    private List<MultipartFile> files;
+    private CommonsMultipartFile[] files;
 }

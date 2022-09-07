@@ -61,7 +61,19 @@ public class IndividualEmployeeController {
         }
         return ResponseEntity.ok();
     }
-
+    /**
+     * 户名是否重复 查询
+     */
+    @ApiOperation(value = "员工个体户  新增 返回数量 >0 就存在", httpMethod = "POST")
+    @PostMapping("/findRepeat")
+    public ResponseEntity findRepeat(@RequestBody IndividualRepeatDTO dto) throws Exception {
+        try {
+           Integer exist = filesService.findRepeat(dto);
+            return ResponseEntity.ok(exist);
+        } catch (Exception e) {
+            return ResponseEntity.error(e.getMessage());
+        }
+    }
 
     /**
      * 员工个体户  修改信息

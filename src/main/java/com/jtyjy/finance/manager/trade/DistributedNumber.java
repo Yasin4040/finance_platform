@@ -21,6 +21,9 @@ public class DistributedNumber {
 
     @Value("${bx.redis.key}")
     private String BX_REDIS_KEY;
+    @Value("${invoice.redis.key}")
+    private String INVOICE_REDIS_KEY;
+
 
     @Value("${tc.redis.key}")
     private String TC_REDIS_KEY;
@@ -71,7 +74,17 @@ public class DistributedNumber {
         //组装key
         String key = Constants.FORMAT_8.format(new Date());
         key = this.BX_REDIS_KEY + key;
-        return this.redis.getRedisIncrNum(key, 3, this.NUM_TTL, this.NUM_FILL_VALUE);
+        return this.redis.getRedisIncrNum(key, 4, this.NUM_TTL, this.NUM_FILL_VALUE);
+    }
+
+    /**
+     * 获取收票流水号
+     */
+    public String getInvoiceNum() {
+        //组装key
+        String key = Constants.FORMAT_8.format(new Date());
+        key = this.INVOICE_REDIS_KEY + key;
+        return this.redis.getRedisIncrNum(key, 4, this.NUM_TTL, this.NUM_FILL_VALUE);
     }
 
     /**

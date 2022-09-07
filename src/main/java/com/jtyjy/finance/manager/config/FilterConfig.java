@@ -26,6 +26,7 @@ public class FilterConfig {
         List<String> apis = new ArrayList<>();
 
         //上传文件
+        apis.add("/api/common/upload");
         apis.add("/api/common/uploadFile");
         //提成明细导入导出
         apis.add("/api/commissionApplication/downLoadTemplate");

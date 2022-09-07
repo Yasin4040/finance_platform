@@ -11,8 +11,10 @@ import com.jtyjy.core.auth.anno.NoLoginAnno;
 import com.jtyjy.finance.manager.bean.BudgetCommonAttachment;
 import com.jtyjy.finance.manager.query.UploadQuery;
 import io.swagger.annotations.*;
+import org.apache.commons.fileupload.FileUpload;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,6 +39,11 @@ import com.jtyjy.finance.manager.service.BudgetAuthorfeesumService;
 import com.jtyjy.finance.manager.service.CommonService;
 import com.jtyjy.finance.manager.service.WbDeptService;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
+import org.springframework.web.multipart.commons.CommonsMultipartResolver;
+
+import javax.servlet.http.HttpServletRequest;
 
 /*
  * Author: ldw
@@ -236,13 +243,18 @@ public class CommonController extends BaseController {
     @ApiOperation(value = "上传文件",httpMethod="POST")
     @PostMapping(value = "/uploadFile")
     public ResponseEntity uploadFile(@ModelAttribute UploadQuery query) {
-
-        if(query.getFiles()==null || query.getFiles().size() ==0) {
+        if(query.getFiles()==null || query.getFiles().length ==0) {
             return ResponseEntity.error("文件不存在");
         }
         commonService.uploadFile(query);
         return ResponseEntity.ok();
     }
+    @ApiOperation(value = "上传文件",httpMethod="POST")
+    @PostMapping(value = "/upload")
+    public ResponseEntity upload(@RequestParam(name="file") CommonsMultipartFile file) {
+        return ResponseEntity.ok(commonService.upload(file));
+    }
+
     @ApiOperation(value = "查看附件",httpMethod="GET")
     @GetMapping(value = "/viewAttachment")
     public ResponseEntity viewAttachment(String contactId) {

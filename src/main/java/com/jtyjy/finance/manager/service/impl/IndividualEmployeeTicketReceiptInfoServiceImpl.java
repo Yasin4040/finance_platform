@@ -1,6 +1,7 @@
 package com.jtyjy.finance.manager.service.impl;
 
 import com.alibaba.excel.EasyExcel;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -17,6 +18,7 @@ import com.jtyjy.finance.manager.service.IndividualEmployeeFilesService;
 import com.jtyjy.finance.manager.service.IndividualEmployeeTicketReceiptInfoService;
 import com.jtyjy.finance.manager.mapper.IndividualEmployeeTicketReceiptInfoMapper;
 import com.jtyjy.finance.manager.service.IndividualEmployeeTicketReceiptService;
+import com.jtyjy.finance.manager.trade.DistributedNumber;
 import com.jtyjy.finance.manager.vo.individual.IndividualEmployeeFilesVO;
 import com.jtyjy.finance.manager.vo.individual.IndividualTicketVO;
 import lombok.SneakyThrows;
@@ -24,18 +26,12 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.beanutils.locale.converters.DateLocaleConverter;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.text.MessageFormat;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,10 +46,11 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
 
     private final IndividualEmployeeFilesService employeeFilesService;
     private final IndividualEmployeeTicketReceiptService mainService;
-
-    public IndividualEmployeeTicketReceiptInfoServiceImpl(IndividualEmployeeFilesService employeeFilesService, IndividualEmployeeTicketReceiptService mainService) {
+    private final DistributedNumber distributedNumber;
+    public IndividualEmployeeTicketReceiptInfoServiceImpl(IndividualEmployeeFilesService employeeFilesService, IndividualEmployeeTicketReceiptService mainService, DistributedNumber distributedNumber) {
         this.employeeFilesService = employeeFilesService;
         this.mainService = mainService;
+        this.distributedNumber = distributedNumber;
     }
 
     @Override
@@ -118,27 +115,37 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
     }
 
     private String generateWaterCode() {
-        DateTimeFormatter yyyyMMdd = DateTimeFormatter.ofPattern("yyyyMMdd");
-        String yearMd = LocalDate.now().format(yyyyMMdd);
-        List<String> ticketCodeList = mainService.getAllCodes();
-        String waterCode = "0001";
-        if (CollectionUtils.isNotEmpty(ticketCodeList)) {
-            Optional<Integer> max = ticketCodeList.stream().filter(x -> x.contains("SP" + yearMd)).map(x -> Integer.valueOf(x.substring(10))).max(Comparator.comparing(Integer::new));
-            DecimalFormat g1 = new DecimalFormat("0000");
-            waterCode = g1.format(max.get() + 1);
-        }
-        String ticketCode = MessageFormat.format("SP{0}{1}", yearMd, waterCode);
-        return ticketCode;
+       return distributedNumber.getInvoiceNum();
+//        DateTimeFormatter yyyyMMdd = DateTimeFormatter.ofPattern("yyyyMMdd");
+//        String yearMd = LocalDate.now().format(yyyyMMdd);
+//        List<String> ticketCodeList = mainService.getAllCodes();
+//        String waterCode = "0001";
+//        if (CollectionUtils.isNotEmpty(ticketCodeList)) {
+//            Optional<Integer> max = ticketCodeList.stream().filter(x -> x.contains("SP" + yearMd)).map(x -> Integer.valueOf(x.substring(10))).max(Comparator.comparing(Integer::new));
+//            DecimalFormat g1 = new DecimalFormat("0000");
+//            if (max.isPresent()){
+//                waterCode = g1.format(max.get() + 1);
+//            }else {
+//                waterCode = g1.format( 1);
+//            }
+//
+//
+//        }
+//        String ticketCode = MessageFormat.format("SP{0}{1}", yearMd, waterCode);
+//        return ticketCode;
     }
 
     @Override
     public void updateTicket(IndividualTicketDTO dto) {
         List<IndividualTicketDetailsDTO> detailsDTOList = dto.getDetailsDTOList();
+
+        IndividualEmployeeTicketReceipt mainReceipt = mainService.getById(dto.getTicketId());
+        BigDecimal invoiceAmount = mainReceipt.getInvoiceAmount();
         List<IndividualEmployeeTicketReceiptInfo> infoList = new ArrayList<>();
         for (int i = 0; i < detailsDTOList.size(); i++) {
             Long id = detailsDTOList.get(i).getId();
             IndividualEmployeeTicketReceiptInfo info = new IndividualEmployeeTicketReceiptInfo();
-            if(id == null){
+            if(id != null){
                 info = this.getById(id);
             }
             IndividualTicketDetailsDTO singleDTO = detailsDTOList.get(i);
@@ -147,15 +154,19 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
             info.setInvoiceAmount(singleDTO.getInvoiceAmount());
             info.setTicketId(dto.getTicketId());
 
-//            info.setEmployeeJobNum(dto.getEmployeeJobNum());
-//            info.setIndividualEmployeeInfoId(dto.getIndividualEmployeeInfoId());
-//            info.setIndividualName(dto.getIndividualName());
-            info.setRemarks(detailsDTOList.get(i).getRemarks());
+            info.setEmployeeJobNum(dto.getEmployeeJobNum());
+            info.setIndividualEmployeeInfoId(dto.getIndividualEmployeeInfoId());
+            info.setIndividualName(dto.getIndividualName());
 
+            info.setRemarks(detailsDTOList.get(i).getRemarks());
             info.setUpdateTime(new Date());
             info.setUpdateBy(UserThreadLocal.getEmpNo());
             infoList.add(info);
+//            this.saveOrUpdate(info);
+            invoiceAmount = invoiceAmount.add(info.getInvoiceAmount());
         }
+        mainReceipt.setInvoiceAmount(invoiceAmount);
+        mainService.updateById(mainReceipt);
         this.saveOrUpdateBatch(infoList);
     }
 
@@ -256,6 +267,16 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
 
         dto.setDetailsDTOList(individualTicketDetailsDTOS);
         return dto;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void delTicket(List<Long> ids) {
+        for (Long id : ids) {
+            mainService.removeById(id);
+            this.remove(new LambdaQueryWrapper<IndividualEmployeeTicketReceiptInfo>().eq(IndividualEmployeeTicketReceiptInfo::getTicketId,id));
+        }
+
     }
 }
 

@@ -1,5 +1,6 @@
 package com.jtyjy.finance.manager.vo.application;
 
+import com.jtyjy.finance.manager.bean.BudgetCommonAttachment;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -39,5 +40,9 @@ public class CommissionApplicationInfoUpdateVO {
 
     //预算明细
     List<BudgetDetailsVO> budgetList;
+
+    //预算明细
+    List<BudgetCommonAttachmentVO> attachmentList;
+
 
 }

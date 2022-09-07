@@ -3,6 +3,7 @@ package com.jtyjy.finance.manager.vo.application;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.jtyjy.finance.manager.bean.BudgetCommonAttachment;
 import com.jtyjy.finance.manager.vo.application.BudgetDetailsVO;
 import com.jtyjy.finance.manager.vo.application.CommissionDetailsVO;
 import io.swagger.annotations.ApiModelProperty;
@@ -65,10 +66,6 @@ public class CommissionApplicationInfoVO {
     @ApiModelProperty(value = "备注")
     private String remarks;
 
-    //提成明细
-    List<CommissionDetailsVO> commissionList;
-    //预算明细
-    List<BudgetDetailsVO> budgetList;
 
     @ApiModelProperty(value = "合计发放 费用发放+提成发放+公户+个卡")
     private BigDecimal totalDistributionAmount;
@@ -76,6 +73,13 @@ public class CommissionApplicationInfoVO {
     private BigDecimal individualUnissuedAmount;
     @ApiModelProperty(value = "外部户发放金额")
     private BigDecimal outerDistributionAmount;
+
+    //提成明细
+    List<CommissionDetailsVO> commissionList;
+    //预算明细
+    List<BudgetDetailsVO> budgetList;
     //发放 明细
     List<DistributionDetailsVO> distributionList;
+    //附件 明细
+    List<BudgetCommonAttachmentVO> attachmentList;
 }

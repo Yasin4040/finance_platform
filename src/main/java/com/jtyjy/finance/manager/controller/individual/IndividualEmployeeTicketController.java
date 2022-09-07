@@ -106,7 +106,19 @@ public class IndividualEmployeeTicketController {
         return ResponseEntity.ok();
     }
 
-
+    /**
+     * 删除主表
+     */
+    @ApiOperation(value = "删除主表", httpMethod = "POST")
+    @PostMapping("/delMainTicket")
+    public ResponseEntity delMainTicket(@RequestBody List<Long> ids) {
+        try {
+            ticketService.delTicket(ids);
+        } catch (Exception e) {
+            return ResponseEntity.error(e.getMessage());
+        }
+        return ResponseEntity.ok();
+    }
     /**
      * 员工个体户发票维护  删除
      */

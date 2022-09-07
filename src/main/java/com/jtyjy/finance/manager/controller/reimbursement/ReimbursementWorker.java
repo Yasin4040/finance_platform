@@ -98,6 +98,48 @@ public class ReimbursementWorker {
         return null;
     }
 
+
+    /**
+     * 保存:通用校验 -> 相似校验（届别+部门+报销金额+报销人+报销类型+报销日期）----提交校验-----> 保存
+     *
+     * @param request
+     * @param isCommit 是否提交
+     * @throws Exception
+     */
+    public String saveReturnId(ReimbursementRequest request, boolean isCommit) throws Exception {
+        String result = "";
+        //提交校验
+        if (isCommit) {
+            result = this.submitValidate(request);
+            if (StringUtils.isNotEmpty(result)) {
+                return result;
+            }
+        } else {
+            result = this.baseValidate(request);
+            if (StringUtils.isNotEmpty(result)) {
+                return result;
+            }
+            result = this.likeValidate(request);
+            if (StringUtils.isNotEmpty(result)) {
+                return result;
+            }
+        }
+
+        Boolean isFixAsset = request.getIsFixAsset();
+        Boolean isOnlyValidate = request.getIsOnlyValidate();
+        /**
+         * add by minzhq
+         * 做保存操作：
+         *    一、不是固定资产
+         *    二、(是固定资产)并且(不做验证操作)
+         */
+        if((isFixAsset==null) || (isFixAsset!=null && isFixAsset && isOnlyValidate!=null && !isOnlyValidate)){
+            return this.orderService.saveOrUpdateAndSubmitReturnId(request, isCommit);
+        }else {
+            return null;
+        }
+    }
+
     /**
      * 修改：表单状态校验(是否提交)  -> 通用校验 -> 相似校验 -> 保存或修改 --------可选------>  提交校验 -> 保存或修改 -> 提交
      *

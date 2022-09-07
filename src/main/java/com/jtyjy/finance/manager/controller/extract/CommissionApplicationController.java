@@ -208,7 +208,7 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
             @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
     })
     @PostMapping("/importTemplate")
-    public ResponseEntity importTemplate(@RequestParam(name = "file") MultipartFile file,@RequestParam(name = "batchNo",required = false) String batchNo, HttpServletResponse response, HttpServletRequest request) throws IOException {
+    public ResponseEntity importTemplate(@RequestParam(name = "file") MultipartFile file,@RequestParam(name = "batchNo",required = false) String batchNo) throws IOException {
         InputStream is = null;
         int headRows = 3; //表示表头有4行
         int colNum = 42; //43列数
@@ -247,7 +247,8 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
             try {
                 iss = this.getClass().getClassLoader().getResourceAsStream("template/extractImportTemplateNew.xlsx");
                 String key = IMPORT_TYPE + "_" + UserThreadLocal.get().getUserName();
-                String errorFileName = fileShareDir + File.separator + System.currentTimeMillis() + "_错误信息.xlsx";
+//                String errorFileName = fileShareDir + File.separator + System.currentTimeMillis() + "_错误信息.xlsx";
+                String errorFileName =  System.currentTimeMillis() + "_提成导入错误信息.xlsx";
                 ExcelWriter workBook = EasyExcel.write(new File(errorFileName), CommissionDetailsImportDTO.class).withTemplate(iss).build();
                 WriteSheet sheet = EasyExcel.writerSheet(0).build();
                 sheet.setSheetName("提成导入错误明细");

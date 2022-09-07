@@ -228,7 +228,43 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
         this.saveFbInfo(request, order);
         return 8;
     }
-
+    /**
+     * 保存或修改、详情、划拨、转账、现金、差旅、招待、冲账单
+     *
+     * @param request
+     * @return
+     * @throws Exception
+     */
+    public Long saveOrUpdateReturnId(ReimbursementRequest request) throws Exception {
+        //保存订单
+        BudgetReimbursementorder order = request.getOrder();
+        //判断是否存在
+        boolean exist = order.getId() != null;
+        order.setVersion(null);
+        BudgetReimbursementorder _order = null;
+        if (exist) {
+            _order = this.getById(order.getId());
+        }
+        String version = (!exist) ? "0" : String.valueOf(Integer.parseInt(_order.getVersion()) + 1);
+        if (!exist) {
+            //保存
+            String bxdNum = distributedNumber.getBxdNum();
+            WbUser user = null;
+            if(request.getIsFixAsset()!=null && request.getIsFixAsset()){
+                user = this.userService.getByEmpNo(order.getReimperonsid());
+            }
+            //设置基本信息
+            order.setBase(bxdNum, request.getIsProjectBx(),request.getIsFixAsset(),user);
+        }
+        order.setVersion(version);
+        order.setUpdatetime(new Date());
+        this.saveOrUpdate(order);
+        this.setQrcode(order);
+        this.saveOrUpdate(order);
+        //保存附表信息
+        this.saveFbInfo(request, order);
+        return order.getId();
+    }
     /**
      * 设置二维码
      *
@@ -295,6 +331,24 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
         }
         return 8;
     }
+    /**
+     * 保存或修改后提交报销单、详情、划拨、转账、现金、差旅、招待、冲账单
+     *
+     * @param request
+     * @param isCommit
+     * @return
+     * @throws Exception
+     */
+    public String saveOrUpdateAndSubmitReturnId(ReimbursementRequest request, boolean isCommit) throws Exception {
+        //保存或修改
+        this.saveOrUpdate(request);
+        //提交
+        if (isCommit) {
+            this.submit(request);
+        }
+        return request.getOrder().getId().toString();
+    }
+
 
     /**
      * 提交

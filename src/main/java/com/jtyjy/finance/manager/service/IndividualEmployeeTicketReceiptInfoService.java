@@ -28,4 +28,6 @@ public interface IndividualEmployeeTicketReceiptInfoService extends IService<Ind
     List<IndividualTicketImportErrorDTO> importTicket(MultipartFile multipartFile);
 
     IndividualTicketInfoDTO getIndividualInfo(String ticketId);
+
+    void delTicket(List<Long> ids);
 }
