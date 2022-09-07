@@ -30,11 +30,14 @@ import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -675,7 +678,7 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 
 	}
 
-	@ApiOperation(value = "获取提成发放明细", httpMethod = "GET")
+	@ApiOperation(value = "员工批次发放明细", httpMethod = "GET")
 	@ApiImplicitParams(value = {
 			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
 			@ApiImplicitParam(value = "导航栏查询条件", name = "query", dataType = "String", required = false),
@@ -683,8 +686,8 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 			@ApiImplicitParam(value = "每页条数（默认20）", name = "rows", dataType = "Integer", required = false),
 			@ApiImplicitParam(value = "工号/姓名", name = "empno", dataType = "String", required = false),
 	})
-	@GetMapping("/getExtractPayDetails")
-	public ResponseEntity<PageResult<ExtractPayDetailVO>> getExtractPayDetails(@RequestParam(name = "query", required = true) String query,
+	@GetMapping("/getExtractBatchPayDetails")
+	public ResponseEntity<PageResult<ExtractPayDetailVO>> getExtractBatchPayDetails(@RequestParam(name = "query", required = true) String query,
 	                                                                           @RequestParam(defaultValue = "1") Integer page,
 	                                                                           @RequestParam(defaultValue = "20") Integer rows,
 	                                                                           @RequestParam(name = "empno", required = false) String empno) {
@@ -694,6 +697,35 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 			Map<String, Object> params = new HashMap<>();
 			params.put("extractmonth", query.split("-")[2]);
 			if (StringUtils.isNotBlank(empno)) params.put("empno", empno);
+			PageResult<ExtractPayDetailVO> pageResult = extractsumService.getExtractPayDetails(params, page, rows);
+			return ResponseEntity.ok(pageResult);
+		} catch (Exception e) {
+			e.printStackTrace();
+			LOGGER.error(e.getMessage(), e);
+			return ResponseEntity.error(e.getMessage());
+		}
+
+	}
+
+	@ApiOperation(value = "员工单号发放明细", httpMethod = "GET")
+	@ApiImplicitParams(value = {
+			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
+			@ApiImplicitParam(value = "提成id", name = "sumId", dataType = "Long", required = true),
+			@ApiImplicitParam(value = "当前页（默认1）", name = "page", dataType = "Integer", required = false),
+			@ApiImplicitParam(value = "每页条数（默认20）", name = "rows", dataType = "Integer", required = false),
+			@ApiImplicitParam(value = "工号/姓名", name = "empno", dataType = "String", required = false),
+	})
+	@GetMapping("/getExtractPayDetails")
+	public ResponseEntity<PageResult<ExtractPayDetailVO>> getExtractPayDetails(@RequestParam(name = "sumId", required = true) Long sumId,
+	                                                                           @RequestParam(defaultValue = "1") Integer page,
+	                                                                           @RequestParam(defaultValue = "20") Integer rows,
+	                                                                           @RequestParam(name = "empno", required = false) String empno) {
+		try {
+			BudgetExtractsum extractsum = this.extractsumService.getById(sumId);
+			Map<String, Object> params = new HashMap<>();
+			params.put("extractmonth", extractsum.getExtractmonth());
+			if (StringUtils.isNotBlank(empno)) params.put("empno", empno);
+			params.put("sumId", sumId);
 			PageResult<ExtractPayDetailVO> pageResult = extractsumService.getExtractPayDetails(params, page, rows);
 			return ResponseEntity.ok(pageResult);
 		} catch (Exception e) {
@@ -791,7 +823,7 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 //	        ExecutorService executorService = Executors.newFixedThreadPool(1);
 //	        executorService.submit(futureTask);
 			try {
-				this.extractsumService.calculate(extractBatch, specialPersonNameList, empno);
+				this.extractsumService.calculate(extractBatch, specialPersonNameList, null);
 			} catch (Exception e) {
 				throw e;
 			} finally {
@@ -855,7 +887,8 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 			int length = query.split("-").length;
 			if (length != 3) throw new RuntimeException("请先选择导航栏的一个批次！");
 			String extractBatch = query.split("-")[2];
-			//当前批次的所有提成			
+			this.extractsumService.validateIsCanSetExcess(extractBatch);
+			//当前批次的所有提成
 			List<BudgetExtractdetail> curExtractDetails = this.extractsumService.getExtractExcessDetailByExtractmonth(extractBatch);
 			if (curExtractDetails.isEmpty()) throw new RuntimeException("提成批次【" + extractBatch + "】无超额提成可处理!");
 			List<String> empnoList = curExtractDetails.stream().map(e -> e.getEmpno()).distinct().collect(Collectors.toList());
@@ -871,6 +904,8 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 				ed.setIdNumber(idnumber);
 				ed.setBillingUnitName(idnumber2billingUnitNameMap.get(idnumber));
 				ed.setExcessMoney(bedList.get(0).getExcessmoney());
+				ed.setAvoidTaxMoney(null);
+				ed.setOutUnitPayMoney(null);
 				details.add(ed);
 			});
 			is = this.getClass().getClassLoader().getResourceAsStream("template/extractExcessDetail.xlsx");
@@ -878,6 +913,51 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 			WriteSheet sheet = EasyExcel.writerSheet(0).build();
 			workBook.fill(details, sheet);
 			workBook.finish();
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage(), e);
+			throw e;
+		} finally {
+			if (is != null) is.close();
+		}
+	}
+
+
+	@ApiOperation(value = "导出外部户发放明细", httpMethod = "GET")
+	@ApiImplicitParams(value = {
+			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
+			@ApiImplicitParam(value = "导航栏查询条件", name = "query", dataType = "String", required = true)
+	})
+	@GetMapping("/exportExtractOutUnitPayDetail")
+	public void exportExtractOutUnitPayDetail(@RequestParam(name = "query", required = true) String query, HttpServletResponse response) throws Exception {
+		int length = query.split("-").length;
+		if (length != 3) throw new RuntimeException("请先选择导航栏的一个批次！");
+
+		ClassPathResource resource = new ClassPathResource("template/exportExtractOutUnitPayDetail.xlsx");
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		InputStream is = null;
+		XSSFWorkbook workbook = null;
+		try {
+			String extractBatch = query.split("-")[2];
+			//外部户的发放明细
+			Map<String,List<ExtractOutUnitPayExcelData>> detailMap = this.extractsumService.getExtractOutUnitPayDetails(extractBatch);
+			List<String> outUnitNameList = detailMap.keySet().stream().collect(Collectors.toList());
+			if(!outUnitNameList.isEmpty()){
+				workbook = new XSSFWorkbook(resource.getInputStream());
+				workbook.setSheetName(0, outUnitNameList.get(0));
+				for (int i = 1; i < outUnitNameList.size(); i++) {
+					workbook.cloneSheet(0, outUnitNameList.get(i));
+				}
+				workbook.write(bos);
+				is = new ByteArrayInputStream(bos.toByteArray());
+				ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream(extractBatch + "员工外部户发放明细", response), ExtractOutUnitPayExcelData.class).withTemplate(is).build();
+				detailMap.forEach((outUnitName,list)->{
+					WriteSheet sheet = EasyExcel.writerSheet(outUnitNameList.indexOf(outUnitName)).build();
+					workBook.fill(list, sheet);
+				});
+				workBook.finish();
+			}else{
+				throw new RuntimeException("没有员工外部户发放明细可导出！");
+			}
 		} catch (Exception e) {
 			LOGGER.error(e.getMessage(), e);
 			throw e;
@@ -904,10 +984,10 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 		 */
 		List<BudgetExtractsum> extractSumList = this.extractsumService.list(new QueryWrapper<BudgetExtractsum>().eq("extractmonth", extractBatch).eq("deleteflag", 0));
 		long count = extractSumList.stream().filter(e -> e.getStatus() != ExtractStatusEnum.APPROVED.getType()).count();
-		if (count>0) return ResponseEntity.error("提成批次【" + extractBatch + "】不支持此操作!");
+		if (count > 0) return ResponseEntity.error("提成批次【" + extractBatch + "】不支持此操作!");
 		InputStream is = null;
 		int headRows = 0; //表示表头有1行
-		EasyExcelImportListener extractListener = new EasyExcelImportListener(extractsumService, FEEPAY, headRows, 3,extractBatch,extractSumList);
+		EasyExcelImportListener extractListener = new EasyExcelImportListener(extractsumService, FEEPAY, headRows, 3, extractBatch, extractSumList);
 		try {
 			is = file.getInputStream();
 			EasyExcel.read(is, extractListener).sheet(0).doReadSync();
@@ -940,7 +1020,7 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 				ed.setEmpName(empName);
 				ed.setFeePay(feeStr);
 				Map<Integer, String> errMap = (Map<Integer, String>) errorMap.get(i);
-				if(errMap!=null){
+				if (errMap != null) {
 					String errMsg = errMap.get(3);
 					ed.setErrMsg(errMsg);
 				}
@@ -1006,72 +1086,37 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 		/**
 		 * 校验是否能够导入超额明细
 		 */
-		List<BudgetExtractsum> extractSumList = this.extractsumService.list(new QueryWrapper<BudgetExtractsum>().eq("extractmonth", extractBatch).eq("deleteflag", 0).ge("status", ExtractStatusEnum.CALCULATION_COMPLETE.getType()));
-		if (extractSumList.isEmpty()) return ResponseEntity.error("提成批次【" + extractBatch + "】还未计算发放!");
-		InputStream is = null;
-		int headRows = 0; //表示表头有1行
-		EasyExcelImportListener extractListener = new EasyExcelImportListener(extractsumService, TCEXCESS, headRows, 8,extractBatch);
-		try {
-			is = file.getInputStream();
-			EasyExcel.read(is, extractListener).sheet(0).doReadSync();
-		} catch (IOException e1) {
-			e1.printStackTrace();
-			LOGGER.error(e1.getMessage(), e1);
-			return ResponseEntity.error(e1.getMessage());
-		} finally {
-			try {
-				is.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-				LOGGER.error(e.getMessage(), e);
-				return ResponseEntity.error(e.getMessage());
+		this.extractsumService.validateIsCanSetExcess(extractBatch);
+		InputStream inputStream = file.getInputStream();
+		try{
+			List<ExtractExcessExcelData> details = this.extractsumService.importExtractExcessDetail(inputStream,extractBatch);
+			List<ExtractExcessExcelData> errorDetails = details.stream().filter(e -> StringUtils.isNotBlank(e.getErrMsg())).collect(Collectors.toList());
+			if(!CollectionUtils.isEmpty(errorDetails)){
+				InputStream iss = null;
+				try {
+					String key = IMPORT_EXCESS_TYPE + "_" + UserThreadLocal.get().getUserName();
+					String errorFileName = fileShareDir + File.separator + System.currentTimeMillis() + "_错误信息.xlsx";
+					iss = this.getClass().getClassLoader().getResourceAsStream("template/extractExcessDetail.xlsx");
+					ExcelWriter workBook = EasyExcel.write(new File(errorFileName), ExtractExcessExcelData.class).withTemplate(iss).build();
+					WriteSheet sheet = EasyExcel.writerSheet(0).build();
+					workBook.fill(details, sheet);
+					workBook.finish();
+					redis.set(key, errorFileName, expiretime);
+				} catch (Exception e) {
+					e.printStackTrace();
+					LOGGER.error(e.getMessage(), e);
+				} finally {
+					if (iss != null) iss.close();
+					if(inputStream!=null) inputStream.close();
+				}
+				return ResponseEntity.apply(StatusCodeEnmus.ERROR_FORMAT, "文件导入有错误,请点击此处下载");
 			}
-		}
-		//明细数据的错误明细
-		Map<Integer, Map<Integer, String>> errorMap = extractListener.getErrorMap();
-		//导入的所有的数据
-		Map<Integer, Map<Integer, String>> allDataMap = extractListener.getAllDataMap();
-		if (!errorMap.isEmpty()) {
-			List<ExtractExcessExcelData> details = new ArrayList<>();
-			errorMap.forEach((i, data) -> {
-				String idNumber = data.get(0);
-				String isCompanyEmp = data.get(1);
-				String empNo = data.get(2);
-				String empName = data.get(3);
-				String billingUnitName = data.get(4);
-				String excessMoney = data.get(5);
-				String feeStr = data.get(6);
-				String avoidTaxMoney = data.get(7);
-				String errMsg = data.get(8);
-				ExtractExcessExcelData ed = new ExtractExcessExcelData();
-				ed.setIdNumber(idNumber);
-				ed.setIsCompanyEmp(isCompanyEmp);
-				ed.setEmpNo(empNo);
-				ed.setEmpName(empName);
-				ed.setBillingUnitName(billingUnitName);
-				ed.setExcessMoney(excessMoney!=null?new BigDecimal(excessMoney):BigDecimal.ZERO);
-				ed.setFee(feeStr!=null?new BigDecimal(feeStr):BigDecimal.ZERO);
-				ed.setAvoidTaxMoney(avoidTaxMoney!=null?new BigDecimal(avoidTaxMoney):BigDecimal.ZERO);
-				ed.setErrMsg(errMsg);
-				details.add(ed);
-			});
-			InputStream iss = null;
-			try {
-				String key = IMPORT_EXCESS_TYPE + "_" + UserThreadLocal.get().getUserName();
-				String errorFileName = fileShareDir + File.separator + System.currentTimeMillis() + "_错误信息.xlsx";
-				iss = this.getClass().getClassLoader().getResourceAsStream("template/extractExcessDetail.xlsx");
-				ExcelWriter workBook = EasyExcel.write(new File(errorFileName), ExtractExcessExcelData.class).withTemplate(iss).build();
-				WriteSheet sheet = EasyExcel.writerSheet(0).build();
-				workBook.fill(details, sheet);
-				workBook.finish();
-				redis.set(key, errorFileName, expiretime);
-			} catch (Exception e) {
-				e.printStackTrace();
-				LOGGER.error(e.getMessage(), e);
-			} finally {
-				if (iss != null) iss.close();
-			}
-			return ResponseEntity.apply(StatusCodeEnmus.ERROR_FORMAT, "文件导入有错误,请点击此处下载");
+		}catch (Exception e){
+			e.printStackTrace();
+			LOGGER.error(e.getMessage(), e);
+			return ResponseEntity.apply(StatusCodeEnmus.ERROR_FORMAT, e.getMessage());
+		}finally {
+			if(inputStream!=null) inputStream.close();
 		}
 		return ResponseEntity.ok("导入成功");
 	}
@@ -1156,7 +1201,7 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 
 			//模板中的明细
 			List<ExtractPaymentExcelData> details = new ArrayList<>();
-			extractsumService.exportExtractPaymentDetail(extractsum,details);
+			extractsumService.exportExtractPaymentDetail(extractsum, details);
 			//汇总数据
 			BigDecimal realExtractSum = details.stream().filter(e -> e.getIsSum()).map(e -> e.getRealExtract()).reduce(BigDecimal.ZERO, BigDecimal::add);
 			BigDecimal consotaxSum = details.stream().filter(e -> e.getIsSum()).map(e -> e.getConsotax()).reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -1323,12 +1368,12 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 	}
 
 
-
-	@ApiOperation(value = "导出提成支付", httpMethod = "GET")
-	@ApiImplicitParams(value = {
-			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
-			@ApiImplicitParam(value = "导航栏查询条件", name = "query", dataType = "String", required = true)
-	})
+	//	@ApiOperation(value = "导出提成支付", httpMethod = "GET")
+//	@ApiImplicitParams(value = {
+//			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
+//			@ApiImplicitParam(value = "导航栏查询条件", name = "query", dataType = "String", required = true)
+//	})
+	@ApiIgnore
 	@GetMapping("/exportExtractPay")
 	public void exportExtractPay(@RequestParam(name = "query", required = true) String query, HttpServletResponse response) throws Exception {
 		InputStream is = null;
@@ -1348,7 +1393,7 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 			is = BudgetExtractController.class.getClassLoader().getResourceAsStream("template/extractPayApply.xlsx");
 			ExcelFillCellMergeStrategy.rowMergeFlag = new HashMap<>();
 			outputStream = EasyExcelUtil.getOutputStream(extractBatch + "提成支付表", response);
-			ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream(extractBatch + "提成支付表", response)).withTemplate(is).registerWriteHandler(new ExcelFillCellMergeStrategy(5,null,1)).build();
+			ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream(extractBatch + "提成支付表", response)).withTemplate(is).registerWriteHandler(new ExcelFillCellMergeStrategy(5, null, 1)).build();
 			WriteSheet sheet = EasyExcel.writerSheet(0).build();
 			sheet.setSheetName("支付申请单");
 			workBook.fill(heads, sheet);
@@ -1361,7 +1406,26 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 			throw e;
 		} finally {
 			if (is != null) is.close();
-			if(outputStream!=null) outputStream.close();
+			if (outputStream != null) outputStream.close();
+		}
+	}
+
+
+	@ApiOperation(value = "提成支付申请单发放明细", httpMethod = "GET")
+	@ApiImplicitParams(value = {
+			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
+			//@ApiImplicitParam(value = "提成id", name = "extractPayApplyId", dataType = "Long", required = true)
+			@ApiImplicitParam(value = "提成id", name = "extractSumId", dataType = "Long", required = true)
+	})
+	@GetMapping("/getExtractPayApplyPayDetail")
+	public ResponseEntity<ExtractPayApplyPayDetailVO> getExtractPayApplyPayDetail(@RequestParam(name = "extractSumId", required = true) Long extractSumId) throws Exception {
+		try {
+			ExtractPayApplyPayDetailVO result = this.extractsumService.getExtractPayApplyPayDetail(extractSumId);
+			return ResponseEntity.ok(result);
+		} catch (Exception e) {
+			e.printStackTrace();
+			LOGGER.error(e.getMessage(), e);
+			return ResponseEntity.error(e.getMessage());
 		}
 	}
 
@@ -1389,7 +1453,7 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 			ExcelFillCellMergeStrategy.rowMergeFlag = new HashMap<>();
 			outputStream = EasyExcelUtil.getOutputStream(extractBatch + "提成支付汇总表", response);
 			int[] col = {1};
-			ExcelWriter workBook = EasyExcel.write(outputStream).withTemplate(is).registerWriteHandler(new ExcelFillCellMergeStrategy(3,col,2)).build();
+			ExcelWriter workBook = EasyExcel.write(outputStream).withTemplate(is).registerWriteHandler(new ExcelFillCellMergeStrategy(3, col, 2)).build();
 			WriteSheet sheet = EasyExcel.writerSheet(0).build();
 			sheet.setSheetName("提成支付汇总表");
 			workBook.fill(extractPaySumExcelDetails, sheet);
@@ -1400,7 +1464,7 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 			throw e;
 		} finally {
 			if (is != null) is.close();
-			if(outputStream!=null) outputStream.close();
+			if (outputStream != null) outputStream.close();
 		}
 	}
 
@@ -1479,8 +1543,8 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 			is = BudgetExtractController.class.getClassLoader().getResourceAsStream("template/extractPaySum.xlsx");
 			ExcelFillCellMergeStrategy.rowMergeFlag = new HashMap<>();
 			int[] col = {1};
-			ExcelWriter workBook = EasyExcel.write(new File("D:\\exceltemplate\\b.xlsx")).withTemplate(is).registerWriteHandler(new ExcelFillCellMergeStrategy(3,col,2)).build();
-			WriteSheet sheet = EasyExcel.writerSheet(0).registerWriteHandler(new ExcelFillCellMergeStrategy(3,col,2)).build();
+			ExcelWriter workBook = EasyExcel.write(new File("D:\\exceltemplate\\b.xlsx")).withTemplate(is).registerWriteHandler(new ExcelFillCellMergeStrategy(3, col, 2)).build();
+			WriteSheet sheet = EasyExcel.writerSheet(0).registerWriteHandler(new ExcelFillCellMergeStrategy(3, col, 2)).build();
 			sheet.setSheetName("提成支付汇总表");
 			workBook.fill(details, sheet);
 			workBook.finish();

@@ -71,6 +71,12 @@ public class FilterConfig {
         apis.add("/api/extractInfo/exportExtractPaySum");
         apis.add("/api/extractInfo/downImportExtractFeePayErrorDetail");
         apis.add("/api/extractInfo/importExtractFeePay");
+        apis.add("/api/extractInfo/exportExtractOutUnitPayDetail");
+        apis.add("/api/extractInfo/exportPersonalityDetail");
+        apis.add("/api/extractInfo/importPersonalityPayDetail");
+        apis.add("/api/extractInfo/importInitPersonalityPayDetail");
+        apis.add("/api/extractInfo/downInitPersonalityPayDetailTemplate");
+        apis.add("/api/extractInfo/exportPersonalityPayDetail");
 
         //消息推送
         apis.add("/api/msg/downWarningTemplate");

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetExtractPerPayDetailMapper">
+
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetExtractPerPayDetail">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="extractMonth" column="extract_month" jdbcType="VARCHAR"/>
+            <result property="extractCode" column="extract_code" jdbcType="VARCHAR"/>
+            <result property="billingUnitId" column="billing_unit_id" jdbcType="BIGINT"/>
+            <result property="billingUnitAccount" column="billing_unit_account" jdbcType="VARCHAR"/>
+            <result property="billingUnitBranchCode" column="billing_unit_branch_code" jdbcType="VARCHAR"/>
+            <result property="billingUnitBankName" column="billing_unit_bank_name" jdbcType="VARCHAR"/>
+            <result property="billingUnitOpenBank" column="billing_unit_open_bank" jdbcType="VARCHAR"/>
+            <result property="billingUnitName" column="billing_unit_name" jdbcType="VARCHAR"/>
+            <result property="payMoney" column="pay_money" jdbcType="DECIMAL"/>
+            <result property="isCompanyEmp" column="is_company_emp" jdbcType="BIT"/>
+            <result property="personalityId" column="personality_id" jdbcType="BIGINT"/>
+            <result property="receiverCode" column="receiver_code" jdbcType="VARCHAR"/>
+            <result property="receiverName" column="receiver_name" jdbcType="VARCHAR"/>
+            <result property="receiverBankAccountr" column="receiver_bank_accountr" jdbcType="VARCHAR"/>
+            <result property="receiverBankAccountBranchCoder" column="receiver_bank_account_branch_coder" jdbcType="VARCHAR"/>
+            <result property="receiveBankAccountBankName" column="receive_bank_account_bank_name" jdbcType="VARCHAR"/>
+            <result property="receiverOpenBank" column="receiver_open_bank" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="orderNo" column="order_no" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,extract_month,extract_code,
+        billing_unit_id,billing_unit_account,billing_unit_branch_code,
+        billing_unit_bank_name,billing_unit_open_bank,billing_unit_name,
+        pay_money,is_company_emp,personality_id,
+        receiver_code,receiver_name,receiver_bank_accountr,
+        receiver_bank_account_branch_coder,receive_bank_account_bank_name,receiver_open_bank,
+        create_time,order_no
+    </sql>
+</mapper>

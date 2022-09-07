@@ -14,11 +14,14 @@ import lombok.Data;
 @Data
 public class ExtractPayDetailVO {
 	
-	@ApiModelProperty(value="还款单id")
+	@ApiModelProperty(value="id")
 	private Long id;
 
 	@ApiModelProperty(value="提成明细id",hidden = true)
 	private String extractdetailids;
+
+	@ApiModelProperty("是否公司员工")
+	private Boolean isCompanyEmp;
 
 	@ApiModelProperty("提成批次")
 	private String extractmonth;
@@ -44,18 +47,33 @@ public class ExtractPayDetailVO {
 	@ApiModelProperty("提成发放单位1")
 	private String billingUnitname;
 	
-	@ApiModelProperty("发放金额")
+	@ApiModelProperty("发放金额1")
 	private BigDecimal billingPaymoney;
-	
+
+	@ApiModelProperty(value="提成发放单位2 id",hidden = true)
+	private Long avoidBillingUnitId;
+
 	@ApiModelProperty("提成发放单位2")
 	private String avoidBillingNnitname;
 	
-	@ApiModelProperty("发放金额")
+	@ApiModelProperty("发放金额2")
 	private BigDecimal avoidBillingPaymoney;
 
 	@ApiModelProperty("费用发放")
 	private BigDecimal beforeCalFee;
 
+	@ApiModelProperty(value="提成发放单位3 id",hidden = true)
+	private Long outUnitId;
+
+	@ApiModelProperty("提成发放单位3")
+	private String outUnitName;
+
+	@ApiModelProperty("发放金额3")
+	private BigDecimal outUnitPayMoney;
+
 	@ApiModelProperty("超额费用发放")
 	private BigDecimal payFee;
+
+	@ApiModelProperty(hidden = true)
+	private Boolean isSelf = true;
 }

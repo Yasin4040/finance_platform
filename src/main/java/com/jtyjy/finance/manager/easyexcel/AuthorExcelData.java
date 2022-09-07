@@ -22,15 +22,15 @@ public class AuthorExcelData {
     @ColumnWidth(12)
     private String author;
 
-    @ExcelProperty(value = "身份证号\r\n（个人作者必填）")
+    @ExcelProperty(value = "身份证号")
     @ColumnWidth(20)
     private String idnumber;
     
-    @ExcelProperty(value = "纳税人识别号\r\n（单位作者必填）")
+    @ExcelProperty(value = "纳税人识别号")
     @ColumnWidth(20)
     private String taxpayernumber;
 
-    @ExcelProperty(value = "是否公司员工\r\n（是或否）")
+    @ExcelProperty(value = "是否公司员工")
     @ColumnWidth(20)
     private String authortype;
 

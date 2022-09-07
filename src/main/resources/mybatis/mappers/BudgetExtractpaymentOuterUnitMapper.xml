@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BudgetExtractpaymentOuterUnitMapper">
+
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetExtractpaymentOuterUnit">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="extractMonth" column="extract_month" jdbcType="VARCHAR"/>
+            <result property="extractPaymentId" column="extract_payment_id" jdbcType="BIGINT"/>
+            <result property="billingUnitId" column="billing_unit_id" jdbcType="BIGINT"/>
+            <result property="unitBankAccount" column="unit_bank_account" jdbcType="VARCHAR"/>
+            <result property="branchcode" column="branchcode" jdbcType="VARCHAR"/>
+            <result property="bankName" column="bank_name" jdbcType="VARCHAR"/>
+            <result property="openBank" column="open_bank" jdbcType="VARCHAR"/>
+            <result property="payMoney" column="pay_money" jdbcType="DECIMAL"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,extract_month,extract_payment_id,
+        billing_unit_id,unit_bank_account,branchcode,
+        bank_name,open_bank,pay_money
+    </sql>
+</mapper>

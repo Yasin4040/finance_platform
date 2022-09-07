@@ -160,20 +160,25 @@
 			paydetail.empno,
 			paydetail.empname,
 			paydetail.extractmonth,
-			bep.payfee payFee,
+			paydetail.iscompanyemp isCompanyEmp,
+			beou.billing_unit_name outUnitName,
+			beou.billing_unit_id outUnitId,
+			beou.pay_money outUnitPayMoney,
 			bep.extractdetailids,
 			bep.before_cal_fee beforeCalFee,
-			(select sum(realextract) from budget_extractdetail bed where bed.id in (bep.extractdetailids) and bed.empno = paydetail.empno) realextract,
-			(select sum(withholdmoney) from budget_extractdetail bed where bed.id in (bep.extractdetailids) and bed.empno = paydetail.empno) repaymoney,
-			(select sum(consotax) from budget_extractdetail bed where bed.id in (bep.extractdetailids) and bed.empno = paydetail.empno) consotax,
+			(select sum(realextract) from budget_extractdetail bed where bed.id in (bep.extractdetailids) and bed.empno = paydetail.empno and bed.individual_employee_id is null ) realextract,
+			(select sum(withholdmoney) from budget_extractdetail bed where bed.id in (bep.extractdetailids) and bed.empno = paydetail.empno and bed.individual_employee_id is null) repaymoney,
+			(select sum(consotax) from budget_extractdetail bed where bed.id in (bep.extractdetailids) and bed.empno = paydetail.empno and bed.individual_employee_id is null) consotax,
 			bep.bunitid1 billingUnitId,
 			bep.bunitname1 billingUnitname,
 			bep.paymoney1 billingPaymoney,
+			bep.bunitid2 avoidBillingUnitId,
 			bep.bunitname2 avoidBillingNnitname,
 			bep.paymoney2 avoidBillingPaymoney 
 		FROM
 			budget_extractpayment bep
-			LEFT JOIN budget_extractpaydetail paydetail ON paydetail.id = bep.budgetextractpaydetailid 
+			LEFT JOIN budget_extractpaydetail paydetail ON paydetail.id = bep.budgetextractpaydetailid
+			left join budget_extractpayment_outer_unit beou on beou.extract_payment_id = bep.id
 		WHERE
 			paydetail.extractmonth = #{params.extractmonth}   	
 			<if test="params.empno !=null and params.empno != ''">
