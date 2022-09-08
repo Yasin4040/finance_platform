@@ -608,31 +608,31 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			throw new RuntimeException("姓名不能为空!");
 		}
 
-		if (StringUtils.isBlank(sftc)) {
-			throw new RuntimeException("实发金额不能为空!");
-		} else {
-			BigDecimal tc = BigDecimal.ZERO;
-			try {
-				tc = new BigDecimal(sftc);
-			} catch (Exception e) {
-				throw new RuntimeException("实发提成格式不正确!");
-			}
-			if (tc.compareTo(BigDecimal.ZERO) != 0 && !NumberUtil.isInteger(trimZero(sftc))) {
-				throw new RuntimeException("按财务的要求，实发提成目前只支持导入整数!");
-			}
-			if (tc.compareTo(BigDecimal.ZERO) < 0) {
-				throw new RuntimeException("实发提成不能小于0!");
-			}
-		}
-		if (StringUtils.isBlank(zhs)) {
-			throw new RuntimeException("综合税不能为空!");
-		} else {
-			try {
-				new BigDecimal(zhs);
-			} catch (Exception e) {
-				throw new RuntimeException("综合税格式不正确!");
-			}
-		}
+//		if (StringUtils.isBlank(sftc)) {
+//			throw new RuntimeException("实发金额不能为空!");
+//		} else {
+//			BigDecimal tc = BigDecimal.ZERO;
+//			try {
+//				tc = new BigDecimal(sftc);
+//			} catch (Exception e) {
+//				throw new RuntimeException("实发提成格式不正确!");
+//			}
+//			if (tc.compareTo(BigDecimal.ZERO) != 0 && !NumberUtil.isInteger(trimZero(sftc))) {
+//				throw new RuntimeException("按财务的要求，实发提成目前只支持导入整数!");
+//			}
+//			if (tc.compareTo(BigDecimal.ZERO) < 0) {
+//				throw new RuntimeException("实发提成不能小于0!");
+//			}
+//		}
+//		if (StringUtils.isBlank(zhs)) {
+//			throw new RuntimeException("综合税不能为空!");
+//		} else {
+//			try {
+//				new BigDecimal(zhs);
+//			} catch (Exception e) {
+//				throw new RuntimeException("综合税格式不正确!");
+//			}
+//		}
 		if (StringUtils.isBlank(tcPeriod)) throw new RuntimeException("提成明细届别不能为空!");
 		BudgetYearPeriod yearPeriod = getPeriodByName(tcPeriod);
 		if (null == yearPeriod) throw new RuntimeException("提成明细届别【" + tcPeriod + "】不存在!");
