@@ -32,4 +32,6 @@ public interface HrSalaryYearTaxUserMapper extends BaseMapper<HrSalaryYearTaxUse
 	String getSalaryUnitByEmpno(@Param("empNo") String empNo);
 
 	Integer getEmpHireDay(@Param("empNo")String empNo);
+
+	Map<String,String> getSalaryUnitByEmpNos(@Param("empNos") List<String> empNos);
 }

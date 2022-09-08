@@ -7,6 +7,4 @@ import com.jtyjy.finance.manager.bean.BudgetExtractFeePayDetailBeforeCal;
  * @author Admin
  */
 public interface BudgetExtractFeePayDetailMapper extends BaseMapper<BudgetExtractFeePayDetailBeforeCal> {
-
-
 }

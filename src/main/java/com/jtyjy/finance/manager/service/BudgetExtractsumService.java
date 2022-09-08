@@ -609,7 +609,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		}
 
 		if (StringUtils.isBlank(sftc)) {
-			throw new RuntimeException("实发提成不能为空!");
+			throw new RuntimeException("实发金额不能为空!");
 		} else {
 			BigDecimal tc = BigDecimal.ZERO;
 			try {

@@ -145,6 +145,7 @@ public class EasyExcelImportListener extends AnalysisEventListener<Map<Integer, 
 				//表头行报错
 				headErrorMsg.add(e.getMessage());
 			} else {
+				//一共几列
 				data.put(colNum, e.getMessage());
 				errorMap.put(context.readRowHolder().getRowIndex(), data);
 			}

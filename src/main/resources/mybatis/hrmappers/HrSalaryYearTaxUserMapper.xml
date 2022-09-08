@@ -257,4 +257,18 @@
 		WHERE
 			sus.empNo = #{empNo}
 	</select>
+	<select id="getSalaryUnitByEmpNos" resultType="map">
+		SELECT
+		user_.empNo as empNo,st.hr_company_id AS companyId,
+		FROM
+			hr_salary_template st
+				INNER JOIN sys_user user_ ON st.hr_emp_id = user_.empId
+		WHERE  1=1
+		<if test="empNoList!=null and empNoList.size()>0">
+		    and	user_.empNo in
+			<foreach collection="empNos" separator="," open="(" close=")" item="empNo">
+				#{empNo}
+			</foreach>
+		</if>
+	</select>
 </mapper>

@@ -1,5 +1,6 @@
 package com.jtyjy.finance.manager.service.impl;
 
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -7,21 +8,33 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.iamxiongx.util.message.exception.BusinessException;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.finance.manager.bean.*;
+import com.jtyjy.finance.manager.cache.BankCache;
+import com.jtyjy.finance.manager.cache.UnitCache;
 import com.jtyjy.finance.manager.cache.UserCache;
 import com.jtyjy.finance.manager.controller.reimbursement.ReimbursementController;
 import com.jtyjy.finance.manager.controller.reimbursement.ReimbursementWorker;
 import com.jtyjy.finance.manager.converter.CommonAttachmentConverter;
+import com.jtyjy.finance.manager.converter.IndividualEmployeeFilesConverter;
 import com.jtyjy.finance.manager.dto.ReimbursementRequest;
+import com.jtyjy.finance.manager.dto.commission.FeeImportErrorDTO;
+import com.jtyjy.finance.manager.dto.commission.IndividualIssueExportDTO;
+import com.jtyjy.finance.manager.dto.individual.IndividualImportDTO;
+import com.jtyjy.finance.manager.dto.individual.IndividualImportErrorDTO;
 import com.jtyjy.finance.manager.enmus.ExtractStatusEnum;
 import com.jtyjy.finance.manager.enmus.ExtractTypeEnum;
 import com.jtyjy.finance.manager.enmus.ExtractUserTypeEnum;
 import com.jtyjy.finance.manager.enmus.ReimbursementFromEnmu;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
+import com.jtyjy.finance.manager.listener.easyexcel.PageReadListener;
 import com.jtyjy.finance.manager.mapper.*;
 import com.jtyjy.finance.manager.service.*;
 import com.jtyjy.finance.manager.utils.FileUtils;
 import com.jtyjy.finance.manager.vo.application.*;
 import lombok.SneakyThrows;
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.beanutils.ConvertUtils;
+import org.apache.commons.beanutils.PropertyUtils;
+import org.apache.commons.beanutils.locale.converters.DateLocaleConverter;
 import org.apache.commons.lang3.StringUtils;
 import org.csource.common.MyException;
 import org.csource.fastdfs.StorageClient;
@@ -30,6 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.util.*;
@@ -44,6 +58,7 @@ import java.util.stream.Collectors;
 public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<BudgetExtractCommissionApplicationMapper, BudgetExtractCommissionApplication>
     implements BudgetExtractCommissionApplicationService{
 
+    private final BudgetExtractTaxHandleRecordService taxHandleRecordService;
     private final BudgetExtractsumMapper extractSumMapper;
     private final BudgetExtractOuterpersonMapper outPersonMapper;
     private final IndividualEmployeeFilesService individualService;
@@ -57,8 +72,9 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     private final ReimbursementWorker reimbursementWorker;
     private final BudgetReimbursementorderService reimbursementorderService;
     private final BudgetExtractFeePayDetailMapper feePayDetailMapper;
-
-    public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractsumMapper extractSumMapper, BudgetExtractOuterpersonMapper outPersonMapper, IndividualEmployeeFilesService individualService, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, ReimbursementController reimbursementController, BudgetCommonAttachmentService attachmentService, StorageClient storageClient, ReimbursementWorker reimbursementWorker, BudgetReimbursementorderService reimbursementorderService, BudgetExtractFeePayDetailMapper feePayDetailMapper) {
+    private final HrService hrService;
+    public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractTaxHandleRecordService taxHandleRecordService, BudgetExtractsumMapper extractSumMapper, BudgetExtractOuterpersonMapper outPersonMapper, IndividualEmployeeFilesService individualService, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, ReimbursementController reimbursementController, BudgetCommonAttachmentService attachmentService, StorageClient storageClient, ReimbursementWorker reimbursementWorker, BudgetReimbursementorderService reimbursementorderService, BudgetExtractFeePayDetailMapper feePayDetailMapper, HrService hrService) {
+        this.taxHandleRecordService = taxHandleRecordService;
         this.extractSumMapper = extractSumMapper;
         this.outPersonMapper = outPersonMapper;
         this.individualService = individualService;
@@ -72,6 +88,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         this.reimbursementWorker = reimbursementWorker;
         this.reimbursementorderService = reimbursementorderService;
         this.feePayDetailMapper = feePayDetailMapper;
+        this.hrService = hrService;
     }
 
     @Override
@@ -235,6 +252,116 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     }
 
     @Override
+    public List<IndividualIssueExportDTO> exportIssuedTemplate(String sumId) {
+        List<IndividualIssueExportDTO> exportDTOList = new ArrayList<>();
+        List<BudgetExtractImportdetail> importDetailList = extractImportDetailMapper.selectList
+                (new LambdaQueryWrapper<BudgetExtractImportdetail>()
+                .eq(BudgetExtractImportdetail::getExtractsumid, sumId)
+                .eq(BudgetExtractImportdetail::getIndividualEmployeeId,null));
+        List<String> empNos = importDetailList.stream().map(x -> x.getEmpno()).collect(Collectors.toList());
+        Map<String, String> unitByEmpNos = hrService.getSalaryUnitByEmpNos(empNos);
+        for (BudgetExtractImportdetail importDetail : importDetailList) {
+            IndividualIssueExportDTO dto = new IndividualIssueExportDTO();
+
+            dto.setEmployeeName(importDetail.getEmpname());
+            dto.setEmployeeJobNum(Integer.valueOf(importDetail.getEmpno()));
+            //发放单位
+            dto.setCopeextract(importDetail.getCopeextract());
+            String unitId = unitByEmpNos.get(importDetail.getEmpno());
+            if(StringUtils.isNotBlank(unitId)){
+                BudgetBillingUnit billingUnit = UnitCache.getByOutKey(unitId);
+                if(billingUnit != null){
+                    //没有就置空
+                    dto.setIssuedUnit(billingUnit.getName());
+                }
+            }
+            exportDTOList.add(dto);
+        }
+        return exportDTOList;
+    }
+
+    @Override
+    @SneakyThrows
+    public List<FeeImportErrorDTO> importFeeTemplate(MultipartFile multipartFile,String sumId) {
+        List<FeeImportErrorDTO> errList = new ArrayList<>();
+        List<Map> errorMap = new ArrayList<>();
+        List<String> errorList = new ArrayList<>();
+        BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
+        try {
+            EasyExcel.read(multipartFile.getInputStream(), IndividualIssueExportDTO.class,
+                    new PageReadListener<IndividualIssueExportDTO>(dataList -> {
+                     List<BudgetExtractFeePayDetailBeforeCal> entities = new ArrayList<>();
+                        for (IndividualIssueExportDTO dto : dataList) {
+                            try {
+                                BudgetExtractFeePayDetailBeforeCal payDetail= new BudgetExtractFeePayDetailBeforeCal();
+                                validData(dto);
+                                payDetail.setEmpNo(String.valueOf(dto.getEmployeeJobNum()));
+                                payDetail.setEmpName(dto.getEmployeeName());
+                                payDetail.setExtractMonth(budgetExtractsum.getExtractmonth());
+                                payDetail.setCopeextract(dto.getCopeextract());
+                                BudgetBillingUnit billingUnit = UnitCache.getByName(dto.getIssuedUnit());
+                                if (billingUnit!=null) {
+                                    payDetail.setIssuedUnit(billingUnit.getId());
+                                    payDetail.setIssuedUnitName(dto.getIssuedUnit());
+                                }
+                                payDetail.setFeePay(dto.getPaymentAmount());
+
+                                payDetail.setCreatorName(UserThreadLocal.getEmpName());
+                                payDetail.setCreator(UserThreadLocal.getEmpNo());
+                                payDetail.setCreateTime(new Date());
+                                feePayDetailMapper.insert(payDetail);
+                            }
+                            catch (Exception e) {
+                                FeeImportErrorDTO errorDTO = new FeeImportErrorDTO();
+
+                                try {
+                                    PropertyUtils.copyProperties(errorDTO,dto);
+                                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException ex) {
+                                    ex.printStackTrace();
+                                }
+                                errorDTO.setInsertDatabaseError(e.getCause().getMessage());
+                                errList.add(errorDTO);
+                            }
+                        }
+                        System.out.println(dataList);
+                    }, errorMap)).sheet().doRead();
+
+            for (Map map : errorMap) {
+                FeeImportErrorDTO errorDTO = new FeeImportErrorDTO();
+                try {
+                    ConvertUtils.register(new DateLocaleConverter(), Date.class);//BeanUtils.populate对日期类型进行处理，否则无法封装
+                    BeanUtils.populate(errorDTO,map);
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+                errList.add(errorDTO);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+        return errList;
+    }
+
+    private void validData(IndividualIssueExportDTO dto) {
+        //发放单位验证
+        String issuedUnit = dto.getIssuedUnit();
+        BudgetBillingUnit billingUnit = UnitCache.getByName(issuedUnit);
+        if(billingUnit==null){
+            throw new BusinessException("请填写正确的发放单位");
+        }
+        //工号姓名验证
+        WbUser user = getUserByEmpno(String.valueOf(dto.getEmployeeJobNum()));
+        if (user == null) {
+            throw new RuntimeException("工号【" + dto.getEmployeeJobNum() + "】不存在!");
+        } else {
+            if (!dto.getEmployeeName().equals(user.getDisplayName())) {
+                throw new RuntimeException("工号与姓名不匹配!正确姓名为【" + user.getDisplayName() + "】");
+            }
+        }
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateStatusBySumId(String sumId, Integer status) {
         Optional<BudgetExtractCommissionApplication> applicationOptional = getApplicationBySumId(sumId);
@@ -255,22 +382,31 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
 //                        退回失败！任务已计算！
                     }
                     //有费用导入。就不能税务退回
-//                    Integer count =  feePayDetailMapper.selectCount(new LambdaQueryWrapper<BudgetExtractFeePayDetailBeforeCal>()
-//                            .eq(BudgetExtractFeePayDetailBeforeCal::getExtractMonth,application.get))
-//
-//                    if (count>0) {
-//                        throw new BusinessException("撤回失败,申请单已审批！");
-//                    }
-//处理状态都为1
+                    BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(application.getExtractSumId());
+                    //批次号
+                    String extractMonth = budgetExtractsum.getExtractmonth();
+                    Integer returnCount =  feePayDetailMapper.selectCount(new LambdaQueryWrapper<BudgetExtractFeePayDetailBeforeCal>()
+                            .eq(BudgetExtractFeePayDetailBeforeCal::getExtractMonth,extractMonth));
+                    if (returnCount>0) {
+                        throw new BusinessException("退回失败！任务已计算！");
+                    }
+                    //个体户导入
+                    BudgetExtractTaxHandleRecord recordServiceOne = taxHandleRecordService.getOne(new LambdaQueryWrapper<BudgetExtractTaxHandleRecord>().eq(BudgetExtractTaxHandleRecord::getExtractMonth, extractMonth));
+
+                    if (recordServiceOne != null) {
+                        if(recordServiceOne.getIsCalComplete()||recordServiceOne.getIsSetExcessComplete()||recordServiceOne.getIsPersonalityComplete()){
+                            throw new BusinessException("退回失败！任务已计算！");
+                        }
+                    }
                     break;
                 case DRAFT:
                     //撤回  申请单必须没有人审批过
                     if (application.getStatus().equals(1)) {
                         //1 已提交
-                        Integer count = applicationLogService.lambdaQuery()
+                        Integer draftCount = applicationLogService.lambdaQuery()
                                 .eq(BudgetExtractCommissionApplicationLog::getApplicationId, application.getId())
                                 .eq(BudgetExtractCommissionApplicationLog::getStatus, 1).count();
-                        if (count>0) {
+                        if (draftCount>0) {
                             throw new BusinessException("撤回失败,申请单已审批！");
                         }
                     }else{

@@ -1,8 +1,10 @@
 package com.jtyjy.finance.manager.controller.extract;
 
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.jtyjy.common.enmus.StatusCodeEnmus;
 import com.jtyjy.core.auth.anno.ApiDataAuthAnno;
 import com.jtyjy.core.local.JdbcSqlThreadLocal;
@@ -10,9 +12,15 @@ import com.jtyjy.core.redis.RedisClient;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.result.ResponseEntity;
 import com.jtyjy.finance.manager.dto.commission.CommissionDetailsImportDTO;
+import com.jtyjy.finance.manager.dto.commission.FeeImportErrorDTO;
+import com.jtyjy.finance.manager.dto.commission.IndividualIssueExportDTO;
+import com.jtyjy.finance.manager.dto.individual.IndividualExportDTO;
+import com.jtyjy.finance.manager.dto.individual.IndividualImportDTO;
+import com.jtyjy.finance.manager.dto.individual.IndividualImportErrorDTO;
 import com.jtyjy.finance.manager.easyexcel.EasyExcelImportListener;
 import com.jtyjy.finance.manager.easyexcel.ExtractInfoExportExcelData;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
+import com.jtyjy.finance.manager.query.individual.IndividualFilesQuery;
 import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationService;
 import com.jtyjy.finance.manager.service.BudgetExtractsumService;
 import com.jtyjy.finance.manager.utils.EasyExcelUtil;
@@ -22,6 +30,7 @@ import com.jtyjy.finance.manager.vo.ExtractInfoVO;
 import com.jtyjy.finance.manager.vo.application.BudgetSubjectVO;
 import com.jtyjy.finance.manager.vo.application.CommissionApplicationInfoUpdateVO;
 import com.jtyjy.finance.manager.vo.application.CommissionApplicationInfoVO;
+import com.jtyjy.finance.manager.vo.individual.IndividualEmployeeFilesVO;
 import com.klcwqy.easy.lock.impl.ZookeeperShareLock;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -29,6 +38,7 @@ import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +53,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -211,7 +222,7 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
     public ResponseEntity importTemplate(@RequestParam(name = "file") MultipartFile file,@RequestParam(name = "batchNo",required = false) String batchNo) throws IOException {
         InputStream is = null;
         int headRows = 3; //表示表头有4行
-        int colNum = 42; //43列数
+        int colNum = 43; //43列数
         EasyExcelImportListener extractListener = new EasyExcelImportListener(extractsumService, TCIMPORT, headRows ,colNum,batchNo);
         try {
             is = file.getInputStream();
@@ -319,50 +330,6 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
         }
     }
 
-//
-//    @ApiOperation(value = "提交", httpMethod = "GET")
-//    @ApiImplicitParams(value = {
-//            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
-//            @ApiImplicitParam(value = "ids", name = "ids", dataType = "String", required = true)
-//    })
-//    @GetMapping("/submit")
-//    //提交提成明细导入。
-//    public ResponseEntity submit(@RequestParam(name = "ids", required = true) String ids) throws Exception {
-//        try {
-//            String lockKey = "/finance-platform/extract/submit/" + ids;
-//            ZookeeperShareLock zookeeperShareLock = new ZookeeperShareLock(this.curatorFramework, lockKey, null);
-//            try {
-//                zookeeperShareLock.tryLock();
-//                this.extractsumService.submit(ids);
-//            } catch (Exception e) {
-//                throw e;
-//            } finally {
-//                zookeeperShareLock.unLock();
-//            }
-//            return ResponseEntity.ok();
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            log.error(e.getMessage(), e);
-//            return ResponseEntity.error(e.getMessage());
-//        }
-//    }
-
-//    @ApiOperation(value = "删除提成主数据", httpMethod = "GET")
-//    @ApiImplicitParams(value = {
-//            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
-//            @ApiImplicitParam(value = "id", name = "id", dataType = "Long", required = true)
-//    })
-//    @GetMapping("/deleteExtractSum")
-//    public ResponseEntity deleteExtractSum(@RequestParam(name = "id", required = true) Long sumId) throws Exception {
-//        try {
-//            this.extractsumService.deleteExtractSum(sumId);
-//            return ResponseEntity.ok();
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            log.error(e.getMessage(), e);
-//            return ResponseEntity.error(e.getMessage());
-//        }
-//    }
 
     /**
      * 填充导入提成错误的数据
@@ -533,7 +500,11 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
     }
     private BigDecimal getBigDecimal(String object){
         if (StringUtils.isNotBlank(object)) {
-            return new BigDecimal(object);
+            if (StringUtils.isNumeric(object)) {
+                return new BigDecimal(object);
+            }else{
+                 return BigDecimal.ZERO;
+            }
         }else {
             return BigDecimal.ZERO;
         }
@@ -571,4 +542,69 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
         }
         return ResponseEntity.ok(applicationService.listSubjectMonthAgent(paramMap, page, rows));
     }
+
+
+    /**
+     * 下载发放明细模板。
+     */
+    @ApiOperation(value = "下载发放明细模板", httpMethod = "GET",produces = "application/octet-stream")
+    @GetMapping("/downLoadIssuedTemplate")
+    public void downLoadIssuedTemplate(HttpServletResponse response) throws Exception {
+        // 这里注意 有同学反应使用swagger 会导致各种问题，请直接用浏览器或者用postman
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
+        String fileName = URLEncoder.encode("员工发放名单模板", "UTF-8").replaceAll("\\+", "%20");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+        EasyExcelFactory.write(response.getOutputStream(), IndividualIssueExportDTO.class).sheet("员工发放名单模板").doWrite(new ArrayList<>());
+    }
+
+    /**
+     * 导出发放明细
+     */
+    @ApiOperation(value = "导出发放明细", httpMethod = "GET")
+    @GetMapping("/exportIssuedTemplate")
+    public ResponseEntity exportIssuedTemplate(@RequestParam String sumId, HttpServletResponse response) throws Exception {
+        try {
+            List<IndividualIssueExportDTO> exportDTOList  =  applicationService.exportIssuedTemplate(sumId);
+            EasyExcelUtil.writeExcel(response,exportDTOList,"发放明细信息","发放明细信息",IndividualExportDTO.class);
+        } catch (Exception e) {
+            return ResponseEntity.error(e.getMessage());
+        }
+        return ResponseEntity.ok();
+    }
+
+
+    /**
+     * 先导出发放明细，填写费用，再导入.导入时，前端需要传sumId
+     */
+    @ApiOperation(value = "导入费用明细", httpMethod = "GET")
+    @GetMapping("/importFeeTemplate")
+    public ResponseEntity importFeeTemplate(@RequestParam("file") MultipartFile multipartFile,@RequestParam("sumId") String sumId,HttpServletResponse response) throws Exception {
+        try {
+            List<FeeImportErrorDTO> errorDTOList = applicationService.importFeeTemplate(multipartFile,sumId);
+            if(CollectionUtils.isNotEmpty(errorDTOList)) {
+                EasyExcelUtil.writeExcel(response, errorDTOList, "员工个体户错误明细", "员工个体户错误明细", FeeImportErrorDTO.class);
+                return null;
+            }
+        } catch (Exception e) {
+            return ResponseEntity.error(e.getMessage());
+        }
+        return ResponseEntity.ok();
+    }
+
+//    /**
+//     * 先导出发放明细，填写费用，再导入.导入时，前端需要传sumId。费用明细列表
+//     */
+//    @ApiOperation(value = "费用明细列表", httpMethod = "GET")
+//    @GetMapping("/getFeeDetailPage")
+//    public ResponseEntity getFeePage(@RequestParam("sumId") String sumId) throws Exception {
+//
+//        List<FeeImportErrorDTO> errorDTOList = applicationService.importFeeTemplate(multipartFile,sumId);
+//
+//        IPage<IndividualEmployeeFilesVO> page = filesService.selectPage(query);
+//        return ResponseEntity.ok(PageResult.apply(page.getTotal(), page.getRecords()));
+//        return ResponseEntity.ok();
+//    }
+
 }

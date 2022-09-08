@@ -5,12 +5,16 @@ package com.jtyjy.finance.manager.enmus;
  * 提成类型
  */
 public enum ExtractTypeEnum {
+    //“扎帐前提成”、“扎帐后提成”、“期间提成”、“坏账明细”、“绩效奖提成”、“预提绩效奖”
+//
 	RETURN(1,"期间提成"),
 	DRAFT(2,"扎账总提成"),
 	VERIFYING(3,"扎账后提成"),
     APPROVED(4,"坏账明细"),
     PERFORMANCE_AWARD_COMMISSION(5,"绩效奖提成"),
-    ACCRUED_PERFORMANCE_AWARD(6,"预提绩效奖");
+    ACCRUED_PERFORMANCE_AWARD(6,"预提绩效奖"),
+    COMMISSION_BEFORE_ACCOUNTS(7,"扎帐前提成");
+
 
 	public String value;
     public int type;

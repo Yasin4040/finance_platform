@@ -4,12 +4,15 @@ import com.jtyjy.core.result.PageResult;
 import com.jtyjy.finance.manager.bean.BudgetExtractCommissionApplication;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.jtyjy.finance.manager.bean.BudgetExtractsum;
+import com.jtyjy.finance.manager.dto.commission.FeeImportErrorDTO;
+import com.jtyjy.finance.manager.dto.commission.IndividualIssueExportDTO;
 import com.jtyjy.finance.manager.vo.application.BudgetSubjectVO;
 import com.jtyjy.finance.manager.vo.application.CommissionApplicationInfoUpdateVO;
 import com.jtyjy.finance.manager.vo.application.CommissionApplicationInfoVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -37,4 +40,8 @@ public interface BudgetExtractCommissionApplicationService extends IService<Budg
     void updateApplicationInfo(CommissionApplicationInfoUpdateVO updateVO);
 
     PageResult<BudgetSubjectVO> listSubjectMonthAgent(HashMap<String, Object> paramMap, Integer page, Integer rows);
+
+    List<IndividualIssueExportDTO> exportIssuedTemplate(String sumId);
+
+    List<FeeImportErrorDTO> importFeeTemplate(MultipartFile multipartFile,String sumId);
 }

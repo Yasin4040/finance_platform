@@ -1,5 +1,6 @@
 package com.jtyjy.finance.manager.bean;
 
+import com.alibaba.excel.annotation.ExcelProperty;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -39,10 +40,24 @@ public class BudgetExtractFeePayDetailBeforeCal {
 	@ApiModelProperty(value = "费用发放")
 	private BigDecimal feePay;
 
+	@ApiModelProperty(value = "实发金额")
+	@TableField(value = "copeextract")
+	private BigDecimal copeextract;
+
+	@ApiModelProperty(value = "发放单位名称")
+	@TableField(value = "issued_unit_name")
+	private String issuedUnitName;
+
+	@ApiModelProperty(value = "发放单位")
+	@TableField(value = "issued_unit")
+	private Long issuedUnit;
+
 	@TableField(value = "creatorname")
 	@ApiModelProperty(value = "创建人")
 	private String creatorName;
-
+	@TableField(value = "creator")
+	@ApiModelProperty(value = "创建人")
+	private String creator;
 	@TableField(value = "create_time")
 	@ApiModelProperty(value = "创建时间")
 	private Date createTime;
