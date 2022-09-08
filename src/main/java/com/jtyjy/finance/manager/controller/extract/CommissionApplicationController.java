@@ -11,33 +11,31 @@ import com.jtyjy.core.local.JdbcSqlThreadLocal;
 import com.jtyjy.core.redis.RedisClient;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.result.ResponseEntity;
+import com.jtyjy.finance.manager.bean.BudgetExtractFeePayDetailBeforeCal;
+import com.jtyjy.finance.manager.bean.BudgetExtractImportdetail;
+import com.jtyjy.finance.manager.bean.BudgetExtractsum;
+import com.jtyjy.finance.manager.converter.CommissionConverter;
 import com.jtyjy.finance.manager.dto.commission.CommissionDetailsImportDTO;
 import com.jtyjy.finance.manager.dto.commission.FeeImportErrorDTO;
 import com.jtyjy.finance.manager.dto.commission.IndividualIssueExportDTO;
-import com.jtyjy.finance.manager.dto.individual.IndividualExportDTO;
-import com.jtyjy.finance.manager.dto.individual.IndividualImportDTO;
-import com.jtyjy.finance.manager.dto.individual.IndividualImportErrorDTO;
 import com.jtyjy.finance.manager.easyexcel.EasyExcelImportListener;
-import com.jtyjy.finance.manager.easyexcel.ExtractInfoExportExcelData;
+import com.jtyjy.finance.manager.enmus.ExtractUserTypeEnum;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
-import com.jtyjy.finance.manager.query.individual.IndividualFilesQuery;
+import com.jtyjy.finance.manager.mapper.BudgetYearPeriodMapper;
+import com.jtyjy.finance.manager.query.commission.FeeQuery;
 import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationService;
+import com.jtyjy.finance.manager.service.BudgetExtractImportdetailService;
 import com.jtyjy.finance.manager.service.BudgetExtractsumService;
 import com.jtyjy.finance.manager.utils.EasyExcelUtil;
-import com.jtyjy.finance.manager.vo.BudgetSubjectAgentVO;
 import com.jtyjy.finance.manager.vo.ExtractImportDetailVO;
-import com.jtyjy.finance.manager.vo.ExtractInfoVO;
 import com.jtyjy.finance.manager.vo.application.BudgetSubjectVO;
 import com.jtyjy.finance.manager.vo.application.CommissionApplicationInfoUpdateVO;
 import com.jtyjy.finance.manager.vo.application.CommissionApplicationInfoVO;
-import com.jtyjy.finance.manager.vo.individual.IndividualEmployeeFilesVO;
-import com.klcwqy.easy.lock.impl.ZookeeperShareLock;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
@@ -51,7 +49,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -72,8 +69,9 @@ import java.util.stream.Collectors;
 public class CommissionApplicationController {
     private final BudgetExtractCommissionApplicationService applicationService;
     private final BudgetExtractsumService extractsumService;
+    private final BudgetExtractImportdetailService importDetailService;
     private final RedisClient redisClient;
-
+    private final BudgetYearPeriodMapper yearMapper;
     private final CuratorFramework curatorFramework;
     private final static String IMPORT_TYPE = "tc";
     public final static String TCIMPORT = "TCIMPORT";
@@ -84,10 +82,12 @@ public class CommissionApplicationController {
     @Value("${redis.file.key.expiretime}")
     private Integer expiretime;
 
-    public CommissionApplicationController(BudgetExtractCommissionApplicationService applicationService, BudgetExtractsumService extractsumService, RedisClient redisClient, CuratorFramework curatorFramework) {
+    public CommissionApplicationController(BudgetExtractCommissionApplicationService applicationService, BudgetExtractsumService extractsumService, BudgetExtractImportdetailService importDetailService, RedisClient redisClient, BudgetYearPeriodMapper yearMapper, CuratorFramework curatorFramework) {
         this.applicationService = applicationService;
         this.extractsumService = extractsumService;
+        this.importDetailService = importDetailService;
         this.redisClient = redisClient;
+        this.yearMapper = yearMapper;
         this.curatorFramework = curatorFramework;
     }
 
@@ -286,7 +286,7 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
     @ApiOperation(value = "提成明细  下载模板", httpMethod = "GET")
     @GetMapping("/downLoadTemplate")
     public void downLoadTemplate(HttpServletResponse response) throws Exception {
-        try (InputStream is = this.getClass().getClassLoader().getResourceAsStream("template/extractImportTemplateNew.xlsx")) {
+        try (InputStream is = this.getClass().getClassLoader().getResourceAsStream("template/extractImportTemplateNewError.xlsx")) {
             ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream("提成导入模板", response)).withTemplate(is).build();
             WriteSheet sheet = EasyExcel.writerSheet(0).build();
             List<Map<String, Object>> list = new ArrayList<>();
@@ -564,9 +564,9 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
      */
     @ApiOperation(value = "导出发放明细", httpMethod = "GET")
     @GetMapping("/exportIssuedTemplate")
-    public ResponseEntity exportIssuedTemplate(@RequestParam String sumId, HttpServletResponse response) throws Exception {
+    public ResponseEntity exportIssuedTemplate(@RequestParam("extractMonth") String extractMonth, HttpServletResponse response) throws Exception {
         try {
-            List<IndividualIssueExportDTO> exportDTOList  =  applicationService.exportIssuedTemplate(sumId);
+            List<IndividualIssueExportDTO> exportDTOList  =  applicationService.exportIssuedTemplate(extractMonth);
             EasyExcelUtil.writeExcel(response,exportDTOList,"发放明细信息","发放明细信息",IndividualIssueExportDTO.class);
         } catch (Exception e) {
             return ResponseEntity.error(e.getMessage());
@@ -578,11 +578,11 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
     /**
      * 先导出发放明细，填写费用，再导入.导入时，前端需要传sumId
      */
-    @ApiOperation(value = "导入费用明细", httpMethod = "GET")
-    @GetMapping("/importFeeTemplate")
-    public ResponseEntity importFeeTemplate(@RequestParam("file") MultipartFile multipartFile,@RequestParam("extractMonth") String sumId,HttpServletResponse response) throws Exception {
+    @ApiOperation(value = "导入费用明细", httpMethod = "POST")
+    @PostMapping("/importFeeTemplate")
+    public ResponseEntity importFeeTemplate(@RequestParam("file") MultipartFile multipartFile,@RequestParam("extractMonth") String extractMonth,HttpServletResponse response) throws Exception {
         try {
-            List<FeeImportErrorDTO> errorDTOList = applicationService.importFeeTemplate(multipartFile,sumId);
+            List<FeeImportErrorDTO> errorDTOList = applicationService.importFeeTemplate(multipartFile,extractMonth);
             if(CollectionUtils.isNotEmpty(errorDTOList)) {
                 EasyExcelUtil.writeExcel(response, errorDTOList, "员工个体户错误明细", "员工个体户错误明细", FeeImportErrorDTO.class);
                 return null;
@@ -593,20 +593,61 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
         return ResponseEntity.ok();
     }
 
-//    /**
-//     * 先导出发放明细，填写费用，再导入.导入时，前端需要传sumId。费用明细列表
-//     */
-//    @ApiOperation(value = "费用明细列表", httpMethod = "GET")
-//    @GetMapping("/getFeeDetailPage")
-//    public ResponseEntity getFeePage(@RequestParam("sumId") String sumId) throws Exception {
-//
-//        List<FeeImportErrorDTO> errorDTOList = applicationService.importFeeTemplate(multipartFile,sumId);
-//
-//        IPage<IndividualEmployeeFilesVO> page = filesService.selectPage(query);
-//        return ResponseEntity.ok(PageResult.apply(page.getTotal(), page.getRecords()));
-//        return ResponseEntity.ok();
-//    }
+    /**
+     * 查看批次 费用明细列表
+     */
+    @ApiOperation(value = "查看批次 费用明细列表", httpMethod = "GET")
+    @GetMapping("/selectFeePage")
+    public ResponseEntity selectFeePage(@ModelAttribute FeeQuery query) throws Exception {
+        IPage<BudgetExtractFeePayDetailBeforeCal> page = applicationService.selectFeePage(query);
+        return ResponseEntity.ok(PageResult.apply(page.getTotal(), page.getRecords()));
+    }
 
     //exportTemplate
-
+    /**
+     *  根据sumId 导出提成明细
+     */
+    @ApiOperation(value = "根据sumId 导出提成明细", httpMethod = "GET")
+    @GetMapping("/exportTemplate")
+    public void exportTemplate(HttpServletResponse response,@RequestParam String sumId) throws Exception {
+        BudgetExtractsum extractSum = extractsumService.getById(sumId);
+        List<BudgetExtractImportdetail> importDetailList = importDetailService.lambdaQuery().eq(BudgetExtractImportdetail::getExtractsumid, sumId).list();
+        List<CommissionDetailsImportDTO> dtoList = new ArrayList<>();
+        for (BudgetExtractImportdetail entity : importDetailList) {
+            CommissionDetailsImportDTO dto = CommissionConverter.INSTANCE.toDTO(entity);
+            dtoList.add(dto);
+//            String businessType = dto.getBusinessType();
+            String businessType;
+            if(entity.getIndividualEmployeeId()==null){
+                //为空，就是1公司员工，和 2 外部员工。 3个体户
+                if(entity.getIscompanyemp()){
+                    businessType = ExtractUserTypeEnum.getValue(1);
+                }else {
+                    businessType = ExtractUserTypeEnum.getValue(2);
+                }
+            }else {
+                businessType = ExtractUserTypeEnum.getValue(3);
+            }
+            dto.setBusinessType(businessType);
+            dto.setIfBadDebt(entity.getIsbaddebt()?"是":"否");
+            String yearName = yearMapper.getNameById(entity.getYearid());
+            dto.setYearName(yearName);
+        }
+        try {
+            //模板用错了 导致一直fill错误。 因为没有 那个对象吗。有那个对象，但是dtoList没有值。？？？ 是缓存吗？
+            InputStream is = this.getClass().getClassLoader().getResourceAsStream("template/extractImportTemplateNew.xlsx");
+            ExcelWriter excelWriter = EasyExcel.write(EasyExcelUtil.getOutputStream("提成导入模板", response),CommissionDetailsImportDTO.class).withTemplate(is).build();
+            WriteSheet writeSheet = EasyExcel.writerSheet(0).build();
+            // 直接写入数据
+            excelWriter.fill(dtoList, writeSheet);
+            Map<String,String>  map = new HashMap();
+            map.put("yearPeriod", yearMapper.getNameById(extractSum.getYearid()));
+            map.put("extractMonth", extractSum.getExtractmonth());
+            map.put("unitName", extractSum.getDeptname());
+            excelWriter.fill(map,writeSheet);
+            excelWriter.finish();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+    }
 }

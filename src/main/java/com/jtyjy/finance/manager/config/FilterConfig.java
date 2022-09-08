@@ -39,6 +39,7 @@ public class FilterConfig {
         //提成明细导入导出
         apis.add("/api/commissionApplication/downLoadTemplate");
         apis.add("/api/commissionApplication/exportTemplate");
+
         apis.add("/api/commissionApplication/importTemplate");
         apis.add("/api/commissionApplication/downImportExtractErrorDetail");
         //个体户发票维护

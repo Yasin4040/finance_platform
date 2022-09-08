@@ -2,6 +2,7 @@ package com.jtyjy.finance.manager.dto.commission;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.jtyjy.finance.manager.annotation.ExcelDecimalValid;
+import com.jtyjy.finance.manager.annotation.ExcelValid;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -15,16 +16,18 @@ import java.math.BigDecimal;
 public class IndividualIssueExportDTO {
 
     @ExcelProperty(value = "*工号")
+    @ExcelValid(message = "工号必填")
     private Integer employeeJobNum;
     @ExcelProperty(value = "*姓名")
+    @ExcelValid(message = "姓名")
     private String employeeName;
-    @ExcelDecimalValid(min = 0, max = 1*0000*0000)
+    @ExcelDecimalValid(min = 0, max = 100000000,message = "实发金额大于0小于1亿")
     @ExcelProperty(value = "*实发金额")
     private BigDecimal copeextract;
     @ExcelProperty(value = "*发放单位")
     private String issuedUnit;
     @ExcelProperty(value = "*费用发放金额")
-    @ExcelDecimalValid(min = 0, max = 1*0000*0000)
+    @ExcelDecimalValid(min = 0, max = 100000000,message = "实发金额大于0小于1亿")
     private BigDecimal paymentAmount;
 
 

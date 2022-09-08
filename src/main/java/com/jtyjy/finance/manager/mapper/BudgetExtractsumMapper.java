@@ -3,6 +3,7 @@ package com.jtyjy.finance.manager.mapper;
 import java.util.List;
 import java.util.Map;
 
+import com.jtyjy.finance.manager.dto.commission.IndividualIssueExportDTO;
 import org.apache.ibatis.annotations.Param;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -35,5 +36,6 @@ public interface BudgetExtractsumMapper extends BaseMapper<BudgetExtractsum> {
 	List<Map<String, Object>> getRepaymoneymsg(@Param("repaymoneyid")Long repaymoneyid);
 
 	List<ExtractCCLPayExcelData> getCCLPayDetailList(@Param("extractBatch")String extractBatch);
-	
+
+	List<IndividualIssueExportDTO> selectAllDetailList(@Param("extractMonth")String extractMonth);
 }

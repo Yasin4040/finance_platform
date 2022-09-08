@@ -1,11 +1,14 @@
 package com.jtyjy.finance.manager.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.finance.manager.bean.BudgetExtractCommissionApplication;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.jtyjy.finance.manager.bean.BudgetExtractFeePayDetailBeforeCal;
 import com.jtyjy.finance.manager.bean.BudgetExtractsum;
 import com.jtyjy.finance.manager.dto.commission.FeeImportErrorDTO;
 import com.jtyjy.finance.manager.dto.commission.IndividualIssueExportDTO;
+import com.jtyjy.finance.manager.query.commission.FeeQuery;
 import com.jtyjy.finance.manager.vo.application.BudgetSubjectVO;
 import com.jtyjy.finance.manager.vo.application.CommissionApplicationInfoUpdateVO;
 import com.jtyjy.finance.manager.vo.application.CommissionApplicationInfoVO;
@@ -41,7 +44,9 @@ public interface BudgetExtractCommissionApplicationService extends IService<Budg
 
     PageResult<BudgetSubjectVO> listSubjectMonthAgent(HashMap<String, Object> paramMap, Integer page, Integer rows);
 
-    List<IndividualIssueExportDTO> exportIssuedTemplate(String sumId);
+    List<IndividualIssueExportDTO> exportIssuedTemplate(String extractMonth);
 
-    List<FeeImportErrorDTO> importFeeTemplate(MultipartFile multipartFile,String sumId);
+    List<FeeImportErrorDTO> importFeeTemplate(MultipartFile multipartFile,String extractMonth);
+
+    IPage<BudgetExtractFeePayDetailBeforeCal> selectFeePage(FeeQuery query);
 }

@@ -3,23 +3,19 @@ package com.jtyjy.finance.manager.service.impl;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.iamxiongx.util.message.exception.BusinessException;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.finance.manager.bean.*;
-import com.jtyjy.finance.manager.cache.BankCache;
 import com.jtyjy.finance.manager.cache.UnitCache;
 import com.jtyjy.finance.manager.cache.UserCache;
-import com.jtyjy.finance.manager.controller.reimbursement.ReimbursementController;
 import com.jtyjy.finance.manager.controller.reimbursement.ReimbursementWorker;
 import com.jtyjy.finance.manager.converter.CommonAttachmentConverter;
-import com.jtyjy.finance.manager.converter.IndividualEmployeeFilesConverter;
 import com.jtyjy.finance.manager.dto.ReimbursementRequest;
 import com.jtyjy.finance.manager.dto.commission.FeeImportErrorDTO;
 import com.jtyjy.finance.manager.dto.commission.IndividualIssueExportDTO;
-import com.jtyjy.finance.manager.dto.individual.IndividualImportDTO;
-import com.jtyjy.finance.manager.dto.individual.IndividualImportErrorDTO;
 import com.jtyjy.finance.manager.enmus.ExtractStatusEnum;
 import com.jtyjy.finance.manager.enmus.ExtractTypeEnum;
 import com.jtyjy.finance.manager.enmus.ExtractUserTypeEnum;
@@ -27,6 +23,7 @@ import com.jtyjy.finance.manager.enmus.ReimbursementFromEnmu;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.listener.easyexcel.PageReadListener;
 import com.jtyjy.finance.manager.mapper.*;
+import com.jtyjy.finance.manager.query.commission.FeeQuery;
 import com.jtyjy.finance.manager.service.*;
 import com.jtyjy.finance.manager.utils.FileUtils;
 import com.jtyjy.finance.manager.vo.application.*;
@@ -60,6 +57,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
 
     private final BudgetExtractTaxHandleRecordService taxHandleRecordService;
     private final BudgetExtractsumMapper extractSumMapper;
+    private final BudgetExtractdetailService  extractDetailService;
     private final BudgetExtractOuterpersonMapper outPersonMapper;
     private final IndividualEmployeeFilesService individualService;
     private final BudgetExtractImportdetailMapper extractImportDetailMapper;
@@ -72,9 +70,10 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     private final BudgetReimbursementorderService reimbursementorderService;
     private final BudgetExtractFeePayDetailMapper feePayDetailMapper;
     private final HrService hrService;
-    public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractTaxHandleRecordService taxHandleRecordService, BudgetExtractsumMapper extractSumMapper, BudgetExtractOuterpersonMapper outPersonMapper, IndividualEmployeeFilesService individualService, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, BudgetCommonAttachmentService attachmentService, StorageClient storageClient, ReimbursementWorker reimbursementWorker, BudgetReimbursementorderService reimbursementorderService, BudgetExtractFeePayDetailMapper feePayDetailMapper, HrService hrService) {
+    public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractTaxHandleRecordService taxHandleRecordService, BudgetExtractsumMapper extractSumMapper, BudgetExtractdetailService extractDetailService, BudgetExtractOuterpersonMapper outPersonMapper, IndividualEmployeeFilesService individualService, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, BudgetCommonAttachmentService attachmentService, StorageClient storageClient, ReimbursementWorker reimbursementWorker, BudgetReimbursementorderService reimbursementorderService, BudgetExtractFeePayDetailMapper feePayDetailMapper, HrService hrService) {
         this.taxHandleRecordService = taxHandleRecordService;
         this.extractSumMapper = extractSumMapper;
+        this.extractDetailService = extractDetailService;
         this.outPersonMapper = outPersonMapper;
         this.individualService = individualService;
         this.extractImportDetailMapper = extractImportDetailMapper;
@@ -250,23 +249,21 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     }
 
     @Override
-    public List<IndividualIssueExportDTO> exportIssuedTemplate(String sumId) {
+    public List<IndividualIssueExportDTO> exportIssuedTemplate(String extractMonth) {
         List<IndividualIssueExportDTO> exportDTOList = new ArrayList<>();
-        List<BudgetExtractImportdetail> importDetailList = extractImportDetailMapper.selectList
-                (new LambdaQueryWrapper<BudgetExtractImportdetail>()
-                .eq(BudgetExtractImportdetail::getExtractsumid, sumId)
-                .isNull(BudgetExtractImportdetail::getIndividualEmployeeId));
-        List<String> empNos = importDetailList.stream().map(x -> x.getEmpno()).collect(Collectors.toList());
+        //根据批次，找到所有主表。
+        //只返回，工号，姓名，实发金额，发放单位。 累加实发金额。
+        List<IndividualIssueExportDTO> issueExportDTOList = extractSumMapper.selectAllDetailList(extractMonth);
+
+
+
+        List<String> empNos = issueExportDTOList.stream().map(x->String.valueOf(x.getEmployeeJobNum())).collect(Collectors.toList());
         List<Map<String, String>> unitByEmpNoList = hrService.getSalaryUnitByEmpNos(empNos);
         Map<String, String> unitByEmpNos = unitByEmpNoList.stream().collect(Collectors.toMap(x -> x.get("empNo"), x -> String.valueOf( x.get("companyId")), (k1, k2) -> k1));
-        for (BudgetExtractImportdetail importDetail : importDetailList) {
-            IndividualIssueExportDTO dto = new IndividualIssueExportDTO();
 
-            dto.setEmployeeName(importDetail.getEmpname());
-            dto.setEmployeeJobNum(Integer.valueOf(importDetail.getEmpno()));
+        for (IndividualIssueExportDTO dto : issueExportDTOList) {
             //发放单位
-            dto.setCopeextract(importDetail.getCopeextract());
-            String unitId = unitByEmpNos.get(importDetail.getEmpno());
+            String unitId = unitByEmpNos.get(String.valueOf(dto.getEmployeeJobNum()));
             if(StringUtils.isNotBlank(unitId)){
                 BudgetBillingUnit billingUnit = UnitCache.getByOutKey(unitId);
                 if(billingUnit != null){
@@ -281,38 +278,56 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
 
     @Override
     @SneakyThrows
-    public List<FeeImportErrorDTO> importFeeTemplate(MultipartFile multipartFile,String sumId) {
+    public List<FeeImportErrorDTO> importFeeTemplate(MultipartFile multipartFile,String extractMonth) {
         List<FeeImportErrorDTO> errList = new ArrayList<>();
         List<Map> errorMap = new ArrayList<>();
         List<String> errorList = new ArrayList<>();
-        BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
+//        BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
         try {
             EasyExcel.read(multipartFile.getInputStream(), IndividualIssueExportDTO.class,
                     new PageReadListener<IndividualIssueExportDTO>(dataList -> {
                      List<BudgetExtractFeePayDetailBeforeCal> entities = new ArrayList<>();
                         for (IndividualIssueExportDTO dto : dataList) {
                             try {
-                                BudgetExtractFeePayDetailBeforeCal payDetail= new BudgetExtractFeePayDetailBeforeCal();
+                                //验证
                                 validData(dto);
-                                payDetail.setEmpNo(String.valueOf(dto.getEmployeeJobNum()));
-                                payDetail.setEmpName(dto.getEmployeeName());
-                                payDetail.setExtractMonth(budgetExtractsum.getExtractmonth());
+                                //相同的先删除再insert
+                                BudgetExtractFeePayDetailBeforeCal payDetail= new BudgetExtractFeePayDetailBeforeCal();
+                                BudgetExtractFeePayDetailBeforeCal payDetailBeforeCal = feePayDetailMapper.selectOne(new LambdaQueryWrapper<BudgetExtractFeePayDetailBeforeCal>()
+                                        .eq(BudgetExtractFeePayDetailBeforeCal::getExtractMonth, extractMonth)
+                                        .eq(BudgetExtractFeePayDetailBeforeCal::getEmpNo, dto.getEmployeeJobNum()).last("limit 1"));
+                                if(payDetailBeforeCal==null){
+                                    payDetail.setEmpNo(String.valueOf(dto.getEmployeeJobNum()));
+                                    payDetail.setEmpName(dto.getEmployeeName());
+                                    payDetail.setExtractMonth(extractMonth);
+
+                                    payDetail.setCreatorName(UserThreadLocal.getEmpName());
+                                    payDetail.setCreator(UserThreadLocal.getEmpNo());
+                                    payDetail.setCreateTime(new Date());
+                                }else {
+                                    payDetail = payDetailBeforeCal;
+                                }
+
+                                payDetail.setUpdateBy(UserThreadLocal.getEmpName());
+                                payDetail.setUpdateTime(new Date());
+                                //费用金额 实发金额
+                                payDetail.setFeePay(dto.getPaymentAmount());
                                 payDetail.setCopeextract(dto.getCopeextract());
+                                //发放单位
                                 BudgetBillingUnit billingUnit = UnitCache.getByName(dto.getIssuedUnit());
                                 if (billingUnit!=null) {
                                     payDetail.setIssuedUnit(billingUnit.getId());
                                     payDetail.setIssuedUnitName(dto.getIssuedUnit());
                                 }
-                                payDetail.setFeePay(dto.getPaymentAmount());
 
-                                payDetail.setCreatorName(UserThreadLocal.getEmpName());
-                                payDetail.setCreator(UserThreadLocal.getEmpNo());
-                                payDetail.setCreateTime(new Date());
-                                feePayDetailMapper.insert(payDetail);
+                                if (payDetail.getId()!=null) {
+                                    feePayDetailMapper.updateById(payDetail);
+                                }else{
+                                    feePayDetailMapper.insert(payDetail);
+                                }
                             }
                             catch (Exception e) {
                                 FeeImportErrorDTO errorDTO = new FeeImportErrorDTO();
-
                                 try {
                                     PropertyUtils.copyProperties(errorDTO,dto);
                                 } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException ex) {
@@ -342,13 +357,30 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         return errList;
     }
 
+    @Override
+    public IPage<BudgetExtractFeePayDetailBeforeCal> selectFeePage(FeeQuery query) {
+
+        //new Page<>(query.getPageSize(), query.getPageSize()
+        Page<BudgetExtractFeePayDetailBeforeCal> beforeCalPage =  feePayDetailMapper.selectFeePage(new Page<>(query.getPageNum(), query.getPageSize()),query);
+
+//        Page<BudgetExtractFeePayDetailBeforeCal> beforeCalPage = feePayDetailMapper.selectPage(new Page<BudgetExtractFeePayDetailBeforeCal>(query.getPageSize(), query.getPageSize()),
+//                new LambdaQueryWrapper<BudgetExtractFeePayDetailBeforeCal>()
+//                        .eq(BudgetExtractFeePayDetailBeforeCal::getExtractMonth, query.getExtractMonth())
+//                        //模糊搜索
+//                        .and(StringUtils.isNotBlank(query.getEmployeeName()),i->i.like(BudgetExtractFeePayDetailBeforeCal::getEmpName,query.getEmployeeName())
+//                        .or()
+//                        .like(BudgetExtractFeePayDetailBeforeCal::getEmpNo,query.getEmployeeName()))
+//        );
+        return beforeCalPage;
+    }
+
     private void validData(IndividualIssueExportDTO dto) {
         //发放单位验证
-        String issuedUnit = dto.getIssuedUnit();
-        BudgetBillingUnit billingUnit = UnitCache.getByName(issuedUnit);
-        if(billingUnit==null){
-            throw new BusinessException("请填写正确的发放单位");
-        }
+//        String issuedUnit = dto.getIssuedUnit();
+//        BudgetBillingUnit billingUnit = UnitCache.getByName(issuedUnit);
+//        if(billingUnit==null){
+//            throw new RuntimeException("请填写正确的发放单位");
+//        }
         //工号姓名验证
         WbUser user = getUserByEmpno(String.valueOf(dto.getEmployeeJobNum()));
         if (user == null) {

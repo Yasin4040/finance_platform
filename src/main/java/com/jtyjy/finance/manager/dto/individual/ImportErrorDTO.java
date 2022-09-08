@@ -19,14 +19,16 @@ public class ImportErrorDTO {
      * 导入验证错误原因
      */
     @ApiModelProperty(value = "验证格式错误")
-    @ExcelProperty(value = "验证格式错误",index = 0)
+//    @ExcelProperty(value = "验证格式错误",index = 0)
+    @ExcelProperty(value = "验证格式错误")
     private String validationFormatError;
 
     /**
      * 导入验证错误原因
      */
     @ApiModelProperty(value = "插入数据库错误")
-    @ExcelProperty(value = "插入数据库错误",index = 1)
+//    @ExcelProperty(value = "插入数据库错误",index = 1)
+    @ExcelProperty(value = "插入数据库错误")
     private String insertDatabaseError;
 
 

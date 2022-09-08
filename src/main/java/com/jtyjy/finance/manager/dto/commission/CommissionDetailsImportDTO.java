@@ -1,5 +1,6 @@
 package com.jtyjy.finance.manager.dto.commission;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.baomidou.mybatisplus.annotation.IdType;

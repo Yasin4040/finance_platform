@@ -61,4 +61,11 @@ public class BudgetExtractFeePayDetailBeforeCal {
 	@TableField(value = "create_time")
 	@ApiModelProperty(value = "创建时间")
 	private Date createTime;
+
+	@TableField(value = "update_by")
+	@ApiModelProperty(value = "创建人")
+	private String updateBy;
+	@TableField(value = "update_time")
+	@ApiModelProperty(value = "创建时间")
+	private Date updateTime;
 }
