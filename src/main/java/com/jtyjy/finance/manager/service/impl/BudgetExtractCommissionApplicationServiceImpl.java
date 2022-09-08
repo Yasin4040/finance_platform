@@ -66,14 +66,13 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     private final BudgetYearPeriodMapper yearMapper;
     private final BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService;
     private final BudgetExtractCommissionApplicationLogService applicationLogService;
-    private final ReimbursementController reimbursementController;
     private final BudgetCommonAttachmentService attachmentService;
     private final StorageClient storageClient;
     private final ReimbursementWorker reimbursementWorker;
     private final BudgetReimbursementorderService reimbursementorderService;
     private final BudgetExtractFeePayDetailMapper feePayDetailMapper;
     private final HrService hrService;
-    public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractTaxHandleRecordService taxHandleRecordService, BudgetExtractsumMapper extractSumMapper, BudgetExtractOuterpersonMapper outPersonMapper, IndividualEmployeeFilesService individualService, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, ReimbursementController reimbursementController, BudgetCommonAttachmentService attachmentService, StorageClient storageClient, ReimbursementWorker reimbursementWorker, BudgetReimbursementorderService reimbursementorderService, BudgetExtractFeePayDetailMapper feePayDetailMapper, HrService hrService) {
+    public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractTaxHandleRecordService taxHandleRecordService, BudgetExtractsumMapper extractSumMapper, BudgetExtractOuterpersonMapper outPersonMapper, IndividualEmployeeFilesService individualService, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, BudgetCommonAttachmentService attachmentService, StorageClient storageClient, ReimbursementWorker reimbursementWorker, BudgetReimbursementorderService reimbursementorderService, BudgetExtractFeePayDetailMapper feePayDetailMapper, HrService hrService) {
         this.taxHandleRecordService = taxHandleRecordService;
         this.extractSumMapper = extractSumMapper;
         this.outPersonMapper = outPersonMapper;
@@ -82,7 +81,6 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         this.yearMapper = yearMapper;
         this.budgetDetailsService = budgetDetailsService;
         this.applicationLogService = applicationLogService;
-        this.reimbursementController = reimbursementController;
         this.attachmentService = attachmentService;
         this.storageClient = storageClient;
         this.reimbursementWorker = reimbursementWorker;
@@ -257,9 +255,10 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         List<BudgetExtractImportdetail> importDetailList = extractImportDetailMapper.selectList
                 (new LambdaQueryWrapper<BudgetExtractImportdetail>()
                 .eq(BudgetExtractImportdetail::getExtractsumid, sumId)
-                .eq(BudgetExtractImportdetail::getIndividualEmployeeId,null));
+                .isNull(BudgetExtractImportdetail::getIndividualEmployeeId));
         List<String> empNos = importDetailList.stream().map(x -> x.getEmpno()).collect(Collectors.toList());
-        Map<String, String> unitByEmpNos = hrService.getSalaryUnitByEmpNos(empNos);
+        List<Map<String, String>> unitByEmpNoList = hrService.getSalaryUnitByEmpNos(empNos);
+        Map<String, String> unitByEmpNos = unitByEmpNoList.stream().collect(Collectors.toMap(x -> x.get("empNo"), x -> String.valueOf( x.get("companyId")), (k1, k2) -> k1));
         for (BudgetExtractImportdetail importDetail : importDetailList) {
             IndividualIssueExportDTO dto = new IndividualIssueExportDTO();
 

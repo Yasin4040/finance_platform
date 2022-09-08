@@ -28,10 +28,18 @@ public class FilterConfig {
         //上传文件
         apis.add("/api/common/upload");
         apis.add("/api/common/uploadFile");
+
+        //发放人员模板 和导出
+        apis.add("/api/commissionApplication/downLoadIssuedTemplate");
+        apis.add("/api/commissionApplication/exportIssuedTemplate");
+        //费用导入
+        apis.add("/api/commissionApplication/importFeeTemplate");
+
+
         //提成明细导入导出
         apis.add("/api/commissionApplication/downLoadTemplate");
+        apis.add("/api/commissionApplication/exportTemplate");
         apis.add("/api/commissionApplication/importTemplate");
-//        apis.add("/api/commissionApplication/importExtractDetail");
         apis.add("/api/commissionApplication/downImportExtractErrorDetail");
         //个体户发票维护
         apis.add("/api/individualTicket/downLoadTemplate");

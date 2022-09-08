@@ -166,7 +166,8 @@ public class HrService extends DefaultBaseService<HrSalaryYearTaxUserMapper, HrS
 	public String getSalaryUnitByEmpno(String empNo){
     	return this.mapper.getSalaryUnitByEmpno(empNo);
 	}
-	public Map<String, String> getSalaryUnitByEmpNos(List<String> empNos){
+
+	public List<Map<String, String>> getSalaryUnitByEmpNos(List<String> empNos){
 		return this.mapper.getSalaryUnitByEmpNos(empNos);
 	}
 	
