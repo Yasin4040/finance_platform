@@ -64,7 +64,7 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
         List<IndividualTicketDetailsDTO> detailsDTOList = dto.getDetailsDTOList();
         List<IndividualEmployeeTicketReceiptInfo> infoList = new ArrayList<>();
         IndividualEmployeeTicketReceipt receipt = new IndividualEmployeeTicketReceipt();
-        BigDecimal invoiceAmount = receipt.getInvoiceAmount() != null ? receipt.getInvoiceAmount() : BigDecimal.ZERO;
+        BigDecimal invoiceAmount = BigDecimal.ZERO;
 
         //SP+年月日+4位流水号
         //SP 2022 09 06  10
@@ -94,11 +94,11 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
             info.setYear(singleDTO.getYear());
             info.setMonth(singleDTO.getMonth());
             info.setInvoiceAmount(singleDTO.getInvoiceAmount());
-
+            //里面的备注
+            info.setRemarks(singleDTO.getRemarks());
             info.setEmployeeJobNum(dto.getEmployeeJobNum());
             info.setIndividualEmployeeInfoId(dto.getIndividualEmployeeInfoId());
             info.setIndividualName(dto.getIndividualName());
-            info.setRemarks(dto.getRemarks());
 
             info.setCreateTime(new Date());
             info.setCreateBy(UserThreadLocal.getEmpNo());
@@ -140,7 +140,7 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
         List<IndividualTicketDetailsDTO> detailsDTOList = dto.getDetailsDTOList();
 
         IndividualEmployeeTicketReceipt mainReceipt = mainService.getById(dto.getTicketId());
-        BigDecimal invoiceAmount = mainReceipt.getInvoiceAmount();
+        BigDecimal invoiceAmount = BigDecimal.ZERO;
         List<IndividualEmployeeTicketReceiptInfo> infoList = new ArrayList<>();
         for (int i = 0; i < detailsDTOList.size(); i++) {
             Long id = detailsDTOList.get(i).getId();
