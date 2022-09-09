@@ -12,10 +12,10 @@ import lombok.Data;
  */
 @ApiModel(description = "提成发放明细")
 @Data
-public class ExtractPayDetailVO {
+public class ExtractPayDetailVO implements Cloneable{
 	
-	@ApiModelProperty(value="id")
-	private Long id;
+	@ApiModelProperty(value="id",hidden = true)
+	private Long id1;
 
 	@ApiModelProperty(value="提成明细id",hidden = true)
 	private String extractdetailids;
@@ -30,8 +30,11 @@ public class ExtractPayDetailVO {
 	private String empno;
 	
 	@ApiModelProperty("姓名")
-	private String empname;		
-	
+	private String empname;
+
+	@ApiModelProperty("身份证号")
+	private String idnumber;
+
 	@ApiModelProperty("实发提成")
 	private BigDecimal realextract;
 	
@@ -76,4 +79,9 @@ public class ExtractPayDetailVO {
 
 	@ApiModelProperty(hidden = true)
 	private Boolean isSelf = true;
+
+
+	public Object clone() throws CloneNotSupportedException {
+		return super.clone();
+	}
 }

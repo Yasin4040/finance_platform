@@ -4,20 +4,96 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.jtyjy.finance.manager.mapper.BudgetExtractAccountTaskMapper">
 
-    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BudgetExtractAccountTask">
-            <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="extractCode" column="extract_code" jdbcType="VARCHAR"/>
-            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
-            <result property="planAccountantEmpNos" column="plan_accountant_emp_nos" jdbcType="VARCHAR"/>
-            <result property="billingUnitId" column="billing_unit_id" jdbcType="BIGINT"/>
-            <result property="accountantEmpNo" column="accountant_emp_no" jdbcType="VARCHAR"/>
-            <result property="accountantTime" column="accountant_time" jdbcType="TIMESTAMP"/>
-            <result property="accountantStatus" column="accountant_status" jdbcType="INTEGER"/>
-    </resultMap>
+    <select id="getExtractAccountTaskList"
+            resultType="com.jtyjy.finance.manager.vo.ExtractAccountTaskResponseVO">
+        SELECT
+            beat.id,
+            bes.`status`,
+            if(beat.task_type=3,beat.delay_extract_code,bes.`code`) 'code',
+            byp.period yearPeriod,
+            concat( substr( bes.extractmonth, 5, 2 )+ 0, '月' ) monthPeriod,
+            bes.extractmonth extractBatch,
+            bes.deptname unitName,
+            beat.create_time createTime,
+            CONCAT( wu.DISPLAY_NAME, '(', wu.USER_NAME, ')' ) accountant,
+            beat.accountant_time accountantTime,
+            ( SELECT sum( pay_money ) FROM budget_extract_per_pay_detail WHERE extract_code = bes.`code` AND pay_status = beat.task_type and billing_unit_id=bbu.id) payMoney,
+            beat.task_type taskType,
+            bbu.`name` billingUnitName
+        FROM
+            budget_extract_account_task beat
+            LEFT JOIN budget_extractsum bes ON beat.extract_code = bes.`code`
+            LEFT JOIN budget_year_period byp ON byp.id = bes.yearid
+            LEFT JOIN wb_user wu ON beat.accountant_emp_no = wu.USER_NAME
+            LEFT JOIN budget_billing_unit bbu ON bbu.id = beat.billing_unit_id
+        <where>
+            bbu.accountants like concat('%',#{params.empNo},'%') and beat.is_should_account = 1
+            <if test="params.isHistory">
+                and beat.accountant_status = 1
+            </if>
+            <if test="!params.isHistory">
+                and beat.accountant_status = 0
+            </if>
+            <if test="params.orderNo !=null and params.orderNo !=''">
+                and bes.`code` like concat('%',#{params.orderNo},'%')
+            </if>
+            <if test="params.yearPeriodId !=null">
+                and byp.id = #{params.yearPeriodId}
+            </if>
+            <if test="params.monthPeriodId !=null">
+                and (substr( bes.extractmonth, 5, 2 )+ 0) = #{params.monthPeriodId}
+            </if>
+            <if test="params.extractBatch !=null and params.extractBatch !=''">
+                and bes.extractmonth like concat('%',#{params.extractBatch},'%')
+            </if>
+            <if test="params.deptName !=null and params.deptName !=''">
+                and bes.deptname like concat('%',#{params.deptName},'%')
+            </if>
+            <if test="params.billingUnitName !=null and params.billingUnitName !=''">
+                and bbu.`name` like concat('%',#{params.billingUnitName},'%')
+            </if>
+            <if test="params.status !=null">
+                and bes.status = #{params.status}
+            </if>
+        </where>
+        order by beat.create_time desc
+    </select>
+    <select id="getExtractAccountTaskDetail"
+            resultType="com.jtyjy.finance.manager.vo.ExtractAccountTaskDetailVO">
 
-    <sql id="Base_Column_List">
-        id,extract_code,create_time,
-        plan_accountant_emp_nos,billing_unit_id,accountant_emp_no,
-        accountant_time,accountant_status
-    </sql>
+        SELECT
+            beppd.receiver_code empNo,
+            beppd.receiver_name empName,
+            beppd.receiver_account_name accountName,
+            beppd.pay_money money,
+            beppd.receiver_account_name receiver,
+            beppd.receiver_open_bank receiverBank,
+            beppd.receiver_bank_account bankAccount,
+            bbu.`name` unitName,
+            beppd.pay_status payStatus,
+            beppd.personality_id personalityId,
+            bief.account_type accountType
+        FROM
+             budget_extract_per_pay_detail beppd
+          LEFT JOIN budget_billing_unit bbu ON bbu.id = beppd.billing_unit_id
+            left join budget_individual_employee_files bief on bief.id = beppd.personality_id
+        where beppd.extract_code = #{params.extractCode} and beppd.billing_unit_id = #{params.unitId}
+
+        <if test="params.unitName!=null and params.unitName!=''">
+            and bbu.`name` like concat('%',#{params.unitName},'%')
+        </if>
+        <if test="params.personalityName!=null and params.personalityName!=''">
+            and beppd.receiver_account_name like concat('%',#{params.personalityName},'%')
+        </if>
+        <if test="params.payStatus!=null ">
+            and beppd.pay_status = #{params.payStatus}
+        </if>
+        <if test="params.personalityIds!=null and params.personalityIds.size()>0">
+            and beppd.personality_id in
+            <foreach collection="params.personalityIds" separator="," open="(" close=")" item="id">
+                #{id}
+            </foreach>
+            and beppd.pay_status = 3
+        </if>
+    </select>
 </mapper>

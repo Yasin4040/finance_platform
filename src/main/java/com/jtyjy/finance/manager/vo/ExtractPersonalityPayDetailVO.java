@@ -15,7 +15,7 @@ import java.math.BigDecimal;
  * @since 2022/9/1
  */
 @Data
-public class ExtractPersonalityPayDetailVO {
+public class ExtractPersonalityPayDetailVO implements Cloneable{
 
 	@ApiModelProperty("提成批次")
 	@NotBlank(message = "提成批次不能为空")
@@ -119,4 +119,9 @@ public class ExtractPersonalityPayDetailVO {
 
 	@ApiModelProperty(hidden = true)
 	private Boolean isSelf = true;
+
+	@Override
+	public Object clone() throws CloneNotSupportedException {
+		return super.clone();
+	}
 }

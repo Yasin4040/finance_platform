@@ -34,16 +34,16 @@ public class ExtractPayApplyPayDetailVO {
 		private String billingUnitName;
 
 		@ApiModelProperty("员工发放金额（提成发放）")
-		private BigDecimal payMoney;
+		private BigDecimal payMoney = BigDecimal.ZERO;
 
 		@ApiModelProperty("员工发放金额（费用发放）")
-		private BigDecimal fee;
+		private BigDecimal fee = BigDecimal.ZERO;
 
 		@ApiModelProperty("员工个体户发放金额（公户）")
-		private BigDecimal personalityPayMoney1;
+		private BigDecimal personalityPayMoney1 = BigDecimal.ZERO;
 
 		@ApiModelProperty("员工个体户发放金额（个卡）")
-		private BigDecimal personalityPayMoney2;
+		private BigDecimal personalityPayMoney2 = BigDecimal.ZERO;
 
 		@ApiModelProperty("合计")
 		private BigDecimal total;

@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 描述：<p></p>
@@ -52,5 +53,8 @@ public class ExtractPersonalityPayDetailQueryVO {
 
 	@ApiModelProperty("导航栏查询条件")
 	private String query;
+
+	@ApiModelProperty(value = "员工个体户ids",hidden = false)
+	private List<String> personalityIds;
 
 }

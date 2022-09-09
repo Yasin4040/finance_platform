@@ -4,11 +4,13 @@ import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.jtyjy.common.enmus.StatusCodeEnmus;
+import com.jtyjy.core.redis.RedisClient;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.result.ResponseEntity;
 import com.jtyjy.finance.manager.easyexcel.ExtractPersonalityPayDetailExcelData;
 import com.jtyjy.finance.manager.easyexcel.ExtractPersonlityDetailExcelData;
 import com.jtyjy.finance.manager.exception.MyException;
+import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.service.BudgetExtractPersonalityPayService;
 import com.jtyjy.finance.manager.service.BudgetExtractsumService;
 import com.jtyjy.finance.manager.utils.EasyExcelUtil;
@@ -17,6 +19,8 @@ import com.jtyjy.finance.manager.vo.ExtractPersonalityPayDetailVO;
 import io.swagger.annotations.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,10 +28,13 @@ import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 描述：<p></p>
@@ -47,6 +54,17 @@ public class BudgetExtractPersonalityPayController {
 
 	@Autowired
 	private BudgetExtractsumService extractsumService;
+
+	private final static String IMPORT_TYPE = "tc_personality";
+
+	@Autowired
+	private RedisClient redis;
+
+	@Value("${file.shareDir}")
+	private String fileShareDir;
+
+	@Value("${redis.file.key.expiretime}")
+	private Integer expiretime;
 
 	@ApiOperation(value = "新增员工个体户发放明细", httpMethod = "POST")
 	@ApiImplicitParams(value = {
@@ -111,7 +129,7 @@ public class BudgetExtractPersonalityPayController {
 			@ApiImplicitParam(value = "导航栏查询条件", name = "query", dataType = "String", required = true)
 	})
 	@GetMapping("/exportPersonalityPayDetail")
-	public void exportPersonalityPayDetail(ExtractPersonalityPayDetailQueryVO params, HttpServletResponse response) throws Exception {
+	public ResponseEntity<String> exportPersonalityPayDetail(ExtractPersonalityPayDetailQueryVO params, HttpServletResponse response) throws Exception {
 		InputStream is = null;
 		try {
 			if (StringUtils.isBlank(params.getQuery())) throw new RuntimeException("参数异常。");
@@ -128,10 +146,11 @@ public class BudgetExtractPersonalityPayController {
 			workBook.finish();
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw e;
+			return ResponseEntity.error(e.getMessage());
 		} finally {
 			if (is != null) is.close();
 		}
+		return ResponseEntity.ok();
 	}
 
 	@ApiOperation(value = "员工个体户单据发放明细", httpMethod = "GET")
@@ -167,7 +186,7 @@ public class BudgetExtractPersonalityPayController {
 			@ApiImplicitParam(value = "导航栏查询条件", name = "query", dataType = "String", required = true)
 	})
 	@GetMapping("/exportPersonalityDetail")
-	public void exportPersonlityDetail(@RequestParam(name = "query", required = true) String query, HttpServletResponse response) throws Exception {
+	public ResponseEntity<String> exportPersonlityDetail(@RequestParam(name = "query", required = true) String query, HttpServletResponse response) throws Exception {
 		InputStream is = null;
 		try {
 			int length = query.split("-").length;
@@ -182,10 +201,11 @@ public class BudgetExtractPersonalityPayController {
 			workBook.finish();
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw e;
+			return ResponseEntity.error(e.getMessage());
 		} finally {
 			if (is != null) is.close();
 		}
+		return ResponseEntity.ok();
 	}
 
 	@ApiOperation(value = "导入员工个体户发放明细", httpMethod = "POST")
@@ -205,7 +225,27 @@ public class BudgetExtractPersonalityPayController {
 		this.extractsumService.validateIsCanOperatePersonalityPayDetail(extractBatch);
 		InputStream inputStream = file.getInputStream();
 		try {
-			this.extractsumService.importPersonalityPayDetail(inputStream, extractBatch);
+			List<ExtractPersonlityDetailExcelData> extractPersonlityDetail = this.extractsumService.importPersonalityPayDetail(inputStream, extractBatch);
+			List<ExtractPersonlityDetailExcelData> errorDetails = extractPersonlityDetail.stream().filter(e -> StringUtils.isNotBlank(e.getErrMsg())).collect(Collectors.toList());
+			if(!CollectionUtils.isEmpty(errorDetails)){
+				InputStream iss = null;
+				try {
+					String key = IMPORT_TYPE + "_" + UserThreadLocal.get().getUserName();
+					String errorFileName = fileShareDir + File.separator + System.currentTimeMillis() + "_错误信息.xlsx";
+					iss = this.getClass().getClassLoader().getResourceAsStream("template/exportPersonlitydetail.xlsx");
+					ExcelWriter workBook = EasyExcel.write(new File(errorFileName), ExtractPersonlityDetailExcelData.class).withTemplate(iss).build();
+					WriteSheet sheet = EasyExcel.writerSheet(0).build();
+					workBook.fill(extractPersonlityDetail, sheet);
+					workBook.finish();
+					redis.set(key, errorFileName, expiretime);
+				} catch (Exception e) {
+					e.printStackTrace();
+				} finally {
+					if (iss != null) iss.close();
+					if(inputStream!=null) inputStream.close();
+				}
+				return ResponseEntity.apply(StatusCodeEnmus.ERROR_FORMAT, "文件导入有错误,请点击此处下载");
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			return ResponseEntity.apply(StatusCodeEnmus.ERROR_FORMAT, e.getMessage());
@@ -213,6 +253,35 @@ public class BudgetExtractPersonalityPayController {
 			if (inputStream != null) inputStream.close();
 		}
 		return ResponseEntity.ok("导入成功");
+	}
+
+	@ApiOperation(value = "下载导入员工个体户发放错误明细", httpMethod = "GET")
+	@ApiImplicitParams(value = {
+			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
+	})
+	@GetMapping("/downImportPersonalityPayErrorDetail")
+	public ResponseEntity<String> downImportPersonalityPayErrorDetail(HttpServletResponse response, HttpServletRequest request) throws Exception {
+
+		InputStream is = null;
+		try {
+			if (redis.get(IMPORT_TYPE + "_" + UserThreadLocal.get().getUserName()) == null) {
+				throw new RuntimeException("没有员工个体户发放导入错误明细可供下载。");
+			}
+			String errorFileName = redis.get(IMPORT_TYPE + "_" + UserThreadLocal.get().getUserName());
+			is = new FileInputStream(errorFileName);
+			ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream("员工个体户发放导入错误明细", response)).withTemplate(is).build();
+			WriteSheet sheet = EasyExcel.writerSheet(0).build();
+			workBook.finish();
+			File file = new File(errorFileName);
+			if (file.exists()) file.delete();
+			redis.delete(IMPORT_TYPE + "_" + UserThreadLocal.get().getUserName());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.error(e.getMessage());
+		} finally {
+			if (is != null) is.close();
+		}
+		return ResponseEntity.ok();
 	}
 
 	@ApiOperation(value = "撤回员工个体户导入", httpMethod = "GET")

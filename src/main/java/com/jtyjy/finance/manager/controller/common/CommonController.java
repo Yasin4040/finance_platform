@@ -97,7 +97,7 @@ public class CommonController extends BaseController {
     /**
      * author minzhq
      */
-    @ApiOperation(value = "获取提成审核状态列表",httpMethod="GET")
+    @ApiOperation(value = "获取提成状态列表",httpMethod="GET")
     @GetMapping("/getExtractStatusList")
     public List<Map<String,Object>> getExtractStatusList(){   	
     	return Arrays.stream(ExtractStatusEnum.values()).map(e->{

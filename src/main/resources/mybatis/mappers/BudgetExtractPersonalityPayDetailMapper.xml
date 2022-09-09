@@ -113,6 +113,12 @@
             <if test="params.remainingPayLimitMoney !=null and params.remainingPayLimitMoney != ''">
                 and bepd.remaining_pay_limit_money like concat('%',#{params.remainingPayLimitMoney},'%')
             </if>
+            <if test="params.personalityIds !=null and params.personalityIds.size()>0">
+                and bepd.personality_id in
+                <foreach collection="params.personalityIds" item="personalityId" close=")" open="(" separator=",">
+                    #{personalityId}
+                </foreach>
+            </if>
             order by bief.employee_job_num,bbu.billingunittype desc
     </select>
 </mapper>

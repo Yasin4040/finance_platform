@@ -29,10 +29,7 @@ import org.springframework.util.CollectionUtils;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -88,15 +85,82 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 
 	}
 
+	/**
+	 * <p>获取员工个体户信息</p>
+	 * @author minzhq
+	 * @date 2022/9/9 17:07
+	 * @param personalityId 员工个体户id
+	 * @param extractBatch 批次
+	 * @param billingUnitId 发放单位id
+	 * @param payTotal 当期发放总额
+	 */
+	public ExtractPersonlityDetailExcelData getPersonalitySendData(Long personalityId, String extractBatch, Long billingUnitId, BigDecimal payTotal){
+		ExtractPersonlityDetailExcelData excelData = new ExtractPersonlityDetailExcelData();
+		Map<String, ExtractPersonlityDetailExcelData> individualEmployeeAgoPayDetailMap = extractsumService.getIndividualEmployeeAgoPayDetail(Lists.newArrayList(personalityId), extractBatch);
+		ExtractPersonlityDetailExcelData agoExcelData = individualEmployeeAgoPayDetailMap.get(personalityId.toString() + "&&" + billingUnitId.toString());
+		Map<Long, BigDecimal> receiptSum = extractsumService.getReceiptSum(Lists.newArrayList(personalityId), extractBatch);
+		if (Objects.nonNull(agoExcelData)) {
+			excelData.setExtractSum(agoExcelData.getExtractSum());
+			excelData.setSalarySum(agoExcelData.getSalarySum());
+			excelData.setWelfareSum(agoExcelData.getWelfareSum());
+		} else {
+			excelData.setExtractSum(BigDecimal.ZERO);
+			excelData.setSalarySum(BigDecimal.ZERO);
+			excelData.setWelfareSum(BigDecimal.ZERO);
+		}
+		excelData.setReceiptSum(receiptSum.get(personalityId)==null?BigDecimal.ZERO:receiptSum.get(personalityId));
+
+		BudgetBillingUnit budgetBillingUnit = billingUnitMapper.selectById(billingUnitId);
+		IndividualEmployeeFiles individualEmployeeFiles = individualEmployeeFilesMapper.selectById(personalityId);
+		if(("0".equals(budgetBillingUnit.getBillingUnitType()) || ("1".equals(budgetBillingUnit.getBillingUnitType()) && individualEmployeeFiles.getAccountType() == 1))){
+			//不需要计算剩余票额
+			excelData.setRemainingInvoices("0");
+			excelData.setRemainingPayLimitMoney("0");
+		}else{
+			Map<Long, List<IndividualEmployeeTicketReceiptInfo>> receiptInfoMap = extractsumService.getIndividualEmployeeTicketReceiptInfoList(Lists.newArrayList(personalityId)).stream().collect(Collectors.groupingBy(e -> e.getIndividualEmployeeInfoId()));
+			List<BudgetExtractPersonalityPayDetail> effectList = personalityPayDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractPersonalityPayDetail>().eq(BudgetExtractPersonalityPayDetail::getPersonalityId, personalityId)).stream().filter(e -> {
+				BudgetBillingUnit budgetBillingUnit1 = billingUnitMapper.selectById(billingUnitId);
+				return !("0".equals(budgetBillingUnit1.getBillingUnitType()) || ("1".equals(budgetBillingUnit1.getBillingUnitType()) && individualEmployeeFiles.getAccountType() == 1));
+			}).collect(Collectors.toList());
+
+			BigDecimal total = effectList.stream().map(e->{
+				return e.getExtractSum().add(e.getSalarySum()).add(e.getWelfareSum()).add(e.getCurSalary()).add(e.getCurRealExtract()).add(e.getCurWelfare());
+			}).reduce(BigDecimal.ZERO,BigDecimal::add);
+			total = total.add(payTotal==null?BigDecimal.ZERO:payTotal);
+			BigDecimal subtract = excelData.getReceiptSum().subtract(total);
+
+
+			BigDecimal annualQuota = individualEmployeeFiles.getAnnualQuota() == null ? BigDecimal.ZERO : individualEmployeeFiles.getAnnualQuota();
+			List<IndividualEmployeeTicketReceiptInfo> individualEmployeeTicketReceiptInfos = receiptInfoMap.get(personalityId);
+			if (!CollectionUtils.isEmpty(individualEmployeeTicketReceiptInfos)) {
+				List<IndividualEmployeeTicketReceiptInfo> sortedReceiptInfoList = individualEmployeeTicketReceiptInfos.stream().sorted(Comparator.comparing(IndividualEmployeeTicketReceiptInfo::getYear)).sorted(Comparator.comparing(IndividualEmployeeTicketReceiptInfo::getMonth)).collect(Collectors.toList());
+				IndividualEmployeeTicketReceiptInfo individualEmployeeTicketReceiptInfo = sortedReceiptInfoList.get(0);
+				Integer[] intArr = extractsumService.calNextYearMonth(individualEmployeeTicketReceiptInfo.getYear(), individualEmployeeTicketReceiptInfo.getMonth());
+				BigDecimal receiptInfoMoney = sortedReceiptInfoList.stream().filter(e -> e.getYear() <= intArr[0] && e.getMonth() <= intArr[1]).map(e -> {
+					return e.getInvoiceAmount() == null ? BigDecimal.ZERO : e.getInvoiceAmount();
+				}).reduce(BigDecimal.ZERO, BigDecimal::add);
+				annualQuota = annualQuota.subtract(receiptInfoMoney);
+			}
+			excelData.setRemainingPayLimitMoney(annualQuota.toString());
+			excelData.setRemainingInvoices(subtract.toString());
+		}
+		return excelData;
+	}
+
+
 	private List<BudgetExtractPersonalityPayDetail> validateData(ExtractPersonalityPayDetailVO entity){
 		List<BudgetExtractPersonalityPayDetail> extractPersonalityPayDetails = personalityPayDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractPersonalityPayDetail>()
 				.eq(BudgetExtractPersonalityPayDetail::getExtractMonth, entity.getExtractBatch())
 				.eq(BudgetExtractPersonalityPayDetail::getPersonalityId, entity.getPersonalityId())
 				.ne(entity.getId()!=null,BudgetExtractPersonalityPayDetail::getId, entity.getId()));
 
-		long count = extractPersonalityPayDetails.stream().filter(e -> e.getPersonalityId().equals(entity.getPersonalityId()) && e.getBillingUnitId().equals(entity.getBillingUnitId())).count();
+//		long count = extractPersonalityPayDetails.stream().filter(e -> e.getPersonalityId().equals(entity.getPersonalityId()) && e.getBillingUnitId().equals(entity.getBillingUnitId())).count();
+//		if (count > 0) {
+//			throw new RuntimeException("此员工个体户已有此发放单位的发放明细。");
+//		}
+		long count = extractPersonalityPayDetails.stream().filter(e -> e.getPersonalityId().equals(entity.getPersonalityId())).count();
 		if (count > 0) {
-			throw new RuntimeException("此员工个体户已有此发放单位的发放明细。");
+			throw new RuntimeException("此员工个体户已有发放明细。");
 		}
 		long count1 = extractPersonalityPayDetails.stream().filter(e -> !e.getPayStatus().equals(entity.getPayStatus())).count();
 		if (count1 > 0) {
@@ -273,8 +337,10 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 		LambdaUpdateWrapper<BudgetExtractPersonalityPayDetail> updateWrapper = new LambdaUpdateWrapper<>();
 		updateWrapper.eq(BudgetExtractPersonalityPayDetail::getExtractMonth,extractBatch);
 		updateWrapper.set(BudgetExtractPersonalityPayDetail::getOperateTime,null);
-		//updateWrapper.set(BudgetExtractPersonalityPayDetail::getIsSend,0);
 		this.update(updateWrapper);
+
+		extractTaxHandleRecord.setIsPersonalityComplete(false);
+		taxHandleRecordMapper.updateById(extractTaxHandleRecord);
 	}
 	/**
 	 * <p>导入初始化数据</p>
@@ -328,14 +394,21 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 		if(count > 0){
 			throw new RuntimeException("存在不允许延期发放的数据，请重新选择。");
 		}
-		long count1 = extractPersonalityPayDetails.stream().filter(e -> e.getIsSend() != null && e.getIsSend()).count();
-		if(count1>0){
-			throw new RuntimeException("存在已发放的数据，请重新选择。");
+		long count2 = extractPersonalityPayDetails.stream().filter(e -> e.getOperateTime()!=null).count();
+		if(count2 > 0){
+			throw new RuntimeException("存在已延期发放的数据，请重新选择。");
 		}
 
+		long count1 = extractPersonalityPayDetails.stream().filter(e -> e.getIsSend() != null && e.getIsSend()).count();
+		if(count1>0){
+			throw new RuntimeException("存在已付款的数据，请重新选择。");
+		}
 		extractPersonalityPayDetails.forEach(e->{
 			e.setOperateTime(new Date());
 		});
 		this.updateBatchById(extractPersonalityPayDetails);
+		//生成延期待付申请单
+		extractsumService.generateDelayApplyOrder(extractBatch,ids,curBatchExtractSum);
+
 	}
 }

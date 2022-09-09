@@ -107,6 +107,13 @@ public class DistributedNumber {
         return this.redis.getRedisIncrNum(key, 3, this.NUM_TTL, this.NUM_FILL_VALUE);
     }
 
+    public String getExtractDelayNum() {
+        //组装key
+        String key = Constants.FORMAT_8.format(new Date());
+        key = "YQ" + key;
+        return this.redis.getRedisIncrNum(key, 3, this.NUM_TTL, this.NUM_FILL_VALUE);
+    }
+
     /**
      * 获取借款单号
      */

@@ -156,19 +156,17 @@
     
     <select id="getExtractPayDetails" resultType="com.jtyjy.finance.manager.vo.ExtractPayDetailVO">
 		SELECT
-			bep.id,
+			bep.id id1,
 			paydetail.empno,
 			paydetail.empname,
 			paydetail.extractmonth,
 			paydetail.iscompanyemp isCompanyEmp,
+			paydetail.idnumber idnumber,
 			beou.billing_unit_name outUnitName,
 			beou.billing_unit_id outUnitId,
 			beou.pay_money outUnitPayMoney,
 			bep.extractdetailids,
 			bep.before_cal_fee beforeCalFee,
-			(select sum(realextract) from budget_extractdetail bed where bed.id in (bep.extractdetailids) and bed.empno = paydetail.empno and bed.individual_employee_id is null ) realextract,
-			(select sum(withholdmoney) from budget_extractdetail bed where bed.id in (bep.extractdetailids) and bed.empno = paydetail.empno and bed.individual_employee_id is null) repaymoney,
-			(select sum(consotax) from budget_extractdetail bed where bed.id in (bep.extractdetailids) and bed.empno = paydetail.empno and bed.individual_employee_id is null) consotax,
 			bep.bunitid1 billingUnitId,
 			bep.bunitname1 billingUnitname,
 			bep.paymoney1 billingPaymoney,

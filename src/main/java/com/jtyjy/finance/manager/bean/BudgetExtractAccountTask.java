@@ -27,6 +27,11 @@ public class BudgetExtractAccountTask implements Serializable {
     private String extractCode;
 
     /**
+     * 提成批次
+     */
+    private String extractMonth;
+
+    /**
      * 创建时间
      */
     private Date createTime;
@@ -55,63 +60,33 @@ public class BudgetExtractAccountTask implements Serializable {
      * 做账状态。0：未完成 1：已完成
      */
     private Integer accountantStatus;
+    /**
+     * 类型。1：提成支付申请单 3：延期支付申请单
+     */
+    private Integer taskType;
+
+    /**
+     * 延期支付申请单批次
+     */
+    private Integer batch;
+
+    /**
+     * 延期支付申请单号
+     */
+    private String delayExtractCode;
+
+    /**
+     * 员工个体户id列表
+     */
+    private String personalityIds;
+
+    /**
+     * （延期任务时需要使用，留存记录）是否需要做账
+     */
+    private Boolean isShouldAccount;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
-    @Override
-    public boolean equals(Object that) {
-        if (this == that) {
-            return true;
-        }
-        if (that == null) {
-            return false;
-        }
-        if (getClass() != that.getClass()) {
-            return false;
-        }
-        BudgetExtractAccountTask other = (BudgetExtractAccountTask) that;
-        return (this.getId() == null ? other.getId() == null : this.getId().equals(other.getId()))
-            && (this.getExtractCode() == null ? other.getExtractCode() == null : this.getExtractCode().equals(other.getExtractCode()))
-            && (this.getCreateTime() == null ? other.getCreateTime() == null : this.getCreateTime().equals(other.getCreateTime()))
-            && (this.getPlanAccountantEmpNos() == null ? other.getPlanAccountantEmpNos() == null : this.getPlanAccountantEmpNos().equals(other.getPlanAccountantEmpNos()))
-            && (this.getBillingUnitId() == null ? other.getBillingUnitId() == null : this.getBillingUnitId().equals(other.getBillingUnitId()))
-            && (this.getAccountantEmpNo() == null ? other.getAccountantEmpNo() == null : this.getAccountantEmpNo().equals(other.getAccountantEmpNo()))
-            && (this.getAccountantTime() == null ? other.getAccountantTime() == null : this.getAccountantTime().equals(other.getAccountantTime()))
-            && (this.getAccountantStatus() == null ? other.getAccountantStatus() == null : this.getAccountantStatus().equals(other.getAccountantStatus()));
-    }
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((getId() == null) ? 0 : getId().hashCode());
-        result = prime * result + ((getExtractCode() == null) ? 0 : getExtractCode().hashCode());
-        result = prime * result + ((getCreateTime() == null) ? 0 : getCreateTime().hashCode());
-        result = prime * result + ((getPlanAccountantEmpNos() == null) ? 0 : getPlanAccountantEmpNos().hashCode());
-        result = prime * result + ((getBillingUnitId() == null) ? 0 : getBillingUnitId().hashCode());
-        result = prime * result + ((getAccountantEmpNo() == null) ? 0 : getAccountantEmpNo().hashCode());
-        result = prime * result + ((getAccountantTime() == null) ? 0 : getAccountantTime().hashCode());
-        result = prime * result + ((getAccountantStatus() == null) ? 0 : getAccountantStatus().hashCode());
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(getClass().getSimpleName());
-        sb.append(" [");
-        sb.append("Hash = ").append(hashCode());
-        sb.append(", id=").append(id);
-        sb.append(", extractCode=").append(extractCode);
-        sb.append(", createTime=").append(createTime);
-        sb.append(", planAccountantEmpNos=").append(planAccountantEmpNos);
-        sb.append(", billingUnitId=").append(billingUnitId);
-        sb.append(", accountantEmpNo=").append(accountantEmpNo);
-        sb.append(", accountantTime=").append(accountantTime);
-        sb.append(", accountantStatus=").append(accountantStatus);
-        sb.append(", serialVersionUID=").append(serialVersionUID);
-        sb.append("]");
-        return sb.toString();
-    }
 }

@@ -881,7 +881,7 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 			@ApiImplicitParam(value = "导航栏查询条件", name = "query", dataType = "String", required = true)
 	})
 	@GetMapping("/exportExtractExcessDetail")
-	public void exportExtractExcessDetail(@RequestParam(name = "query", required = true) String query, HttpServletResponse response) throws Exception {
+	public ResponseEntity<String> exportExtractExcessDetail(@RequestParam(name = "query", required = true) String query, HttpServletResponse response) throws Exception {
 		InputStream is = null;
 		try {
 			int length = query.split("-").length;
@@ -915,10 +915,11 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 			workBook.finish();
 		} catch (Exception e) {
 			LOGGER.error(e.getMessage(), e);
-			throw e;
+			return ResponseEntity.error(e.getMessage());
 		} finally {
 			if (is != null) is.close();
 		}
+		return ResponseEntity.ok();
 	}
 
 
@@ -1127,7 +1128,7 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
 	})
 	@GetMapping("/downImportExtractFeePayErrorDetail")
-	public void downImportExtractFeePayErrorDetail(HttpServletResponse response, HttpServletRequest request) throws Exception {
+	public ResponseEntity<String> downImportExtractFeePayErrorDetail(HttpServletResponse response, HttpServletRequest request) throws Exception {
 
 		InputStream is = null;
 		try {
@@ -1145,10 +1146,11 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 		} catch (Exception e) {
 			e.printStackTrace();
 			LOGGER.error(e.getMessage(), e);
-			throw e;
+			return ResponseEntity.error(e.getMessage());
 		} finally {
 			if (is != null) is.close();
 		}
+		return ResponseEntity.ok();
 	}
 
 	@ApiOperation(value = "下载导入提成超额错误明细", httpMethod = "GET")
@@ -1156,7 +1158,7 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
 	})
 	@GetMapping("/downImportExtractExcessErrorDetail")
-	public void downImportExtractExcessErrorDetail(HttpServletResponse response, HttpServletRequest request) throws Exception {
+	public ResponseEntity<String> downImportExtractExcessErrorDetail(HttpServletResponse response, HttpServletRequest request) throws Exception {
 
 		InputStream is = null;
 		try {
@@ -1174,10 +1176,11 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 		} catch (Exception e) {
 			e.printStackTrace();
 			LOGGER.error(e.getMessage(), e);
-			throw e;
+			return ResponseEntity.error(e.getMessage());
 		} finally {
 			if (is != null) is.close();
 		}
+		return ResponseEntity.ok();
 	}
 
 	@ApiOperation(value = "导出发放表", httpMethod = "GET")
