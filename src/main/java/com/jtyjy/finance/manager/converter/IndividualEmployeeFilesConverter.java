@@ -6,6 +6,7 @@ import com.jtyjy.finance.manager.dto.individual.IndividualExportDTO;
 import com.jtyjy.finance.manager.dto.individual.IndividualImportDTO;
 import com.jtyjy.finance.manager.vo.individual.IndividualEmployeeFilesVO;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;
 
@@ -28,9 +29,11 @@ public interface IndividualEmployeeFilesConverter {
 
     IndividualEmployeeFiles dtoToEntity(IndividualEmployeeFilesDTO dto);
 
+
     IndividualExportDTO entityToExportDTO(IndividualEmployeeFiles entity);
     List<IndividualExportDTO> entityToExportDTOList(List<IndividualEmployeeFiles> entities);
 
+    @Mapping(target = "accountType",ignore = true)
     IndividualEmployeeFiles importDTOToEntity(IndividualImportDTO importDTO);
     List<IndividualEmployeeFiles> importDTOToEntities(List<IndividualImportDTO> importDTOList);
 }

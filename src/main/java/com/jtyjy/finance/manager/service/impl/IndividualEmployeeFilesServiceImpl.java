@@ -185,7 +185,7 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
                                 } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException ex) {
                                     ex.printStackTrace();
                                 }
-                                errorDTO.setInsertDatabaseError(e.getCause().getMessage());
+                                errorDTO.setInsertDatabaseError(e.getMessage()==null? e.toString():e.getMessage());
                                 errList.add(errorDTO);
                             }
                         }
