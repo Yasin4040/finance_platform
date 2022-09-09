@@ -35,7 +35,6 @@ public class IndividualTicketPageVO {
     @ExcelProperty(value = "批次")
     private String batchNo;
 
-
     @ApiModelProperty(value = "部门")
     @ExcelProperty(value = "部门")
     private String departmentName;

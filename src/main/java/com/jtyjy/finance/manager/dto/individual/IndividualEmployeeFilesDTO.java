@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -99,7 +100,7 @@ public class IndividualEmployeeFilesDTO {
      * 年额度
      */
     @ApiModelProperty(value = "年额度")
-    private Integer annualQuota;
+    private BigDecimal annualQuota;
 
 
 
@@ -118,7 +119,7 @@ public class IndividualEmployeeFilesDTO {
     /**
      * 部门
      */
-    @ApiModelProperty(value = "部门")
+    @ApiModelProperty(value = "部门Id")
     private String departmentNo;
 
     /**

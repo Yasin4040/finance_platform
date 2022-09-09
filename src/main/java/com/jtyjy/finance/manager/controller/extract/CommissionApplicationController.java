@@ -5,6 +5,7 @@ import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jtyjy.common.enmus.StatusCodeEnmus;
 import com.jtyjy.core.auth.anno.ApiDataAuthAnno;
 import com.jtyjy.core.local.JdbcSqlThreadLocal;
@@ -598,7 +599,7 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
      */
     @ApiOperation(value = "查看批次 费用明细列表", httpMethod = "GET")
     @GetMapping("/selectFeePage")
-    public ResponseEntity selectFeePage(@ModelAttribute FeeQuery query) throws Exception {
+    public ResponseEntity<PageResult<BudgetExtractFeePayDetailBeforeCal>> selectFeePage(@ModelAttribute FeeQuery query) throws Exception {
         IPage<BudgetExtractFeePayDetailBeforeCal> page = applicationService.selectFeePage(query);
         return ResponseEntity.ok(PageResult.apply(page.getTotal(), page.getRecords()));
     }
@@ -636,7 +637,7 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
         try {
             //模板用错了 导致一直fill错误。 因为没有 那个对象吗。有那个对象，但是dtoList没有值。？？？ 是缓存吗？
             InputStream is = this.getClass().getClassLoader().getResourceAsStream("template/extractImportTemplateNew.xlsx");
-            ExcelWriter excelWriter = EasyExcel.write(EasyExcelUtil.getOutputStream("提成导入模板", response),CommissionDetailsImportDTO.class).withTemplate(is).build();
+            ExcelWriter excelWriter = EasyExcel.write(EasyExcelUtil.getOutputStream("导出提成明细", response),CommissionDetailsImportDTO.class).withTemplate(is).build();
             WriteSheet writeSheet = EasyExcel.writerSheet(0).build();
             // 直接写入数据
             excelWriter.fill(dtoList, writeSheet);

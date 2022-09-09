@@ -6,7 +6,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.iamxiongx.util.message.exception.BusinessException;
 import com.jtyjy.finance.manager.bean.IndividualEmployeeFiles;
+import com.jtyjy.finance.manager.bean.WbBanks;
+import com.jtyjy.finance.manager.bean.WbDept;
 import com.jtyjy.finance.manager.cache.BankCache;
+import com.jtyjy.finance.manager.cache.DeptCache;
 import com.jtyjy.finance.manager.cache.UnitCache;
 import com.jtyjy.finance.manager.converter.IndividualEmployeeFilesConverter;
 import com.jtyjy.finance.manager.dto.individual.*;
@@ -49,6 +52,12 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
 
         List<IndividualEmployeeFilesVO> records = convert.getRecords();
         for (IndividualEmployeeFilesVO record : records) {
+            if(StringUtils.isNotBlank( record.getDepartmentNo())){
+                WbDept dept = DeptCache.getByDeptId(record.getDepartmentNo());
+                if(dept!=null){
+                    record.setDepartmentName(dept.getDeptFullname());
+                }
+            }
             record.setDepositBankName(BankCache.getBankByBranchCode(record.getDepositBank())!=null
                     ?BankCache.getBankByBranchCode(record.getDepositBank()).getSubBranchName():record.getDepositBank());
             record.setIssuedUnitName(UnitCache.get(record.getIssuedUnit())!=null?
@@ -130,13 +139,23 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
     @Override
     public List<IndividualExportDTO> exportIndividual(IndividualFilesQuery query) {
         query.setPageSize(-1);
+        query.setPageNum(1);
         Page<IndividualEmployeeFiles> page = getSimplePage(query);
         List<IndividualEmployeeFiles> list = page.getRecords();
         List<IndividualExportDTO> dtoList = IndividualEmployeeFilesConverter.INSTANCE.entityToExportDTOList(list);
         for (IndividualExportDTO dto : dtoList) {
             dto.setAccountType(dto.getAccountType().equals("1")?"个卡":"公户");
-            dto.setDepositBank(BankCache.getBankByBranchCode(dto.getDepositBank())!=null
-                    ?BankCache.getBankByBranchCode(dto.getDepositBank()).getSubBranchName():dto.getDepositBank());
+            dto.setAccountType(dto.getAccountType().equals("1")?"自办":"代办");
+            if (dto.getDepositBank()!=null) {
+                WbBanks bank = BankCache.getBankByBranchCode(dto.getDepositBank());
+                if (bank!=null) {
+                    dto.setProvince(bank.getProvince());
+                    dto.setCity(bank.getCity());
+                    dto.setBankType(bank.getBankName());
+                    dto.setDepositBank(bank.getSubBranchName());
+                    dto.setElectronicInterBankNo(bank.getSubBranchCode());
+                }
+            }
             dto.setIssuedUnit(UnitCache.get(dto.getIssuedUnit())!=null?
                     UnitCache.get(dto.getIssuedUnit()).getName():dto.getIssuedUnit());
         }

@@ -131,6 +131,7 @@ public class IndividualEmployeeController {
 //                individualExportDTO.setId(i);
 //            }
             EasyExcelUtil.writeExcel(response,exportDTOList,"员工个体户信息","员工个体户信息",IndividualExportDTO.class);
+//            return null;
         } catch (Exception e) {
             return ResponseEntity.error(e.getMessage());
         }

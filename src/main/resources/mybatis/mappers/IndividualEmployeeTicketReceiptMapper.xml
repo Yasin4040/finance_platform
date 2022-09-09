@@ -37,6 +37,9 @@
             <if test="query.batchNo !=null and query.batchNo != ''">
                 and  bief.batch_no like concat('%',#{query.batchNo},'%')
             </if>
+            <if test="query.departmentName !=null and query.departmentName != ''">
+                and  bief.department_name like concat('%',#{query.departmentName},'%')
+            </if>
             <if test="query.provinceOrRegion !=null and query.provinceOrRegion != ''">
                 and bief.province_or_region like concat('%',#{query.provinceOrRegion},'%')
             </if>

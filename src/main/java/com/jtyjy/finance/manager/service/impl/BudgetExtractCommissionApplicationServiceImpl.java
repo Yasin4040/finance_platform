@@ -409,7 +409,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                 case RETURN:
                     //税务退回
                     if (!application.getStatus().equals(2)) {
-                        throw new BusinessException("税务退回失败,申请单必须是审核状态！");
+                        throw new BusinessException("税务退回失败,申请单必须是审核通过状态！");
 //                        退回失败！任务已计算！
                     }
                     //有费用导入。就不能税务退回

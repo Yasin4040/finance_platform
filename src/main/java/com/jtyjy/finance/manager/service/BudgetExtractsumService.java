@@ -1204,6 +1204,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	 *
 	 * @param sumId
 	 */
+	@Transactional(rollbackFor = Exception.class)
 	public void deleteExtractSum(Long sumId) {
 		//先行条件 作废和审核状态  且报销表 没有审核通过
 		//后续操作
@@ -1216,8 +1217,8 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 
 
 		BudgetExtractsum extractsum = this.budgetExtractsumMapper.selectById(sumId);
-		if (extractsum.getStatus() == ExtractStatusEnum.VERIFYING.getType()||extractsum.getStatus() == ExtractStatusEnum.REJECT.getType())
-			throw new RuntimeException("操作失败!作废和审核状态，该单据不允许删除");
+		if (extractsum.getStatus() != ExtractStatusEnum.DRAFT.getType())
+			throw new RuntimeException("操作失败!非草稿状态，该单据不允许删除");
 		Optional<BudgetExtractCommissionApplication> applicationOptional = applicationService.lambdaQuery().eq(BudgetExtractCommissionApplication::getExtractSumId, sumId).last("limit 1").oneOpt();
 		if (!applicationOptional.isPresent()) {
 			throw new RuntimeException("申请单不存在");
@@ -1225,14 +1226,16 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		BudgetExtractCommissionApplication application = applicationOptional.get();
 		Long reimbursementId = application.getReimbursementId();
 		BudgetReimbursementorder reimbursementorder = reimbursementorderService.getById(reimbursementId);
-		Integer reuqeststatus = reimbursementorder.getReuqeststatus();
-		//审核状态，-1：退回，0：保存，1：已提交（待审核），2：审核通过
-		if (reuqeststatus == 2) {
-			throw new RuntimeException("报销单已经审核通过，该单据不允许删除");
+		if (reimbursementorder!=null) {
+			Integer reuqeststatus = reimbursementorder.getReuqeststatus();
+			//审核状态，-1：退回，0：保存，1：已提交（待审核），2：审核通过
+			if (reuqeststatus == ExtractStatusEnum.APPROVED.getType()) {
+				throw new RuntimeException("报销单已经审核通过，该单据不允许删除");
+			}
 		}
 		//1、导入明细
-		if (extractsum.getStatus() >= ExtractStatusEnum.VERIFYING.getType())
-			throw new RuntimeException("操作失败!该单据不允许删除");
+//		if (extractsum.getStatus() > ExtractStatusEnum.VERIFYING.getType())
+//			throw new RuntimeException("操作失败!该单据不允许删除");
 		extractImportDetailMapper.delete(new QueryWrapper<BudgetExtractImportdetail>().eq("extractsumid", sumId));
 		//2、导入 合并明细  提成明细1
 		extractDetailMapper.delete(new QueryWrapper<BudgetExtractdetail>().eq("extractsumid", sumId));
@@ -1241,7 +1244,8 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		//4、删除报销表
 		reimbursementorderService.removeById(reimbursementorder);
 			//0草稿（-1 退回 不能 -2 作废）
-			if (application.getStatus()== ExtractStatusEnum.DRAFT.getType()||application.getStatus()== ExtractStatusEnum.RETURN.getType()) {
+		//application.getStatus()== ExtractStatusEnum.RETURN.getType()
+			if (application.getStatus()== ExtractStatusEnum.DRAFT.getType()) {
 				//5、申请单删除
 				applicationService.removeById(application.getId());
 				//6、预算明细
@@ -1252,7 +1256,6 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 						.lambda().eq(BudgetExtractCommissionApplicationLog::getApplicationId, application.getId()));
 				//发放明细
 			}
-
 	}
 
 	/**

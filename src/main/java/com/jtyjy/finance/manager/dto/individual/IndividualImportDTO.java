@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -123,7 +124,7 @@ public class IndividualImportDTO {
 
     @ApiModelProperty(value = "年额度")
     @ExcelProperty(value = "*年额度")
-    private Integer annualQuota;
+    private BigDecimal annualQuota;
 
     @ApiModelProperty(value = "备注")
     @ExcelProperty(value = "备注")

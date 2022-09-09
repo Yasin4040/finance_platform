@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -114,7 +115,7 @@ public class IndividualEmployeeFilesVO {
      * 年额度
      */
     @ApiModelProperty(value = "年额度")
-    private Integer annualQuota;
+    private BigDecimal annualQuota;
 
     /**
      * 状态 1 正常  2停用
