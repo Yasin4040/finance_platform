@@ -112,6 +112,30 @@ public class WbUserController extends BaseController<BudgetAgentExecuteView> {
     }
 
     /**
+     * 分页查询用户
+     */
+    @ApiOperation(value = "分页查询用户", httpMethod = "POST")
+    @ApiImplicitParams(value = {
+            @ApiImplicitParam(value = "用户名称（模糊查询）", name = "displayName", dataType = "String"),
+            @ApiImplicitParam(value = "预算单位id（报销人查询需送）", name = "unitId", dataType = "Integer"),
+            @ApiImplicitParam(value = "当前页（默认1）", name = "page", dataType = "Integer"),
+            @ApiImplicitParam(value = "每页条数（默认20）", name = "rows", dataType = "Integer"),
+            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
+    })
+    @PostMapping("allUserPage")
+    public ResponseEntity<Page<WbUser>> allUserPage(
+            @RequestParam(value = "displayName", required = false) String displayName,
+            @RequestParam(value = "unitId", required = false) Long unitId,
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "rows", required = false, defaultValue = "20") Integer rows) throws Exception {
+        Page<WbUser> voList = new Page<WbUser>();
+        voList = this.service.getAllUserPageInfo(displayName, unitId, page, rows);
+
+        return ResponseEntity.ok(voList);
+    }
+
+
+    /**
      * 按照ID查询
      */
     @ApiOperation(value = "按照主键查询", httpMethod = "GET")

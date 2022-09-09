@@ -15,7 +15,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 public interface WbUserMapper extends BaseMapper<WbUser> {
 	
     List<WbUser> getUserPageInfo(Page pageCond, String displayName, String authSql);
-    
+    List<WbUser> getAllUserPageInfo(Page pageCond, String displayName, String authSql);
+
     List<WbUser> getUserPageInfoByUnit(Page pageCond, String displayName, String deptIds, String userIds, String authSql);
 
     WbUser selectUserByEmpNo(Long empNo);

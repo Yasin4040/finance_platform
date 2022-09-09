@@ -56,7 +56,7 @@ public class WbUserService extends DefaultBaseService<WbUserMapper, WbUser> {
      * 分页查询用户信息
      *
      * @param displayName 用户名称（模糊查询）
-     * @param userName    工号（模糊查询）
+     * @param unitId    unitId（模糊查询）
      * @param page
      * @param rows
      * @return
@@ -99,6 +99,15 @@ public class WbUserService extends DefaultBaseService<WbUserMapper, WbUser> {
             }
         }
 
+        return pageCond;
+    }
+
+    public Page<WbUser> getAllUserPageInfo(String displayName, Long unitId, Integer page, Integer rows) {
+        Page<WbUser> pageCond = new Page<>(page, rows);
+        if (null == unitId) {
+            List<WbUser> resultList = this.wuMapper.getAllUserPageInfo(pageCond, displayName, JdbcSqlThreadLocal.get());
+            pageCond.setRecords(resultList);
+        }
         return pageCond;
     }
 

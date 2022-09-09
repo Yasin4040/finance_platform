@@ -680,7 +680,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 						//@ApiModelProperty(value = "是否坏账 0否1是")
 						//"是".equals(isDebt) ? true : false
 //						badDebt = successMap.get(3).get(6).equals("是")?"提成":"坏账";
-						badDebt = successMap.get(4).get(3).equals("是")?"提成":"坏账";
+						badDebt = successMap.get(4).get(3).equals("否")?"提成":"坏账";
 						//插入提成明细
 						applicationService.saveExtractImportDetails(detailMap, extractsum);
 //						saveExtractImportDetails(detailMap, extractsum);

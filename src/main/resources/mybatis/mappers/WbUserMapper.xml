@@ -33,7 +33,18 @@
             ${authSql}
         </if>
     </select>
-    
+    <select id = "getAllUserPageInfo" resultMap = "BaseResultMap">
+        SELECT USER_ID, USER_NAME, DISPLAY_NAME, ID_NUMBER
+        FROM wb_user
+        WHERE 1 = 1
+        <if test="displayName !=null and displayName !=''">
+            and (DISPLAY_NAME like CONCAT('%', #{displayName}, '%') OR USER_NAME like CONCAT('%', #{displayName}, '%'))
+        </if>
+        ORDER BY USER_NAME
+        <if test="authSql !=null and authSql !=''">
+            ${authSql}
+        </if>
+    </select>
     <select id = "getUserPageInfoByUnit" resultMap = "BaseResultMap">
     	SELECT wu.USER_ID, wu.USER_NAME, wu.DISPLAY_NAME, wu.ID_NUMBER
     	FROM wb_user wu LEFT JOIN wb_person wp on wu.USER_ID = wp.USER_ID

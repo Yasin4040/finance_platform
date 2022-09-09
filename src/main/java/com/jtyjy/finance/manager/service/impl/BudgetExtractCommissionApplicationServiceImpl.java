@@ -125,8 +125,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                 //用 cache mapper层缓存
                 String yearName = yearMapper.getNameById(importDetail.getYearid());
                 detailsVO.setYearId(yearName);
-
-                detailsVO.setYearId(importDetail.getYearid().toString()+"届");
+//                detailsVO.setYearId(importDetail.getYearid().toString()+"届");
                 detailsVO.setApplyAmount(importDetail.getShouldSendExtract());
                 detailsVO.setActualAmount(importDetail.getCopeextract());
                 detailsVO.setDeductionAmount(importDetail.getCopeextract().subtract(importDetail.getShouldSendExtract()));
