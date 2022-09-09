@@ -50,4 +50,23 @@ public class CommissionApplicationLogController {
             return ResponseEntity.error(e.getMessage());
         }
     }
+
+
+//    @ApiOperation(value = "记录 OA的审批 拒绝记录", httpMethod = "GET")
+//    @GetMapping("/getList")
+//    public ResponseEntity<PageResult<BudgetExtractCommissionApplicationLog>> getList(@RequestParam String sumId,@ModelAttribute PageQuery query) {
+//        try {
+//            Optional<BudgetExtractCommissionApplication> applicationBySumId = applicationService.getApplicationBySumId(sumId);
+//            if (applicationBySumId.isPresent()) {
+//                Page<BudgetExtractCommissionApplicationLog> page = logService.page(new Page<>(query.getPageNum(), query.getPageSize())
+//                        , new LambdaQueryWrapper<BudgetExtractCommissionApplicationLog>()
+//                                .eq(BudgetExtractCommissionApplicationLog::getApplicationId, sumId));
+//                return ResponseEntity.ok(PageResult.apply(page.getTotal(),page.getRecords()));
+//            }
+//            return ResponseEntity.ok();
+//        } catch (Exception e) {
+//            return ResponseEntity.error(e.getMessage());
+//        }
+//    }
+
 }

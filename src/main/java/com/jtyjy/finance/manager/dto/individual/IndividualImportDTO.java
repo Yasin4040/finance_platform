@@ -31,24 +31,23 @@ public class IndividualImportDTO {
 //    @ExcelProperty(value = "*事业群",index = 2)
 //    private String businessGroup;
 //
-
-    @ApiModelProperty(value = "部门名称")
-    @ExcelProperty(value = "*事业群")
-    @NotBlank
-    private String departmentName;
+//    @ApiModelProperty(value = "部门名称")
+//    @ExcelProperty(value = "*部门")
+//    private String departmentName;
 
     @ApiModelProperty(value = "省区/大区")
     @ExcelProperty(value = "*省区/大区")
-    @NotBlank
+    @ExcelValid(message = "省区/大区不能为空")
     private String provinceOrRegion;
 
     @ApiModelProperty(value = "员工工号")
     @ExcelProperty(value = "*工号")
-    @NotBlank
+    @ExcelValid(message = "工号不能为空")
     private Integer employeeJobNum;
 
     @ApiModelProperty(value = "员工名称")
     @ExcelProperty(value = "*姓名")
+    @ExcelValid(message = "姓名不能为空")
     private String employeeName;
 
     @ApiModelProperty(value = "联系电话")
@@ -59,6 +58,15 @@ public class IndividualImportDTO {
     @ExcelProperty(value = "*账户类型(个卡/公户)")
     private String accountType;
 
+    @ApiModelProperty(value = "社保停发日期")
+    @DateTimeFormat("yyyy-MM-dd")
+    @ExcelProperty(value = "社保停发日期")
+    private Date socialSecurityStopDate;
+
+    @ApiModelProperty(value = "离职日期")
+    @DateTimeFormat("yyyy-MM-dd")
+    @ExcelProperty(value = "离职日期")
+    private Date leaveDate;
     @ApiModelProperty(value = "户名")
     @ExcelProperty(value = "*户名")
     private String accountName;
@@ -96,16 +104,6 @@ public class IndividualImportDTO {
     @ExcelProperty(value = "*发放意见")
     private String releaseOpinions;
 
-    @ApiModelProperty(value = "社保停发日期")
-    @DateTimeFormat("yyyy-MM-dd")
-    @ExcelProperty(value = "社保停发日期")
-    private Date socialSecurityStopDate;
-
-    @ApiModelProperty(value = "离职日期")
-    @DateTimeFormat("yyyy-MM-dd")
-    @ExcelProperty(value = "离职日期")
-    private Date leaveDate;
-
     @ApiModelProperty(value = "服务协议")
     @ExcelProperty(value = "服务协议")
     private String serviceAgreement;
@@ -129,6 +127,5 @@ public class IndividualImportDTO {
     @ApiModelProperty(value = "备注")
     @ExcelProperty(value = "备注")
     private String remarks;
-
 
 }

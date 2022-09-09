@@ -5,12 +5,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.iamxiongx.util.message.exception.BusinessException;
-import com.jtyjy.finance.manager.bean.IndividualEmployeeFiles;
-import com.jtyjy.finance.manager.bean.WbBanks;
-import com.jtyjy.finance.manager.bean.WbDept;
-import com.jtyjy.finance.manager.cache.BankCache;
-import com.jtyjy.finance.manager.cache.DeptCache;
-import com.jtyjy.finance.manager.cache.UnitCache;
+import com.jtyjy.finance.manager.bean.*;
+import com.jtyjy.finance.manager.cache.*;
 import com.jtyjy.finance.manager.converter.IndividualEmployeeFilesConverter;
 import com.jtyjy.finance.manager.dto.individual.*;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
@@ -188,6 +184,17 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
                         for (IndividualImportDTO dto : dataList) {
                             try {
                                     IndividualEmployeeFiles entity = IndividualEmployeeFilesConverter.INSTANCE.importDTOToEntity(dto);
+                                    Integer employeeJobNum = dto.getEmployeeJobNum();
+                                    WbPerson personByEmpNo = PersonCache.getPersonByEmpNo(String.valueOf(employeeJobNum));
+                                    if(personByEmpNo==null){
+                                        throw new RuntimeException("工号不存在");
+                                    }
+                                    entity.setDepartmentNo(personByEmpNo.getDeptId());
+                                    WbDept byDeptId = DeptCache.getByDeptId(personByEmpNo.getDeptId());
+                                    if(byDeptId == null){
+                                        throw new RuntimeException("员工部门不存在");
+                                    }
+                                    entity.setDepartmentName(byDeptId.getDeptName());
                                     entity.setAccountType(dto.getAccountType().equals("个卡")?1:2);
                                     //通过名称 找id
                                     entity.setDepositBank(BankCache.getBankByBranchName(entity.getDepositBank()) != null ?
