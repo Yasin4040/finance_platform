@@ -256,7 +256,7 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
 
             InputStream iss = null;
             try {
-                iss = this.getClass().getClassLoader().getResourceAsStream("template/extractImportTemplateNew.xlsx");
+                iss = this.getClass().getClassLoader().getResourceAsStream("template/extractImportTemplateNewError.xlsx");
                 String key = IMPORT_TYPE + "_" + UserThreadLocal.get().getUserName();
 //                String errorFileName = fileShareDir + File.separator + System.currentTimeMillis() + "_错误信息.xlsx";
                 String errorFileName =  System.currentTimeMillis() + "_提成导入错误信息.xlsx";
@@ -286,7 +286,7 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
     @ApiOperation(value = "提成明细  下载模板", httpMethod = "GET")
     @GetMapping("/downLoadTemplate")
     public void downLoadTemplate(HttpServletResponse response) throws Exception {
-        try (InputStream is = this.getClass().getClassLoader().getResourceAsStream("template/extractImportTemplateNewError.xlsx")) {
+        try (InputStream is = this.getClass().getClassLoader().getResourceAsStream("template/extractImportTemplateNew.xlsx")) {
             ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream("提成导入模板", response)).withTemplate(is).build();
             WriteSheet sheet = EasyExcel.writerSheet(0).build();
             List<Map<String, Object>> list = new ArrayList<>();
