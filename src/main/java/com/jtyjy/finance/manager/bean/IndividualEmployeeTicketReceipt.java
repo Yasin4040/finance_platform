@@ -70,7 +70,7 @@ public class IndividualEmployeeTicketReceipt implements Serializable {
      * 创建时间
      */
     @TableField(value = "create_time")
-    @JsonFormat(timezone = "UTC+8", pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
     private Date createTime;
 
     /**
@@ -83,7 +83,7 @@ public class IndividualEmployeeTicketReceipt implements Serializable {
      * 更新时间
      */
     @TableField(value = "update_time")
-    @JsonFormat(timezone = "UTC+8", pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
     private Date updateTime;
 
     @TableField(exist = false)

@@ -87,7 +87,7 @@ public class ExtractImportDetailNewVO {
 	@ApiModelProperty(value = "员工个体户id")
 	private Long individualEmployeeId;
 
-	@JsonFormat(pattern = "yyyy-MM-dd HH:hh:ss",timezone = "UTC+8")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:hh:ss",timezone = "GMT+8")
 	@ApiModelProperty(value = "创建时间")
 	private Date createtime;
 
@@ -95,7 +95,7 @@ public class ExtractImportDetailNewVO {
 	@ApiModelProperty(value = "创建人")
 	private String createBy;
 
-	@JsonFormat(pattern = "yyyy-MM-dd HH:hh:ss",timezone = "UTC+8")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:hh:ss",timezone = "GMT+8")
 	@ApiModelProperty(value = "更新时间")
 	private Date updatetime;
 

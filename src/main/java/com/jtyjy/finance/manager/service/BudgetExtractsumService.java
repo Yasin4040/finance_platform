@@ -1217,6 +1217,10 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 
 
 		BudgetExtractsum extractsum = this.budgetExtractsumMapper.selectById(sumId);
+		if(extractsum==null){
+			throw new RuntimeException("提成单不存在!");
+		}
+
 		if (extractsum.getStatus() != ExtractStatusEnum.DRAFT.getType())
 			throw new RuntimeException("操作失败!非草稿状态，该单据不允许删除");
 		Optional<BudgetExtractCommissionApplication> applicationOptional = applicationService.lambdaQuery().eq(BudgetExtractCommissionApplication::getExtractSumId, sumId).last("limit 1").oneOpt();

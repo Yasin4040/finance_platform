@@ -71,7 +71,7 @@ public class IndividualTicketVO {
 
     @ApiModelProperty(value = "录入日期")
     @ExcelProperty(value = "录入日期")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "UTC+8")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
     @DateTimeFormat(value = "yyyy-MM-dd")
     private Date createTime;
 

@@ -145,7 +145,7 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
         List<IndividualExportDTO> dtoList = IndividualEmployeeFilesConverter.INSTANCE.entityToExportDTOList(list);
         for (IndividualExportDTO dto : dtoList) {
             dto.setAccountType(dto.getAccountType().equals("1")?"个卡":"公户");
-            dto.setAccountType(dto.getAccountType().equals("1")?"自办":"代办");
+            dto.setSelfOrAgency(dto.getAccountType().equals("1")?"自办":"代办");
             if (dto.getDepositBank()!=null) {
                 WbBanks bank = BankCache.getBankByBranchCode(dto.getDepositBank());
                 if (bank!=null) {
@@ -154,6 +154,13 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
                     dto.setBankType(bank.getBankName());
                     dto.setDepositBank(bank.getSubBranchName());
                     dto.setElectronicInterBankNo(bank.getSubBranchCode());
+                }
+            }
+            //部门名称
+            if(StringUtils.isNotBlank( dto.getDepartmentNo())){
+                WbDept dept = DeptCache.getByDeptId(dto.getDepartmentNo());
+                if(dept!=null){
+                    dto.setDepartmentName(dept.getDeptFullname());
                 }
             }
             dto.setIssuedUnit(UnitCache.get(dto.getIssuedUnit())!=null?

@@ -59,6 +59,16 @@ public class IndividualImportErrorDTO extends ImportErrorDTO{
     @ExcelProperty(value = "*账户类型(个卡/公户)")
     private String accountType;
 
+    @ApiModelProperty(value = "社保停发日期")
+    @DateTimeFormat("yyyy-MM-dd")
+    @ExcelProperty(value = "社保停发日期")
+    private Date socialSecurityStopDate;
+
+    @ApiModelProperty(value = "离职日期")
+    @DateTimeFormat("yyyy-MM-dd")
+    @ExcelProperty(value = "离职日期")
+    private Date leaveDate;
+
     @ApiModelProperty(value = "户名")
     @ExcelProperty(value = "*户名")
     private String accountName;
@@ -96,15 +106,6 @@ public class IndividualImportErrorDTO extends ImportErrorDTO{
     @ExcelProperty(value = "*发放意见")
     private String releaseOpinions;
 
-    @ApiModelProperty(value = "社保停发日期")
-    @DateTimeFormat("yyyy-MM-dd")
-    @ExcelProperty(value = "社保停发日期")
-    private Date socialSecurityStopDate;
-
-    @ApiModelProperty(value = "离职日期")
-    @DateTimeFormat("yyyy-MM-dd")
-    @ExcelProperty(value = "离职日期")
-    private Date leaveDate;
 
     @ApiModelProperty(value = "服务协议")
     @ExcelProperty(value = "服务协议")
@@ -129,6 +130,5 @@ public class IndividualImportErrorDTO extends ImportErrorDTO{
     @ApiModelProperty(value = "备注")
     @ExcelProperty(value = "备注")
     private String remarks;
-
 
 }
