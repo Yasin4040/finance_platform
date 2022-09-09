@@ -70,7 +70,7 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
         //SP 2022 09 06  10
 
         receipt.setTicketCode(generateWaterCode());
-        receipt.setInvoiceAmount(invoiceAmount);
+
         receipt.setEmployeeJobNum(dto.getEmployeeJobNum());
         receipt.setIndividualEmployeeInfoId(dto.getIndividualEmployeeInfoId());
         receipt.setIndividualName(dto.getIndividualName());
@@ -108,7 +108,7 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
             infoList.add(info);
             invoiceAmount = invoiceAmount.add(singleDTO.getInvoiceAmount());
         }
-
+        receipt.setInvoiceAmount(invoiceAmount);
         mainService.save(receipt);
         infoList.forEach(x -> x.setTicketId(receipt.getId()));
         this.saveBatch(infoList);

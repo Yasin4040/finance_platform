@@ -51,12 +51,12 @@
                 <if test="query.individualName !=null and query.individualName != ''">
                     and bietri.individual_name like concat('%',#{query.individualName},'%')
                 </if>
-                <if test="query.year !=null and query.year != ''">
-                    and bietri.`year` like concat('%',#{query.year},'%')
-                </if>
-                <if test="query.month !=null and query.month != ''">
-                    and bietri.`month` like concat('%',#{query.month},'%')
-                </if>
+<!--                <if test="query.year !=null and query.year != ''">-->
+<!--                    and bietri.`year` like concat('%',#{query.year},'%')-->
+<!--                </if>-->
+<!--                <if test="query.month !=null and query.month != ''">-->
+<!--                    and bietri.`month` like concat('%',#{query.month},'%')-->
+<!--                </if>-->
                 <if test="query.invoiceAmount !=null and query.invoiceAmount != ''">
                     and bietri.invoice_amount like concat('%',#{query.invoiceAmount},'%')
                 </if>
