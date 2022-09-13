@@ -12,8 +12,12 @@ import lombok.Data;
 @ApiModel("分页查询业务对象")
 @Data
 public class PageQuery {
+//    @ApiModelProperty(value = "当前页码",name = "page")
+//    private Integer pageNum = 1;
+//    @ApiModelProperty(value = "每页条数",name = "rows")
+//    private Integer pageSize = 20;
     @ApiModelProperty(value = "当前页码",name = "page")
-    private Integer pageNum = 1;
+    private Integer page = 1;
     @ApiModelProperty(value = "每页条数",name = "rows")
-    private Integer pageSize = 20;
+    private Integer rows = 20;
 }

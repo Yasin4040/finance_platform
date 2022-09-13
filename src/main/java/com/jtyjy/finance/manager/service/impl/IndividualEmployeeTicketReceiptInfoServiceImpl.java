@@ -56,7 +56,7 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
 
     @Override
     public IPage<IndividualTicketVO> selectPage(IndividualTicketQuery query) {
-        return this.baseMapper.selectTicketPage(new Page<>(query.getPageNum(), query.getPageSize()), query);
+        return this.baseMapper.selectTicketPage(new Page<>(query.getPage(), query.getRows()), query);
     }
 
     @Override

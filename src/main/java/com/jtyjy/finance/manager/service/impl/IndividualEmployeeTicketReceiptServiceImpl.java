@@ -29,7 +29,7 @@ public class IndividualEmployeeTicketReceiptServiceImpl extends ServiceImpl<Indi
     @Override
     public IPage<IndividualTicketPageVO> selectPage(IndividualTicketQuery query) {
 //        IPage<Map> mapIPage = this.baseMapper.selectTicketPageMap(new Page<>(1,10));
-        IPage<IndividualTicketPageVO> individualTicketPageVOIPage = this.baseMapper.selectTicketPage(new Page<>(query.getPageNum(), query.getPageSize()), query);
+        IPage<IndividualTicketPageVO> individualTicketPageVOIPage = this.baseMapper.selectTicketPage(new Page<>(query.getPage(), query.getRows()), query);
         List<IndividualTicketPageVO> records = individualTicketPageVOIPage.getRecords();
         for (IndividualTicketPageVO record : records) {
             if(StringUtils.isNotBlank( record.getDepartmentNo())){

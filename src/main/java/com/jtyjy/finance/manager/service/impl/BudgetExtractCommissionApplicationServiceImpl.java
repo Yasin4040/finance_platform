@@ -365,7 +365,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     public IPage<BudgetExtractFeePayDetailBeforeCal> selectFeePage(FeeQuery query) {
 
         //new Page<>(query.getPageSize(), query.getPageSize()
-        Page<BudgetExtractFeePayDetailBeforeCal> beforeCalPage =  feePayDetailMapper.selectFeePage(new Page<>(query.getPageNum(), query.getPageSize()),query);
+        Page<BudgetExtractFeePayDetailBeforeCal> beforeCalPage =  feePayDetailMapper.selectFeePage(new Page<>(query.getPage(), query.getRows()),query);
 
 //        Page<BudgetExtractFeePayDetailBeforeCal> beforeCalPage = feePayDetailMapper.selectPage(new Page<BudgetExtractFeePayDetailBeforeCal>(query.getPageSize(), query.getPageSize()),
 //                new LambdaQueryWrapper<BudgetExtractFeePayDetailBeforeCal>()

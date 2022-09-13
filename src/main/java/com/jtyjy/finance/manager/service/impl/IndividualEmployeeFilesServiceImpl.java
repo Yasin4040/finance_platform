@@ -84,7 +84,7 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
                 .eq(query.getStatus() != null, IndividualEmployeeFiles::getStatus, query.getStatus())
                 .eq(query.getAccountType() != null, IndividualEmployeeFiles::getAccountType, query.getAccountType())
                 .orderByDesc(IndividualEmployeeFiles::getCreateTime)
-                .page(new Page<>(query.getPageNum(), query.getPageSize()));
+                .page(new Page<>(query.getPage(), query.getRows()));
         return page;
     }
 
@@ -135,8 +135,8 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
 
     @Override
     public List<IndividualExportDTO> exportIndividual(IndividualFilesQuery query) {
-        query.setPageSize(-1);
-        query.setPageNum(1);
+        query.setPage(1);
+        query.setRows(-1);
         Page<IndividualEmployeeFiles> page = getSimplePage(query);
         List<IndividualEmployeeFiles> list = page.getRecords();
         List<IndividualExportDTO> dtoList = IndividualEmployeeFilesConverter.INSTANCE.entityToExportDTOList(list);

@@ -140,8 +140,8 @@ public class IndividualEmployeeTicketController {
     @GetMapping("/exportTicket")
     public ResponseEntity exportTicket(@ModelAttribute IndividualTicketQuery query, HttpServletResponse response) throws Exception {
         try {
-            query.setPageNum(1);
-            query.setPageSize(-1);
+            query.setPage(1);
+            query.setRows(-1);
             IPage<IndividualTicketVO> individualTicketVOIPage = ticketService.selectPage(query);
             List<IndividualTicketVO> records = individualTicketVOIPage.getRecords();
 

@@ -110,8 +110,8 @@ public class IndividualEmployeeController {
     public ResponseEntity getIndividualInfoList(@RequestParam String name) throws Exception {
             IndividualFilesQuery query = new IndividualFilesQuery();
             query.setAccountName(name);
-            query.setPageNum(1);
-            query.setPageSize(-1);
+            query.setPage(1);
+            query.setRows(-1);
         return this.selectPage(query);
     }
 
