@@ -55,6 +55,6 @@ public class ExtractPersonalityPayDetailQueryVO {
 	private String query;
 
 	@ApiModelProperty(value = "员工个体户ids",hidden = false)
-	private List<String> personalityIds;
+	private List<Long> personalityIds;
 
 }
