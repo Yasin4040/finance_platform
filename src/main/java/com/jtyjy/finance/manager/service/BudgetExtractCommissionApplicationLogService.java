@@ -1,5 +1,6 @@
 package com.jtyjy.finance.manager.service;
 
+import com.jtyjy.ecology.EcologyParams;
 import com.jtyjy.finance.manager.bean.BudgetExtractCommissionApplicationLog;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -11,4 +12,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
 public interface BudgetExtractCommissionApplicationLogService extends IService<BudgetExtractCommissionApplicationLog> {
 
     void saveLog(Long applicationId);
+
+    void doRecordOA(EcologyParams params);
 }

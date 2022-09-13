@@ -24,7 +24,7 @@ public class ExcelImportValid {
      * @param object 校验的JavaBean 其属性须有自定义注解
      * @author linmaosheng
      */
-    public static void valid(Object object) {
+    public static void  valid(Object object) {
         Field[] fields = object.getClass().getDeclaredFields();
         StringBuilder errMsg = new StringBuilder();
         for (Field field : fields) {

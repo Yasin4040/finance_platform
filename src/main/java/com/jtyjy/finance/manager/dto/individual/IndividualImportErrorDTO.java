@@ -35,9 +35,9 @@ public class IndividualImportErrorDTO extends ImportErrorDTO{
 //    private String businessGroup;
 //
 
-    @ApiModelProperty(value = "部门名称")
-    @ExcelProperty(value = "*事业群")
-    private String departmentName;
+//    @ApiModelProperty(value = "部门名称")
+//    @ExcelProperty(value = "*事业群")
+//    private String departmentName;
 
     @ApiModelProperty(value = "省区/大区")
     @ExcelProperty(value = "*省区/大区")

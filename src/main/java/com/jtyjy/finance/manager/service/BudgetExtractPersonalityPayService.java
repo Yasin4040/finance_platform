@@ -109,6 +109,7 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 			excelData.setWelfareSum(BigDecimal.ZERO);
 		}
 		excelData.setReceiptSum(receiptSum.get(personalityId)==null?BigDecimal.ZERO:receiptSum.get(personalityId));
+		excelData.setMoneySum(excelData.getExtractSum().add(excelData.getSalarySum()).add(excelData.getWelfareSum()));
 
 		BudgetBillingUnit budgetBillingUnit = billingUnitMapper.selectById(billingUnitId);
 		IndividualEmployeeFiles individualEmployeeFiles = individualEmployeeFilesMapper.selectById(personalityId);

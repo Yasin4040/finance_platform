@@ -17,6 +17,7 @@ import com.jtyjy.finance.manager.service.IndividualEmployeeFilesService;
 import com.jtyjy.finance.manager.vo.individual.IndividualEmployeeFilesVO;
 import lombok.SneakyThrows;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.beanutils.BeanUtilsBean;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.beanutils.locale.converters.DateLocaleConverter;
@@ -208,8 +209,13 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
                                     entity.setUpdateTime(new Date());
                                     entity.setUpdateBy(UserThreadLocal.get().getUserName());
                                     entity.setStatus(1);
+                                try {
                                     this.save(entity);
+                                } catch (Exception e) {
+                                    throw new RuntimeException("工号+户名已存在");
+//                                    e.printStackTrace();
                                 }
+                            }
                                catch (Exception e) {
                                 IndividualImportErrorDTO errorDTO = new IndividualImportErrorDTO();
 
@@ -228,6 +234,7 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
             for (Map map : errorMap) {
                 IndividualImportErrorDTO errorDTO = new IndividualImportErrorDTO();
                 try {
+                    BeanUtilsBean.getInstance().getConvertUtils().register(false, false, 0);//解决bigdecimal null
                     ConvertUtils.register(new DateLocaleConverter(), Date.class);//BeanUtils.populate对日期类型进行处理，否则无法封装
                     BeanUtils.populate(errorDTO,map);
                 } catch (IllegalAccessException | InvocationTargetException e) {
