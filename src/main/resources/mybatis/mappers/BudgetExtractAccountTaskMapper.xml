@@ -73,7 +73,7 @@
              budget_extract_per_pay_detail beppd
           LEFT JOIN budget_billing_unit bbu ON bbu.id = beppd.billing_unit_id
             left join budget_individual_employee_files bief on bief.id = beppd.personality_id
-        where beppd.extract_code = #{params.extractCode} and beppd.billing_unit_id = #{params.unitId}
+        where beppd.extract_code = #{params.extractCode}
 
         <if test="params.unitName!=null and params.unitName!=''">
             and bbu.`name` like concat('%',#{params.unitName},'%')
@@ -103,11 +103,12 @@
             bes.extractmonth extractBatch,
             bes.deptname unitName,
             a.create_time createTime,
-            a.task_type taskType
+            a.task_type taskType,a.payMoney
         FROM
             (
             SELECT
                 beat.extract_code,
+                beat.relation_extract_code,
                 beat.task_type,
                 beat.create_time,( SELECT sum( pay_money ) FROM budget_extract_per_pay_detail WHERE extract_code = beat.extract_code AND pay_status = beat.task_type ) payMoney
             FROM
@@ -123,9 +124,10 @@
             GROUP BY
                 beat.extract_code,
                 beat.task_type,
-                beat.create_time
+                beat.create_time,
+                beat.relation_extract_code
             ) a
-            LEFT JOIN budget_extractsum bes ON a.extract_code = bes.`code`
+            LEFT JOIN budget_extractsum bes ON ifnull(a.relation_extract_code,a.extract_code) = bes.`code`
             LEFT JOIN budget_year_period byp ON byp.id = bes.yearid
             <where>
                 1 = 1

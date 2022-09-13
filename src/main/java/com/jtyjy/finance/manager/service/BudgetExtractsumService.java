@@ -4463,9 +4463,9 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		if(CollectionUtils.isEmpty(extractDetailList)) return resultList;
 		//员工个体户
 		Map<String, List<IndividualEmployeeFiles>> individualEmployeeFilesMap = this.individualEmployeeFilesMapper.selectList(null).stream().collect(Collectors.groupingBy(e -> e.getEmployeeJobNum().toString() + "&&" + e.getEmployeeName()));
-
-		Map<String, ExtractPersonlityDetailExcelData> individualEmployeeAgoPayDetailMap = getIndividualEmployeeAgoPayDetail(individualEmployeeFilesMap.values().stream().flatMap(e->e.stream()).map(e->e.getId()).collect(Collectors.toList()), extractBatch);
-
+		List<Long> individualEmployeeIdList = individualEmployeeFilesMap.values().stream().flatMap(e->e.stream()).map(e->e.getId()).collect(Collectors.toList());
+		Map<String, ExtractPersonlityDetailExcelData> individualEmployeeAgoPayDetailMap = getIndividualEmployeeAgoPayDetail(individualEmployeeIdList, extractBatch);
+		Map<Long, BigDecimal> receiptSum = getReceiptSum(individualEmployeeIdList, extractBatch);
 		extractDetailList.stream().collect(Collectors.groupingBy(e->e.getEmpno()+"&&"+e.getEmpname())).forEach((key,list)->{
 			List<IndividualEmployeeFiles> individualEmployeeFiles = individualEmployeeFilesMap.get(key);
 
@@ -4479,15 +4479,18 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 					excelData.setExtractSum(agoExcelData.getExtractSum());
 					excelData.setSalarySum(agoExcelData.getSalarySum());
 					excelData.setWelfareSum(agoExcelData.getWelfareSum());
-					excelData.setReceiptSum(agoExcelData.getReceiptSum());
 				}else{
 					excelData.setExtractSum(BigDecimal.ZERO);
 					excelData.setSalarySum(BigDecimal.ZERO);
 					excelData.setWelfareSum(BigDecimal.ZERO);
-					excelData.setReceiptSum(BigDecimal.ZERO);
 				}
+				excelData.setReceiptSum(receiptSum.get(individualEmployeeFile.getId()));
 				excelData.setMoneySum(excelData.getExtractSum().add(excelData.getSalarySum()).add(excelData.getWelfareSum()));
 				excelData.setPayStatus(ExtractPersonalityPayStatusEnum.COMMON.value);
+				BudgetBillingUnit budgetBillingUnit = billingUnitMapper.selectById(individualEmployeeFile.getIssuedUnit());
+				if(budgetBillingUnit!=null){
+					excelData.setBillingUnitName(budgetBillingUnit.getName());
+				}
 				resultList.add(excelData);
 			});
 		});
@@ -4600,6 +4603,15 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			excelDataList.stream().collect(Collectors.groupingBy(e->{
 				return e.getEmpNo().toString().concat(e.getPersonlityName());
 			})).forEach((account,list)->{
+
+				IndividualEmployeeFiles individualEmployeeFiles = employeeFilesMap.get(list.get(0).getEmpNo() + "&&" + list.get(0).getPersonlityName());
+				long count = extractPersonalityPayDetails.stream().filter(e -> e.getPersonalityId().equals(individualEmployeeFiles.getId())).count();
+				if(count>0){
+					list.forEach(e->{
+						e.setErrMsg("该员工数据已存在，无法导入。");
+					});
+					return;
+				}
 				int size = list.stream().collect(Collectors.groupingBy(ExtractPersonlityDetailExcelData::getPayStatus)).size();
 				if(size>1){
 					list.forEach(e->{
@@ -4607,16 +4619,6 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 					});
 					return;
 				}
-				IndividualEmployeeFiles individualEmployeeFiles = employeeFilesMap.get(list.get(0).getEmpNo() + "&&" + list.get(0).getPersonlityName());
-
-				long count = extractPersonalityPayDetails.stream().filter(e -> e.getPersonalityId().equals(individualEmployeeFiles.getId())).count();
-				if(count>0){
-					list.forEach(e->{
-						e.setErrMsg("该个体户您已导入过。");
-					});
-					return;
-				}
-
 				//获取数据库中已存在的，但是又不属于此次导入的明细
 				List<BudgetExtractPersonalityPayDetail> dbList = extractPersonalityPayDetails.stream().filter(e->e.getPersonalityId().equals(individualEmployeeFiles.getId())).filter(dbDetail -> {
 					return list.stream().noneMatch(e -> {
@@ -4802,14 +4804,15 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	}
 
 	private void moneyValidate(String text,String type){
-		if(StringUtils.isBlank(text)){
+		if(StringUtils.isNotBlank(text)){
 			try{
-				if(new BigDecimal(text).compareTo(BigDecimal.ZERO)<0){
-					throw new RuntimeException("金额格式错误");
-				}
 				String[] split = text.split("\\.");
-				if(split.length!=2) throw new RuntimeException("金额格式错误");
-				if(split[1].length()>2) throw new RuntimeException("金额格式错误");
+				if(split.length != 1){
+					if(split[1].length()>2) throw new RuntimeException("金额格式错误");
+				}
+				if(new BigDecimal(text).compareTo(BigDecimal.ZERO)<0){
+					throw new RuntimeException("金额不能小于0");
+				}
 			}catch (Exception e){
 				throw new RuntimeException(type+"格式错误");
 			}
@@ -4832,7 +4835,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		}
 		IndividualEmployeeFiles individualEmployeeFiles = getIndividualEmployeeFiles(data.getEmpNo().toString(), data.getPersonlityName());
 		if(Objects.isNull(individualEmployeeFiles)){
-			throw new RuntimeException("找不到员工个体户【"+data.getPersonlityName()+"("+data.getPersonlityName()+")"+"】");
+			throw new RuntimeException("找不到员工个体户【"+data.getPersonlityName()+"("+data.getEmpNo()+")"+"】");
 		}
 		if(individualEmployeeFiles.getStatus()==2){
 			throw new RuntimeException("该员工个体户已被停用。");
@@ -5062,12 +5065,14 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	}
 
 	public void generateDelayApplyOrder(String extractBatch, String ids,List<BudgetExtractsum> curBatchExtractSum){
+		List<BudgetExtractPersonalityPayDetail> extractPersonalityPayDetails = personalityPayDetailMapper.selectBatchIds(Arrays.asList(ids.split(",")));
 		Map<Long, BudgetBillingUnit> unitMap = this.billingUnitMapper.selectList(null).stream().collect(Collectors.toMap(BudgetBillingUnit::getId, Function.identity()));
 		Map<Long, List<BudgetBillingUnitAccount>> unitAccountMap = this.billingUnitAccountMapper.selectList(new LambdaQueryWrapper<BudgetBillingUnitAccount>().in(BudgetBillingUnitAccount::getBillingunitid, unitMap.keySet())).stream().collect(Collectors.groupingBy(BudgetBillingUnitAccount::getBillingunitid));
-		Map<Long, IndividualEmployeeFiles> individualEmployeeFilesMap = individualEmployeeFilesMapper.selectBatchIds(Arrays.asList(ids.split(","))).stream().collect(Collectors.toMap(e -> e.getId(), e -> e));
+		List<Long> personalityIds = extractPersonalityPayDetails.stream().map(BudgetExtractPersonalityPayDetail::getPersonalityId).collect(Collectors.toList());
+		Map<Long, IndividualEmployeeFiles> individualEmployeeFilesMap = individualEmployeeFilesMapper.selectBatchIds(personalityIds).stream().collect(Collectors.toMap(e -> e.getId(), e -> e));
 		ExtractPersonalityPayDetailQueryVO vo = new ExtractPersonalityPayDetailQueryVO();
 		vo.setPayStatus(ExtractPersonalityPayStatusEnum.DELAY.type);
-		vo.setPersonalityIds(Arrays.asList(ids.split(",")));
+		vo.setPersonalityIds(personalityIds);
 		List<ExtractPersonalityPayDetailVO> personalityPayDetails = this.personalityPayDetailMapper.getExtractPersonalityPayDetailVO(null, vo, extractBatch);
 		List<BudgetExtractPerPayDetail> perPayDetails = new ArrayList<>();
 		curBatchExtractSum.forEach(sum-> {
@@ -5098,18 +5103,14 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		Date date = new Date();
 		perPayDetails.stream().collect(Collectors.groupingBy(e->e.getExtractCode())).forEach((code,list)->{
 			String personalityIds = list.stream().map(e -> e.getPersonalityId().toString()).collect(Collectors.joining(","));
-			accountTasks.addAll(list.stream().map(e->e.getBillingUnitId()).distinct().map(e->{
-				BudgetBillingUnit budgetBillingUnit = unitMap.get(e);
+			accountTasks.addAll(list.stream().map(e->{
+				BudgetBillingUnit budgetBillingUnit = unitMap.get(e.getBillingUnitId());
 				BudgetExtractAccountTask task = new BudgetExtractAccountTask();
 				task.setExtractMonth(extractBatch);
 				task.setCreateTime(date);
-				task.setDelayExtractCode(code);
-				task.setBillingUnitId(e);
+				task.setRelationExtractCode(code);
+				task.setBillingUnitId(budgetBillingUnit.getId());
 				if("1".equals(budgetBillingUnit.getBillingUnitType()) && budgetBillingUnit.getOwnFlag() == 0){
-					//不需做账
-					task.setAccountantStatus(1);
-					task.setIsShouldAccount(false);
-				}else{
 					task.setAccountantStatus(0);
 					task.setIsShouldAccount(true);
 					String accountants = budgetBillingUnit.getAccountants();
@@ -5118,15 +5119,21 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 					}
 					String empNos = Arrays.stream(accountants.split(",")).map(a -> UserCache.getUserByUserId(a).getUserName()).collect(Collectors.joining(","));
 					task.setPlanAccountantEmpNos(empNos);
+				}else{
+					//不需做账
+					task.setAccountantStatus(1);
+					task.setIsShouldAccount(false);
 				}
 				task.setExtractCode(distributedNumber.getExtractDelayNum());
-				task.setPersonalityIds(personalityIds);
+				e.setExtractCode(task.getExtractCode());
 				task.setTaskType(ExtractTaskTypeEnum.DELAY.type);
+				e.setPayStatus(task.getTaskType());
+				task.setPersonalityIds(personalityIds);
 				task.setBatch(batch);
 				return task;
 			}).collect(Collectors.toList()));
 		});
-
+		if(!CollectionUtils.isEmpty(perPayDetails)) perPayDetailService.saveBatch(perPayDetails);
 		if(!accountTasks.isEmpty()) {
 			accountTaskService.saveBatch(accountTasks);
 
@@ -5204,7 +5211,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			perPayDetail.setReceiverBankAccount(individualEmployeeFiles.getAccount());
 			WbBanks bank1 = bankCache.getBankByBranchCode(individualEmployeeFiles.getDepositBank());
 			if(Objects.isNull(bank1)){
-				throw new RuntimeException("员工个体户【" + individualEmployeeFiles.getEmployeeName() + "】的账号【"+budgetBillingUnitAccount.getBankaccount()+"】银行信息有错误。");
+				throw new RuntimeException("员工个体户【" + individualEmployeeFiles.getEmployeeName() + "】的账号【"+individualEmployeeFiles.getAccount()+"】银行信息有错误。");
 			}
 			perPayDetail.setReceiverBankAccountBranchCode(bank1.getSubBranchCode());
 			perPayDetail.setReceiveBankAccountBankName(bank1.getBankName());

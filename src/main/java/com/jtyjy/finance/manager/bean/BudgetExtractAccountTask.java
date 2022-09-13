@@ -71,9 +71,9 @@ public class BudgetExtractAccountTask implements Serializable {
     private Integer batch;
 
     /**
-     * 延期支付申请单号
+     * 关联提成单号
      */
-    private String delayExtractCode;
+    private String relationExtractCode;
 
     /**
      * 员工个体户id列表

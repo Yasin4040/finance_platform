@@ -57,7 +57,7 @@ public class BudgetExtractAccountController {
 			@ApiImplicitParam(value = "单号", name = "code", dataType = "String", required = true),
 			@ApiImplicitParam(value = "付款单位", name = "unitName", dataType = "String", required = false),
 			@ApiImplicitParam(value = "个体户名称", name = "personalityName", dataType = "String", required = false),
-			@ApiImplicitParam(value = "发放状态(0:否 1：是)", name = "payStatus", dataType = "Integer", required = false),
+			@ApiImplicitParam(value = "发放状态(1。正常 2。调账 3。延期)", name = "payStatus", dataType = "Integer", required = false),
 			@ApiImplicitParam(value = "当前页（默认1）", name = "page", dataType = "Integer", required = false),
 			@ApiImplicitParam(value = "每页条数（默认20）", name = "rows", dataType = "Integer", required = false)
 	})
@@ -98,12 +98,12 @@ public class BudgetExtractAccountController {
 	@ApiOperation(value = "获取做账单位列表", httpMethod = "GET")
 	@ApiImplicitParams(value = {
 			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
-			@ApiImplicitParam(value = "任务单位id", name = "taskId", dataType = "Long", required = true)
+			@ApiImplicitParam(value = "任务列表的单号", name = "extractCode", dataType = "String", required = true)
 	})
 	@GetMapping("/getExtractTaskBillingUnitList")
-	public ResponseEntity<List<ExtractBillingUnitVO>> getExtractTaskBillingUnitList(@RequestParam(value = "taskId")Long taskId) {
+	public ResponseEntity<List<ExtractBillingUnitVO>> getExtractTaskBillingUnitList(@RequestParam(value = "extractCode")String extractCode) {
 		try {
-			List<ExtractBillingUnitVO> result = accountService.getExtractTaskBillingUnitList(taskId);
+			List<ExtractBillingUnitVO> result = accountService.getExtractTaskBillingUnitList(extractCode);
 			return ResponseEntity.ok(result);
 		} catch (Exception e) {
 			e.printStackTrace();

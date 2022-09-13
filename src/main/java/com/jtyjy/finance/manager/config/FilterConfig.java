@@ -85,6 +85,7 @@ public class FilterConfig {
         apis.add("/api/extractInfo/importPersonalityPayDetail");
         apis.add("/api/extractInfo/importInitPersonalityPayDetail");
         apis.add("/api/extractInfo/downInitPersonalityPayDetailTemplate");
+        apis.add("/api/extractInfo/downImportPersonalityPayErrorDetail");
         apis.add("/api/extractInfo/exportPersonalityPayDetail");
 
         //消息推送
