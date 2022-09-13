@@ -13,7 +13,7 @@ public enum ExtractTypeEnum {
     APPROVED(4,"坏账明细"),
     PERFORMANCE_AWARD_COMMISSION(5,"绩效奖提成"),
     ACCRUED_PERFORMANCE_AWARD(6,"预提绩效奖"),
-    COMMISSION_BEFORE_ACCOUNTS(7,"扎帐前提成");
+    COMMISSION_BEFORE_ACCOUNTS(7,"扎账前提成");
 
 
 	public String value;

@@ -85,7 +85,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	private static String EXTRACTVERIFY = "EXTRACTVERIFY";
 
 	private static String QRCODE_PREFIX = "TC";
-
+	Map<String,String> exists = new HashMap<>();
 	@Autowired
 	private BudgetExtractsumMapper budgetExtractsumMapper;
 	@Autowired
@@ -456,6 +456,8 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		if (BudgetExtractController.TCIMPORT.equals(importType)) {
 			//第2行
 			if (row == 1) {
+				//高并发失效
+				exists.clear();
 				//校验导入的表头
 				validateImportTableHead(data);
 				//第5行
@@ -559,6 +561,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	}
 
 	private void validateImportTableDetails(Map<Integer, String> data) {
+
 		String isCompanyEmp = data.get(0); //是否公司员工
 		String empNo = data.get(1); //工号
 		String empName = data.get(2); //姓名
@@ -566,8 +569,11 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 
 		String extractType = data.get(4);//提成类型
 		String tcPeriod = data.get(5); //提成届别 第6列
-
-
+		if (exists.get(isCompanyEmp+empNo)==null) {
+			exists.put(isCompanyEmp+empNo,empName);
+		}else if(exists.get(isCompanyEmp+empNo).equals(empName)){
+			throw new RuntimeException(isCompanyEmp+","+empNo+","+empName+"存在重复数据");
+		}
 
 		String sftc = data.get(42);//实发金额
 		String zhs = data.get(21); //综合税
@@ -592,9 +598,17 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				if (outerPerson.getStopflag()) throw new RuntimeException("外部人员【" + empNo + "," + empName + "】已被停用!");
 				break;
 			case SELF_EMPLOYED_EMPLOYEES:
-				IndividualEmployeeFiles employeeFiles = individualService.lambdaQuery().eq(IndividualEmployeeFiles::getEmployeeJobNum, empNo).eq(IndividualEmployeeFiles::getAccountName, empName).last("limit 1").one();
-				if (employeeFiles == null) throw new RuntimeException("个体户【" + empNo + "," + empName + "】不存在!");
-				if (employeeFiles.getStatus()==2) throw new RuntimeException("个体户【" + empNo + "," + empName + "】已被停用!");
+				user = getUserByEmpno(empNo);
+				if (user == null) {
+					throw new RuntimeException("工号【" + empNo + "】不存在!");
+				} else {
+					if (!empName.equals(user.getDisplayName())) {
+						throw new RuntimeException("工号与姓名不匹配!正确姓名为【" + user.getDisplayName() + "】");
+					}
+				}
+				List<IndividualEmployeeFiles> employeeFilesList = individualService.lambdaQuery().eq(IndividualEmployeeFiles::getEmployeeJobNum, empNo).list();
+				if (CollectionUtils.isEmpty(employeeFilesList)) throw new RuntimeException("个体户【" + empNo + "," + empName + "】不存在!");
+				if (employeeFilesList.stream().allMatch(x->x.getStatus()==2)) throw new RuntimeException("个体户【" + empNo + "," + empName + "】已被停用!");
 				//个体户不存在
 			default:
 				throw new RuntimeException("业务类型 请填写公司员工，外部人员，员工个体户!");

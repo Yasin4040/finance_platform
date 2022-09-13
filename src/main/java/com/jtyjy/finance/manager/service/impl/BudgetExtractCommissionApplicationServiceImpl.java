@@ -169,6 +169,10 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateApplicationInfo(CommissionApplicationInfoUpdateVO updateVO) {
+        //状态判断。
+        BudgetExtractsum extractsum = extractSumMapper.selectById (updateVO.getExtractSumId());
+        if (extractsum.getStatus() != ExtractStatusEnum.DRAFT.getType()||extractsum.getStatus() != ExtractStatusEnum.RETURN.getType())
+            throw new RuntimeException("操作失败！只能修改退回和草稿状态的提成明细");
         BudgetExtractCommissionApplication application = this.getById(updateVO.getApplicationId());
         application.setRemarks(updateVO.getRemarks());
         application.setPaymentReason(updateVO.getPaymentReason());
@@ -236,6 +240,9 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             attachments.add(attachment);
         }
         attachmentService.saveOrUpdateBatch(attachments);
+        extractsum.setStatus(ExtractStatusEnum.DRAFT.getType());
+        extractSumMapper.updateById(extractsum);
+
     }
     @Override
     /**
@@ -395,24 +402,24 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     @Transactional(rollbackFor = Exception.class)
     public void updateStatusBySumId(String sumId, Integer status) {
         Optional<BudgetExtractCommissionApplication> applicationOptional = getApplicationBySumId(sumId);
+        BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
         if (applicationOptional.isPresent()) {
             BudgetExtractCommissionApplication application = applicationOptional.get();
             ExtractStatusEnum willEnum = ExtractStatusEnum.getTypeEnume(status);
             switch (willEnum) {
                 case REJECT:
                     //作废操作  申请单状态必须是-1
-                    if (!application.getStatus().equals(-1)) {
+                    if (!budgetExtractsum.getStatus().equals(-1)) {
                         throw new BusinessException("作废失败,申请单必须是退回状态！");
                     }
                     break;
                 case RETURN:
                     //税务退回
-                    if (!application.getStatus().equals(2)) {
+                    if (!budgetExtractsum.getStatus().equals(2)) {
                         throw new BusinessException("税务退回失败,申请单必须是审核通过状态！");
 //                        退回失败！任务已计算！
                     }
                     //有费用导入。就不能税务退回
-                    BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(application.getExtractSumId());
                     //批次号
                     String extractMonth = budgetExtractsum.getExtractmonth();
                     Integer returnCount =  feePayDetailMapper.selectCount(new LambdaQueryWrapper<BudgetExtractFeePayDetailBeforeCal>()
@@ -431,7 +438,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                     break;
                 case DRAFT:
                     //撤回  申请单必须没有人审批过
-                    if (application.getStatus().equals(1)) {
+                    if (budgetExtractsum.getStatus().equals(1)) {
                         //1 已提交
                         Integer draftCount = applicationLogService.lambdaQuery()
                                 .eq(BudgetExtractCommissionApplicationLog::getApplicationId, application.getId())
@@ -452,8 +459,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                 reimbursementorderService.removeById(reimbursementorder);
             }
             this.lambdaUpdate().eq(BudgetExtractCommissionApplication::getExtractSumId,sumId).set(BudgetExtractCommissionApplication::getStatus,status);
-            BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
-            budgetExtractsum.setStatus(ExtractStatusEnum.DRAFT.getType());
+            budgetExtractsum.setStatus(status);
             extractSumMapper.updateById(budgetExtractsum);
         }else {
             throw new BusinessException("申请单不存在");
@@ -731,17 +737,19 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         }
     }
     private void setUserTypeValue(String isCompanyEmp, String empNo, String empName, BudgetExtractImportdetail extractImportdetail) {
-        extractImportdetail.setIscompanyemp("是".equals(isCompanyEmp) ? true : false);
+//        extractImportdetail.setIscompanyemp("是".equals(isCompanyEmp) ? true : false);
         switch ( ExtractUserTypeEnum.getEnumByValue(isCompanyEmp)) {
             case COMPANY_STAFF:
                 WbUser user = getUserByEmpno(empNo);
                 extractImportdetail.setEmpid(user.getUserId());
                 extractImportdetail.setIdnumber(user.getIdNumber());
+                extractImportdetail.setIscompanyemp(true);
                 break;
             case EXTERNAL_STAFF:
                 BudgetExtractOuterperson outerPerson = getExtractOuterpersonByEmpnoAndEmpname(empNo, empName);
                 extractImportdetail.setEmpid(outerPerson.getId().toString());
                 extractImportdetail.setIdnumber(outerPerson.getIdnumber());
+                extractImportdetail.setIscompanyemp(false);
                 break;
             case SELF_EMPLOYED_EMPLOYEES:
                 //todo 个体户
@@ -750,6 +758,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                 extractImportdetail.setEmpid(user2.getUserId());
                 extractImportdetail.setIdnumber(user2.getIdNumber());
                 extractImportdetail.setIndividualEmployeeId(employeeFiles.getId());
+                extractImportdetail.setIscompanyemp(false);
                 break;
             default:
                 break;

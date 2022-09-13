@@ -17,7 +17,7 @@ public class IndividualIssueExportDTO {
 
     @ExcelProperty(value = "*工号")
     @ExcelValid(message = "工号必填")
-    private Integer employeeJobNum;
+    private String employeeJobNum;
     @ExcelProperty(value = "*姓名")
     @ExcelValid(message = "姓名")
     private String employeeName;
