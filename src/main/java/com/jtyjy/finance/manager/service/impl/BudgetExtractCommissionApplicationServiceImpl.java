@@ -171,7 +171,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     public void updateApplicationInfo(CommissionApplicationInfoUpdateVO updateVO) {
         //状态判断。
         BudgetExtractsum extractsum = extractSumMapper.selectById (updateVO.getExtractSumId());
-        if (extractsum.getStatus() != ExtractStatusEnum.DRAFT.getType()||extractsum.getStatus() != ExtractStatusEnum.RETURN.getType())
+        if (extractsum.getStatus() != ExtractStatusEnum.DRAFT.getType() && extractsum.getStatus() != ExtractStatusEnum.RETURN.getType())
             throw new RuntimeException("操作失败！只能修改退回和草稿状态的提成明细");
         BudgetExtractCommissionApplication application = this.getById(updateVO.getApplicationId());
         application.setRemarks(updateVO.getRemarks());

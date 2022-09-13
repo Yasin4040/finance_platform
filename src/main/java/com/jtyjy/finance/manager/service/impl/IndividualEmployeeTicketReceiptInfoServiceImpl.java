@@ -3,6 +3,7 @@ package com.jtyjy.finance.manager.service.impl;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jtyjy.finance.manager.bean.IndividualEmployeeFiles;
@@ -142,11 +143,14 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
         IndividualEmployeeTicketReceipt mainReceipt = mainService.getById(dto.getTicketId());
         BigDecimal invoiceAmount = BigDecimal.ZERO;
         List<IndividualEmployeeTicketReceiptInfo> infoList = new ArrayList<>();
+        List<IndividualEmployeeTicketReceiptInfo> oldList
+                = this.lambdaQuery().eq(IndividualEmployeeTicketReceiptInfo::getTicketId, dto.getTicketId()).list();
         for (int i = 0; i < detailsDTOList.size(); i++) {
             Long id = detailsDTOList.get(i).getId();
             IndividualEmployeeTicketReceiptInfo info = new IndividualEmployeeTicketReceiptInfo();
             if(id != null){
                 info = this.getById(id);
+                oldList.removeIf(x->x.getId().equals(id));
             }
             IndividualTicketDetailsDTO singleDTO = detailsDTOList.get(i);
             info.setYear(singleDTO.getYear());
@@ -167,6 +171,7 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
         }
         mainReceipt.setInvoiceAmount(invoiceAmount);
         mainService.updateById(mainReceipt);
+        this.removeByIds(oldList.stream().map(x->x.getId()).collect(Collectors.toList()));
         this.saveOrUpdateBatch(infoList);
     }
 
