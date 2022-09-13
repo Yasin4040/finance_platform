@@ -1159,8 +1159,9 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		List<BudgetExtractImportdetail> allimportDetails = new ArrayList<>();
 		budgetExtractsums.forEach(extractsum -> {
 			//审核通过及已计算的不允许提交
-			if (extractsum.getStatus()!=0)
+			if (extractsum.getStatus()!=0){
 				throw new RuntimeException("操作失败！非草稿状态，提成单号【" + extractsum.getCode() + "】不允许提交!");
+			}
 			//合并
 			combine(extractsum.getId(), allimportDetails);
 			extractsum.setStatus(ExtractStatusEnum.VERIFYING.getType());
@@ -1171,7 +1172,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			if (applicationOptional.isPresent()) {
 				BudgetExtractCommissionApplication application = applicationOptional.get();
 				//根据预算明细。生成报销单。
-				applicationService.generateReimbursement(application.getExtractSumId());
+				applicationService.generateReimbursement(application.getExtractSumId(),extractsum);
 				//更新时间  1 已提交
 				application.setStatus(ExtractStatusEnum.VERIFYING.getType());
 				application.setUpdateTime(new Date());

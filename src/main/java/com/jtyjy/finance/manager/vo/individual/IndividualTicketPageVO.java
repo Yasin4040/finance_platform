@@ -39,6 +39,10 @@ public class IndividualTicketPageVO {
     @ExcelProperty(value = "部门")
     private String departmentName;
 
+    @ApiModelProperty(value = "部门Id")
+    @ExcelIgnore
+    private String departmentNo;
+
     @ApiModelProperty(value = "省区/大区")
     @ExcelProperty(value = "省区/大区")
     private String provinceOrRegion;

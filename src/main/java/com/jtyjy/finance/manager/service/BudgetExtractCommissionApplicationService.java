@@ -36,7 +36,7 @@ public interface BudgetExtractCommissionApplicationService extends IService<Budg
 
     void updateStatusBySumId(String sumId, Integer status);
 
-    void generateReimbursement(Long sumId);
+    void generateReimbursement(Long sumId,BudgetExtractsum extractsum);
 
     Optional<BudgetExtractCommissionApplication> getApplicationBySumId(String sumId);
 

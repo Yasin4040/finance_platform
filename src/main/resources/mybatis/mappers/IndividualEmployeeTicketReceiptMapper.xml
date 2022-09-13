@@ -24,6 +24,7 @@
         bietri.individual_employee_info_id as individualEmployeeInfoId,
         bief.batch_no as batchNo,
         bief.department_name as departmentName,
+        bief.department_no as departmentNo,
         bief.province_or_region as provinceOrRegion,
         bief.employee_job_num as employeeJobNum,
         bief.employee_name as employeeName,

@@ -169,6 +169,8 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
 //            this.saveOrUpdate(info);
             invoiceAmount = invoiceAmount.add(info.getInvoiceAmount());
         }
+        mainReceipt.setIndividualEmployeeInfoId(dto.getIndividualEmployeeInfoId());
+        mainReceipt.setIndividualName(dto.getIndividualName());
         mainReceipt.setInvoiceAmount(invoiceAmount);
         mainService.updateById(mainReceipt);
         this.removeByIds(oldList.stream().map(x->x.getId()).collect(Collectors.toList()));
@@ -189,17 +191,17 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
 
                             String individualName = key.split("-")[1];
                             Integer employeeJobNum = Integer.valueOf(key.split("-")[0]);
-                            Optional<IndividualEmployeeFiles> individualEmployeeFiles = employeeFilesService.lambdaQuery().like(IndividualEmployeeFiles::getAccountName, individualName).last("limit 1").oneOpt();
+                            Optional<IndividualEmployeeFiles> individualEmployeeFiles = employeeFilesService.lambdaQuery().eq(IndividualEmployeeFiles::getEmployeeJobNum,employeeJobNum).like(IndividualEmployeeFiles::getAccountName, individualName).last("limit 1").oneOpt();
                             if (individualEmployeeFiles.isPresent()) {
                                 IndividualEmployeeFiles file = individualEmployeeFiles.get();
 
                                 IndividualEmployeeTicketReceipt receipt = new IndividualEmployeeTicketReceipt();
-                                BigDecimal invoiceAmount = receipt.getInvoiceAmount() != null ? receipt.getInvoiceAmount() : BigDecimal.ZERO;
+                                BigDecimal invoiceAmount = BigDecimal.ZERO;
                                 //SP+年月日+4位流水号
                                 //SP 2022 09 06  10
                                 receipt.setTicketCode(generateWaterCode());
-                                receipt.setInvoiceAmount(invoiceAmount);
 
+                                receipt.setInvoiceAmount(invoiceAmount);
                                 receipt.setIndividualEmployeeInfoId(file.getId());
                                 receipt.setIndividualName(file.getAccountName());
                                 receipt.setEmployeeJobNum(file.getEmployeeJobNum());
@@ -225,6 +227,7 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
                                         info.setUpdateTime(new Date());
                                         info.setUpdateBy(UserThreadLocal.getEmpNo());
                                         this.save(info);
+                                        invoiceAmount = invoiceAmount.add(info.getInvoiceAmount());
                                     } catch (Exception e) {
                                         IndividualTicketImportErrorDTO errorDTO = new IndividualTicketImportErrorDTO();
                                         try {
@@ -236,6 +239,8 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
                                         errorDTOList.add(errorDTO);
                                     }
                                 }
+                                receipt.setInvoiceAmount(invoiceAmount);
+                                mainService.updateById(receipt);
                             }
                         }
                     }, errorMap)).sheet().doRead();

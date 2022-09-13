@@ -16,10 +16,7 @@ import com.jtyjy.finance.manager.converter.CommonAttachmentConverter;
 import com.jtyjy.finance.manager.dto.ReimbursementRequest;
 import com.jtyjy.finance.manager.dto.commission.FeeImportErrorDTO;
 import com.jtyjy.finance.manager.dto.commission.IndividualIssueExportDTO;
-import com.jtyjy.finance.manager.enmus.ExtractStatusEnum;
-import com.jtyjy.finance.manager.enmus.ExtractTypeEnum;
-import com.jtyjy.finance.manager.enmus.ExtractUserTypeEnum;
-import com.jtyjy.finance.manager.enmus.ReimbursementFromEnmu;
+import com.jtyjy.finance.manager.enmus.*;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.listener.easyexcel.PageReadListener;
 import com.jtyjy.finance.manager.mapper.*;
@@ -470,7 +467,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
 
     @SneakyThrows
     @Override
-    public void generateReimbursement(Long sumId) {
+    public void generateReimbursement(Long sumId,BudgetExtractsum extractsum) {
         Optional<BudgetExtractCommissionApplication> applicationBySumId = this.getApplicationBySumId(String.valueOf(sumId));
         if (applicationBySumId.isPresent()) {
             BudgetExtractCommissionApplication application = applicationBySumId.get();
@@ -515,11 +512,11 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                     otherTotalMoney =  otherTotalMoney.add(budgetDetails.getBudgetAmount());
                     orderDetailList.add(reimbursement);
                 }
-                BudgetReimbursementorder order = new BudgetReimbursementorder();
-                //报销单来源 0：普通报销单（预算员手动填写的）1：稿费 2：提成 3：工资 4:项目预领
-                order.setOrderscrtype(ReimbursementFromEnmu.COMMISSION.getCode());
+                BudgetReimbursementorder order = getTestBean(extractsum);
                 order.setOthermoney(otherTotalMoney);
-                reimbursementRequest.setSubmit("1");
+                order.setReimmoney(otherTotalMoney);
+                order.setLackBill(false);
+                reimbursementRequest.setSubmit(String.valueOf(1));
                 reimbursementRequest.setOrder(order);
                 reimbursementRequest.setOrderDetail(orderDetailList);
 
@@ -532,7 +529,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                     }
 //                    reimbursementController.opt(reimbursementRequest);
                 } catch (Exception e) {
-                    throw e;
+                    throw new RuntimeException(e.getMessage()==null?e.toString():e.getMessage());
                 }
             }
 
@@ -546,7 +543,34 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
 //        multipartFile.
 //        multipartFile.getInputStream();
     }
+    private  BudgetReimbursementorder getTestBean(BudgetExtractsum extractsum) {
+        //设置报销单信息
+        BudgetReimbursementorder order = new BudgetReimbursementorder();
+        //预算单位
+//        commonData.getBxUnit().getId()
+        order.setUnitid(Long.valueOf(extractsum.getDeptid()));
+        order.setYearid(extractsum.getYearid());
+        order.setReimperonsid(UserThreadLocal.get().getUserId());
+        order.setPaymentmoney(BigDecimal.ZERO);
+        order.setReimperonsname(UserThreadLocal.get().getDisplayName());
+        String monthId = extractsum.getExtractmonth().substring(4, 6);
+        order.setMonthid(Long.valueOf(monthId));
+        order.setBxtype(ReimbursementTypeEnmu.COMMON.getCode());
+        //报销单来源 0：普通报销单（预算员手动填写的）1：稿费 2：提成 3：工资 4:项目预领
+        order.setOrderscrtype(ReimbursementFromEnmu.COMMISSION.getCode());
 
+        order.setReimdate(new Date());
+        order.setReimmoney(BigDecimal.ZERO);
+        order.setNonreimmoney(BigDecimal.ZERO);
+        order.setPaymentmoney(BigDecimal.ZERO);
+        order.setTransmoney(BigDecimal.ZERO);
+        order.setCashmoney(BigDecimal.ZERO);
+        order.setAllocatedmoney(BigDecimal.ZERO);
+        order.setOthermoney(BigDecimal.ZERO);
+        order.setAttachcount(0);
+        order.setRemark("申请单报销用例");
+        return order;
+    }
     @Override
     public void saveEntity(BudgetExtractsum extract,String badDebt,Object... params) {
         //生成提成明细申请单
