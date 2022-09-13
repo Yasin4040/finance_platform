@@ -1148,6 +1148,23 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			//合并
 			combine(extractsum.getId(), allimportDetails);
 			extractsum.setStatus(ExtractStatusEnum.VERIFYING.getType());
+
+			//申请单 改为待审核。
+			Optional<BudgetExtractCommissionApplication> applicationOptional =
+					applicationService.lambdaQuery().eq(BudgetExtractCommissionApplication::getExtractSumId, extractsum.getId()).last("limit 1").oneOpt();
+			if (applicationOptional.isPresent()) {
+				BudgetExtractCommissionApplication application = applicationOptional.get();
+				//根据预算明细。生成报销单。
+				applicationService.generateReimbursement(application.getExtractSumId());
+				//更新时间  1 已提交
+				application.setStatus(ExtractStatusEnum.VERIFYING.getType());
+				application.setUpdateTime(new Date());
+				application.setUpdateBy(UserThreadLocal.getEmpNo());
+				applicationService.updateById(application);
+
+				//日志记录
+				applicationLogService.saveLog(application.getId());
+			}
 		});
 		if (!allimportDetails.isEmpty()) this.extractImportDetailService.updateBatchById(allimportDetails);
 		this.updateBatchById(budgetExtractsums);
