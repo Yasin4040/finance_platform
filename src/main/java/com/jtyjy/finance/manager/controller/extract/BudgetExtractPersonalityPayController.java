@@ -14,8 +14,10 @@ import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.service.BudgetExtractPersonalityPayService;
 import com.jtyjy.finance.manager.service.BudgetExtractsumService;
 import com.jtyjy.finance.manager.utils.EasyExcelUtil;
+import com.jtyjy.finance.manager.vo.ExtractPersonalityMessageResponseVO;
 import com.jtyjy.finance.manager.vo.ExtractPersonalityPayDetailQueryVO;
 import com.jtyjy.finance.manager.vo.ExtractPersonalityPayDetailVO;
+import com.jtyjy.finance.manager.vo.ExtractPersonalityQueryVO;
 import io.swagger.annotations.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,6 +109,26 @@ public class BudgetExtractPersonalityPayController {
 		}
 	}
 
+
+	@ApiOperation(value = "获取员工个体户信息", httpMethod = "POST")
+	@ApiImplicitParams(value = {
+			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
+	})
+	@PostMapping("/getExtractPersonalityDetail")
+	public ResponseEntity getExtractPersonalityDetail(@RequestBody @Validated ExtractPersonalityQueryVO entity) {
+		try {
+			String query = entity.getQuery();
+			int length = query.split("-").length;
+			if (length != 3) throw new RuntimeException("请先选择导航栏的一个批次！");
+			String extractBatch = query.split("-")[2];
+			ExtractPersonalityMessageResponseVO personalitySendData = personalityPayService.getPersonalitySendData(entity.getPersonalityId(), extractBatch, entity.getBillingUnitId(), entity.getCurExtract().add(entity.getCurSalary()).add(entity.getCurWelfare()));
+			return ResponseEntity.ok(personalitySendData);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.error(e.getMessage());
+		}
+	}
+
 	@ApiOperation(value = "删除员工个体户发放明细", httpMethod = "GET")
 	@ApiImplicitParams(value = {
 			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
@@ -152,6 +174,18 @@ public class BudgetExtractPersonalityPayController {
 		}
 		return ResponseEntity.ok();
 	}
+
+//	@ApiOperation(value = "获取员工个体户明细", httpMethod = "GET")
+//	@GetMapping("/getExtractPersonalityPayDetails")
+//	public ResponseEntity<PageResult<ExtractPersonalityPayDetailVO>> getExtractPersonalityPayDetails(ExtractPersonalityPayDetailQueryVO params,
+//	                                                                                                 @RequestParam(defaultValue = "1") Integer page,
+//	                                                                                                 @RequestParam(defaultValue = "20") Integer rows) {
+//		if (params.getSumId() == null) return ResponseEntity.error("参数异常。");
+//		PageResult<ExtractPersonalityPayDetailVO> pageList = extractsumService.getExtractPersonalityPayDetailVO(params, page, rows, null);
+//		return ResponseEntity.ok(pageList);
+//
+//	}
+
 
 	@ApiOperation(value = "员工个体户单据发放明细", httpMethod = "GET")
 	@GetMapping("/getExtractPersonalityPayDetails")

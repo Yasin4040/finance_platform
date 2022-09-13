@@ -4,15 +4,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.common.collect.Lists;
 import com.jtyjy.core.anno.JdbcSelector;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.service.DefaultBaseService;
 import com.jtyjy.finance.manager.bean.*;
 import com.jtyjy.finance.manager.dto.ExtractAccountDTO;
-import com.jtyjy.finance.manager.enmus.ExtractPersonalityPayStatusEnum;
-import com.jtyjy.finance.manager.enmus.ExtractTaskTypeEnum;
+import com.jtyjy.finance.manager.enmus.*;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.mapper.*;
+import com.jtyjy.finance.manager.trade.DistributedNumber;
 import com.jtyjy.finance.manager.vo.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,8 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 	private final BudgetExtractPerPayDetailMapper perPayDetailMapper;
 	private final BudgetBillingUnitMapper billingUnitMapper;
 	private final IndividualEmployeeFilesMapper individualEmployeeFilesMapper;
+	private final BudgetExtractsumService extractsumService;
+	private final DistributedNumber distributedNumber;
 
 	@Override
 	public BaseMapper<TabChangeLog> getLoggerMapper() {
@@ -60,7 +63,13 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 	public PageResult<ExtractAccountTaskResponseVO> getExtractAccountTaskList(ExtractAccountTaskQueryVO params, Integer page, Integer rows) {
 		params.setEmpNo(UserThreadLocal.get().getUserId());
 		Page<ExtractAccountTaskResponseVO> pageCond = new Page<>(page, rows);
-		List<ExtractAccountTaskResponseVO> resultList = accountTaskMapper.getExtractAccountTaskList(pageCond, params);
+		List<ExtractAccountTaskResponseVO> resultList = null;
+		if(!params.getIsHistory()){
+			//不是历史数据
+			resultList = accountTaskMapper.getExtractAccountTaskList(pageCond, params);
+		}else{
+			resultList = accountTaskMapper.getExtractAccountTaskHistoryList(pageCond, params);
+		}
 		return PageResult.apply(pageCond.getTotal(), resultList);
 	}
 
@@ -70,19 +79,17 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 	 * @author minzhq
 	 * @date 2022/9/8 10:10
 	 */
-	public PageResult<ExtractAccountTaskDetailVO> getExtractAccountTaskDetail(Long taskId, String unitName, String personalityName, Integer payStatus, Integer page, Integer rows) {
+	public PageResult<ExtractAccountTaskDetailVO> getExtractAccountTaskDetail(String code, String unitName, String personalityName, Integer payStatus, Integer page, Integer rows) {
 
-		BudgetExtractAccountTask budgetExtractAccountTask = accountTaskMapper.selectById(taskId);
+		List<BudgetExtractAccountTask> accountTasks = accountTaskMapper.selectList(new LambdaQueryWrapper<BudgetExtractAccountTask>().eq(BudgetExtractAccountTask::getExtractCode, code));
 		Map<String, Object> params = new HashMap<>(5);
-		params.put("extractCode", budgetExtractAccountTask.getExtractCode());
-		params.put("unitId", budgetExtractAccountTask.getBillingUnitId());
+		params.put("extractCode", code);
 		params.put("unitName", unitName);
 		params.put("personalityName", personalityName);
 		params.put("payStatus", payStatus);
-		if (budgetExtractAccountTask.getTaskType() == ExtractTaskTypeEnum.DELAY.type) {
-			params.put("personalityIds", Arrays.asList(budgetExtractAccountTask.getPersonalityIds().split(",")));
+		if (accountTasks.get(0).getTaskType() == ExtractTaskTypeEnum.DELAY.type) {
+			params.put("personalityIds", Arrays.asList(accountTasks.get(0).getPersonalityIds().split(",")));
 		}
-
 		Page<ExtractAccountTaskDetailVO> pageCond = new Page<>(page, rows);
 		List<ExtractAccountTaskDetailVO> resultList = accountTaskMapper.getExtractAccountTaskDetail(pageCond, params);
 		resultList.forEach(result -> result.setPayStatusName(ExtractPersonalityPayStatusEnum.getValue(result.getPayStatus())));
@@ -167,35 +174,97 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 	 * @date 2022/9/9 14:22
 	 */
 	public void account(ExtractAccountDTO accountDTO) {
-		BudgetExtractAccountTask budgetExtractAccountTask = accountTaskMapper.selectById(accountDTO.getTaskId());
-		if (budgetExtractAccountTask.getAccountantStatus() == 1) {
-			throw new RuntimeException("该任务已做账完成！");
-		}
 
 		LambdaUpdateWrapper<BudgetExtractAccountTask> updateWrapper = new LambdaUpdateWrapper<>();
-		updateWrapper.eq(BudgetExtractAccountTask::getId, budgetExtractAccountTask.getId());
+		updateWrapper.eq(BudgetExtractAccountTask::getExtractCode, accountDTO.getExtractCode());
 		updateWrapper.eq(BudgetExtractAccountTask::getAccountantStatus, 0);
+		updateWrapper.eq(BudgetExtractAccountTask::getIsShouldAccount, 1);
+		updateWrapper.in(BudgetExtractAccountTask::getBillingUnitId, accountDTO.getBillingUnitIdList());
 		updateWrapper.set(BudgetExtractAccountTask::getAccountantStatus, 1);
+		updateWrapper.set(BudgetExtractAccountTask::getAccountantEmpNo, UserThreadLocal.get().getUserName());
+		updateWrapper.set(BudgetExtractAccountTask::getAccountantTime, new Date());
 		int update = accountTaskMapper.update(new BudgetExtractAccountTask(), updateWrapper);
-		if (update <= 0) {
-			throw new RuntimeException("该任务已做账完成！");
+		if (update != accountDTO.getBillingUnitIdList().size()) {
+			throw new RuntimeException("存在已经做账完成的开票单位！");
 		}
 
+		List<BudgetExtractAccountTask> accountTasks = accountTaskMapper.selectList(new LambdaQueryWrapper<BudgetExtractAccountTask>().eq(BudgetExtractAccountTask::getExtractCode, accountDTO.getExtractCode()));
 
-		Integer unCompleteTaskCount = accountTaskMapper.selectCount(new LambdaQueryWrapper<BudgetExtractAccountTask>()
-				.eq(BudgetExtractAccountTask::getTaskType, budgetExtractAccountTask.getTaskType())
-				.eq(BudgetExtractAccountTask::getExtractMonth, budgetExtractAccountTask.getExtractMonth())
-				.eq(BudgetExtractAccountTask::getAccountantStatus, 0));
-		if(unCompleteTaskCount == 0){
-			//做账全部完成。
 
-		}
-
-		if (budgetExtractAccountTask.getTaskType() == ExtractTaskTypeEnum.COMMON.type) {
+		boolean isDelay = false;
+		if (accountTasks.get(0).getTaskType() == ExtractTaskTypeEnum.COMMON.type) {
 			//提成支付申请单
+			BudgetExtractsum extractSum = budgetExtractsumMapper.selectOne(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getCode, accountDTO.getExtractCode()));
+			extractsumService.generateExtractStepLog(Lists.newArrayList(extractSum.getId()), OperationNodeEnum.ACCOUNTING,OperationNodeEnum.getValue(OperationNodeEnum.ACCOUNTING.getType()) + "完成",1);
+			Integer orderUnCompleteTaskCount = accountTaskMapper.selectCount(new LambdaQueryWrapper<BudgetExtractAccountTask>()
+					.eq(BudgetExtractAccountTask::getTaskType, accountTasks.get(0).getTaskType())
+					.eq(BudgetExtractAccountTask::getExtractCode, accountDTO.getExtractCode())
+					.eq(BudgetExtractAccountTask::getAccountantStatus, 0)
+					.eq(BudgetExtractAccountTask::getIsShouldAccount, 1));
+			if(orderUnCompleteTaskCount == 0){
+				//该单号完成做账
+				extractSum.setStatus(ExtractStatusEnum.ACCOUNT.getType());
+				budgetExtractsumMapper.updateById(extractSum);
+			}
+		} else if (accountTasks.get(0).getTaskType() == ExtractTaskTypeEnum.DELAY.type) {
+			isDelay = true;
+		}
 
-		} else if (budgetExtractAccountTask.getTaskType() == ExtractTaskTypeEnum.DELAY.type) {
+		Integer batchUnCompleteTaskCount = accountTaskMapper.selectCount(new LambdaQueryWrapper<BudgetExtractAccountTask>()
+				.eq(BudgetExtractAccountTask::getTaskType, accountTasks.get(0).getTaskType()).and(e->{
+					if(accountTasks.get(0).getTaskType() == ExtractTaskTypeEnum.COMMON.type){
+
+					} else if (accountTasks.get(0).getTaskType() == ExtractTaskTypeEnum.DELAY.type) {
+						e.eq(BudgetExtractAccountTask::getExtractMonth, accountTasks.get(0).getExtractMonth());
+					}
+				})
+				.eq(BudgetExtractAccountTask::getAccountantStatus, 0)
+				.eq(BudgetExtractAccountTask::getIsShouldAccount, 1));
+		if(batchUnCompleteTaskCount == 0){
+			//做账全部完成。
+			finishAccount(isDelay,accountDTO.getExtractCode(),accountTasks.get(0).getExtractMonth());
+		}
+	}
+
+	/**
+	 * <p>批次做账完成</p>
+	 * @author minzhq
+	 * @date 2022/9/13 14:46
+	 * @param isDelay 是否是延期支付申请单
+	 * @param extractCode
+	 * @param extractBatch
+	 */
+	private void finishAccount(boolean isDelay, String extractCode ,String extractBatch) {
+		List<BudgetExtractPerPayDetail> perPayDetails = null;
+		if(isDelay){
+			perPayDetails = perPayDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractPerPayDetail>().eq(BudgetExtractPerPayDetail::getExtractMonth, extractBatch).eq(BudgetExtractPerPayDetail::getPayStatus, ExtractPersonalityPayStatusEnum.COMMON.type));
+
+		}else{
+			perPayDetails = perPayDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractPerPayDetail>().eq(BudgetExtractPerPayDetail::getExtractMonth, extractBatch).eq(BudgetExtractPerPayDetail::getPayStatus, ExtractPersonalityPayStatusEnum.COMMON.type));
+			List<BudgetPaymoney> paymoneyList = perPayDetails.stream().map(e -> {
+				BudgetPaymoney paymoney = new BudgetPaymoney();
+				paymoney.setPaymoneycode(distributedNumber.getPaymoneyNum());
+				paymoney.setPaytype(PaymoneyTypeEnum.EXTRACT_PAY.type);
+				paymoney.setPaymoneyobjectcode(e.getExtractCode());
+				paymoney.setPaymoneyobjectid(e.getId());
+				paymoney.setPaymoney(e.getPayMoney());
+				paymoney.setPaytype(1);
+				paymoney.setPaymoneystatus(PaymoneyStatusEnum.RECEIVE_PAY.type);
+				paymoney.setVerifystatus(0);
+				paymoney.setCreatetime(new Date());
+				paymoney.setBunitname(e.getBillingUnitName());
+				paymoney.setBunitbankaccount(e.getBillingUnitAccount());
+				paymoney.setBunitaccountbranchcode(e.getBillingUnitBranchCode());
+				paymoney.setBunitaccountbranchname(e.getBillingUnitBankName());
+				paymoney.setBankaccount(e.getReceiverBankAccount());
+				paymoney.setBankaccountbranchcode(e.getReceiverBankAccountBranchCode());
+				paymoney.setBunitaccountbranchname(e.getReceiveBankAccountBankName());
+				paymoney.setOpenbank(e.getReceiverOpenBank());
+				paymoney.setRemark("提成【" + e.getExtractCode() + "】付款");
+				return paymoney;
+			}).collect(Collectors.toList());
 
 		}
+
 	}
 }

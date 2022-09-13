@@ -54,7 +54,7 @@ public class BudgetExtractAccountController {
 	@ApiOperation(value = "查看明细", httpMethod = "GET")
 	@ApiImplicitParams(value = {
 			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
-			@ApiImplicitParam(value = "任务id", name = "taskId", dataType = "Long", required = true),
+			@ApiImplicitParam(value = "单号", name = "code", dataType = "String", required = true),
 			@ApiImplicitParam(value = "付款单位", name = "unitName", dataType = "String", required = false),
 			@ApiImplicitParam(value = "个体户名称", name = "personalityName", dataType = "String", required = false),
 			@ApiImplicitParam(value = "发放状态(0:否 1：是)", name = "payStatus", dataType = "Integer", required = false),
@@ -63,13 +63,13 @@ public class BudgetExtractAccountController {
 	})
 	@GetMapping("/getExtractAccountTaskDetail")
 	public ResponseEntity<PageResult<ExtractAccountTaskDetailVO>> getExtractAccountTaskDetail(
-																							@RequestParam(value = "taskId")Long taskId,
+																							@RequestParam(value = "code")String code,
 																							@RequestParam(value = "unitName",required = false)String unitName,
 																							@RequestParam(value = "personalityName",required = false)String personalityName,
 																							@RequestParam(value = "payStatus",required = false)Integer payStatus,
 	                                                                                          @RequestParam(defaultValue = "1") Integer page, @RequestParam(defaultValue = "20") Integer rows) {
 		try {
-			PageResult<ExtractAccountTaskDetailVO> pageList = accountService.getExtractAccountTaskDetail(taskId,unitName,personalityName,payStatus, page, rows);
+			PageResult<ExtractAccountTaskDetailVO> pageList = accountService.getExtractAccountTaskDetail(code,unitName,personalityName,payStatus, page, rows);
 			return ResponseEntity.ok(pageList);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -80,12 +80,12 @@ public class BudgetExtractAccountController {
 	@ApiOperation(value = "延期支付申请单明细", httpMethod = "GET")
 	@ApiImplicitParams(value = {
 			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
-			@ApiImplicitParam(value = "延期支付申请单号", name = "delayPayApplyOrderNo", dataType = "String", required = true),
+			@ApiImplicitParam(value = "单号(列表显示的提成单号)", name = "orderNo", dataType = "String", required = true),
 			@ApiImplicitParam(value = "当前页（默认1）", name = "page", dataType = "Integer", required = false),
 			@ApiImplicitParam(value = "每页条数（默认20）", name = "rows", dataType = "Integer", required = false)
 	})
 	@GetMapping("/getExtractDelayPayApplyDetail")
-	public ResponseEntity<ExtractDelayPayApplyVO> getExtractDelayPayApplyDetail(@RequestParam(value = "delayPayApplyOrderNo")String delayPayApplyOrderNo) {
+	public ResponseEntity<ExtractDelayPayApplyVO> getExtractDelayPayApplyDetail(@RequestParam(value = "orderNo")String delayPayApplyOrderNo) {
 		try {
 			ExtractDelayPayApplyVO result = accountService.getExtractDelayPayApplyDetail(delayPayApplyOrderNo);
 			return ResponseEntity.ok(result);

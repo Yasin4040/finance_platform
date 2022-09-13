@@ -16,6 +16,9 @@ import java.util.Date;
 @Data
 public class ExtractAccountTaskResponseVO {
 
+	@ApiModelProperty("提成主表id")
+	private Long sumId;
+
 	@ApiModelProperty("做账任务id")
 	private Long id;
 

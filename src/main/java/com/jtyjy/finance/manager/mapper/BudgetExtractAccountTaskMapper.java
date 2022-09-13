@@ -16,6 +16,8 @@ import java.util.Map;
  */
 public interface BudgetExtractAccountTaskMapper extends BaseMapper<BudgetExtractAccountTask> {
 
+	List<ExtractAccountTaskResponseVO> getExtractAccountTaskHistoryList(Page<ExtractAccountTaskResponseVO> pageCond,@Param("params") ExtractAccountTaskQueryVO params);
+
 	List<ExtractAccountTaskResponseVO> getExtractAccountTaskList(Page<ExtractAccountTaskResponseVO> pageCond,@Param("params") ExtractAccountTaskQueryVO params);
 
 	List<ExtractAccountTaskDetailVO> getExtractAccountTaskDetail(Page<ExtractAccountTaskDetailVO> pageCond, @Param("params")Map<String,Object> params);

@@ -16,9 +16,9 @@ import java.util.List;
 @Data
 public class ExtractAccountDTO {
 
-	@ApiModelProperty(value = "任务Id")
-	@NotNull(message = "任务id不能为空")
-	private Long taskId;
+	@ApiModelProperty(value = "提成单号")
+	@NotNull(message = "提成单号不能为空")
+	private String extractCode;
 
 	@ApiModelProperty(value = "开票单位id列表")
 	@NotEmpty(message = "开票单位不能为空")

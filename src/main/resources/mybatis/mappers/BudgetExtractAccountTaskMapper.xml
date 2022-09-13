@@ -3,13 +3,14 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.jtyjy.finance.manager.mapper.BudgetExtractAccountTaskMapper">
-
-    <select id="getExtractAccountTaskList"
+        <!--bbu.accountants like concat('%',#{params.empNo},'%') and -->
+    <select id="getExtractAccountTaskHistoryList"
             resultType="com.jtyjy.finance.manager.vo.ExtractAccountTaskResponseVO">
         SELECT
             beat.id,
             bes.`status`,
-            if(beat.task_type=3,beat.delay_extract_code,bes.`code`) 'code',
+            bes.id sumId,
+            bes.`code` 'code',
             byp.period yearPeriod,
             concat( substr( bes.extractmonth, 5, 2 )+ 0, '月' ) monthPeriod,
             bes.extractmonth extractBatch,
@@ -27,13 +28,8 @@
             LEFT JOIN wb_user wu ON beat.accountant_emp_no = wu.USER_NAME
             LEFT JOIN budget_billing_unit bbu ON bbu.id = beat.billing_unit_id
         <where>
-            bbu.accountants like concat('%',#{params.empNo},'%') and beat.is_should_account = 1
-            <if test="params.isHistory">
-                and beat.accountant_status = 1
-            </if>
-            <if test="!params.isHistory">
-                and beat.accountant_status = 0
-            </if>
+            beat.is_should_account = 1
+            and beat.accountant_status = 1
             <if test="params.orderNo !=null and params.orderNo !=''">
                 and bes.`code` like concat('%',#{params.orderNo},'%')
             </if>
@@ -95,5 +91,54 @@
             </foreach>
             and beppd.pay_status = 3
         </if>
+    </select>
+    <select id="getExtractAccountTaskList"
+            resultType="com.jtyjy.finance.manager.vo.ExtractAccountTaskResponseVO">
+        SELECT
+            bes.`status`,
+            bes.id sumId,
+            a.extract_code 'code',
+            byp.period yearPeriod,
+            concat( substr( bes.extractmonth, 5, 2 )+ 0, '月' ) monthPeriod,
+            bes.extractmonth extractBatch,
+            bes.deptname unitName,
+            a.create_time createTime,
+            a.task_type taskType
+        FROM
+            (
+            SELECT
+                beat.extract_code,
+                beat.task_type,
+                beat.create_time,( SELECT sum( pay_money ) FROM budget_extract_per_pay_detail WHERE extract_code = beat.extract_code AND pay_status = beat.task_type ) payMoney
+            FROM
+                budget_extract_account_task beat
+                LEFT JOIN budget_billing_unit bbu ON beat.billing_unit_id = bbu.id
+            WHERE
+                bbu.accountants LIKE concat('%',#{params.empNo},'%')
+                AND beat.is_should_account = 1
+                AND beat.accountant_status = 0
+                <if test="params.billingUnitName !=null and params.billingUnitName !=''">
+                    and bbu.`name` like concat('%',#{params.billingUnitName},'%')
+                </if>
+            GROUP BY
+                beat.extract_code,
+                beat.task_type,
+                beat.create_time
+            ) a
+            LEFT JOIN budget_extractsum bes ON a.extract_code = bes.`code`
+            LEFT JOIN budget_year_period byp ON byp.id = bes.yearid
+            <where>
+                1 = 1
+                <if test="params.orderNo !=null and params.orderNo !=''">
+                    and bes.`code` like concat('%',#{params.orderNo},'%')
+                </if>
+                <if test="params.extractBatch !=null and params.extractBatch !=''">
+                    and bes.extractmonth like concat('%',#{params.extractBatch},'%')
+                </if>
+                <if test="params.deptName !=null and params.deptName !=''">
+                    and bes.deptname like concat('%',#{params.deptName},'%')
+                </if>
+            </where>
+        order by a.create_time desc
     </select>
 </mapper>
