@@ -32,6 +32,7 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.beanutils.locale.converters.DateLocaleConverter;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.csource.common.MyException;
 import org.csource.fastdfs.StorageClient;
@@ -488,7 +489,9 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             if(ifExistsCommission){
                 List<BudgetExtractCommissionApplicationBudgetDetails> budgetDetailsList =
                         budgetDetailsService.lambdaQuery().eq(BudgetExtractCommissionApplicationBudgetDetails::getApplicationId, applicationId).list();
-
+                if (CollectionUtils.isEmpty(budgetDetailsList)) {
+                    return;
+                }
                 //报销单 生成
                 ReimbursementRequest reimbursementRequest = new ReimbursementRequest();
                 List<BudgetReimbursementorderDetail> orderDetailList = new ArrayList<>();
