@@ -567,6 +567,7 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
     @GetMapping("/exportIssuedTemplate")
     public ResponseEntity exportIssuedTemplate(@RequestParam("extractMonth") String extractMonth, HttpServletResponse response) throws Exception {
         try {
+             extractMonth = extractMonth.split("-")[2];
             List<IndividualIssueExportDTO> exportDTOList  =  applicationService.exportIssuedTemplate(extractMonth);
             EasyExcelUtil.writeExcel(response,exportDTOList,"发放明细信息","发放明细信息",IndividualIssueExportDTO.class);
         } catch (Exception e) {
@@ -583,6 +584,7 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
     @PostMapping("/importFeeTemplate")
     public ResponseEntity importFeeTemplate(@RequestParam("file") MultipartFile multipartFile,@RequestParam("extractMonth") String extractMonth,HttpServletResponse response) throws Exception {
         try {
+            extractMonth = extractMonth.split("-")[2];
             List<FeeImportErrorDTO> errorDTOList = applicationService.importFeeTemplate(multipartFile,extractMonth);
             if(CollectionUtils.isNotEmpty(errorDTOList)) {
                 EasyExcelUtil.writeExcel(response, errorDTOList, "员工个体户错误明细", "员工个体户错误明细", FeeImportErrorDTO.class);
@@ -600,6 +602,7 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
     @ApiOperation(value = "查看批次 费用明细列表", httpMethod = "GET")
     @GetMapping("/selectFeePage")
     public ResponseEntity<PageResult<BudgetExtractFeePayDetailBeforeCal>> selectFeePage(@ModelAttribute FeeQuery query) throws Exception {
+        query.setExtractMonth( query.getExtractMonth().split("-")[2]);
         IPage<BudgetExtractFeePayDetailBeforeCal> page = applicationService.selectFeePage(query);
         return ResponseEntity.ok(PageResult.apply(page.getTotal(), page.getRecords()));
     }
