@@ -17,7 +17,7 @@ import java.util.Date;
 @Data
 public class FeeImportErrorDTO extends ImportErrorDTO {
     @ExcelProperty(value = "*工号")
-    private Integer employeeJobNum;
+    private String employeeJobNum;
     @ExcelProperty(value = "*姓名")
     private String employeeName;
     @ExcelProperty(value = "*实发金额")
