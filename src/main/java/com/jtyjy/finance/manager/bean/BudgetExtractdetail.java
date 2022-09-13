@@ -42,6 +42,12 @@ public class BudgetExtractdetail implements Serializable {
     private Long extractsumid;
 
     /**
+     * 是否处理超额 1 已处理
+     */
+    @ApiModelProperty(value = "是否处理超额", hidden = false)
+    @TableField(value = "handleflag")
+    private Boolean handleflag;
+    /**
      * 提成人id
      */
     @ApiModelProperty(value = "人员id", hidden = false)
@@ -161,17 +167,10 @@ public class BudgetExtractdetail implements Serializable {
     private BigDecimal excessmoney;
 
     /**
-     * 是否处理超额 1 已处理
+     * 业务类型
      */
-    @ApiModelProperty(value = "是否处理超额", hidden = false)
-    @TableField(value = "handleflag")
-    private Boolean handleflag;
-    /**
-     * 员工个体户id
-     */
-    @ApiModelProperty(value = "员工个体户id", hidden = false)
-    @TableField(value = "individual_employee_id")
-    private Long individualEmployeeId;
+    @TableField(value = "business_type")
+    private Integer businessType;
     @ApiModelProperty(value = "提成批次", hidden = false)
     @TableField(exist = false)
     private String extractmonth;

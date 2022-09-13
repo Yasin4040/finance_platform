@@ -106,11 +106,11 @@ public class BudgetExtractImportdetail implements Serializable {
     @TableField(value = "extract_type")
     private String extractType;
 
-    /**
-     * 员工个体户id
-     */
-    @TableField(value = "individual_employee_id")
-    private Long individualEmployeeId;
+//    /**
+//     * 员工个体户id
+//     */
+//    @TableField(value = "individual_employee_id")
+//    private Long individualEmployeeId;
 
     /**
      * 码洋
