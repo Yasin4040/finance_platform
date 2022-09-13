@@ -577,7 +577,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
 
     @Override
     public void saveExtractImportDetails(Map<Integer, String> data, BudgetExtractsum extractSum) {
-        String isCompanyEmp = data.get(0); //业务类型  是否是公司员工？？
+        String businessType = data.get(0); //业务类型  是否是公司员工？？
         //新增员工个体户。
 
         String empNo = data.get(1); //工号
@@ -655,7 +655,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             extractImportdetail.setId(null);
             extractImportdetail.setExtractsumid(extractSum.getId());
             //赋值 员工类型
-            setUserTypeValue(isCompanyEmp, empNo, empName, extractImportdetail);
+            setUserTypeValue(businessType, empNo, empName, extractImportdetail);
 
             extractImportdetail.setEmpno(empNo);
             extractImportdetail.setEmpname(empName);
@@ -744,20 +744,21 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                 extractImportdetail.setEmpid(user.getUserId());
                 extractImportdetail.setIdnumber(user.getIdNumber());
                 extractImportdetail.setIscompanyemp(true);
+                extractImportdetail.setBusinessType(ExtractUserTypeEnum.COMPANY_STAFF.getCode());
                 break;
             case EXTERNAL_STAFF:
                 BudgetExtractOuterperson outerPerson = getExtractOuterpersonByEmpnoAndEmpname(empNo, empName);
                 extractImportdetail.setEmpid(outerPerson.getId().toString());
                 extractImportdetail.setIdnumber(outerPerson.getIdnumber());
                 extractImportdetail.setIscompanyemp(false);
+                extractImportdetail.setBusinessType(ExtractUserTypeEnum.EXTERNAL_STAFF.getCode());
                 break;
             case SELF_EMPLOYED_EMPLOYEES:
                 //todo 个体户
-                IndividualEmployeeFiles employeeFiles = individualService.lambdaQuery().eq(IndividualEmployeeFiles::getEmployeeJobNum, empNo).eq(IndividualEmployeeFiles::getAccountName, empName).last("limit 1").one();
                 WbUser user2 = getUserByEmpno(empNo);
                 extractImportdetail.setEmpid(user2.getUserId());
                 extractImportdetail.setIdnumber(user2.getIdNumber());
-                extractImportdetail.setIndividualEmployeeId(employeeFiles.getId());
+                extractImportdetail.setBusinessType(ExtractUserTypeEnum.SELF_EMPLOYED_EMPLOYEES.getCode());
                 extractImportdetail.setIscompanyemp(false);
                 break;
             default:

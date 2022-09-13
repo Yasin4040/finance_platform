@@ -561,27 +561,27 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	}
 
 	private void validateImportTableDetails(Map<Integer, String> data) {
-
-		String isCompanyEmp = data.get(0); //是否公司员工
+		//业务类型
+		String businessType = data.get(0); //业务类型
 		String empNo = data.get(1); //工号
 		String empName = data.get(2); //姓名
 		String isDebt = data.get(3); //是否坏账   index = 3,实际是第4列
 
 		String extractType = data.get(4);//提成类型
 		String tcPeriod = data.get(5); //提成届别 第6列
-		if (exists.get(isCompanyEmp+empNo)==null) {
-			exists.put(isCompanyEmp+empNo,empName);
-		}else if(exists.get(isCompanyEmp+empNo).equals(empName)){
-			throw new RuntimeException(isCompanyEmp+","+empNo+","+empName+"存在重复数据");
+		if (exists.get(businessType+empNo)==null) {
+			exists.put(businessType+empNo,empName);
+		}else if(exists.get(businessType+empNo).equals(empName)){
+			throw new RuntimeException(businessType+","+empNo+","+empName+"存在重复数据");
 		}
 
 		String sftc = data.get(42);//实发金额
 		String zhs = data.get(21); //综合税
 
-		if (StringUtils.isBlank(isCompanyEmp)) {
+		if (StringUtils.isBlank(businessType)) {
 			throw new RuntimeException("是否公司员工不能为空!");
 		}
-		switch (ExtractUserTypeEnum.getEnumByValue(isCompanyEmp)){
+		switch (ExtractUserTypeEnum.getEnumByValue(businessType)){
 			case COMPANY_STAFF:
 				WbUser user = getUserByEmpno(empNo);
 				if (user == null) {
@@ -1086,19 +1086,21 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				WbUser user = getUserByEmpno(empNo);
 				extractImportdetail.setEmpid(user.getUserId());
 				extractImportdetail.setIdnumber(user.getIdNumber());
+				extractImportdetail.setBusinessType(ExtractUserTypeEnum.COMPANY_STAFF.getCode());
 				break;
 			case EXTERNAL_STAFF:
 				BudgetExtractOuterperson outerPerson = getExtractOuterpersonByEmpnoAndEmpname(empNo, empName);
 				extractImportdetail.setEmpid(outerPerson.getId().toString());
 				extractImportdetail.setIdnumber(outerPerson.getIdnumber());
+				extractImportdetail.setBusinessType(ExtractUserTypeEnum.EXTERNAL_STAFF.getCode());
 				break;
 			case SELF_EMPLOYED_EMPLOYEES:
 				//todo 个体户
-				IndividualEmployeeFiles employeeFiles = individualService.lambdaQuery().eq(IndividualEmployeeFiles::getEmployeeJobNum, empNo).eq(IndividualEmployeeFiles::getAccountName, empName).last("limit 1").one();
 				WbUser user2 = getUserByEmpno(empNo);
 				extractImportdetail.setEmpid(user2.getUserId());
 				extractImportdetail.setIdnumber(user2.getIdNumber());
-				extractImportdetail.setIndividualEmployeeId(employeeFiles.getId());
+				extractImportdetail.setBusinessType(ExtractUserTypeEnum.SELF_EMPLOYED_EMPLOYEES.getCode());
+//				extractImportdetail.setIndividualEmployeeId(employeeFiles.getId());
 			break;
 			default:
 				break;

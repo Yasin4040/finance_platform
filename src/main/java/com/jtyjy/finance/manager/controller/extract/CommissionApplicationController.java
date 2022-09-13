@@ -368,7 +368,7 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
 
     private CommissionDetailsImportDTO setValue(Map<Integer, String> data){
         CommissionDetailsImportDTO extractImportdetail = new CommissionDetailsImportDTO();
-        String isCompanyEmp = data.get(0); //业务类型  是否是公司员工？？
+        String businessType = data.get(0); //业务类型  ？？
         //新增员工个体户。
 
         String empNo = data.get(1); //工号
@@ -439,7 +439,7 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
         extractImportdetail.setEmpname(empName);
         extractImportdetail.setIfBadDebt(isDebt);
         extractImportdetail.setYearName(tcPeriod);
-        extractImportdetail.setBusinessType(isCompanyEmp);
+        extractImportdetail.setBusinessType(businessType);
         extractImportdetail.setExtractType(extractType);
 
 
@@ -567,7 +567,9 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
     @GetMapping("/exportIssuedTemplate")
     public ResponseEntity exportIssuedTemplate(@RequestParam("extractMonth") String extractMonth, HttpServletResponse response) throws Exception {
         try {
-             extractMonth = extractMonth.split("-")[2];
+            if(StringUtils.isNotBlank(extractMonth)) {
+                extractMonth = extractMonth.split("-")[2];
+            }
             List<IndividualIssueExportDTO> exportDTOList  =  applicationService.exportIssuedTemplate(extractMonth);
             EasyExcelUtil.writeExcel(response,exportDTOList,"发放明细信息","发放明细信息",IndividualIssueExportDTO.class);
         } catch (Exception e) {
@@ -622,19 +624,7 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
         for (BudgetExtractImportdetail entity : importDetailList) {
             CommissionDetailsImportDTO dto = CommissionConverter.INSTANCE.toDTO(entity);
             dtoList.add(dto);
-//            String businessType = dto.getBusinessType();
-            String businessType;
-            if(entity.getIndividualEmployeeId()==null){
-                //为空，就是1公司员工，和 2 外部员工。 3个体户
-                if(entity.getIscompanyemp()){
-                    businessType = ExtractUserTypeEnum.getValue(1);
-                }else {
-                    businessType = ExtractUserTypeEnum.getValue(2);
-                }
-            }else {
-                businessType = ExtractUserTypeEnum.getValue(3);
-            }
-            dto.setBusinessType(businessType);
+            dto.setBusinessType(ExtractUserTypeEnum.getValue(entity.getBusinessType()) );
             dto.setIfBadDebt(entity.getIsbaddebt()?"是":"否");
             String yearName = yearMapper.getNameById(entity.getYearid());
             dto.setYearName(yearName);
