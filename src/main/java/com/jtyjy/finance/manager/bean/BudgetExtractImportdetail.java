@@ -50,6 +50,12 @@ public class BudgetExtractImportdetail implements Serializable {
     private Boolean iscompanyemp;
 
     /**
+     * 业务类型
+     */
+    @TableField(value = "business_type")
+    private Integer businessType;
+
+    /**
      * 是否是坏账
      */
     @TableField(value = "isbaddebt")

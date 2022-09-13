@@ -602,7 +602,9 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
     @ApiOperation(value = "查看批次 费用明细列表", httpMethod = "GET")
     @GetMapping("/selectFeePage")
     public ResponseEntity<PageResult<BudgetExtractFeePayDetailBeforeCal>> selectFeePage(@ModelAttribute FeeQuery query) throws Exception {
-        query.setExtractMonth( query.getExtractMonth().split("-")[2]);
+        if (StringUtils.isNotBlank(query.getExtractMonth())) {
+            query.setExtractMonth( query.getExtractMonth().split("-")[2]);
+        }
         IPage<BudgetExtractFeePayDetailBeforeCal> page = applicationService.selectFeePage(query);
         return ResponseEntity.ok(PageResult.apply(page.getTotal(), page.getRecords()));
     }

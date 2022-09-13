@@ -32,12 +32,7 @@
         <result column="resubmittime" jdbcType="TIMESTAMP" property="resubmittime"/>
         <result column="qrcodebase64str" jdbcType="LONGVARCHAR" property="qrcodebase64str"/>
     </resultMap>
-    <sql id="Base_Column_List">
-        id, code, status, yearid, deptid, deptname, salarymonth, extractmonth, extractseq,
-    extractnum, createtime, creator, createorname, updatetime, remark, deleteflag, reimbursementflag, 
-    reimbursementsubjectname, reimbursementagentname, reimbursementsubjectid, reimbursementagentid, 
-    budgetuserid, verifyorid, verifytime, verifyorname, resubmitor, resubmitorname, resubmittime, qrcodebase64str
-    </sql>
+
     
     <select id="getExtractDeductionReport" resultType="com.jtyjy.finance.manager.vo.ExtractDeductionDetailVO">
     	SELECT
@@ -225,7 +220,7 @@
 			bei.empno as employeeJobNum,bei.empname as employeeName,sum(bei.copeextract) as  copeextract
 		from budget_extractsum be
 				 left join budget_extract_importdetail bei on be.id = bei.extractsumid
-		where  be.extractmonth = #{extractMonth} and bei.individual_employee_id is null
+		where  be.extractmonth = #{extractMonth} and bei.individual_employee_id is null and bei.business_type !=3
 		group by bei.empno,employeeName
 	</select>
 </mapper>

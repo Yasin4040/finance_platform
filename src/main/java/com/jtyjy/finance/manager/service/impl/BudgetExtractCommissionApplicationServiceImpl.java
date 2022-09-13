@@ -339,7 +339,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                                 } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException ex) {
                                     ex.printStackTrace();
                                 }
-                                errorDTO.setInsertDatabaseError(e.getCause().getMessage());
+                                errorDTO.setInsertDatabaseError(e.getMessage()==null?e.toString():e.getMessage());
                                 errList.add(errorDTO);
                             }
                         }
