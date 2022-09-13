@@ -103,10 +103,11 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 	 * @date 2022/9/8 10:26
 	 */
 	public ExtractDelayPayApplyVO getExtractDelayPayApplyDetail(String delayPayApplyOrderNo) {
-		BudgetExtractAccountTask budgetExtractAccountTask = accountTaskMapper.selectOne(new LambdaQueryWrapper<BudgetExtractAccountTask>().eq(BudgetExtractAccountTask::getDelayExtractCode, delayPayApplyOrderNo));
+		List<BudgetExtractAccountTask> budgetExtractAccountTasks = accountTaskMapper.selectList(new LambdaQueryWrapper<BudgetExtractAccountTask>().eq(BudgetExtractAccountTask::getExtractCode, delayPayApplyOrderNo));
+		BudgetExtractAccountTask budgetExtractAccountTask = budgetExtractAccountTasks.get(0);
 		if (budgetExtractAccountTask.getTaskType() == ExtractTaskTypeEnum.DELAY.type) {
 			ExtractDelayPayApplyVO result = new ExtractDelayPayApplyVO();
-			BudgetExtractsum extractSum = budgetExtractsumMapper.selectOne(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getCode, budgetExtractAccountTask.getExtractCode()));
+			BudgetExtractsum extractSum = budgetExtractsumMapper.selectOne(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getCode, budgetExtractAccountTask.getRelationExtractCode()));
 			result.setUnitName(extractSum.getDeptname());
 			result.setOrderDate(budgetExtractAccountTask.getCreateTime());
 			result.setPayReason("支付" + yearPeriodMapper.selectById(extractSum.getYearid()).getPeriod() + Integer.parseInt(extractSum.getExtractmonth().substring(4, 6)) + "月第" + Integer.parseInt(extractSum.getExtractmonth().substring(6, 8)) + "批提成");
@@ -114,7 +115,7 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 			result.setBatch(budgetExtractAccountTask.getBatch());
 
 			Map<String, Object> params = new HashMap<>(5);
-			params.put("extractCode", budgetExtractAccountTask.getExtractCode());
+			params.put("extractCode", extractSum.getCode());
 			params.put("unitId", budgetExtractAccountTask.getBillingUnitId());
 			params.put("personalityIds", Arrays.asList(budgetExtractAccountTask.getPersonalityIds().split(",")));
 			List<ExtractAccountTaskDetailVO> resultList = accountTaskMapper.getExtractAccountTaskDetail(null, params);
@@ -158,9 +159,8 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 	 * @author minzhq
 	 * @date 2022/9/9 13:55
 	 */
-	public List<ExtractBillingUnitVO> getExtractTaskBillingUnitList(Long taskId) {
-		BudgetExtractAccountTask budgetExtractAccountTask = accountTaskMapper.selectById(taskId);
-		List<BudgetExtractAccountTask> accountTasks = accountTaskMapper.selectList(new LambdaQueryWrapper<BudgetExtractAccountTask>().eq(BudgetExtractAccountTask::getExtractCode, budgetExtractAccountTask.getExtractCode()).eq(BudgetExtractAccountTask::getTaskType, budgetExtractAccountTask.getTaskType()).eq(BudgetExtractAccountTask::getIsShouldAccount, 1).select(BudgetExtractAccountTask::getBillingUnitId));
+	public List<ExtractBillingUnitVO> getExtractTaskBillingUnitList(String extractCode) {
+		List<BudgetExtractAccountTask> accountTasks = accountTaskMapper.selectList(new LambdaQueryWrapper<BudgetExtractAccountTask>().eq(BudgetExtractAccountTask::getExtractCode,extractCode).eq(BudgetExtractAccountTask::getIsShouldAccount, 1).select(BudgetExtractAccountTask::getBillingUnitId));
 		return accountTasks.stream().map(e -> {
 			BudgetBillingUnit budgetBillingUnit = billingUnitMapper.selectById(e.getBillingUnitId());
 			return new ExtractBillingUnitVO(budgetBillingUnit.getId(), budgetBillingUnit.getName());
@@ -211,13 +211,8 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 		}
 
 		Integer batchUnCompleteTaskCount = accountTaskMapper.selectCount(new LambdaQueryWrapper<BudgetExtractAccountTask>()
-				.eq(BudgetExtractAccountTask::getTaskType, accountTasks.get(0).getTaskType()).and(e->{
-					if(accountTasks.get(0).getTaskType() == ExtractTaskTypeEnum.COMMON.type){
-
-					} else if (accountTasks.get(0).getTaskType() == ExtractTaskTypeEnum.DELAY.type) {
-						e.eq(BudgetExtractAccountTask::getExtractMonth, accountTasks.get(0).getExtractMonth());
-					}
-				})
+				.eq(BudgetExtractAccountTask::getTaskType, accountTasks.get(0).getTaskType())
+				.eq(BudgetExtractAccountTask::getExtractMonth, accountTasks.get(0).getExtractMonth())
 				.eq(BudgetExtractAccountTask::getAccountantStatus, 0)
 				.eq(BudgetExtractAccountTask::getIsShouldAccount, 1));
 		if(batchUnCompleteTaskCount == 0){

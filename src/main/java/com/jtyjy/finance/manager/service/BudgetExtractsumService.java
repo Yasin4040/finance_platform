@@ -4602,6 +4602,15 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			excelDataList.stream().collect(Collectors.groupingBy(e->{
 				return e.getEmpNo().toString().concat(e.getPersonlityName());
 			})).forEach((account,list)->{
+
+				IndividualEmployeeFiles individualEmployeeFiles = employeeFilesMap.get(list.get(0).getEmpNo() + "&&" + list.get(0).getPersonlityName());
+				long count = extractPersonalityPayDetails.stream().filter(e -> e.getPersonalityId().equals(individualEmployeeFiles.getId())).count();
+				if(count>0){
+					list.forEach(e->{
+						e.setErrMsg("该员工数据已存在，无法导入。");
+					});
+					return;
+				}
 				int size = list.stream().collect(Collectors.groupingBy(ExtractPersonlityDetailExcelData::getPayStatus)).size();
 				if(size>1){
 					list.forEach(e->{
@@ -4609,16 +4618,6 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 					});
 					return;
 				}
-				IndividualEmployeeFiles individualEmployeeFiles = employeeFilesMap.get(list.get(0).getEmpNo() + "&&" + list.get(0).getPersonlityName());
-
-				long count = extractPersonalityPayDetails.stream().filter(e -> e.getPersonalityId().equals(individualEmployeeFiles.getId())).count();
-				if(count>0){
-					list.forEach(e->{
-						e.setErrMsg("该个体户您已导入过。");
-					});
-					return;
-				}
-
 				//获取数据库中已存在的，但是又不属于此次导入的明细
 				List<BudgetExtractPersonalityPayDetail> dbList = extractPersonalityPayDetails.stream().filter(e->e.getPersonalityId().equals(individualEmployeeFiles.getId())).filter(dbDetail -> {
 					return list.stream().noneMatch(e -> {
@@ -5103,13 +5102,13 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		Date date = new Date();
 		perPayDetails.stream().collect(Collectors.groupingBy(e->e.getExtractCode())).forEach((code,list)->{
 			String personalityIds = list.stream().map(e -> e.getPersonalityId().toString()).collect(Collectors.joining(","));
-			accountTasks.addAll(list.stream().map(e->e.getBillingUnitId()).distinct().map(e->{
-				BudgetBillingUnit budgetBillingUnit = unitMap.get(e);
+			accountTasks.addAll(list.stream().map(e->{
+				BudgetBillingUnit budgetBillingUnit = unitMap.get(e.getBillingUnitId());
 				BudgetExtractAccountTask task = new BudgetExtractAccountTask();
 				task.setExtractMonth(extractBatch);
 				task.setCreateTime(date);
-				task.setDelayExtractCode(code);
-				task.setBillingUnitId(e);
+				task.setRelationExtractCode(code);
+				task.setBillingUnitId(budgetBillingUnit.getId());
 				if("1".equals(budgetBillingUnit.getBillingUnitType()) && budgetBillingUnit.getOwnFlag() == 0){
 					task.setAccountantStatus(0);
 					task.setIsShouldAccount(true);
@@ -5125,13 +5124,15 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 					task.setIsShouldAccount(false);
 				}
 				task.setExtractCode(distributedNumber.getExtractDelayNum());
-				task.setPersonalityIds(personalityIds);
+				e.setExtractCode(task.getExtractCode());
 				task.setTaskType(ExtractTaskTypeEnum.DELAY.type);
+				e.setPayStatus(task.getTaskType());
+				task.setPersonalityIds(personalityIds);
 				task.setBatch(batch);
 				return task;
 			}).collect(Collectors.toList()));
 		});
-
+		if(!CollectionUtils.isEmpty(perPayDetails)) perPayDetailService.saveBatch(perPayDetails);
 		if(!accountTasks.isEmpty()) {
 			accountTaskService.saveBatch(accountTasks);
 
