@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.ExtractAccountEntryTaskMapper">
+
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.ExtractAccountEntryTask">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="sumId" column="sum_id" jdbcType="VARCHAR"/>
+            <result property="extractCode" column="extract_code" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="voucherNo" column="voucher_no" jdbcType="VARCHAR"/>
+            <result property="yearId" column="year_id" jdbcType="VARCHAR"/>
+            <result property="yearName" column="year_name" jdbcType="VARCHAR"/>
+            <result property="monthId" column="month_id" jdbcType="VARCHAR"/>
+            <result property="monthName" column="month_name" jdbcType="VARCHAR"/>
+            <result property="extractMonth" column="extract_month" jdbcType="VARCHAR"/>
+            <result property="deptId" column="dept_id" jdbcType="VARCHAR"/>
+            <result property="deptName" column="dept_name" jdbcType="VARCHAR"/>
+
+            <result property="issuedAmount" column="issued_amount" jdbcType="DECIMAL"/>
+            <result property="accountantEmpNo" column="accountant_emp_no" jdbcType="VARCHAR"/>
+            <result property="accountantEmpName" column="accountant_emp_name" jdbcType="VARCHAR"/>
+            <result property="accountantTime" column="accountant_time" jdbcType="TIMESTAMP"/>
+            <result property="status" column="status" jdbcType="INTEGER"/>
+    </resultMap>
+
+</mapper>
