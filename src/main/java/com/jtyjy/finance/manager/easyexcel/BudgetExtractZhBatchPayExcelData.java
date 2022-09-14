@@ -13,13 +13,10 @@ import lombok.Data;
 public class BudgetExtractZhBatchPayExcelData {
 	@ExcelProperty("业务参考号")
 	private String ywckh;
-
 	@ExcelProperty("收款人编号")
 	private String skrbh;
-
 	@ExcelProperty("收款人账号")
 	private String bankAccount;
-
 	@ExcelProperty("收款人名称")
 	private String bankAccountName;
 	@ExcelProperty("收方开户支行")
@@ -40,37 +37,23 @@ public class BudgetExtractZhBatchPayExcelData {
 	private String jsfs = "快速";
 	@ExcelProperty("业务种类")
 	private String ywzl = "普通汇兑";
-	//业务参考号	收款人编号	收款人账号	收款人名称											付方虚拟户编号	期望日	期望时间	用途	金额	收方联行号	收方开户银行	业务摘要
-	//{.ywckh}	{.skrbh}	{.bankAccount}	{.}	{.}	{.}	{.}	{.}	{.}	{.}	{.}	{.}	{.}	{.bunitAccount}	{.xnbh}	{.qwr}	{.qwsj}	{.yt}	{.payMoney}	{.branchCode}	{.bankName}	{.remark}
-
 	@ExcelProperty("付方账号")
 	private String bunitAccount;
-//	@ExcelProperty("收款人所在省")
-//	private String province;
-//	@ExcelProperty("收款人所在省")
-//	private String province;
-//	@ExcelProperty("收款人所在省")
-//	private String province;
-//	@ExcelProperty("收款人所在省")
-//	private String province;
-//	@ExcelProperty("收款人所在省")
-//	private String province;
-//	@ExcelProperty("收款人所在省")
-//	private String province;
-//	@ExcelProperty("收款人所在省")
-//	private String province;
-//	@ExcelProperty("收款人所在省")
-//	private String province;
-//	@ExcelProperty("收款人所在省")
-//	private String province;
-//	@ExcelProperty("收款人所在省")
-//	private String province;
-//	@ExcelProperty("收款人所在省")
-//	private String province;
-//	@ExcelProperty("收款人所在省")
-//	private String province;
-//	@ExcelProperty("收款人所在省")
-//	private String province;
-//	@ExcelProperty("收款人所在省")
-//	private String province;
+	@ExcelProperty("付方虚拟户编号")
+	private String xnbh = "0000000001";
+	@ExcelProperty("期望日")
+	private String qwr = "20080808";
+	@ExcelProperty("期望时间")
+	private String qwsj = "080000";
+	@ExcelProperty("用途")
+	private String yt = "JJ";
+	@ExcelProperty("金额")
+	private String payMoney;
+	@ExcelProperty("收方联行号")
+	private String branchCode;
+	@ExcelProperty("收方开户银行")
+	private String bankName;
+	@ExcelProperty("业务摘要")
+	private String remark;
+
 }

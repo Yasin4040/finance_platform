@@ -16,4 +16,11 @@
         id,extract_month,is_cal_complete,
         is_set_excess_complete,is_personality_complete
     </sql>
+    <select id="getOldBatchUnHandleCount" resultType="java.lang.Integer">
+        select count(*) from budget_extract_tax_handle_record
+        where extract_month &lt; #{extractBatch} and (
+            (is_cal_complete = 0 and is_set_excess_complete = 0 and is_personality_complete = 1) or
+            (is_cal_complete = 1 and is_personality_complete = 0)
+        )
+    </select>
 </mapper>

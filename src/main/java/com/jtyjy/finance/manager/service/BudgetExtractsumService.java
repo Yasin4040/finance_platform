@@ -4470,12 +4470,15 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		Map<Long, BigDecimal> receiptSum = getReceiptSum(individualEmployeeIdList, extractBatch);
 		extractDetailList.stream().collect(Collectors.groupingBy(e->e.getEmpno()+"&&"+e.getEmpname())).forEach((key,list)->{
 			List<IndividualEmployeeFiles> individualEmployeeFiles = individualEmployeeFilesMap.get(key);
-
+			List<String> sizeList = new ArrayList<>();
 			individualEmployeeFiles.forEach(individualEmployeeFile->{
 				ExtractPersonlityDetailExcelData excelData = ExtractPersonlityDetailExcelData.transfer(individualEmployeeFile);
 				excelData.setOrderNumber(resultList.size()+1);
 				BigDecimal extract = list.stream().map(BudgetExtractdetail::getCopeextract).reduce(BigDecimal.ZERO, BigDecimal::add);
-				excelData.setExtract(extract);
+				if(sizeList.size() == 0){
+					excelData.setExtract(extract);
+					sizeList.add("0");
+				}
 				ExtractPersonlityDetailExcelData agoExcelData = individualEmployeeAgoPayDetailMap.get(individualEmployeeFile.getId().toString() + "&&" + individualEmployeeFile.getIssuedUnit());
 				if(Objects.nonNull(agoExcelData)){
 					excelData.setExtractSum(agoExcelData.getExtractSum());
@@ -4567,6 +4570,18 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		BudgetExtractTaxHandleRecord extractTaxHandleRecord = getExtractTaxHandleRecord(extractBatch);
 		if (extractTaxHandleRecord!=null && extractTaxHandleRecord.getIsPersonalityComplete()) {
 			throw new RuntimeException("您已完成提成批次【" + extractBatch + "】员工个体户发放。");
+		}
+
+		int count = taxHandleRecordService.count(new LambdaQueryWrapper<BudgetExtractTaxHandleRecord>().gt(BudgetExtractTaxHandleRecord::getExtractMonth, extractBatch).and(e -> {
+			e.eq(BudgetExtractTaxHandleRecord::getIsCalComplete, 1).or().eq(BudgetExtractTaxHandleRecord::getIsPersonalityComplete, 1);
+		}));
+		if(count>0){
+			throw new RuntimeException("已有后续批次已被税筹处理。");
+		}
+
+		Integer count1 = taxHandleRecordMapper.getOldBatchUnHandleCount(extractBatch);
+		if(count1>0){
+			throw new RuntimeException("有老批次正在被税筹处理。");
 		}
 	}
 

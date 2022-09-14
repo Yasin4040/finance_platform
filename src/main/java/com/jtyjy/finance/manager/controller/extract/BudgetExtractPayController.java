@@ -50,4 +50,16 @@ public class BudgetExtractPayController {
 		}
 	}
 
+	@ApiOperation(value = "提成准备付款", httpMethod = "POST")
+	@ApiImplicitParams(value = {
+			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
+			@ApiImplicitParam(value = "模板类型", name = "payTemplateType", dataType = "Integer", required = true)
+	})
+	@PostMapping("/extractPreparePay")
+	public void extractPreparePay(@RequestParam(value = "payTemplateType") Integer payTemplateType) {
+
+
+
+	}
+
 }

@@ -156,7 +156,6 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 		return excelData;
 	}
 
-
 	private List<BudgetExtractPersonalityPayDetail> validateData(ExtractPersonalityPayDetailVO entity){
 		List<BudgetExtractPersonalityPayDetail> extractPersonalityPayDetails = personalityPayDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractPersonalityPayDetail>()
 				.eq(BudgetExtractPersonalityPayDetail::getExtractMonth, entity.getExtractBatch())
