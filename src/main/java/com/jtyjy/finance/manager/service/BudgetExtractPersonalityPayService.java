@@ -142,8 +142,13 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 			if (!CollectionUtils.isEmpty(individualEmployeeTicketReceiptInfos)) {
 				List<IndividualEmployeeTicketReceiptInfo> sortedReceiptInfoList = individualEmployeeTicketReceiptInfos.stream().sorted(Comparator.comparing(IndividualEmployeeTicketReceiptInfo::getYear)).sorted(Comparator.comparing(IndividualEmployeeTicketReceiptInfo::getMonth)).collect(Collectors.toList());
 				IndividualEmployeeTicketReceiptInfo individualEmployeeTicketReceiptInfo = sortedReceiptInfoList.get(0);
-				Integer[] intArr = extractsumService.calNextYearMonth(individualEmployeeTicketReceiptInfo.getYear(), individualEmployeeTicketReceiptInfo.getMonth());
-				BigDecimal receiptInfoMoney = sortedReceiptInfoList.stream().filter(e -> e.getYear() <= intArr[0] && e.getMonth() <= intArr[1]).map(e -> {
+				String yearMonth = extractsumService.calNextYearMonth(individualEmployeeTicketReceiptInfo.getYear(), individualEmployeeTicketReceiptInfo.getMonth());
+				BigDecimal receiptInfoMoney = sortedReceiptInfoList.stream().filter(e -> {
+					Integer year = e.getYear();
+					Integer month = e.getMonth();
+					String yearmonth = year + (month<10?("0"+month):month+"");
+					return Integer.parseInt(yearmonth)<Integer.parseInt(yearMonth);
+				}).map(e -> {
 					return e.getInvoiceAmount() == null ? BigDecimal.ZERO : e.getInvoiceAmount();
 				}).reduce(BigDecimal.ZERO, BigDecimal::add);
 				annualQuota = annualQuota.subtract(receiptInfoMoney);

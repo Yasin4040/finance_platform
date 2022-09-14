@@ -4627,7 +4627,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				.eq(BudgetExtractPersonalityPayDetail::getExtractMonth, extractBatch));
 		if(excelDataList.stream().noneMatch(e->StringUtils.isNotBlank(e.getErrMsg()))){
 			excelDataList.stream().collect(Collectors.groupingBy(e->{
-				return e.getEmpNo().toString().concat(e.getPersonlityName());
+				return e.getEmpNo().toString().concat(e.getEmpName());
 			})).forEach((account,list)->{
 
 				IndividualEmployeeFiles individualEmployeeFiles = employeeFilesMap.get(list.get(0).getEmpNo() + "&&" + list.get(0).getPersonlityName());
@@ -4786,8 +4786,13 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				if (!CollectionUtils.isEmpty(individualEmployeeTicketReceiptInfos)) {
 					List<IndividualEmployeeTicketReceiptInfo> sortedReceiptInfoList = individualEmployeeTicketReceiptInfos.stream().sorted(Comparator.comparing(IndividualEmployeeTicketReceiptInfo::getYear)).sorted(Comparator.comparing(IndividualEmployeeTicketReceiptInfo::getMonth)).collect(Collectors.toList());
 					IndividualEmployeeTicketReceiptInfo individualEmployeeTicketReceiptInfo = sortedReceiptInfoList.get(0);
-					Integer[] intArr = calNextYearMonth(individualEmployeeTicketReceiptInfo.getYear(), individualEmployeeTicketReceiptInfo.getMonth());
-					BigDecimal receiptInfoMoney = sortedReceiptInfoList.stream().filter(e -> e.getYear() <= intArr[0] && e.getMonth() <= intArr[1]).map(e -> {
+					String yearMonth = calNextYearMonth(individualEmployeeTicketReceiptInfo.getYear(), individualEmployeeTicketReceiptInfo.getMonth());
+					BigDecimal receiptInfoMoney = sortedReceiptInfoList.stream().filter(e -> {
+						Integer year = e.getYear();
+						Integer month = e.getMonth();
+						String yearmonth = year + (month<10?("0"+month):month+"");
+						return Integer.parseInt(yearmonth)<Integer.parseInt(yearMonth);
+					}).map(e -> {
 						return e.getInvoiceAmount() == null ? BigDecimal.ZERO : e.getInvoiceAmount();
 					}).reduce(BigDecimal.ZERO, BigDecimal::add);
 					annualQuota = annualQuota.subtract(receiptInfoMoney);
@@ -4817,7 +4822,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		if(!CollectionUtils.isEmpty(extractPersonalityPayDetails))personalityPayDetailService.updateBatchById(extractPersonalityPayDetails);
 	}
 
-	public Integer[] calNextYearMonth(Integer oldYear, Integer oldMonth) {
+	public String calNextYearMonth(Integer oldYear, Integer oldMonth) {
 		int finalYear = oldYear + 1;
 		int finalMonth = oldMonth;
 		if (oldMonth == 1) {
@@ -4826,7 +4831,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		} else {
 			finalMonth = oldMonth - 1;
 		}
-		return new Integer[]{finalYear, finalMonth};
+		return finalYear+ (finalMonth<10?("0"+finalMonth):finalMonth+"");
 	}
 
 	private void moneyValidate(String text,String type){
