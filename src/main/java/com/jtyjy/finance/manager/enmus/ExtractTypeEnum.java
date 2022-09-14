@@ -5,7 +5,7 @@ package com.jtyjy.finance.manager.enmus;
  * 提成类型
  */
 public enum ExtractTypeEnum {
-    //“扎帐前提成”、“扎帐后提成”、“期间提成”、“坏账明细”、“绩效奖提成”、“预提绩效奖”
+    //“扎账前提成”、“扎账后提成”、“期间提成”、“坏账明细”、“绩效奖提成”、“预提绩效奖”
 //
 	RETURN(1,"期间提成"),
 	DRAFT(2,"扎账总提成"),
