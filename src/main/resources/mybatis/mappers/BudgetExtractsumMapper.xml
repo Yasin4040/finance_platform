@@ -220,7 +220,7 @@
 			bei.empno as employeeJobNum,bei.empname as employeeName,sum(bei.copeextract) as  copeextract
 		from budget_extractsum be
 				 left join budget_extract_importdetail bei on be.id = bei.extractsumid
-		where  be.extractmonth = #{extractMonth} and bei.individual_employee_id is null and bei.business_type !=3
+		where  be.extractmonth = #{extractMonth}  and bei.business_type !=3
 		group by bei.empno,employeeName
 	</select>
 </mapper>
