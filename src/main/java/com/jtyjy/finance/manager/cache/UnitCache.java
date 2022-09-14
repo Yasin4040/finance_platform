@@ -61,7 +61,7 @@ public class UnitCache extends BaseCache{
 		List<BudgetBillingUnit> banks = billingUnitService.list();
 		banks.forEach(x->{
 			UNIT_MAP.put(String.valueOf(x.getId()),x);
-			UNIT_MAP.put(String.valueOf(x.getName()),x);
+			UNIT_NAME_MAP.put(String.valueOf(x.getName()),x);
 			UNIT_OUT_KEY_MAP.put(String.valueOf(x.getOutKey()),x);
 		});
 	}
