@@ -609,6 +609,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				List<IndividualEmployeeFiles> employeeFilesList = individualService.lambdaQuery().eq(IndividualEmployeeFiles::getEmployeeJobNum, empNo).list();
 				if (CollectionUtils.isEmpty(employeeFilesList)) throw new RuntimeException("个体户【" + empNo + "," + empName + "】不存在!");
 				if (employeeFilesList.stream().allMatch(x->x.getStatus()==2)) throw new RuntimeException("个体户【" + empNo + "," + empName + "】已被停用!");
+				break;
 				//个体户不存在
 			default:
 				throw new RuntimeException("业务类型 请填写公司员工，外部人员，员工个体户!");

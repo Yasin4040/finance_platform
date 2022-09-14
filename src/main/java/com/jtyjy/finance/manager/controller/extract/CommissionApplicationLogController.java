@@ -8,6 +8,8 @@ import com.jtyjy.core.result.ResponseEntity;
 import com.jtyjy.ecology.EcologyParams;
 import com.jtyjy.finance.manager.bean.BudgetExtractCommissionApplication;
 import com.jtyjy.finance.manager.bean.BudgetExtractCommissionApplicationLog;
+import com.jtyjy.finance.manager.enmus.LogStatusEnum;
+import com.jtyjy.finance.manager.enmus.OperationNodeEnum;
 import com.jtyjy.finance.manager.query.PageQuery;
 import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationLogService;
 import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationService;
@@ -18,6 +20,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -47,6 +50,11 @@ public class CommissionApplicationLogController {
                 Page<BudgetExtractCommissionApplicationLog> page = logService.page(new Page<>(query.getPage(), query.getRows())
                         , new LambdaQueryWrapper<BudgetExtractCommissionApplicationLog>()
                                 .eq(BudgetExtractCommissionApplicationLog::getApplicationId, applicationBySumId.get().getId()));
+                List<BudgetExtractCommissionApplicationLog> records = page.getRecords();
+                for (BudgetExtractCommissionApplicationLog record : records) {
+                    record.setStatusName(LogStatusEnum.getValue(record.getStatus()));
+                    record.setNodeName(OperationNodeEnum.getValue(record.getNode()));
+                }
                 return ResponseEntity.ok(PageResult.apply(page.getTotal(),page.getRecords()));
             }
             return ResponseEntity.ok();

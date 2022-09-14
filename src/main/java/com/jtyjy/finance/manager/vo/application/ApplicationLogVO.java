@@ -1,23 +1,18 @@
-package com.jtyjy.finance.manager.bean;
+package com.jtyjy.finance.manager.vo.application;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import java.io.Serializable;
+import io.swagger.annotations.ApiModelProperty;
+
 import java.util.Date;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
-
 /**
- * 申请单 oa 审批日志记录
- * @TableName budget_extract_commission_application_log
+ * Description:
+ * Created by ZiYao Lee on 2022/09/14.
+ * Time: 10:07
  */
-@TableName(value ="budget_extract_commission_application_log")
-@Data
-public class BudgetExtractCommissionApplicationLog implements Serializable {
+public class ApplicationLogVO {
     /**
      * id
      */
@@ -39,31 +34,12 @@ public class BudgetExtractCommissionApplicationLog implements Serializable {
     private Integer node;
 
     /**
-     * 操作节点    枚举
-     */
-    @TableField(exist = false)
-    @ApiModelProperty(value = "操作节点名称")
-    private String nodeName;
-
-//    /**
-//     * 操作状态  （本系统操作）0已完成   1 同意 2退回
-//     */
-//    @TableField(value = "status")
-//    @ApiModelProperty(value = "操作状态")
-//    private Integer status;
-    /**
      * 操作状态  （本系统操作）0已完成   1 同意 2退回
      */
     @TableField(value = "status")
     @ApiModelProperty(value = "操作状态")
     private Integer status;
 
-    /**
-     * 操作状态  （本系统操作）0已完成   1 同意 2退回
-     */
-    @TableField(exist = false)
-    @ApiModelProperty(value = "操作状态名称")
-    private String statusName;
     /**
      * 备注 操作信息
      */
@@ -102,11 +78,6 @@ public class BudgetExtractCommissionApplicationLog implements Serializable {
      * 操作时间
      */
     @ApiModelProperty(value = "操作时间")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:hh:ss",timezone = "GMT+8")
     @TableField(value = "create_time")
     private Date createTime;
-
-    @TableField(exist = false)
-    private static final long serialVersionUID = 1L;
-
 }

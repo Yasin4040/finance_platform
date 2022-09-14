@@ -5,9 +5,9 @@ package com.jtyjy.finance.manager.enmus;
  * 操作节点 	部门 负责人、职能管理部门审核、财务销售组审核、财务负责人审批为OA审批节点，其他为预算系统节点；
  */
 public enum OperationNodeEnum {
-    SUBMITTED(1,"已提交"),
+    SUBMITTED(1,"单据提交"),
 
-	DEPARTMENT_HEAD(2,"部门负责人"),
+	DEPARTMENT_HEAD(2,"事业群负责人审批"),
 	FUNCTIONAL_DEPARTMENT(3,"职能管理部门审核"),
 	FINANCIAL_SALES_TEAM(4,"财务销售组审核"),
     FINANCIAL_DIRECTOR(5,"财务负责人审批"),
