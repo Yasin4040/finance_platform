@@ -21,6 +21,8 @@ public class AccountEntryQuery extends PageQuery {
     private String extractMonth;
     @ApiModelProperty("部门名称")
     private String deptName;
+    @ApiModelProperty("是否是历史数据 0 待做  1历史完成")
+    private Integer status;
 //    @ApiModelProperty(value = "做账单位")
 //    private String unitName;
 }

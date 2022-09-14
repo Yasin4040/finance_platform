@@ -188,4 +188,7 @@
     <select id="getBudgetUnitForAsset" resultType="map">
         SELECT id,name FROM budget_unit WHERE yearid = #{yearId}
     </select>
+    <select id="getBaseUnitIdListByAccountingNo" resultType="java.lang.String">
+        select id from budget_unit where accounting like  concat('%',#{empNo},'%')
+    </select>
 </mapper>

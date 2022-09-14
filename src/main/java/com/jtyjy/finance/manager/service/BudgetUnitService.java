@@ -1122,4 +1122,8 @@ public class BudgetUnitService extends DefaultBaseService<BudgetUnitMapper, Budg
         List<Long> unitIds = Arrays.asList(dutyIds);
         return unitIds;
     }
+
+    public List<String> getBaseUnitIdListByAccountingNo(String empNo) {
+       return this.mapper.getBaseUnitIdListByAccountingNo(empNo);
+    }
 }

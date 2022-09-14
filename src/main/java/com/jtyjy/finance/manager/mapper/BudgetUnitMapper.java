@@ -82,4 +82,6 @@ public interface BudgetUnitMapper extends BaseMapper<BudgetUnit> {
 	List<BudgetUnitVO> queryAllUnitByYearId(Long yearId);
 
     List<Map<String,Object>> getBudgetUnitForAsset(@Param("yearId") Long yearId);
+
+    List<String> getBaseUnitIdListByAccountingNo(String empNo);
 }
