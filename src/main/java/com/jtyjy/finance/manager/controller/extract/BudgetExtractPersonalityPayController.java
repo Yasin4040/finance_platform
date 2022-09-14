@@ -175,18 +175,6 @@ public class BudgetExtractPersonalityPayController {
 		return ResponseEntity.ok();
 	}
 
-//	@ApiOperation(value = "获取员工个体户明细", httpMethod = "GET")
-//	@GetMapping("/getExtractPersonalityPayDetails")
-//	public ResponseEntity<PageResult<ExtractPersonalityPayDetailVO>> getExtractPersonalityPayDetails(ExtractPersonalityPayDetailQueryVO params,
-//	                                                                                                 @RequestParam(defaultValue = "1") Integer page,
-//	                                                                                                 @RequestParam(defaultValue = "20") Integer rows) {
-//		if (params.getSumId() == null) return ResponseEntity.error("参数异常。");
-//		PageResult<ExtractPersonalityPayDetailVO> pageList = extractsumService.getExtractPersonalityPayDetailVO(params, page, rows, null);
-//		return ResponseEntity.ok(pageList);
-//
-//	}
-
-
 	@ApiOperation(value = "员工个体户单据发放明细", httpMethod = "GET")
 	@GetMapping("/getExtractPersonalityPayDetails")
 	public ResponseEntity<PageResult<ExtractPersonalityPayDetailVO>> getExtractPersonalityPayDetails(ExtractPersonalityPayDetailQueryVO params,

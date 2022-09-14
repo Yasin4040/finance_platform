@@ -62,7 +62,7 @@
             bepd.cur_welfare curWelfare,
             bepd.personality_id personalityId,
             bepd.extract_sum+bepd.salary_sum+bepd.welfare_sum moneySum,
-            bepd.cur_extract+bepd.cur_salary+bepd.cur_welfare curPaySum,
+            bepd.cur_real_extract+bepd.cur_salary+bepd.cur_welfare curPaySum,
             bepd.remaining_invoices remainingInvoices,
             bepd.remaining_pay_limit_money remainingPayLimitMoney,
             bbu.`name` billingUnitName,
@@ -120,5 +120,17 @@
                 </foreach>
             </if>
             order by bief.employee_job_num,bbu.billingunittype desc
+    </select>
+    <select id="getDbMoney" resultType="com.jtyjy.finance.manager.bean.BudgetExtractPersonalityPayDetail">
+        SELECT
+            bepd.*
+        FROM
+            budget_extract_personality_pay_detail bepd
+            LEFT JOIN budget_individual_employee_files bief ON bepd.personality_id = bief.id
+
+        where bief.employee_job_num = #{employeeJobNum} and bief.employee_name = #{employeeName} and bepd.extract_month = #{extractBatch}
+        <if test="id !=null">
+            and bepd.id != #{id}
+         </if>
     </select>
 </mapper>

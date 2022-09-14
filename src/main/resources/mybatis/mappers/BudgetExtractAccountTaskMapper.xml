@@ -76,7 +76,7 @@
         where beppd.extract_code = #{params.extractCode}
 
         <if test="params.empNo!=null and params.empNo!=''">
-            and beppd.receiver_code like concat('%',#{params.empNo},'%')
+            and (beppd.receiver_code like concat('%',#{params.empNo},'%') or beppd.receiver_name like concat('%',#{params.empNo},'%'))
         </if>
         <if test="params.unitName!=null and params.unitName!=''">
             and bbu.`name` like concat('%',#{params.unitName},'%')
@@ -144,6 +144,6 @@
                     and bes.deptname like concat('%',#{params.deptName},'%')
                 </if>
             </where>
-        order by a.create_time desc
+        order by a.create_time desc,a.extract_code desc
     </select>
 </mapper>

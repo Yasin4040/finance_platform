@@ -10,13 +10,9 @@ import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.service.DefaultBaseService;
 import com.jtyjy.finance.manager.bean.*;
 import com.jtyjy.finance.manager.dto.ExtractAccountDTO;
-import com.jtyjy.finance.manager.enmus.ExtractPersonalityPayStatusEnum;
-import com.jtyjy.finance.manager.enmus.ExtractStatusEnum;
-import com.jtyjy.finance.manager.enmus.ExtractTaskTypeEnum;
-import com.jtyjy.finance.manager.enmus.OperationNodeEnum;
+import com.jtyjy.finance.manager.enmus.*;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.mapper.*;
-import com.jtyjy.finance.manager.trade.DistributedNumber;
 import com.jtyjy.finance.manager.vo.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,8 +45,7 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 	private final BudgetBillingUnitMapper billingUnitMapper;
 	private final IndividualEmployeeFilesMapper individualEmployeeFilesMapper;
 	private final BudgetExtractsumService extractsumService;
-	private final DistributedNumber distributedNumber;
-	private final BudgetPaymoneyService payMoneyService;
+	private final BudgetExtractDelayApplicationMapper delayApplicationMapper;
 
 	@Override
 	public BaseMapper<TabChangeLog> getLoggerMapper() {
@@ -77,7 +72,12 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 		}else{
 			resultList = accountTaskMapper.getExtractAccountTaskHistoryList(pageCond, params);
 			resultList.forEach(e->{
-				e.setStatusName(ExtractStatusEnum.getValue(e.getStatus()));
+				if(e.getTaskType() == ExtractTaskTypeEnum.DELAY.type){
+					BudgetExtractDelayApplication delayApplication = delayApplicationMapper.selectOne(new LambdaQueryWrapper<BudgetExtractDelayApplication>().eq(BudgetExtractDelayApplication::getDelayCode, e.getCode()));
+					e.setStatusName(ExtractDelayStatusEnum.getValue(delayApplication.getStatus()));
+				}else{
+					e.setStatusName(ExtractStatusEnum.getValue(e.getStatus()));
+				}
 			});
 		}
 		return PageResult.apply(pageCond.getTotal(), resultList);
@@ -231,6 +231,9 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 			}
 		} else if (accountTasks.get(0).getTaskType() == ExtractTaskTypeEnum.DELAY.type) {
 			isDelay = true;
+			BudgetExtractDelayApplication delayApplication = delayApplicationMapper.selectOne(new LambdaQueryWrapper<BudgetExtractDelayApplication>().eq(BudgetExtractDelayApplication::getDelayCode, accountDTO.getExtractCode()));
+			delayApplication.setStatus(ExtractDelayStatusEnum.ACCOUNT.type);
+			delayApplicationMapper.updateById(delayApplication);
 		}
 
 		/*
