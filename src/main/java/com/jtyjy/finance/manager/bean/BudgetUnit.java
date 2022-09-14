@@ -96,7 +96,13 @@ public class BudgetUnit implements Serializable {
     @TableField(value = "managers")
     @ApiModelProperty(value = "预算员")
     private String managers;
-
+    /**
+     * 多个预算管理员
+     */
+    @ApiParam(hidden = true)
+    @TableField(value = "accounting")
+    @ApiModelProperty(value = "收入会计id")
+    private String accounting;
     /**
      * 创建时间
      */
@@ -294,6 +300,7 @@ public class BudgetUnit implements Serializable {
         this.budgetflag = 0 != vo.getBudgetFlag();
         this.yearid = vo.getYearId();
         this.managers = vo.getManagers();
+        this.accounting = vo.getAccounting();
         this.budgetdepts = vo.getBudgetDepts();
         this.budgetusers = vo.getBudgetUsers();
         this.ccratioformula = vo.getCcratioFormula();

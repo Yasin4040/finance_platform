@@ -74,7 +74,7 @@ public class DistributedNumber {
         //组装key
         String key = Constants.FORMAT_8.format(new Date());
         key = this.BX_REDIS_KEY + key;
-        return this.redis.getRedisIncrNum(key, 4, this.NUM_TTL, this.NUM_FILL_VALUE);
+        return this.redis.getRedisIncrNum(key, 3, this.NUM_TTL, this.NUM_FILL_VALUE);
     }
 
     /**

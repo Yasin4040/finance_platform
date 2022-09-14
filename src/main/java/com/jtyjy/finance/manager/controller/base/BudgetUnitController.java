@@ -49,6 +49,7 @@ public class BudgetUnitController extends BaseController<BudgetAgentExecuteView>
             @ApiImplicitParam(value = "预算体系0：否，1：是", name = "budgetFlag", dataType = "Integer", required = true),
             @ApiImplicitParam(value = "届别id", name = "yearId", dataType = "Integer", required = true),
             @ApiImplicitParam(value = "预算员id（多个以,隔开）", name = "managers", dataType = "String", required = true),
+            @ApiImplicitParam(value = "收入会计id（多个以,隔开）", name = "accounting", dataType = "String", required = true),
             @ApiImplicitParam(value = "部门id（多个以,隔开）", name = "budgetDepts", dataType = "String"),
             @ApiImplicitParam(value = "人员id（多个以,隔开）", name = "budgetUsers", dataType = "String"),
             @ApiImplicitParam(value = "本届码洋占比公式", name = "ccratioFormula", dataType = "String"),

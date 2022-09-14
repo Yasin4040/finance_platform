@@ -175,10 +175,14 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         application.setRemarks(updateVO.getRemarks());
         application.setPaymentReason(updateVO.getPaymentReason());
         List<BudgetDetailsVO> budgetList = updateVO.getBudgetList();
+
+        List<BudgetExtractCommissionApplicationBudgetDetails> oldList =
+                budgetDetailsService.lambdaQuery().eq(BudgetExtractCommissionApplicationBudgetDetails::getApplicationId, application.getId()).list();
         for (BudgetDetailsVO budgetDetailsVO : budgetList) {
             Long budgetId = budgetDetailsVO.getId();
             BudgetExtractCommissionApplicationBudgetDetails budgetDetail = new BudgetExtractCommissionApplicationBudgetDetails();
             if(budgetId != null){
+                oldList.removeIf(x->x.getId().equals(budgetId));
                 budgetDetail = budgetDetailsService.getById(budgetId);
                 budgetDetail.setUpdateBy(UserThreadLocal.getEmpNo());
                 budgetDetail.setUpdateTime(new Date());
@@ -199,6 +203,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             budgetDetail.setSubjectCode(budgetDetailsVO.getSubjectCode());
             budgetDetail.setSubjectName(budgetDetailsVO.getSubjectName());
             budgetDetail.setBudgetAmount(budgetDetailsVO.getBudgetAmount());
+            budgetDetailsService.removeByIds(oldList.stream().map(x->x.getId()).collect(Collectors.toList()));
             budgetDetailsService.saveOrUpdate(budgetDetail);
         }
 //        UserThreadLocal.get()

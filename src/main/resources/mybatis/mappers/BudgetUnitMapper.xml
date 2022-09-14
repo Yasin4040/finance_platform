@@ -70,7 +70,7 @@
     <select id = "getBudgetUnitNoAuth" resultType = "com.jtyjy.finance.manager.vo.BudgetUnitVO">
     	SELECT bu.id id, bu.baseunitid baseUnitId, baseunit.name baseUnitName, bu.name, bu.yearid yearId, yp.period yearName,
     	bu.parentid parentId, if(bu.budgetflag, 1, 0) budgetFlag, bu.pids, bu.managers, bu.budgetdepts budgetDepts,bu.budget_responsibilities budgetResponsibilities,
-    	bu.budgetusers budgetUsers, bu.orderno orderNo, bu.unittype unitType, bu.remark, bu.ccratioformula ccratioFormula, bu.revenueformula revenueFormula 
+    	bu.budgetusers budgetUsers, bu.orderno orderNo, bu.unittype unitType, bu.remark, bu.ccratioformula ccratioFormula, bu.revenueformula revenueFormula ,bu.accounting
     	FROM budget_unit bu INNER JOIN budget_year_period yp ON bu.yearid = yp.id LEFT JOIN budget_base_unit baseunit ON bu.baseunitid = baseunit.id
     	WHERE bu.yearid = #{yearId} 
     	<if test="unitName != null and unitName != ''">

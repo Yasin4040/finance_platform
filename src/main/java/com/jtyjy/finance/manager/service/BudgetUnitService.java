@@ -129,7 +129,8 @@ public class BudgetUnitService extends DefaultBaseService<BudgetUnitMapper, Budg
                 TabDm dm = this.tdMapper.selectOne(new QueryWrapper<TabDm>().eq("dm_type", "unitType").eq("dm", vo.getUnitType().toString()));
                 vo.setUnitTypeName(null == dm ? null : dm.getDmName());
             }
-            vo.setManagersName(getSplitValue(vo.getManagers(), userNameMap, "DISPLAY_NAME"));
+            vo.setAccountingCode(getSplitValue(vo.getAccounting(), userNameMap, "USER_NAME"));
+            vo.setAccountingName(getSplitValue(vo.getAccounting(), userNameMap, "DISPLAY_NAME"));
             vo.setManagersCode(getSplitValue(vo.getManagers(), userNameMap, "USER_NAME"));
             vo.setBudgetUsersName(getSplitValue(vo.getBudgetUsers(), userNameMap, "DISPLAY_NAME"));
             vo.setBudgetUsersCode(getSplitValue(vo.getBudgetUsers(), userNameMap, "USER_NAME"));

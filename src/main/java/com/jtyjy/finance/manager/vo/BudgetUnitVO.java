@@ -67,7 +67,17 @@ public class BudgetUnitVO {
     @ApiParam(hidden = true)
     @ApiModelProperty(value="预算员工号")
     private String managersCode;
-    
+
+    @ApiParam(hidden = true)
+    @ApiModelProperty(value="收入会计")
+    private String accounting;
+    @ApiParam(hidden = true)
+    @ApiModelProperty(value="收入会计工号")
+    private String accountingCode;
+    @ApiParam(hidden = true)
+    @ApiModelProperty(value="收入会计工号")
+    private String accountingName;
+
     @ApiParam(hidden = true)
     @ApiModelProperty(value="部门id")
     private String budgetDepts;
