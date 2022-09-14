@@ -182,9 +182,9 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 		BigDecimal curExtract = budgetExtractdetails.stream().map(BudgetExtractdetail::getCopeextract).reduce(BigDecimal.ZERO, BigDecimal::add);
 		entity.setExtract(curExtract);
 		BigDecimal dbMoney = extractPersonalityPayDetails.stream().map(e -> {
-			return e.getCurRealExtract().add(e.getCurWelfare()).add(e.getCurSalary());
+			return e.getCurRealExtract();
 		}).reduce(BigDecimal.ZERO, BigDecimal::add);
-		if(entity.getCurExtract().add(entity.getCurWelfare()).add(entity.getCurSalary()).add(dbMoney).subtract(curExtract).compareTo(BigDecimal.ZERO)>0){
+		if(entity.getCurExtract().add(dbMoney).subtract(curExtract).compareTo(BigDecimal.ZERO)>0){
 			throw new RuntimeException("保存失败！此员工个体户当期提成发放金额合计超出当期待发提成金额！");
 		}
 		return extractPersonalityPayDetails;

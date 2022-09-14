@@ -4470,7 +4470,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		Map<Long, BigDecimal> receiptSum = getReceiptSum(individualEmployeeIdList, extractBatch);
 		extractDetailList.stream().collect(Collectors.groupingBy(e->e.getEmpno()+"&&"+e.getEmpname())).forEach((key,list)->{
 			List<IndividualEmployeeFiles> individualEmployeeFiles = individualEmployeeFilesMap.get(key);
-			List<String> sizeList = new ArrayList<>();
+			List<String> sizeList = new ArrayList<>(1);
 			individualEmployeeFiles.forEach(individualEmployeeFile->{
 				ExtractPersonlityDetailExcelData excelData = ExtractPersonlityDetailExcelData.transfer(individualEmployeeFile);
 				excelData.setOrderNumber(resultList.size()+1);
@@ -4656,14 +4656,14 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 					return detail.getEmpno().equals(individualEmployeeFiles.getEmployeeJobNum().toString()) && detail.getEmpname().equals(individualEmployeeFiles.getEmployeeName()) && ExtractUserTypeEnum.SELF_EMPLOYED_EMPLOYEES.getCode().equals(detail.getBusinessType());
 				}).map(BudgetExtractdetail::getCopeextract).reduce(BigDecimal.ZERO, BigDecimal::add);
 				BigDecimal dbMoney = dbList.stream().filter(e -> e.getPersonalityId().equals(individualEmployeeFiles.getId())).map(e -> {
-					return e.getCurRealExtract().add(e.getCurWelfare()).add(e.getCurSalary());
+					return e.getCurRealExtract();
 				}).reduce(BigDecimal.ZERO, BigDecimal::add);
 
 				BigDecimal importMoney = list.stream().map(e -> {
 					BigDecimal t1 = StringUtils.isBlank(e.getCurExtract())?BigDecimal.ZERO:new BigDecimal(e.getCurExtract());
-					BigDecimal t2 = StringUtils.isBlank(e.getCurSalary())?BigDecimal.ZERO:new BigDecimal(e.getCurSalary());
-					BigDecimal t3 = StringUtils.isBlank(e.getCurWelfare())?BigDecimal.ZERO:new BigDecimal(e.getCurWelfare());
-					return t1.add(t2).add(t3);
+					//BigDecimal t2 = StringUtils.isBlank(e.getCurSalary())?BigDecimal.ZERO:new BigDecimal(e.getCurSalary());
+					//BigDecimal t3 = StringUtils.isBlank(e.getCurWelfare())?BigDecimal.ZERO:new BigDecimal(e.getCurWelfare());
+					return t1;
 				}).reduce(BigDecimal.ZERO, BigDecimal::add);
 
 				if(extract.subtract(dbMoney).subtract(importMoney).compareTo(BigDecimal.ZERO)<0){
