@@ -46,7 +46,7 @@ public class CommissionApplicationLogController {
             if (applicationBySumId.isPresent()) {
                 Page<BudgetExtractCommissionApplicationLog> page = logService.page(new Page<>(query.getPage(), query.getRows())
                         , new LambdaQueryWrapper<BudgetExtractCommissionApplicationLog>()
-                                .eq(BudgetExtractCommissionApplicationLog::getApplicationId, sumId));
+                                .eq(BudgetExtractCommissionApplicationLog::getApplicationId, applicationBySumId.get().getId()));
                 return ResponseEntity.ok(PageResult.apply(page.getTotal(),page.getRecords()));
             }
             return ResponseEntity.ok();
