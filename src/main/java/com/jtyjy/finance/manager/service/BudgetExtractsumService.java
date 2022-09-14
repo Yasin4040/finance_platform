@@ -211,6 +211,9 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	@Autowired
 	private BudgetExtractCommissionApplicationMapper applicationMapper;
 
+	@Autowired
+	private BudgetExtractDelayApplicationMapper delayApplicationMapper;
+
 	@Value("${extract.qrcode.url}")
 	private String extract_qrcode_url;
 
@@ -4643,22 +4646,22 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 					return;
 				}
 				//获取数据库中已存在的，但是又不属于此次导入的明细
-				List<BudgetExtractPersonalityPayDetail> dbList = extractPersonalityPayDetails.stream().filter(e->e.getPersonalityId().equals(individualEmployeeFiles.getId())).filter(dbDetail -> {
-					return list.stream().noneMatch(e -> {
-						IndividualEmployeeFiles individualEmployeeFiles1 = employeeFilesMap.get(e.getEmpNo() + "&&" + e.getPersonlityName());
-						BudgetBillingUnit budgetBillingUnit = billingUnitMap.get(e.getBillingUnitName());
-						return individualEmployeeFiles1.getId().equals(dbDetail.getPersonalityId()) && dbDetail.getBillingUnitId().equals(budgetBillingUnit.getId());
-					});
-				}).collect(Collectors.toList());
+//				List<BudgetExtractPersonalityPayDetail> dbList = extractPersonalityPayDetails.stream().filter(e->e.getPersonalityId().equals(individualEmployeeFiles.getId())).filter(dbDetail -> {
+//					return list.stream().noneMatch(e -> {
+//						IndividualEmployeeFiles individualEmployeeFiles1 = employeeFilesMap.get(e.getEmpNo() + "&&" + e.getPersonlityName());
+//						BudgetBillingUnit budgetBillingUnit = billingUnitMap.get(e.getBillingUnitName());
+//						return individualEmployeeFiles1.getId().equals(dbDetail.getPersonalityId()) && dbDetail.getBillingUnitId().equals(budgetBillingUnit.getId());
+//					});
+//				}).collect(Collectors.toList());
 
 				//待发提成
 				BigDecimal extract = extractDetailList.stream().filter(detail -> {
 					return detail.getEmpno().equals(individualEmployeeFiles.getEmployeeJobNum().toString()) && detail.getEmpname().equals(individualEmployeeFiles.getEmployeeName()) && ExtractUserTypeEnum.SELF_EMPLOYED_EMPLOYEES.getCode().equals(detail.getBusinessType());
 				}).map(BudgetExtractdetail::getCopeextract).reduce(BigDecimal.ZERO, BigDecimal::add);
-				BigDecimal dbMoney = dbList.stream().filter(e -> e.getPersonalityId().equals(individualEmployeeFiles.getId())).map(e -> {
-					return e.getCurRealExtract();
-				}).reduce(BigDecimal.ZERO, BigDecimal::add);
-
+//				BigDecimal dbMoney = dbList.stream().filter(e -> e.getPersonalityId().equals(individualEmployeeFiles.getId())).map(e -> {
+//					return e.getCurRealExtract();
+//				}).reduce(BigDecimal.ZERO, BigDecimal::add);
+				BigDecimal dbMoney = BigDecimal.ZERO;
 				BigDecimal importMoney = list.stream().map(e -> {
 					BigDecimal t1 = StringUtils.isBlank(e.getCurExtract())?BigDecimal.ZERO:new BigDecimal(e.getCurExtract());
 					//BigDecimal t2 = StringUtils.isBlank(e.getCurSalary())?BigDecimal.ZERO:new BigDecimal(e.getCurSalary());
@@ -5160,14 +5163,22 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		if(!accountTasks.isEmpty()) {
 			accountTaskService.saveBatch(accountTasks);
 
+			accountTasks.stream().map(e->{
+				BudgetExtractDelayApplication delayApplication = new BudgetExtractDelayApplication();
+				delayApplication.setDelayCode(e.getExtractCode());
+				delayApplication.setCreateTime(new Date());
+				delayApplication.setRelationExtractCode(e.getRelationExtractCode());
+				delayApplication.setStatus(ExtractDelayStatusEnum.CALCULATION_COMPLETE.type);
+				return delayApplication;
+			}).forEach(e->{
+				delayApplicationMapper.insert(e);
+			});
+
 			long count = accountTasks.stream().filter(e -> e.getAccountantStatus() == 0).count();
 			if(count == 0){
 				finishAccount(true,accountTasks.stream().map(e->e.getExtractCode()).collect(Collectors.toList()),extractBatch);
 			}
 		}
-
-
-
 	}
 
 	/**

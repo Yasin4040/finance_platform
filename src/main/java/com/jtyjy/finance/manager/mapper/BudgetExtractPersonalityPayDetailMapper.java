@@ -7,6 +7,7 @@ import com.jtyjy.finance.manager.vo.ExtractPersonalityPayDetailQueryVO;
 import com.jtyjy.finance.manager.vo.ExtractPersonalityPayDetailVO;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -17,6 +18,8 @@ public interface BudgetExtractPersonalityPayDetailMapper extends BaseMapper<Budg
 	String  getValidLastExtractBatch(@Param("extractBatch") String extractBatch);
 
 	List<ExtractPersonalityPayDetailVO> getExtractPersonalityPayDetailVO(Page<ExtractPersonalityPayDetailVO> pageCond,@Param("params") ExtractPersonalityPayDetailQueryVO params, @Param("extractBatch")String extractBatch);
+
+	List<BudgetExtractPersonalityPayDetail> getDbMoney(@Param("employeeJobNum") Integer employeeJobNum, @Param("employeeName")String employeeName, @Param("id")Long id);
 }
 
 

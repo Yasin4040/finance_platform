@@ -22,7 +22,6 @@ import com.jtyjy.finance.manager.vo.ExtractPersonalityPayDetailVO;
 import com.jtyjy.weixin.message.MessageSender;
 import com.jtyjy.weixin.message.QywxTextMsg;
 import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -84,7 +83,7 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 		extractsumService.setPayDetail(agoExcelData,payDetail,entity.getPersonalityId(),entity.getBillingUnitId());
 		List<BudgetExtractdetail> extractDetailList = extractsumService.getCurBatchPersionalityExtract(entity.getExtractBatch(),entity.getPersonalityId());
 		BigDecimal extract = extractDetailList.stream().map(BudgetExtractdetail::getCopeextract).reduce(BigDecimal.ZERO, BigDecimal::add);
-		payDetail.setCurRealExtract(extract);
+		payDetail.setCurExtract(extract);
 		personalityPayDetailMapper.insert(payDetail);
 		extractsumService.reCalculateInvoice(Lists.newArrayList(entity.getPersonalityId()),entity.getExtractBatch());
 
@@ -157,15 +156,14 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 	}
 
 	private List<BudgetExtractPersonalityPayDetail> validateData(ExtractPersonalityPayDetailVO entity){
-		List<BudgetExtractPersonalityPayDetail> extractPersonalityPayDetails = personalityPayDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractPersonalityPayDetail>()
-				.eq(BudgetExtractPersonalityPayDetail::getExtractMonth, entity.getExtractBatch())
-				.eq(BudgetExtractPersonalityPayDetail::getPersonalityId, entity.getPersonalityId())
-				.ne(entity.getId()!=null,BudgetExtractPersonalityPayDetail::getId, entity.getId()));
+//		List<BudgetExtractPersonalityPayDetail> extractPersonalityPayDetails = personalityPayDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractPersonalityPayDetail>()
+//				.eq(BudgetExtractPersonalityPayDetail::getExtractMonth, entity.getExtractBatch())
+//				.eq(BudgetExtractPersonalityPayDetail::getPersonalityId, entity.getPersonalityId())
+//				.ne(entity.getId()!=null,BudgetExtractPersonalityPayDetail::getId, entity.getId()));
 
-//		long count = extractPersonalityPayDetails.stream().filter(e -> e.getPersonalityId().equals(entity.getPersonalityId()) && e.getBillingUnitId().equals(entity.getBillingUnitId())).count();
-//		if (count > 0) {
-//			throw new RuntimeException("此员工个体户已有此发放单位的发放明细。");
-//		}
+		IndividualEmployeeFiles individualEmployeeFiles = individualEmployeeFilesMapper.selectById(entity.getPersonalityId());
+		List<BudgetExtractPersonalityPayDetail> extractPersonalityPayDetails =  personalityPayDetailMapper.getDbMoney(individualEmployeeFiles.getEmployeeJobNum(),individualEmployeeFiles.getEmployeeName(),entity.getId());
+
 		if(entity.getId()==null){
 			long count = extractPersonalityPayDetails.stream().filter(e -> e.getPersonalityId().equals(entity.getPersonalityId())).count();
 			if (count > 0) {
@@ -180,10 +178,7 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 		List<BudgetExtractdetail> budgetExtractdetails = extractsumService.getCurBatchPersionalityExtract(entity.getExtractBatch(), entity.getPersonalityId());
 		//待发提成
 		BigDecimal curExtract = budgetExtractdetails.stream().map(BudgetExtractdetail::getCopeextract).reduce(BigDecimal.ZERO, BigDecimal::add);
-		entity.setExtract(curExtract);
-		BigDecimal dbMoney = extractPersonalityPayDetails.stream().map(e -> {
-			return e.getCurRealExtract();
-		}).reduce(BigDecimal.ZERO, BigDecimal::add);
+		BigDecimal dbMoney = extractPersonalityPayDetails.stream().map(e -> e.getCurRealExtract()).reduce(BigDecimal.ZERO, BigDecimal::add);
 		if(entity.getCurExtract().add(dbMoney).subtract(curExtract).compareTo(BigDecimal.ZERO)>0){
 			throw new RuntimeException("保存失败！此员工个体户当期提成发放金额合计超出当期待发提成金额！");
 		}
@@ -201,7 +196,7 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 		extractsumService.setPayDetail(agoExcelData,payDetail,entity.getPersonalityId(),entity.getBillingUnitId());
 		List<BudgetExtractdetail> extractDetailList = extractsumService.getCurBatchPersionalityExtract(entity.getExtractBatch(),entity.getPersonalityId());
 		BigDecimal extract = extractDetailList.stream().map(BudgetExtractdetail::getCopeextract).reduce(BigDecimal.ZERO, BigDecimal::add);
-		payDetail.setCurRealExtract(extract);
+		payDetail.setCurExtract(extract);
 		personalityPayDetailMapper.updateById(payDetail);
 		extractsumService.reCalculateInvoice(Lists.newArrayList(entity.getPersonalityId()),entity.getExtractBatch());
 	}
