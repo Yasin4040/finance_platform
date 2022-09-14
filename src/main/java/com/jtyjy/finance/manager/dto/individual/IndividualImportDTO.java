@@ -2,6 +2,7 @@ package com.jtyjy.finance.manager.dto.individual;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.format.DateTimeFormat;
+import com.jtyjy.finance.manager.annotation.ExcelDecimalValid;
 import com.jtyjy.finance.manager.annotation.ExcelValid;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -52,10 +53,12 @@ public class IndividualImportDTO {
 
     @ApiModelProperty(value = "联系电话")
     @ExcelProperty(value = "*联系电话")
+    @ExcelValid(message = "联系电话不能为空")
     private String phone;
 
     @ApiModelProperty(value = "*账户类型  1个卡 2 公户")
     @ExcelProperty(value = "*账户类型(个卡/公户)")
+    @ExcelValid(message = "账户类型不能为空")
     private String accountType;
 
     @ApiModelProperty(value = "社保停发日期")
@@ -69,10 +72,12 @@ public class IndividualImportDTO {
     private Date leaveDate;
     @ApiModelProperty(value = "户名")
     @ExcelProperty(value = "*户名")
+    @ExcelValid(message = "户名不能为空")
     private String accountName;
 
     @ApiModelProperty(value = "账号")
     @ExcelProperty(value = "*账号")
+    @ExcelValid(message = "账号不能为空")
     private String account;
 
     @ApiModelProperty(value = "银行类型")
@@ -81,6 +86,7 @@ public class IndividualImportDTO {
 
     @ApiModelProperty(value = "开户行")
     @ExcelProperty(value = "*开户行")
+    @ExcelValid(message = "开户行不能为空")
     private String depositBank;
 
     @ApiModelProperty(value = "省份")
@@ -98,10 +104,12 @@ public class IndividualImportDTO {
 
     @ApiModelProperty(value = "发放单位")
     @ExcelProperty(value = "*发放单位")
+    @ExcelValid(message = "发放单位不能为空")
     private String issuedUnit;
 
     @ApiModelProperty(value = "发放意见")
     @ExcelProperty(value = "*发放意见")
+    @ExcelValid(message = "发放意见不能为空")
     private String releaseOpinions;
 
     @ApiModelProperty(value = "服务协议")
@@ -122,6 +130,7 @@ public class IndividualImportDTO {
 
     @ApiModelProperty(value = "年额度")
     @ExcelProperty(value = "*年额度")
+    @ExcelValid(message = "年额度不能为空")
     private BigDecimal annualQuota;
 
     @ApiModelProperty(value = "备注")

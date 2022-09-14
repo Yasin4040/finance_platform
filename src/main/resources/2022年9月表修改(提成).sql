@@ -93,3 +93,148 @@ CREATE TABLE `budget_extractpayment_outer_unit` (
   PRIMARY KEY (`id`),
   KEY `extract_payment_id` (`extract_payment_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='非员工个体户的外部单位发放明细';
+
+
+
+# --李子耀 sql
+-- db_budget.budget_extract_commission_application definition
+
+CREATE TABLE `budget_extract_commission_application` (
+ `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+ `extract_sum_id` bigint(20) DEFAULT NULL COMMENT '提成id主表',
+ `status` int(11) DEFAULT NULL COMMENT '-2 作废（退回才可以作废）,-1(退回，仍可以修改。可以作废)  ，0 草稿（撤回）,1已提交,2审核通过',
+ `department_no` varchar(100) DEFAULT NULL COMMENT '部门',
+ `department_name` varchar(20) DEFAULT NULL COMMENT '部门名称',
+ `payment_reason` varchar(256) DEFAULT NULL COMMENT '支付事由 支付+“届别”+“月份”+“批次”+“提成/坏账”\r\n届别取“届别”字段；月份取“提成期间”中的月份；“提成/坏账”根据“坏账（是/否）”判断，若是则显示“坏账”；否则显示“提成”。',
+ `remarks` varchar(256) DEFAULT NULL COMMENT '备注',
+ `annual_quota` int(11) DEFAULT NULL COMMENT '年额度',
+ `create_by` varchar(20) DEFAULT NULL COMMENT '创建人',
+ `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+ `update_by` varchar(20) DEFAULT NULL COMMENT '更新人',
+ `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+ `reimbursement_id` bigint(20) DEFAULT NULL COMMENT '报销单id',
+ PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=62 DEFAULT CHARSET=utf8mb4 COMMENT='提成支付申请单  主表 ';
+
+-- db_budget.budget_extract_commission_application_budget_details definition
+
+CREATE TABLE `budget_extract_commission_application_budget_details` (
+`id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+`application_id` bigint(20) NOT NULL COMMENT '申请单id',
+`subject_code` varchar(20) DEFAULT NULL COMMENT '科目编码',
+`subject_name` varchar(20) DEFAULT NULL COMMENT '科目名称',
+`budget_amount` decimal(10,2) DEFAULT NULL COMMENT '金额 根据提成类型+届别取提成明细所在行的“申请提成”',
+`create_by` varchar(20) DEFAULT NULL COMMENT '创建人',
+`create_time` datetime DEFAULT NULL COMMENT '创建时间',
+`update_by` varchar(20) DEFAULT NULL COMMENT '更新人',
+`update_time` datetime DEFAULT NULL COMMENT '更新时间',
+`motivation_name` varchar(200) DEFAULT NULL COMMENT '动因名称',
+`motivation_id` bigint(20) DEFAULT NULL COMMENT '动因id',
+`subject_id` bigint(20) DEFAULT NULL COMMENT '科目id',
+PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COMMENT='提成支付申请单  附表 预算明细';
+
+
+-- db_budget.budget_extract_commission_application_log definition
+
+CREATE TABLE `budget_extract_commission_application_log` (
+`id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+`application_id` bigint(20) NOT NULL COMMENT '申请单id',
+`status` int(4) NOT NULL COMMENT '操作状态  1 同意 2拒绝',
+`node` int(20) NOT NULL COMMENT '操作节点    枚举',
+`remarks` varchar(20) DEFAULT NULL COMMENT '备注 操作信息',
+`create_by` varchar(20) DEFAULT NULL COMMENT '操作人',
+`create_time` datetime DEFAULT NULL COMMENT '操作时间',
+`creator_name` varchar(20) DEFAULT NULL COMMENT '创建人名称',
+`request_id` varchar(50) DEFAULT NULL COMMENT 'oa流程id',
+`request_code` varchar(50) DEFAULT NULL COMMENT 'OA流程编码',
+PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COMMENT='申请单 oa 审批日志记录';
+
+-- db_budget.budget_individual_employee_files definition
+
+CREATE TABLE `budget_individual_employee_files` (
+`id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+`employee_job_num` int(11) NOT NULL COMMENT '员工工号',
+`phone` varchar(20) DEFAULT NULL COMMENT '联系电话\r\n',
+`account_type` int(11) DEFAULT NULL COMMENT '账户类型  1个卡 2 公户',
+`account_name` varchar(20) DEFAULT NULL COMMENT '户名\r\n',
+`deposit_bank` varchar(100) DEFAULT NULL COMMENT '开户行',
+`issued_unit` varchar(100) DEFAULT NULL COMMENT '发放单位',
+`release_opinions` varchar(100) DEFAULT NULL COMMENT '发放意见',
+`social_security_stop_date` datetime DEFAULT NULL COMMENT '社保停发日期',
+`leave_date` datetime DEFAULT NULL COMMENT '离职日期',
+`service_agreement` varchar(100) DEFAULT NULL COMMENT '服务协议',
+`self_or_agency` varchar(10) DEFAULT NULL COMMENT '自办还是代办  1自办 2 代办',
+`platform_company` varchar(100) DEFAULT NULL COMMENT '平台公司',
+`verification_audit` varchar(100) DEFAULT NULL COMMENT '核定/查账',
+`annual_quota` decimal(10,2) DEFAULT NULL COMMENT '年额度',
+`create_by` varchar(20) DEFAULT NULL COMMENT '创建人',
+`create_time` datetime DEFAULT NULL COMMENT '创建时间',
+`update_by` varchar(20) DEFAULT NULL COMMENT '更新人',
+`update_time` datetime DEFAULT NULL COMMENT '更新时间',
+`status` int(11) DEFAULT '1' COMMENT '状态 1 正常  2停用',
+`batch_no` varchar(100) DEFAULT NULL COMMENT '批次',
+`department_no` varchar(100) DEFAULT NULL COMMENT '部门',
+`department_name` varchar(100) DEFAULT NULL COMMENT '部门名称',
+`province_or_region` varchar(100) DEFAULT NULL COMMENT '省区/大区',
+`employee_name` varchar(100) DEFAULT NULL COMMENT '员工名称',
+`account` varchar(20) DEFAULT NULL COMMENT '账号',
+`remarks` varchar(256) DEFAULT NULL,
+PRIMARY KEY (`id`),
+UNIQUE KEY `individual_employee_files_unique_index` (`employee_job_num`,`account_name`)
+) ENGINE=InnoDB AUTO_INCREMENT=60 DEFAULT CHARSET=utf8mb4 COMMENT='员工个体户档案';
+
+-- db_budget.budget_individual_employee_ticket_receipt definition
+
+CREATE TABLE `budget_individual_employee_ticket_receipt` (
+`id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+`ticket_code` varchar(50) NOT NULL COMMENT '收票单号',
+`employee_job_num` int(11) NOT NULL COMMENT '员工工号',
+`individual_employee_info_id` bigint(20) NOT NULL COMMENT '员工档案id',
+`individual_name` varchar(100) DEFAULT NULL COMMENT '个体户名称',
+`invoice_amount` decimal(10,2) DEFAULT NULL COMMENT '发票总金额',
+`remarks` varchar(256) DEFAULT NULL COMMENT '备注',
+`create_by` varchar(20) DEFAULT NULL COMMENT '创建人',
+`create_time` datetime DEFAULT NULL COMMENT '创建时间',
+`update_by` varchar(20) DEFAULT NULL COMMENT '更新人',
+`update_time` datetime DEFAULT NULL COMMENT '更新时间',
+PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=utf8mb4 COMMENT='员工个体户收票信息主表 维护档案';
+-- db_budget.budget_individual_employee_ticket_receipt_info definition
+
+CREATE TABLE `budget_individual_employee_ticket_receipt_info` (
+`id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
+`employee_job_num` int(11) NOT NULL COMMENT '员工工号',
+`individual_employee_info_id` int(11) NOT NULL COMMENT '员工档案id',
+`individual_name` varchar(100) DEFAULT NULL COMMENT '个体户名称',
+`year` int(11) DEFAULT NULL COMMENT '年份',
+`month` int(11) DEFAULT NULL COMMENT '月份',
+`invoice_amount` decimal(10,2) DEFAULT NULL COMMENT '发票金额',
+`remarks` varchar(256) DEFAULT NULL COMMENT '备注',
+`create_by` varchar(20) DEFAULT NULL COMMENT '创建人',
+`create_time` datetime DEFAULT NULL COMMENT '创建时间',
+`update_by` varchar(20) DEFAULT NULL COMMENT '更新人',
+`update_time` datetime DEFAULT NULL COMMENT '更新时间',
+`ticket_id` bigint(20) DEFAULT NULL,
+PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=53 DEFAULT CHARSET=utf8mb4 COMMENT='员工个体户收票信息维护档案';
+
+
+-- db_budget.budget_common_attachment definition
+
+CREATE TABLE `budget_common_attachment` (
+`id` bigint(20) NOT NULL AUTO_INCREMENT,
+`contact_id` bigint(20) NOT NULL COMMENT '关联id',
+`file_type` int(4) DEFAULT NULL,
+`file_url` varchar(100) DEFAULT NULL,
+`file_ext_name` varchar(10) DEFAULT NULL,
+`file_name` varchar(100) DEFAULT NULL,
+`create_time` datetime DEFAULT NULL,
+`creator` varchar(100) DEFAULT NULL,
+PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4;
+
+
+
+# 部分表字段新增

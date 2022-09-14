@@ -2,6 +2,7 @@ package com.jtyjy.finance.manager.dto.individual;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.format.DateTimeFormat;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -61,11 +62,13 @@ public class IndividualImportErrorDTO extends ImportErrorDTO{
 
     @ApiModelProperty(value = "社保停发日期")
     @DateTimeFormat("yyyy-MM-dd")
+    @JsonFormat(pattern = "yyyy-MM-dd",timezone = "GMT+8")
     @ExcelProperty(value = "社保停发日期")
     private Date socialSecurityStopDate;
 
     @ApiModelProperty(value = "离职日期")
     @DateTimeFormat("yyyy-MM-dd")
+    @JsonFormat(pattern = "yyyy-MM-dd",timezone = "GMT+8")
     @ExcelProperty(value = "离职日期")
     private Date leaveDate;
 
@@ -125,7 +128,7 @@ public class IndividualImportErrorDTO extends ImportErrorDTO{
 
     @ApiModelProperty(value = "年额度")
     @ExcelProperty(value = "*年额度")
-    private BigDecimal annualQuota;
+    private String annualQuota;
 
     @ApiModelProperty(value = "备注")
     @ExcelProperty(value = "备注")

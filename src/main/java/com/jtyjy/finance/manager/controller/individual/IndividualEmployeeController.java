@@ -12,6 +12,7 @@ import com.jtyjy.finance.manager.utils.EasyExcelUtil;
 import com.jtyjy.finance.manager.vo.individual.IndividualEmployeeFilesVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.SneakyThrows;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -141,17 +142,19 @@ public class IndividualEmployeeController {
     /**
      * 导入。
      */
+    @SneakyThrows
     @ApiOperation(value = "员工个体户 导入", httpMethod = "POST")
     @PostMapping("/importIndividual")
     public ResponseEntity importIndividual(@RequestParam("file") MultipartFile multipartFile,HttpServletResponse response) {
+        List<IndividualImportErrorDTO> errorDTOList = new ArrayList<>();
         try {
-            List<IndividualImportErrorDTO> errorDTOList = filesService.importIndividual(multipartFile);
-            if(CollectionUtils.isNotEmpty(errorDTOList)) {
-                EasyExcelUtil.writeExcel(response, errorDTOList, "员工个体户错误明细", "员工个体户错误明细", IndividualImportErrorDTO.class);
-                return null;
-            }
+             errorDTOList = filesService.importIndividual(multipartFile);
         } catch (Exception e) {
             return ResponseEntity.error(e.getMessage());
+        }
+        if(CollectionUtils.isNotEmpty(errorDTOList)) {
+            EasyExcelUtil.writeExcel(response, errorDTOList, "员工个体户错误明细", "员工个体户错误明细", IndividualImportErrorDTO.class);
+            return null;
         }
         return ResponseEntity.ok();
     }

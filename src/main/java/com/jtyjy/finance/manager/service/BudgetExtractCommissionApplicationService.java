@@ -49,4 +49,6 @@ public interface BudgetExtractCommissionApplicationService extends IService<Budg
     List<FeeImportErrorDTO> importFeeTemplate(MultipartFile multipartFile,String extractMonth);
 
     IPage<BudgetExtractFeePayDetailBeforeCal> selectFeePage(FeeQuery query);
+
+    void validateApplication(BudgetExtractsum extractSum);
 }

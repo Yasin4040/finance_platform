@@ -169,6 +169,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     public void updateApplicationInfo(CommissionApplicationInfoUpdateVO updateVO) {
         //状态判断。
         BudgetExtractsum extractsum = extractSumMapper.selectById (updateVO.getExtractSumId());
+        this.validateApplication(extractsum);
         if (extractsum.getStatus() != ExtractStatusEnum.DRAFT.getType() && extractsum.getStatus() != ExtractStatusEnum.RETURN.getType())
             throw new RuntimeException("操作失败！只能修改退回和草稿状态的提成明细");
         BudgetExtractCommissionApplication application = this.getById(updateVO.getApplicationId());
@@ -245,6 +246,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         attachmentService.saveOrUpdateBatch(attachments);
         extractsum.setStatus(ExtractStatusEnum.DRAFT.getType());
         extractSumMapper.updateById(extractsum);
+        this.updateById(application);
 
     }
     @Override
@@ -383,6 +385,36 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         return beforeCalPage;
     }
 
+    @Override
+    public void validateApplication(BudgetExtractsum extractSum) {
+        //提成明细for
+        List<BudgetExtractImportdetail> importDetails = extractImportDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractImportdetail>()
+                .eq(BudgetExtractImportdetail::getExtractsumid, extractSum.getId()));
+        //是否存在 存在绩效奖和预提绩效奖时
+        List<BudgetExtractImportdetail> awardList = importDetails.stream()
+                .filter(x -> ExtractTypeEnum.ACCRUED_PERFORMANCE_AWARD.value.equals(x.getExtractType()) || ExtractTypeEnum.PERFORMANCE_AWARD_COMMISSION.value.equals(x.getExtractType())).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(awardList)){
+            //budget 不能为空。
+            Optional<BudgetExtractCommissionApplication> applicationBySumId = this.getApplicationBySumId(String.valueOf(extractSum.getId()));
+            if(applicationBySumId.isPresent()){
+                List<BudgetExtractCommissionApplicationBudgetDetails> budgetDetailList
+                        =budgetDetailsService.lambdaQuery().eq(BudgetExtractCommissionApplicationBudgetDetails::getApplicationId, applicationBySumId.get().getId()).list();
+                if(CollectionUtils.isEmpty(budgetDetailList)) {
+                    throw new RuntimeException("未填写预算明细！");
+                }
+                Optional<BigDecimal> bigDecimal = budgetDetailList.stream().map(x -> x.getBudgetAmount()).reduce(BigDecimal::add);
+                Optional<BigDecimal> reduce = awardList.stream().map(x -> x.getShouldSendExtract()).reduce(BigDecimal::add);
+                if(bigDecimal.isPresent()&&reduce.isPresent()){
+                    int i = bigDecimal.get().compareTo(reduce.get());
+                    if (i!=0) {
+                        throw new RuntimeException("提成金额应该和预算金额相等！");
+                    }
+                }
+            }
+
+        }
+    }
+
     private void validData(IndividualIssueExportDTO dto) {
         //发放单位验证
 //        String issuedUnit = dto.getIssuedUnit();
@@ -406,6 +438,9 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     public void updateStatusBySumId(String sumId, Integer status) {
         Optional<BudgetExtractCommissionApplication> applicationOptional = getApplicationBySumId(sumId);
         BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
+        if (budgetExtractsum == null) {
+            throw new BusinessException("该申请单不存在！");
+        }
         if (applicationOptional.isPresent()) {
             BudgetExtractCommissionApplication application = applicationOptional.get();
             ExtractStatusEnum willEnum = ExtractStatusEnum.getTypeEnume(status);
@@ -428,9 +463,9 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                     Integer returnCount =  feePayDetailMapper.selectCount(new LambdaQueryWrapper<BudgetExtractFeePayDetailBeforeCal>()
                             .eq(BudgetExtractFeePayDetailBeforeCal::getExtractMonth,extractMonth));
                     if (returnCount>0) {
-                        throw new BusinessException("退回失败！任务已计算！");
+                        throw new BusinessException("退回失败！该批次任务已计算！");
                     }
-                    //个体户导入
+                    //计算任务
                     BudgetExtractTaxHandleRecord recordServiceOne = taxHandleRecordService.getOne(new LambdaQueryWrapper<BudgetExtractTaxHandleRecord>().eq(BudgetExtractTaxHandleRecord::getExtractMonth, extractMonth));
 
                     if (recordServiceOne != null) {

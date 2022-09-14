@@ -14,6 +14,7 @@ import com.jtyjy.finance.manager.listener.easyexcel.PageReadListener;
 import com.jtyjy.finance.manager.mapper.IndividualEmployeeFilesMapper;
 import com.jtyjy.finance.manager.query.individual.IndividualFilesQuery;
 import com.jtyjy.finance.manager.service.IndividualEmployeeFilesService;
+import com.jtyjy.finance.manager.utils.BeanMapUtil;
 import com.jtyjy.finance.manager.vo.individual.IndividualEmployeeFilesVO;
 import lombok.SneakyThrows;
 import org.apache.commons.beanutils.BeanUtils;
@@ -23,11 +24,15 @@ import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.beanutils.locale.converters.DateLocaleConverter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -168,6 +173,7 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
 
     @SneakyThrows
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<IndividualImportErrorDTO> importIndividual(MultipartFile multipartFile) {
 ;
         List<IndividualImportErrorDTO> errList = new ArrayList<>();
@@ -176,70 +182,70 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
         try {
             EasyExcel.read(multipartFile.getInputStream(), IndividualImportDTO.class,
                     new PageReadListener<IndividualImportDTO>(dataList -> {
-                        //save
-//                        for (IndividualExportDTO dto : dataList) {
-//                            log.info("读取到一条数据{}", JSON.toJSONString(demoData));
-//                        }
-                        //新增--
-//                            List<IndividualEmployeeFiles> entities = IndividualEmployeeFilesConverter.INSTANCE.importDTOToEntities(dataList);
-                        for (IndividualImportDTO dto : dataList) {
+
+                    for (IndividualImportDTO dto : dataList) {
+                        try {
+                                IndividualEmployeeFiles entity = IndividualEmployeeFilesConverter.INSTANCE.importDTOToEntity(dto);
+                                Integer employeeJobNum = dto.getEmployeeJobNum();
+                                WbPerson personByEmpNo = PersonCache.getPersonByEmpNo(String.valueOf(employeeJobNum));
+                                if(personByEmpNo==null){
+                                    throw new RuntimeException("工号不存在");
+                                }
+                                entity.setDepartmentNo(personByEmpNo.getDeptId());
+                                WbDept byDeptId = DeptCache.getByDeptId(personByEmpNo.getDeptId());
+                                if(byDeptId == null){
+                                    throw new RuntimeException("员工部门不存在");
+                                }
+                                entity.setDepartmentName(byDeptId.getDeptName());
+                                entity.setAccountType(dto.getAccountType().equals("个卡")?1:2);
+                                //通过名称 找id
+                                entity.setDepositBank(BankCache.getBankByBranchName(entity.getDepositBank()) != null ?
+                                        BankCache.getBankByBranchName(entity.getDepositBank()).getSubBranchCode() : entity.getDepositBank());
+                                if (UnitCache.getByName(entity.getIssuedUnit())==null) {
+                                    throw new RuntimeException("发放单位不存在");
+                                }
+                                entity.setIssuedUnit(String.valueOf(UnitCache.getByName(entity.getIssuedUnit()).getId()));
+
+                                entity.setCreateTime(new Date());
+                                entity.setCreateBy(UserThreadLocal.get().getUserName());
+
+                                entity.setUpdateTime(new Date());
+                                entity.setUpdateBy(UserThreadLocal.get().getUserName());
+                                entity.setStatus(1);
                             try {
-                                    IndividualEmployeeFiles entity = IndividualEmployeeFilesConverter.INSTANCE.importDTOToEntity(dto);
-                                    Integer employeeJobNum = dto.getEmployeeJobNum();
-                                    WbPerson personByEmpNo = PersonCache.getPersonByEmpNo(String.valueOf(employeeJobNum));
-                                    if(personByEmpNo==null){
-                                        throw new RuntimeException("工号不存在");
-                                    }
-                                    entity.setDepartmentNo(personByEmpNo.getDeptId());
-                                    WbDept byDeptId = DeptCache.getByDeptId(personByEmpNo.getDeptId());
-                                    if(byDeptId == null){
-                                        throw new RuntimeException("员工部门不存在");
-                                    }
-                                    entity.setDepartmentName(byDeptId.getDeptName());
-                                    entity.setAccountType(dto.getAccountType().equals("个卡")?1:2);
-                                    //通过名称 找id
-                                    entity.setDepositBank(BankCache.getBankByBranchName(entity.getDepositBank()) != null ?
-                                            BankCache.getBankByBranchName(entity.getDepositBank()).getSubBranchCode() : entity.getDepositBank());
-                                    entity.setIssuedUnit(UnitCache.getByName(entity.getIssuedUnit()) != null ?
-                                            UnitCache.getByName(entity.getIssuedUnit()).getName() : entity.getIssuedUnit());
-
-                                    entity.setCreateTime(new Date());
-                                    entity.setCreateBy(UserThreadLocal.get().getUserName());
-
-                                    entity.setUpdateTime(new Date());
-                                    entity.setUpdateBy(UserThreadLocal.get().getUserName());
-                                    entity.setStatus(1);
-                                try {
-                                    this.save(entity);
-                                } catch (Exception e) {
-                                    throw new RuntimeException("工号+户名已存在");
-//                                    e.printStackTrace();
-                                }
+                                this.save(entity);
+                            } catch (Exception e) {
+                                throw new DuplicateKeyException("工号:"+employeeJobNum+"户名:"+entity.getAccountName()+"已存在");
                             }
-                               catch (Exception e) {
-                                IndividualImportErrorDTO errorDTO = new IndividualImportErrorDTO();
-
-                                try {
-                                    PropertyUtils.copyProperties(errorDTO,dto);
-                                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException ex) {
-                                    ex.printStackTrace();
-                                }
-                                errorDTO.setInsertDatabaseError(e.getMessage()==null? e.toString():e.getMessage());
-                                errList.add(errorDTO);
+                        } catch (DuplicateKeyException e){
+                            throw e;
+                        } catch (RuntimeException e) {
+                            IndividualImportErrorDTO errorDTO = new IndividualImportErrorDTO();
+                            try {
+                                PropertyUtils.copyProperties(errorDTO,dto);
+                            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException ex) {
+                                ex.printStackTrace();
                             }
+                            errorDTO.setInsertDatabaseError(e.getMessage()==null? e.toString():e.getMessage());
+                            errList.add(errorDTO);
                         }
-                        System.out.println(dataList);
+                    }
+                    System.out.println(dataList);
                     }, errorMap)).sheet().doRead();
 
             for (Map map : errorMap) {
                 IndividualImportErrorDTO errorDTO = new IndividualImportErrorDTO();
-                try {
-                    BeanUtilsBean.getInstance().getConvertUtils().register(false, false, 0);//解决bigdecimal null
-                    ConvertUtils.register(new DateLocaleConverter(), Date.class);//BeanUtils.populate对日期类型进行处理，否则无法封装
-                    BeanUtils.populate(errorDTO,map);
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    e.printStackTrace();
-                }
+//                SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");
+                SimpleDateFormat sf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+                Date socialSecurityStopDate=sf.parse((String)map.get("socialSecurityStopDate"));
+                Date leaveDate=sf.parse((String)map.get("leaveDate"));
+                map.put("socialSecurityStopDate", socialSecurityStopDate);
+                map.put("leaveDate",leaveDate);
+               errorDTO = BeanMapUtil.mapToBean(map,IndividualImportErrorDTO.class);
+//                    BeanUtilsBean.getInstance().getConvertUtils().register(false, false, 0);//解决bigdecimal null
+//                    ConvertUtils.register(new DateLocaleConverter(Locale.CHINA,"yyyy-MM-dd"), Date.class);
+//                    BeanUtils.populate(errorDTO,map);
+
                 errList.add(errorDTO);
             }
         } catch (Exception e) {

@@ -48,7 +48,7 @@ public class AccountEntryController {
             String empNo = UserThreadLocal.getEmpNo();
             List<String> deptIds = budgetUnitService.getBaseUnitIdListByAccountingNo(empNo);
             if(CollectionUtils.isEmpty(deptIds)){
-                return null;
+                return ResponseEntity.ok(PageResult.apply(0,null));
             }
             Page<ExtractAccountEntryTask> page = entryTaskService.page(new Page<>(query.getPage(), query.getRows()), new LambdaQueryWrapper<ExtractAccountEntryTask>()
                     .eq(query.getStatus()!=null,ExtractAccountEntryTask::getStatus, query.getStatus())

@@ -1144,7 +1144,9 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	 *
 	 * @param sumId
 	 */
+	@Transactional(rollbackFor = Exception.class)
 	public void submit(String ids) {
+
 		Optional.ofNullable(ids).orElseThrow(() -> new RuntimeException("参数错误！"));
 		List<BudgetExtractsum> budgetExtractsums = this.budgetExtractsumMapper.selectBatchIds(Arrays.asList(ids.split(",")));
 
@@ -1159,6 +1161,10 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		List<BudgetExtractdetail> bedList = new ArrayList<>();
 		List<BudgetExtractImportdetail> allimportDetails = new ArrayList<>();
 		budgetExtractsums.forEach(extractsum -> {
+			//检验
+			// 1、提成信息中存在绩效奖和预提绩效奖时，预算明细不能为空,提示用户未填写预算明细
+			// 2、用户填写了预算明细，则预算明细金额与绩效奖和预提绩效奖金额和一致
+			applicationService.validateApplication(extractsum);
 			//审核通过及已计算的不允许提交
 			if (extractsum.getStatus()!=0){
 				throw new RuntimeException("操作失败！非草稿状态，提成单号【" + extractsum.getCode() + "】不允许提交!");
