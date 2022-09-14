@@ -128,7 +128,7 @@
             budget_extract_personality_pay_detail bepd
             LEFT JOIN budget_individual_employee_files bief ON bepd.personality_id = bief.id
 
-        where bief.employee_job_num = #{employeeJobNum} and bief.employee_name = #{employeeName}
+        where bief.employee_job_num = #{employeeJobNum} and bief.employee_name = #{employeeName} and bepd.extract_month = #{extractBatch}
         <if test="id !=null">
             and bepd.id != #{id}
          </if>

@@ -19,7 +19,7 @@ public interface BudgetExtractPersonalityPayDetailMapper extends BaseMapper<Budg
 
 	List<ExtractPersonalityPayDetailVO> getExtractPersonalityPayDetailVO(Page<ExtractPersonalityPayDetailVO> pageCond,@Param("params") ExtractPersonalityPayDetailQueryVO params, @Param("extractBatch")String extractBatch);
 
-	List<BudgetExtractPersonalityPayDetail> getDbMoney(@Param("employeeJobNum") Integer employeeJobNum, @Param("employeeName")String employeeName, @Param("id")Long id);
+	List<BudgetExtractPersonalityPayDetail> getDbMoney(@Param("employeeJobNum") Integer employeeJobNum, @Param("employeeName")String employeeName, @Param("id")Long id,@Param("extractBatch")String extractBatch);
 }
 
 

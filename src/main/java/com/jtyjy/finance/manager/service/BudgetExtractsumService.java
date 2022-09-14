@@ -4760,6 +4760,8 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		Map<Long, BudgetBillingUnit> billingUnitMap = billingUnitMapper.selectList(null).stream().collect(Collectors.toMap(e -> e.getId(), Function.identity()));
 		Map<Long, IndividualEmployeeFiles> individualEmployeeFilesMap = individualEmployeeFilesMapper.selectBatchIds(individualEmployeeIdList).stream().collect(Collectors.toMap(e -> e.getId(), Function.identity()));
 		Map<Long, List<IndividualEmployeeTicketReceiptInfo>> receiptInfoMap = getIndividualEmployeeTicketReceiptInfoList(individualEmployeeIdList).stream().collect(Collectors.groupingBy(e -> e.getIndividualEmployeeInfoId()));
+
+		Map<Long, BigDecimal> initReceiptMap = personalityPayDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractPersonalityPayDetail>().eq(BudgetExtractPersonalityPayDetail::getIsInitData, 1).in(BudgetExtractPersonalityPayDetail::getPersonalityId, individualEmployeeIdList)).stream().collect(Collectors.toMap(e -> e.getPersonalityId(), e -> e.getReceiptSum(),(e1,e2)->e1));
 		extractPersonalityPayDetails.stream().collect(Collectors.groupingBy(BudgetExtractPersonalityPayDetail::getPersonalityId)).forEach((personalityId,list)->{
 			IndividualEmployeeFiles individualEmployeeFiles = individualEmployeeFilesMap.get(personalityId);
 
@@ -4775,12 +4777,16 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				BudgetBillingUnit budgetBillingUnit = billingUnitMap.get(e.getBillingUnitId());
 				return !("0".equals(budgetBillingUnit.getBillingUnitType()) || ("1".equals(budgetBillingUnit.getBillingUnitType()) && individualEmployeeFiles.getAccountType() == 1));
 			}).collect(Collectors.toList());
-			BigDecimal total = effectList.stream().map(e->{
-				return e.getExtractSum().add(e.getSalarySum()).add(e.getWelfareSum()).add(e.getCurSalary()).add(e.getCurRealExtract()).add(e.getCurWelfare());
-			}).reduce(BigDecimal.ZERO,BigDecimal::add);
-			BigDecimal subtract = list.get(0).getReceiptSum().subtract(total);
 
 			if(!CollectionUtils.isEmpty(effectList)){
+				BigDecimal initReceipt = BigDecimal.ZERO;
+				if(receiptInfoMap.get(personalityId)!=null){
+					initReceipt = initReceiptMap.get(personalityId);
+				}
+				BigDecimal total = effectList.stream().map(e->{
+					return e.getExtractSum().add(e.getSalarySum()).add(e.getWelfareSum()).add(e.getCurSalary()).add(e.getCurRealExtract()).add(e.getCurWelfare());
+				}).reduce(BigDecimal.ZERO,BigDecimal::add);
+				BigDecimal subtract = list.get(0).getReceiptSum().subtract(total);
 				BigDecimal annualQuota = individualEmployeeFiles.getAnnualQuota() == null ? BigDecimal.ZERO : individualEmployeeFiles.getAnnualQuota();
 				List<IndividualEmployeeTicketReceiptInfo> individualEmployeeTicketReceiptInfos = receiptInfoMap.get(personalityId);
 				if (!CollectionUtils.isEmpty(individualEmployeeTicketReceiptInfos)) {
@@ -4795,7 +4801,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 					}).map(e -> {
 						return e.getInvoiceAmount() == null ? BigDecimal.ZERO : e.getInvoiceAmount();
 					}).reduce(BigDecimal.ZERO, BigDecimal::add);
-					annualQuota = annualQuota.subtract(receiptInfoMoney);
+					annualQuota = annualQuota.subtract(receiptInfoMoney).subtract(initReceipt);
 				}
 				for (int i = 0; i < effectList.size(); i++) {
 					BudgetExtractPersonalityPayDetail payDetail = effectList.get(i);

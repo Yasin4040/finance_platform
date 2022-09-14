@@ -167,7 +167,7 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 //				.ne(entity.getId()!=null,BudgetExtractPersonalityPayDetail::getId, entity.getId()));
 
 		IndividualEmployeeFiles individualEmployeeFiles = individualEmployeeFilesMapper.selectById(entity.getPersonalityId());
-		List<BudgetExtractPersonalityPayDetail> extractPersonalityPayDetails =  personalityPayDetailMapper.getDbMoney(individualEmployeeFiles.getEmployeeJobNum(),individualEmployeeFiles.getEmployeeName(),entity.getId());
+		List<BudgetExtractPersonalityPayDetail> extractPersonalityPayDetails =  personalityPayDetailMapper.getDbMoney(individualEmployeeFiles.getEmployeeJobNum(),individualEmployeeFiles.getEmployeeName(),entity.getId(),entity.getExtractBatch());
 
 		if(entity.getId()==null){
 			long count = extractPersonalityPayDetails.stream().filter(e -> e.getPersonalityId().equals(entity.getPersonalityId())).count();
