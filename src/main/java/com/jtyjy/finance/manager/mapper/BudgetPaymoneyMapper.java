@@ -5,6 +5,8 @@ import com.jtyjy.finance.manager.bean.BudgetPaymoney;
 import java.util.List;
 import java.util.Map;
 
+import com.jtyjy.finance.manager.vo.BudgetExtractPayQueryVO;
+import com.jtyjy.finance.manager.vo.BudgetExtractPayResponseVO;
 import org.apache.ibatis.annotations.Param;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -111,4 +113,12 @@ public interface BudgetPaymoneyMapper extends BaseMapper<BudgetPaymoney> {
      * @return
      */
     List<BudgetPaymoney> otherAddQuery(Page pageCond, Map<String, Object> conditionMap, String authSql);
+	/**
+	 * <p>提成付款单列表</p>
+	 * @author minzhq
+	 * @date 2022/9/14 11:21
+	 * @param pageCond
+	 * @param params
+	 */
+	List<BudgetExtractPayResponseVO> getExtractPayMoneyList(Page<BudgetExtractPayResponseVO> pageCond, @Param("params") BudgetExtractPayQueryVO params);
 }

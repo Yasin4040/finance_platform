@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import com.jtyjy.core.auth.anno.NoLoginAnno;
 import com.jtyjy.finance.manager.bean.BudgetCommonAttachment;
+import com.jtyjy.finance.manager.enmus.*;
 import com.jtyjy.finance.manager.query.UploadQuery;
 import io.swagger.annotations.*;
 import org.apache.commons.fileupload.FileUpload;
@@ -26,13 +27,6 @@ import com.jtyjy.finance.manager.bean.BudgetYearPeriod;
 import com.jtyjy.finance.manager.bean.WbBanks;
 import com.jtyjy.finance.manager.bean.WbDept;
 import com.jtyjy.finance.manager.controller.BaseController;
-import com.jtyjy.finance.manager.enmus.AuthorFeeStatusEnum;
-import com.jtyjy.finance.manager.enmus.ExtractExcessTypeEnum;
-import com.jtyjy.finance.manager.enmus.ExtractStatusEnum;
-import com.jtyjy.finance.manager.enmus.MsgTypeEnum;
-import com.jtyjy.finance.manager.enmus.TemplateCategoryEnum;
-import com.jtyjy.finance.manager.enmus.TemplateParameterFieldTypeEnum;
-import com.jtyjy.finance.manager.enmus.TemplateTypeEnum;
 import com.jtyjy.finance.manager.mapper.BudgetYearPeriodMapper;
 import com.jtyjy.finance.manager.mapper.WbBanksMapper;
 import com.jtyjy.finance.manager.service.BudgetAuthorfeesumService;
@@ -107,6 +101,17 @@ public class CommonController extends BaseController {
     		return map;
     	}).collect(Collectors.toList());
     }
+
+	@ApiOperation(value = "获取提成支付模板列表",httpMethod="GET")
+	@GetMapping("/getExtractPayTemplateList")
+	public List<Map<String,Object>> getExtractPayTemplateList(){
+		return Arrays.stream(ExtractPayTemplateEnum.values()).map(e->{
+			Map<String,Object> map = new HashMap<>();
+			map.put("type", e.getType());
+			map.put("value", ExtractPayTemplateEnum.getValue(e.getType()));
+			return map;
+		}).collect(Collectors.toList());
+	}
     
     /**
      * author minzhq

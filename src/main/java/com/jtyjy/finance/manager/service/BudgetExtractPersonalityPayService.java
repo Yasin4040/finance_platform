@@ -325,7 +325,7 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 			}
 		}
 		List<BudgetExtractsum> curBatchExtractSumList = extractsumService.getCurBatchExtractSum(extractBatch);
-		extractsumService.generateExtractStepLog(curBatchExtractSumList.stream().map(BudgetExtractsum::getId).collect(Collectors.toList()), OperationNodeEnum.TAX_PREPARATION_CALCULATION_2,OperationNodeEnum.getValue(OperationNodeEnum.TAX_PREPARATION_CALCULATION_2.getType()) + "完成",1);
+		extractsumService.generateExtractStepLog(curBatchExtractSumList.stream().map(BudgetExtractsum::getId).collect(Collectors.toList()), OperationNodeEnum.TAX_PREPARATION_CALCULATION_2,"【"+OperationNodeEnum.getValue(OperationNodeEnum.TAX_PREPARATION_CALCULATION_2.getType()) + "】完成",1);
 
 		List<BudgetExtractPersonalityPayDetail> payCommonDetails = extractPersonalityPayDetails.stream().filter(e -> e.getPayStatus() == ExtractPersonalityPayStatusEnum.COMMON.type).collect(Collectors.toList());
 		if(!CollectionUtils.isEmpty(payCommonDetails)){

@@ -1623,7 +1623,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				}
 				taxHandleRecordService.updateById(handleRecord);
 			}
-			generateExtractStepLog(sumIds, OperationNodeEnum.TAX_PREPARATION_CALCULATION_1, OperationNodeEnum.getValue(OperationNodeEnum.TAX_PREPARATION_CALCULATION_1.getType()) + "完成", 1);
+			generateExtractStepLog(sumIds, OperationNodeEnum.TAX_PREPARATION_CALCULATION_1, "【"+OperationNodeEnum.getValue(OperationNodeEnum.TAX_PREPARATION_CALCULATION_1.getType()) + "】完成", 1);
 			taxGroupSuccess(curExtractBatch);
 
 			if (type == 1) {
@@ -4528,7 +4528,13 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	}
 
 	public Map<Long,BigDecimal> getReceiptSum(List<Long> individualEmployeeIdList,String extractBatch){
-		Map<Long, BigDecimal> receiptInfoMap = getIndividualEmployeeTicketReceiptInfoList(individualEmployeeIdList).stream().collect(Collectors.groupingBy(IndividualEmployeeTicketReceiptInfo::getIndividualEmployeeInfoId, Collectors.mapping(Function.identity(), Collectors.collectingAndThen(Collectors.toList(), e -> e.stream().map(IndividualEmployeeTicketReceiptInfo::getInvoiceAmount).reduce(BigDecimal.ZERO, BigDecimal::add)))));
+		//Map<Long, BigDecimal> receiptInfoMap = getIndividualEmployeeTicketReceiptInfoList(individualEmployeeIdList).stream().collect(Collectors.groupingBy(IndividualEmployeeTicketReceiptInfo::getIndividualEmployeeInfoId, Collectors.mapping(Function.identity(), Collectors.collectingAndThen(Collectors.toList(), e -> e.stream().map(IndividualEmployeeTicketReceiptInfo::getInvoiceAmount).reduce(BigDecimal.ZERO, BigDecimal::add)))));
+		Map<Long, BigDecimal> receiptInfoMap = new HashMap<>();
+		Map<Long, List<IndividualEmployeeTicketReceiptInfo>> receiptInfos = getIndividualEmployeeTicketReceiptInfoList(individualEmployeeIdList).stream().collect(Collectors.groupingBy(e -> e.getIndividualEmployeeInfoId()));
+		receiptInfos.forEach((key,list)->{
+			BigDecimal money = list.stream().map(e -> e.getInvoiceAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+			receiptInfoMap.put(key,money);
+		});
 
 		Map<Long, BigDecimal> resultMap = new HashMap<>();
 		Map<Long, BigDecimal> initReceiptMap = personalityPayDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractPersonalityPayDetail>().eq(BudgetExtractPersonalityPayDetail::getIsInitData, 1).in(BudgetExtractPersonalityPayDetail::getPersonalityId, individualEmployeeIdList)).stream().collect(Collectors.toMap(e -> e.getPersonalityId(), e -> e.getReceiptSum(),(e1,e2)->e1));
@@ -4988,19 +4994,19 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			List<BudgetExtractAccountTask> accountTasks = createAccountTask(extractBatch, perPayDetails, curBatchExtractSumList, unitMap);
 
 			if(CollectionUtils.isEmpty(accountTasks)){
+				//没有分单任务、直接到付款
 				curBatchExtractSumList.forEach(sum -> {
 					sum.setStatus(ExtractStatusEnum.ACCOUNT.getType());
 				});
 				this.updateBatchById(curBatchExtractSumList);
-				generateExtractStepLog(curBatchExtractSumList.stream().map(BudgetExtractsum::getId).collect(Collectors.toList()), OperationNodeEnum.ACCOUNTING,OperationNodeEnum.getValue(OperationNodeEnum.ACCOUNTING.getType()) + "完成",1);
+				generateExtractStepLog(curBatchExtractSumList.stream().map(BudgetExtractsum::getId).collect(Collectors.toList()), OperationNodeEnum.ACCOUNTING,"【"+OperationNodeEnum.getValue(OperationNodeEnum.ACCOUNTING.getType()) + "】完成",1);
+				finishAccount(false,null,extractBatch);
 			}else{
 				curBatchExtractSumList.forEach(sum -> {
 					sum.setStatus(ExtractStatusEnum.CALCULATION_COMPLETE.getType());
 				});
 				this.updateBatchById(curBatchExtractSumList);
 			}
-
-
 
 		}
 	}
@@ -5141,12 +5147,57 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 
 			long count = accountTasks.stream().filter(e -> e.getAccountantStatus() == 0).count();
 			if(count == 0){
-				//TODO 直接到出纳付款
+				finishAccount(true,accountTasks.stream().map(e->e.getExtractCode()).collect(Collectors.toList()),extractBatch);
 			}
 		}
 
 
 
+	}
+
+	/**
+	 * <p>批次做账完成</p>
+	 * @author minzhq
+	 * @date 2022/9/13 14:46
+	 * @param isDelay 是否是延期支付申请单
+	 * @param extractCode
+	 * @param extractBatch
+	 */
+	 public void finishAccount(boolean isDelay, List<String> delayExtractCodeList,String extractBatch) {
+
+
+		List<BudgetExtractPerPayDetail> perPayDetails = null;
+		if(isDelay){
+			perPayDetails = perPayDetailService.list(new LambdaQueryWrapper<BudgetExtractPerPayDetail>().in(BudgetExtractPerPayDetail::getExtractCode, delayExtractCodeList).eq(BudgetExtractPerPayDetail::getPayStatus, ExtractPersonalityPayStatusEnum.DELAY.type));
+		}else{
+			perPayDetails = perPayDetailService.list(new LambdaQueryWrapper<BudgetExtractPerPayDetail>().eq(BudgetExtractPerPayDetail::getExtractMonth, extractBatch).eq(BudgetExtractPerPayDetail::getPayStatus, ExtractPersonalityPayStatusEnum.COMMON.type));
+		}
+		List<BudgetPaymoney> payMoneyList = perPayDetails.stream().map(e -> {
+			BudgetPaymoney payMoney = new BudgetPaymoney();
+			payMoney.setPaymoneycode(distributedNumber.getPaymoneyNum());
+			payMoney.setPaymoneyobjectcode(e.getExtractCode());
+			payMoney.setPaymoneyobjectid(e.getId());
+			payMoney.setPaymoney(e.getPayMoney());
+			payMoney.setPaytype(1);
+			payMoney.setPaymoneytype(PaymoneyTypeEnum.EXTRACT_PAY.type);
+			payMoney.setPaymoneystatus(PaymoneyStatusEnum.RECEIVE_PAY.type);
+			payMoney.setVerifystatus(0);
+			payMoney.setCreatetime(new Date());
+			payMoney.setBunitname(e.getBillingUnitName());
+			payMoney.setBunitbankaccount(e.getBillingUnitAccount());
+			payMoney.setBunitaccountbranchcode(e.getBillingUnitBranchCode());
+			payMoney.setBunitaccountbranchname(e.getBillingUnitBankName());
+			payMoney.setBankaccount(e.getReceiverBankAccount());
+			payMoney.setBankaccountname(e.getReceiverAccountName());
+			payMoney.setBankaccountbranchcode(e.getReceiverBankAccountBranchCode());
+			payMoney.setBankaccountbranchname(e.getReceiveBankAccountBankName());
+			payMoney.setOpenbank(e.getReceiverOpenBank());
+			payMoney.setRemark("提成【" + e.getExtractCode() + "】付款");
+			return payMoney;
+		}).collect(Collectors.toList());
+		if(!CollectionUtils.isEmpty(payMoneyList)){
+			paymoneyService.saveBatch(payMoneyList);
+		}
 	}
 
 	private void doGenerateSplitOrderDetail(List<BudgetExtractPerPayDetail> perPayDetails,List<ExtractPayDetailVO> empOrderPayDetails,List<ExtractPersonalityPayDetailVO> orderPersonalityPayDetails,BudgetExtractsum extractsum,Map<Long, BudgetBillingUnit> unitMap,Map<Long, List<BudgetBillingUnitAccount>> unitAccountMap,Map<Long, IndividualEmployeeFiles> individualEmployeeFilesMap){
