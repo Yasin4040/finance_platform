@@ -1204,7 +1204,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		List<BudgetExtractImportdetail> importDetails = extractImportDetailMapper
 				.selectList(new QueryWrapper<BudgetExtractImportdetail>().eq("extractsumid", sumId));
 		if (!CollectionUtils.isEmpty(importDetails)) {
-			importDetails.stream().collect(Collectors.groupingBy(BudgetExtractImportdetail::getIdnumber)).forEach((idnumber, importdetailByEmpnoList) -> {
+			importDetails.stream().collect(Collectors.groupingBy(x->x.getBusinessType()+"-"+x.getIdnumber())).forEach((typeIdnumber, importdetailByEmpnoList) -> {
 				BudgetExtractdetail bed = new BudgetExtractdetail();
 				bed.setExtractsumid(sumId);
 				BudgetExtractImportdetail beid = importdetailByEmpnoList.get(0);
@@ -1220,6 +1220,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				bed.setUpdatetime(bed.getCreatetime());
 				bed.setDeleteflag(0);
 				bed.setIscompanyemp(beid.getIscompanyemp());
+				bed.setBusinessType(beid.getBusinessType());
 				bed.setExcesstype(-1);
 				bed.setExcessmoney(BigDecimal.ZERO);
 				extractDetailMapper.insert(bed);
