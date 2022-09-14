@@ -226,6 +226,7 @@ public class BudgetExtractPersonalityPayController {
 			int length = query.split("-").length;
 			if (length != 3) throw new RuntimeException("请先选择导航栏的一个批次！");
 			String extractBatch = query.split("-")[2];
+			this.extractsumService.validateIsCanOperatePersonalityPayDetail(extractBatch);
 			List<ExtractPersonlityDetailExcelData> details = this.extractsumService.getExtractPersonlityDetail(extractBatch);
 			is = this.getClass().getClassLoader().getResourceAsStream("template/exportPersonlitydetail.xlsx");
 			ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream(extractBatch + "员工个体户明细表", response), ExtractPersonlityDetailExcelData.class).withTemplate(is).build();

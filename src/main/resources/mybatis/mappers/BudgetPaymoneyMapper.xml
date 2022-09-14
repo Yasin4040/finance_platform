@@ -385,4 +385,57 @@
         </if>
     	ORDER BY _pay.receivetime DESC 
     </select>
+    <select id="getExtractPayMoneyList" resultType="com.jtyjy.finance.manager.vo.BudgetExtractPayResponseVO">
+         SELECT
+            pm.id,
+            pm.paymoneystatus payStatus,
+        IF
+            ( pm.paymoneystatus = 1, '待支付', '支付中' ) payStatusName,
+            pm.createtime createTime,
+            pm.paymoneycode payMoneyCode,
+            pm.paymoneyobjectcode extractCode,
+            bes.extractmonth extractBatch,
+            bes.deptname deptName,
+            pm.bunitname billingUnitName,
+            pm.paymoney payMoney,
+            pm.bankaccount bankAccount,
+            pm.bankaccountname bankAccountName,
+            pm.openbank openBank,
+            pm.bankaccountbranchcode bankAccountBranchCode,
+            pm.bankaccountbranchname bankAccountBranchName,
+            wb.province,
+            wb.city,
+            concat( sus.DISPLAY_NAME, '(', sus.USER_NAME, ')' ) payer,
+            pm.receivetime payTime
+        FROM
+            budget_paymoney pm
+            INNER JOIN budget_extract_per_pay_detail bepd ON pm.paymoneyobjectid = bepd.id
+            LEFT JOIN budget_extractsum bes ON ifnull( bepd.relation_extract_code, bepd.extract_code ) = bes.`code`
+            LEFT JOIN wb_banks wb ON wb.sub_branch_code = pm.bankaccountbranchcode
+            LEFT JOIN wb_user sus ON sus.USER_NAME = pm.receiver
+        WHERE
+            pm.paymoneytype = 2
+            AND pm.paymoneystatus IN (
+            1,
+            2)
+        <if test="params.billingUnitName !=null and params.billingUnitName != '' ">
+            and pm.bunitname like concat('%',#{params.billingUnitName},'%')
+        </if>
+        <if test="params.deptName !=null and params.deptName != '' ">
+            and bes.deptname like concat('%',#{params.deptName},'%')
+        </if>
+        <if test="params.bankAccountBranchName !=null and params.bankAccountBranchName != '' ">
+            and pm.bankaccountbranchname like concat('%',#{params.bankAccountBranchName},'%')
+        </if>
+        <if test="params.extractBatch !=null and params.extractBatch != '' ">
+            and  bes.extractmonth like concat('%',#{params.extractBatch},'%')
+        </if>
+        <if test="params.extractCode !=null and params.extractCode != '' ">
+            and  pm.paymoneyobjectcode like concat('%',#{params.extractCode},'%')
+        </if>
+        <if test="params.bankAccountName !=null and params.bankAccountName != '' ">
+            and  pm.bankaccountname like concat('%',#{params.bankAccountName},'%')
+        </if>
+        order by pm.paymoneystatus desc,pm.createtime desc
+    </select>
 </mapper>

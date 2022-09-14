@@ -57,6 +57,7 @@ public class BudgetExtractAccountController {
 			@ApiImplicitParam(value = "单号", name = "code", dataType = "String", required = true),
 			@ApiImplicitParam(value = "付款单位", name = "unitName", dataType = "String", required = false),
 			@ApiImplicitParam(value = "个体户名称", name = "personalityName", dataType = "String", required = false),
+			@ApiImplicitParam(value = "工号", name = "empNo", dataType = "String", required = false),
 			@ApiImplicitParam(value = "发放状态(1。正常 2。调账 3。延期)", name = "payStatus", dataType = "Integer", required = false),
 			@ApiImplicitParam(value = "当前页（默认1）", name = "page", dataType = "Integer", required = false),
 			@ApiImplicitParam(value = "每页条数（默认20）", name = "rows", dataType = "Integer", required = false)
@@ -65,11 +66,12 @@ public class BudgetExtractAccountController {
 	public ResponseEntity<PageResult<ExtractAccountTaskDetailVO>> getExtractAccountTaskDetail(
 																							@RequestParam(value = "code")String code,
 																							@RequestParam(value = "unitName",required = false)String unitName,
+																							@RequestParam(value = "empNo",required = false)String empNo,
 																							@RequestParam(value = "personalityName",required = false)String personalityName,
 																							@RequestParam(value = "payStatus",required = false)Integer payStatus,
 	                                                                                          @RequestParam(defaultValue = "1") Integer page, @RequestParam(defaultValue = "20") Integer rows) {
 		try {
-			PageResult<ExtractAccountTaskDetailVO> pageList = accountService.getExtractAccountTaskDetail(code,unitName,personalityName,payStatus, page, rows);
+			PageResult<ExtractAccountTaskDetailVO> pageList = accountService.getExtractAccountTaskDetail(code,unitName,personalityName,empNo,payStatus, page, rows);
 			return ResponseEntity.ok(pageList);
 		} catch (Exception e) {
 			e.printStackTrace();

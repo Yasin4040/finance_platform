@@ -372,9 +372,9 @@ public class BudgetPaymoneyService extends DefaultBaseService<BudgetPaymoneyMapp
         WbUser user = UserThreadLocal.get();
         List<BudgetPaymoney> retList = this.mapper.getCashPayMoneyPageInfo(pageCond, conditionMap, JdbcSqlThreadLocal.get());
         retList.stream().forEach(budgetPaymoney -> {
-            if(budgetPaymoney.getPaymoneytype() == 1 || budgetPaymoney.getPaymoneytype() == 2){
+            if(budgetPaymoney.getPaymoneytype() == PaymoneyTypeEnum.REIMBURSEMENT_PAY.type || budgetPaymoney.getPaymoneytype() == PaymoneyTypeEnum.EXTRACT_PAY.type){
                 budgetPaymoney.setSourceTypeName("预算系统");
-            }else if(Arrays.asList(3).contains(budgetPaymoney.getPaymoneytype())){
+            }else if(Arrays.asList(PaymoneyTypeEnum.LEND_PAY.type).contains(budgetPaymoney.getPaymoneytype())){
                 budgetPaymoney.setSourceTypeName("OA系统");
             }
         });

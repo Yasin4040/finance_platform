@@ -10,7 +10,7 @@
             beat.id,
             bes.`status`,
             bes.id sumId,
-            bes.`code` 'code',
+            beat.extract_code 'code',
             byp.period yearPeriod,
             concat( substr( bes.extractmonth, 5, 2 )+ 0, '月' ) monthPeriod,
             bes.extractmonth extractBatch,
@@ -18,12 +18,12 @@
             beat.create_time createTime,
             CONCAT( wu.DISPLAY_NAME, '(', wu.USER_NAME, ')' ) accountant,
             beat.accountant_time accountantTime,
-            ( SELECT sum( pay_money ) FROM budget_extract_per_pay_detail WHERE extract_code = bes.`code` AND pay_status = beat.task_type and billing_unit_id=bbu.id) payMoney,
+            ( SELECT sum( pay_money ) FROM budget_extract_per_pay_detail WHERE extract_code = beat.extract_code AND pay_status = beat.task_type and billing_unit_id=bbu.id) payMoney,
             beat.task_type taskType,
             bbu.`name` billingUnitName
         FROM
             budget_extract_account_task beat
-            LEFT JOIN budget_extractsum bes ON beat.extract_code = bes.`code`
+            LEFT JOIN budget_extractsum bes ON ifnull(beat.relation_extract_code,beat.extract_code) = bes.`code`
             LEFT JOIN budget_year_period byp ON byp.id = bes.yearid
             LEFT JOIN wb_user wu ON beat.accountant_emp_no = wu.USER_NAME
             LEFT JOIN budget_billing_unit bbu ON bbu.id = beat.billing_unit_id
@@ -75,6 +75,9 @@
             left join budget_individual_employee_files bief on bief.id = beppd.personality_id
         where beppd.extract_code = #{params.extractCode}
 
+        <if test="params.empNo!=null and params.empNo!=''">
+            and beppd.receiver_code like concat('%',#{params.empNo},'%')
+        </if>
         <if test="params.unitName!=null and params.unitName!=''">
             and bbu.`name` like concat('%',#{params.unitName},'%')
         </if>
