@@ -10,6 +10,8 @@ import com.jtyjy.finance.manager.bean.WbBanks;
 import com.jtyjy.finance.manager.cache.BankCache;
 import com.jtyjy.finance.manager.dto.ExtractPreparePayDTO;
 import com.jtyjy.finance.manager.easyexcel.BudgetExtractZhBatchPayExcelData;
+import com.jtyjy.finance.manager.easyexcel.BudgetExtractZhDfPayExcelData;
+import com.jtyjy.finance.manager.easyexcel.BudgetPayTotalExcelData;
 import com.jtyjy.finance.manager.enmus.ExtractPayTemplateEnum;
 import com.jtyjy.finance.manager.enmus.PayBatchTypeEnum;
 import com.jtyjy.finance.manager.enmus.PaymoneyStatusEnum;
@@ -24,10 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -106,35 +105,78 @@ public class BudgetExtractPayService {
 
 		List<Map<String,Object>> resultList = new ArrayList<>();
 		List<BudgetPaymoney> budgetPaymonies = paymoneyMapper.selectBatchIds(payMoneyIds);
-
+		List<BudgetPayTotalExcelData> excelDatas = new ArrayList<>();
+		Map<String,Object> map = new HashMap<>();
+		map.put("付款明细汇总表",excelDatas);
+		resultList.add(map);
+		List<Map<String,Object>> sheetMapList = new ArrayList<>();
 		if(type == ExtractPayTemplateEnum.ZS_BATCH.type){
-
-
-
 			budgetPaymonies.stream().collect(Collectors.groupingBy(BudgetPaymoney::getBunitname)).forEach((bunitname,list)->{
-
+				Map<String,Object> sheetMap = new LinkedHashMap<>();
 				List<BudgetExtractZhBatchPayExcelData> bUnitNameList = list.stream().map(pm -> {
-					BudgetExtractZhBatchPayExcelData excelData = new BudgetExtractZhBatchPayExcelData();
-					excelData.setBankAccount(pm.getBankaccount());
-					excelData.setBankAccountName(pm.getBankaccountname());
-					excelData.setOpenBank(pm.getOpenbank());
-					WbBanks bank = bankCache.getBankByBranchCode(pm.getBankaccountbranchcode());
-					excelData.setProvince(bank.getProvince());
-					excelData.setCity(bank.getCity());
-					excelData.setBunitAccount(pm.getBunitbankaccount());
-					excelData.setPayMoney(pm.getPaymoney().stripTrailingZeros().toPlainString());
-					excelData.setBranchCode(pm.getBankaccountbranchcode());
-					excelData.setBankName(pm.getBankaccountbranchname());
-					return excelData;
+					return setBudgetExtractZhBatchPayExcelData(pm);
 				}).collect(Collectors.toList());
+				sheetMap.put(bunitname,bUnitNameList);
+				list.stream().collect(Collectors.groupingBy(e -> {
+					return e.getBankaccountbranchname();
+				})).forEach((key,list1)->{
+					BudgetPayTotalExcelData excelData = new BudgetPayTotalExcelData(bunitname,key,list1.stream().map(BudgetPaymoney::getPaymoney).reduce(BigDecimal.ZERO,BigDecimal::add).setScale(2,BigDecimal.ROUND_HALF_UP));
+					excelDatas.add(excelData);
+					List<BudgetExtractZhBatchPayExcelData> bunitBankList = list1.stream().map(pm -> {
+						return setBudgetExtractZhBatchPayExcelData(pm);
+					}).collect(Collectors.toList());
+					sheetMap.put(bunitname+"-"+key,bunitBankList);
+				});
+				sheetMapList.add(sheetMap);
+			});
 
-				Map<String, List<BudgetExtractZhBatchPayExcelData>> bUnitNameBankMap = bUnitNameList.stream().collect(Collectors.groupingBy(e -> {
-					return bunitname + "-" + e.getBankName();
-				}));
-
+		}else if(type == ExtractPayTemplateEnum.ZS_DF.type){
+			budgetPaymonies.stream().collect(Collectors.groupingBy(BudgetPaymoney::getBunitname)).forEach((bunitname,list)->{
+				Map<String,Object> sheetMap = new LinkedHashMap<>();
+				List<BudgetExtractZhDfPayExcelData> bUnitNameList = list.stream().map(pm -> {
+					return setBudgetExtractZhDfPayExcelData(pm);
+				}).collect(Collectors.toList());
+				sheetMap.put(bunitname,bUnitNameList);
+				list.stream().collect(Collectors.groupingBy(e -> {
+					return e.getBankaccountbranchname();
+				})).forEach((key,list1)->{
+					BudgetPayTotalExcelData excelData = new BudgetPayTotalExcelData(bunitname,key,list1.stream().map(BudgetPaymoney::getPaymoney).reduce(BigDecimal.ZERO,BigDecimal::add).setScale(2,BigDecimal.ROUND_HALF_UP));
+					excelDatas.add(excelData);
+					List<BudgetExtractZhDfPayExcelData> bunitBankList = list1.stream().map(pm -> {
+						return setBudgetExtractZhDfPayExcelData(pm);
+					}).collect(Collectors.toList());
+					sheetMap.put(bunitname+"-"+key,bunitBankList);
+				});
+				sheetMapList.add(sheetMap);
 			});
 		}
-
+		resultList.addAll(sheetMapList);
 		return resultList;
+	}
+
+	private BudgetExtractZhBatchPayExcelData setBudgetExtractZhBatchPayExcelData(BudgetPaymoney pm){
+		BudgetExtractZhBatchPayExcelData excelData = new BudgetExtractZhBatchPayExcelData();
+		excelData.setBankAccount(pm.getBankaccount());
+		excelData.setBankAccountName(pm.getBankaccountname());
+		excelData.setOpenBank(pm.getOpenbank());
+		WbBanks bank = bankCache.getBankByBranchCode(pm.getBankaccountbranchcode());
+		excelData.setProvince(bank.getProvince());
+		excelData.setCity(bank.getCity());
+		excelData.setBunitAccount(pm.getBunitbankaccount());
+		excelData.setPayMoney(pm.getPaymoney().setScale(2,BigDecimal.ROUND_HALF_UP));
+		excelData.setBranchCode(pm.getBankaccountbranchcode());
+		excelData.setBankName(pm.getBankaccountbranchname());
+		return excelData;
+	}
+
+	private BudgetExtractZhDfPayExcelData setBudgetExtractZhDfPayExcelData(BudgetPaymoney pm){
+		BudgetExtractZhDfPayExcelData excelData = new BudgetExtractZhDfPayExcelData();
+		excelData.setBankAccount(pm.getBankaccount());
+		excelData.setBankAccountName(pm.getBankaccountname());
+		excelData.setOpenBank(pm.getOpenbank());
+		WbBanks bank = bankCache.getBankByBranchCode(pm.getBankaccountbranchcode());
+		excelData.setCity(bank.getCity());
+		excelData.setPayMoney(pm.getPaymoney().setScale(2,BigDecimal.ROUND_HALF_UP));
+		return excelData;
 	}
 }
