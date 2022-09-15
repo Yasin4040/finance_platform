@@ -1185,10 +1185,13 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				application.setStatus(ExtractStatusEnum.VERIFYING.getType());
 				application.setUpdateTime(new Date());
 				application.setUpdateBy(UserThreadLocal.getEmpNo());
-				applicationService.updateById(application);
+
 
 				//日志记录
 				applicationLogService.saveLog(application.getId());
+				//uploadOA 上传OA
+//				applicationService.uploadOA(application);
+				applicationService.updateById(application);
 			}
 		});
 		if (!allimportDetails.isEmpty()) this.extractImportDetailService.updateBatchById(allimportDetails);

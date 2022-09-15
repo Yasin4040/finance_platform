@@ -38,6 +38,8 @@ public class CommissionApplicationInfoUpdateVO {
     @ApiModelProperty(value = "备注")
     private String remarks;
 
+    @ApiModelProperty(value = "oa密码,上传附件时需使用")
+    private String oaPassword;
     //预算明细
     List<BudgetDetailsVO> budgetList;
 

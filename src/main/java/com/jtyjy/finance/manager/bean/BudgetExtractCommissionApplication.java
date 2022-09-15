@@ -99,6 +99,16 @@ public class BudgetExtractCommissionApplication implements Serializable {
     @TableField(value = "reimbursement_id")
     private Long reimbursementId;
 
+    /**
+     * 流程id
+     */
+    @TableField(value = "request_id")
+    private String requestId;
+    /**
+     * 流程id
+     */
+    @TableField(value = "oa_creator_id")
+    private String oaCreatorId;
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

@@ -20,6 +20,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -33,45 +34,23 @@ import java.util.List;
 @Slf4j
 public class AccountEntryController {
     private final ExtractAccountEntryTaskService entryTaskService;
-    private final BudgetUnitService budgetUnitService;
-    public AccountEntryController(ExtractAccountEntryTaskService entryTaskService, BudgetUnitService budgetUnitService) {
+
+    public AccountEntryController(ExtractAccountEntryTaskService entryTaskService) {
         this.entryTaskService = entryTaskService;
-        this.budgetUnitService = budgetUnitService;
     }
 
     @ApiOperation(value = "获取需要做的核算入账list", httpMethod = "GET")
     @GetMapping("/getList")
     public ResponseEntity<PageResult<ExtractAccountEntryTask>> getList( @ModelAttribute AccountEntryQuery query) {
         try {
-            //加上人员权限。TODO
-            //获取当前人员 拥有哪些预算单位。
-            String empNo = UserThreadLocal.getEmpNo();
-            List<String> deptIds = budgetUnitService.getBaseUnitIdListByAccountingNo(empNo);
-            if(CollectionUtils.isEmpty(deptIds)){
-                return ResponseEntity.ok(PageResult.apply(0,null));
-            }
-            Page<ExtractAccountEntryTask> page = entryTaskService.page(new Page<>(query.getPage(), query.getRows()), new LambdaQueryWrapper<ExtractAccountEntryTask>()
-                    .eq(query.getStatus()!=null,ExtractAccountEntryTask::getStatus, query.getStatus())
-                    .in(CollectionUtils.isNotEmpty(deptIds),ExtractAccountEntryTask::getDeptId, deptIds)
-                    .like(StringUtils.isNotBlank( query.getExtractCode()),ExtractAccountEntryTask::getExtractCode, query.getExtractCode())
-                    .like(StringUtils.isNotBlank( query.getExtractMonth()),ExtractAccountEntryTask::getExtractMonth, query.getExtractMonth())
-                    .like(StringUtils.isNotBlank( query.getDeptName()),ExtractAccountEntryTask::getDeptName, query.getDeptName()));
-            List<ExtractAccountEntryTask> records = page.getRecords();
-            for (ExtractAccountEntryTask record : records) {
-                record.setStatusName(record.getStatus()==0?"核算中":"入账完成");
-            }
+            Page<ExtractAccountEntryTask> page = entryTaskService.getList(query);
             return ResponseEntity.ok(PageResult.apply(page.getTotal(),page.getRecords()));
         } catch (Exception e) {
             return ResponseEntity.error(e.getMessage());
         }
     }
 
-    @ApiOperation(value = "做账完成", httpMethod = "POST")
-    @ApiImplicitParams(value = {
-            @ApiImplicitParam(value = "Object", name = "params", dataType = "EcologyParams", required = true),
-            @ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
-    })
-    @NoLoginAnno
+    @ApiOperation(value = "入账完成", httpMethod = "POST")
     @PostMapping(value = "/entryCompleted")
     public ResponseEntity<String> entryCompleted(@RequestBody EntryCompletedDTO dto) {
         try {
@@ -82,4 +61,17 @@ public class AccountEntryController {
         }
         return ResponseEntity.ok();
     }
+    @ApiOperation(value = "添加预算", httpMethod = "POST")
+    @NoLoginAnno
+    @PostMapping(value = "/addEntryTask")
+    public ResponseEntity<String> addEntryTask(@RequestBody  String extractMonth) {
+        try {
+            entryTaskService.addEntryTask(false,new ArrayList<>(),extractMonth);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.error(e.getMessage()==null?e.toString():e.getMessage());
+        }
+        return ResponseEntity.ok();
+    }
+
 }

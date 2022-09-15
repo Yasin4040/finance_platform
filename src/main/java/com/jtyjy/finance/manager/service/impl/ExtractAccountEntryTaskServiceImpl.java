@@ -1,20 +1,27 @@
 package com.jtyjy.finance.manager.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.jtyjy.finance.manager.bean.BudgetExtractDelayApplication;
-import com.jtyjy.finance.manager.bean.BudgetExtractPerPayDetail;
-import com.jtyjy.finance.manager.bean.BudgetExtractsum;
-import com.jtyjy.finance.manager.bean.ExtractAccountEntryTask;
+import com.iamxiongx.util.message.exception.BusinessException;
+import com.jtyjy.core.result.PageResult;
+import com.jtyjy.core.result.ResponseEntity;
+import com.jtyjy.finance.manager.bean.*;
 import com.jtyjy.finance.manager.dto.commission.EntryCompletedDTO;
+import com.jtyjy.finance.manager.enmus.ExtractStatusEnum;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.mapper.BudgetExtractDelayApplicationMapper;
 import com.jtyjy.finance.manager.mapper.BudgetYearPeriodMapper;
+import com.jtyjy.finance.manager.query.AccountEntryQuery;
 import com.jtyjy.finance.manager.service.BudgetExtractPerPayDetailService;
 import com.jtyjy.finance.manager.service.BudgetExtractsumService;
+import com.jtyjy.finance.manager.service.BudgetUnitService;
 import com.jtyjy.finance.manager.service.ExtractAccountEntryTaskService;
 import com.jtyjy.finance.manager.mapper.ExtractAccountEntryTaskMapper;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -34,12 +41,14 @@ public class ExtractAccountEntryTaskServiceImpl extends ServiceImpl<ExtractAccou
     private final BudgetExtractsumService extractSumService;
     private final BudgetYearPeriodMapper yearMapper;
     private final BudgetExtractPerPayDetailService perPayDetailService;
-    private final BudgetExtractDelayApplicationMapper delayApplicationMapper;;
-    public ExtractAccountEntryTaskServiceImpl(BudgetExtractsumService extractSumService, BudgetYearPeriodMapper yearMapper, BudgetExtractPerPayDetailService perPayDetailService, BudgetExtractDelayApplicationMapper delayApplicationMapper) {
+    private final BudgetExtractDelayApplicationMapper delayApplicationMapper;
+    private final BudgetUnitService budgetUnitService;
+    public ExtractAccountEntryTaskServiceImpl(BudgetExtractsumService extractSumService, BudgetYearPeriodMapper yearMapper, BudgetExtractPerPayDetailService perPayDetailService, BudgetExtractDelayApplicationMapper delayApplicationMapper, BudgetUnitService budgetUnitService) {
         this.extractSumService = extractSumService;
         this.yearMapper = yearMapper;
         this.perPayDetailService = perPayDetailService;
         this.delayApplicationMapper = delayApplicationMapper;
+        this.budgetUnitService = budgetUnitService;
     }
 
     @Override
@@ -56,6 +65,7 @@ public class ExtractAccountEntryTaskServiceImpl extends ServiceImpl<ExtractAccou
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void addEntryTask(Boolean isDelay, List<String> delayList, String extractMonth) {
         //延期。
         List<ExtractAccountEntryTask> taskList = new ArrayList<>();
@@ -69,13 +79,51 @@ public class ExtractAccountEntryTaskServiceImpl extends ServiceImpl<ExtractAccou
             }
         }else {
             List<BudgetExtractsum> curBatchExtractSum = extractSumService.getCurBatchExtractSum(extractMonth);
+            long count = curBatchExtractSum.stream().filter(x -> !x.getStatus().equals(ExtractStatusEnum.ACCOUNT.type)).count();
+            if (count>0) {
+                throw new BusinessException("存在没有做账完成的订单。");
+            }
+            //是否维护了 预算会计
+            List<String> deptIdList = curBatchExtractSum.stream().map(BudgetExtractsum::getDeptid).collect(Collectors.toList());
 
+            List<BudgetUnit> budgetUnitList = budgetUnitService.lambdaQuery().in(BudgetUnit::getId, deptIdList).list();
+            List<BudgetUnit> noAccountingUnitList = budgetUnitList.stream().filter(x -> StringUtils.isBlank(x.getAccounting())).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(noAccountingUnitList)){
+                String unitName ="";
+                for (BudgetUnit x : noAccountingUnitList) {
+                    unitName =  x.getName()+";";
+                }
+                throw new BusinessException(unitName+"还没有维护收入会计");
+            }
             for (BudgetExtractsum extractSum : curBatchExtractSum) {
                 getSingleEntryTask(extractMonth, taskList,extractSum.getCode(), extractSum);
             }
         }
         this.saveOrUpdateBatch(taskList);
 
+    }
+
+    @Override
+    public Page<ExtractAccountEntryTask> getList(AccountEntryQuery query) {
+        //加上人员权限。TODO
+        //获取当前人员 拥有哪些预算单位。
+        WbUser wbUser = UserThreadLocal.get();
+//        String empNo = UserThreadLocal.getEmpNo();
+        List<String> deptIds = budgetUnitService.getBaseUnitIdListByAccountingNo(wbUser.getUserId());
+        if(CollectionUtils.isEmpty(deptIds)){
+            return new Page<>();
+        }
+        Page<ExtractAccountEntryTask> page = this.page(new Page<>(query.getPage(), query.getRows()), new LambdaQueryWrapper<ExtractAccountEntryTask>()
+                .eq(query.getStatus()!=null,ExtractAccountEntryTask::getStatus, query.getStatus())
+                .in(CollectionUtils.isNotEmpty(deptIds),ExtractAccountEntryTask::getDeptId, deptIds)
+                .like(StringUtils.isNotBlank( query.getExtractCode()),ExtractAccountEntryTask::getExtractCode, query.getExtractCode())
+                .like(StringUtils.isNotBlank( query.getExtractMonth()),ExtractAccountEntryTask::getExtractMonth, query.getExtractMonth())
+                .like(StringUtils.isNotBlank( query.getDeptName()),ExtractAccountEntryTask::getDeptName, query.getDeptName()));
+        List<ExtractAccountEntryTask> records = page.getRecords();
+        for (ExtractAccountEntryTask record : records) {
+            record.setStatusName(record.getStatus()==0?"核算中":"入账完成");
+        }
+        return page;
     }
 
     private void getSingleEntryTask(String extractMonth, List<ExtractAccountEntryTask> taskList, String nowCode, BudgetExtractsum extractSum) {

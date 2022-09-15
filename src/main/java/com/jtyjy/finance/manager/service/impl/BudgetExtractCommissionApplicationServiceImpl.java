@@ -1,6 +1,7 @@
 package com.jtyjy.finance.manager.service.impl;
 
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -8,6 +9,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.iamxiongx.util.message.exception.BusinessException;
 import com.jtyjy.core.result.PageResult;
+import com.jtyjy.ecology.webservice.workflow.WorkflowInfo;
 import com.jtyjy.finance.manager.bean.*;
 import com.jtyjy.finance.manager.cache.UnitCache;
 import com.jtyjy.finance.manager.cache.UserCache;
@@ -16,6 +18,8 @@ import com.jtyjy.finance.manager.converter.CommonAttachmentConverter;
 import com.jtyjy.finance.manager.dto.ReimbursementRequest;
 import com.jtyjy.finance.manager.dto.commission.FeeImportErrorDTO;
 import com.jtyjy.finance.manager.dto.commission.IndividualIssueExportDTO;
+import com.jtyjy.finance.manager.dto.commission.OAApplicationDTO;
+import com.jtyjy.finance.manager.dto.commission.OAApplicationDetailDTO;
 import com.jtyjy.finance.manager.enmus.*;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.listener.easyexcel.PageReadListener;
@@ -31,6 +35,7 @@ import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.beanutils.locale.converters.DateLocaleConverter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.curator.framework.CuratorFramework;
 import org.csource.common.MyException;
 import org.csource.fastdfs.StorageClient;
 import org.springframework.stereotype.Service;
@@ -38,8 +43,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
+import java.net.URL;
+import java.net.URLConnection;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -52,7 +60,7 @@ import java.util.stream.Collectors;
 @Service
 public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<BudgetExtractCommissionApplicationMapper, BudgetExtractCommissionApplication>
     implements BudgetExtractCommissionApplicationService{
-
+    private final CuratorFramework curatorFramework;
     private final BudgetExtractTaxHandleRecordService taxHandleRecordService;
     private final BudgetExtractsumMapper extractSumMapper;
     private final BudgetExtractdetailService  extractDetailService;
@@ -68,7 +76,10 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     private final BudgetReimbursementorderService reimbursementorderService;
     private final BudgetExtractFeePayDetailMapper feePayDetailMapper;
     private final HrService hrService;
-    public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractTaxHandleRecordService taxHandleRecordService, BudgetExtractsumMapper extractSumMapper, BudgetExtractdetailService extractDetailService, BudgetExtractOuterpersonMapper outPersonMapper, IndividualEmployeeFilesService individualService, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, BudgetCommonAttachmentService attachmentService, StorageClient storageClient, ReimbursementWorker reimbursementWorker, BudgetReimbursementorderService reimbursementorderService, BudgetExtractFeePayDetailMapper feePayDetailMapper, HrService hrService) {
+    private final OaService oaService;
+
+    public BudgetExtractCommissionApplicationServiceImpl(CuratorFramework curatorFramework, BudgetExtractTaxHandleRecordService taxHandleRecordService, BudgetExtractsumMapper extractSumMapper, BudgetExtractdetailService extractDetailService, BudgetExtractOuterpersonMapper outPersonMapper, IndividualEmployeeFilesService individualService, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, BudgetCommonAttachmentService attachmentService, StorageClient storageClient, ReimbursementWorker reimbursementWorker, BudgetReimbursementorderService reimbursementorderService, BudgetExtractFeePayDetailMapper feePayDetailMapper, HrService hrService, OaService oaService) {
+        this.curatorFramework = curatorFramework;
         this.taxHandleRecordService = taxHandleRecordService;
         this.extractSumMapper = extractSumMapper;
         this.extractDetailService = extractDetailService;
@@ -84,6 +95,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         this.reimbursementorderService = reimbursementorderService;
         this.feePayDetailMapper = feePayDetailMapper;
         this.hrService = hrService;
+        this.oaService = oaService;
     }
 
     @Override
@@ -115,19 +127,30 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             //提成明细for
             List<BudgetExtractImportdetail> importDetails = extractImportDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractImportdetail>()
                     .eq(BudgetExtractImportdetail::getExtractsumid, budgetExtractsum.getId()));
-            for (BudgetExtractImportdetail importDetail : importDetails) {
-                CommissionDetailsVO detailsVO = new CommissionDetailsVO();
-                detailsVO.setId(importDetail.getId());
-                detailsVO.setCommissionTypeName(importDetail.getExtractType());
+            if (CollectionUtils.isNotEmpty(importDetails)) {
+                //提成类型+届别
+                Map<String, List<BudgetExtractImportdetail>> typeList = importDetails.stream().collect(Collectors.groupingBy(x -> x.getExtractType()+"-"+x.getYearid()));
+                for (Map.Entry<String, List<BudgetExtractImportdetail>> entry : typeList.entrySet()) {
+                    BudgetExtractImportdetail importDetail = entry.getValue().get(0);
+                    CommissionDetailsVO detailsVO = new CommissionDetailsVO();
+                    detailsVO.setId(importDetail.getId());
+                    detailsVO.setCommissionTypeName(importDetail.getExtractType());
+                    //用 cache mapper层缓存
+                    String yearName = yearMapper.getNameById(importDetail.getYearid());
+                    detailsVO.setYearId(yearName);
+                    //                detailsVO.setYearId(importDetail.getYearid().toString()+"届");
+                    BigDecimal applyAmount = BigDecimal.ZERO;
+                    BigDecimal actualAmount = BigDecimal.ZERO;
+                    for (BudgetExtractImportdetail temp : entry.getValue()) {
+                        applyAmount = applyAmount.add(temp.getShouldSendExtract());
+                        actualAmount = actualAmount.add(temp.getCopeextract());
+                    }
 
-                //用 cache mapper层缓存
-                String yearName = yearMapper.getNameById(importDetail.getYearid());
-                detailsVO.setYearId(yearName);
-//                detailsVO.setYearId(importDetail.getYearid().toString()+"届");
-                detailsVO.setApplyAmount(importDetail.getShouldSendExtract());
-                detailsVO.setActualAmount(importDetail.getCopeextract());
-                detailsVO.setDeductionAmount(importDetail.getCopeextract().subtract(importDetail.getShouldSendExtract()));
-                commissionList.add(detailsVO);
+                    detailsVO.setApplyAmount(applyAmount);
+                    detailsVO.setActualAmount(actualAmount);
+                    detailsVO.setDeductionAmount(actualAmount.subtract(applyAmount));
+                    commissionList.add(detailsVO);
+                }
             }
             //set预算明细
             List<BudgetDetailsVO> budgetList = new ArrayList<>();
@@ -238,6 +261,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             attachment.setContactId(application.getId());
             attachment.setFileName(attachmentVO.getFileName());
             attachment.setFileType(1);
+            attachment.setOaPassword(updateVO.getOaPassword()==null?"":updateVO.getOaPassword());
             attachment.setFileUrl(attachmentVO.getFileUrl());
             attachment.setFileExtName(FileUtils.getFileType(attachmentVO.getFileName()));
             attachment.setCreator(UserThreadLocal.getEmpNo());
@@ -248,7 +272,6 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         extractsum.setStatus(ExtractStatusEnum.DRAFT.getType());
         extractSumMapper.updateById(extractsum);
         this.updateById(application);
-
     }
 
     private void validateApplicationByUpdateVO(CommissionApplicationInfoUpdateVO updateVO) {
@@ -269,7 +292,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             if (bigDecimal.isPresent() && reduce.isPresent()) {
                 int i = bigDecimal.get().compareTo(reduce.get());
                 if (i != 0) {
-                    throw new RuntimeException("提成金额应该和预算金额相等！");
+                    throw new RuntimeException("申请提成金额应该和预算金额相等！");
                 }
             }
         }
@@ -451,12 +474,98 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                 if(bigDecimal.isPresent()&&reduce.isPresent()){
                     int i = bigDecimal.get().compareTo(reduce.get());
                     if (i!=0) {
-                        throw new RuntimeException("提成金额应该和预算金额相等！");
+                        throw new RuntimeException("申请提成金额应该和预算金额相等！");
                     }
                 }
             }
 
         }
+    }
+
+    @SneakyThrows
+    @Override
+    public void uploadOA(BudgetExtractCommissionApplication application) {
+        Long extractSumId = application.getExtractSumId();
+        BudgetExtractsum extractSum = extractSumMapper.selectById(extractSumId);
+
+        WbUser user = UserThreadLocal.get();
+        String userIdDeptId = oaService.getOaUserId(user.getUserName(),null);
+        String oaUserId = userIdDeptId.split(",")[0];
+//        String oaDeptId = userIdDeptId.split(",")[1];
+        application.setOaCreatorId(oaUserId);
+        //todo 需要更新
+
+        String userName = user.getDisplayName();
+        WorkflowInfo wi = new WorkflowInfo();
+        wi.setCreatorId(oaUserId);
+        wi.setRequestLevel("0");
+        wi.setRequestName("提成申请单流程--" + userName);
+        OAApplicationDTO oaDTO = new OAApplicationDTO();
+        oaDTO.setSqr(user.getUserName());
+        oaDTO.setBm(application.getDepartmentName());
+        oaDTO.setZbrq(application.getCreateTime());
+        oaDTO.setZfsy(application.getPaymentReason());
+        oaDTO.setBz(application.getRemarks());
+        oaDTO.setBh(extractSum.getCode());
+
+        //附件上传
+        List<BudgetCommonAttachment> attachments = attachmentService.lambdaQuery().eq(BudgetCommonAttachment::getContactId, application.getId()).list();
+        String fj = "";
+        for (BudgetCommonAttachment attachment : attachments) {
+            String fileUrl = attachment.getFileUrl();
+            int code = -1;
+            if (StringUtils.isNotBlank(fileUrl)) {
+                String oaPassword = attachment.getOaPassword();
+                URL url = new URL(fileUrl);
+                URLConnection connection = url.openConnection();
+                InputStream is = connection.getInputStream();
+                String fileOriginName = attachment.getFileName();
+                code = this.oaService.createDoc(attachment.getCreator(), oaPassword, is, fileOriginName, fileUrl, "月度追加流程附件");
+                if (code == 0) {
+                    throw new RuntimeException("系统错误!创建文档失败!");
+                }
+                //docCode
+                String temp = code+";";
+                fj = fj+temp;
+                is.close();
+            }
+        }
+        oaDTO.setFj(fj);
+
+        List<BudgetExtractImportdetail> importDetailList = extractImportDetailMapper.selectList
+                (new LambdaQueryWrapper<BudgetExtractImportdetail>().eq(BudgetExtractImportdetail::getExtractsumid,extractSumId));
+        List<OAApplicationDetailDTO> oaDetailList = new ArrayList<>();
+        for (BudgetExtractImportdetail detail : importDetailList) {
+            OAApplicationDetailDTO dto = new OAApplicationDetailDTO();
+            dto.setTclx(detail.getExtractType());
+            //归属届别
+            String yearName = yearMapper.getNameById(detail.getYearid());
+            dto.setGslx(yearName);
+
+            dto.setSqtc(detail.getShouldSendExtract());
+
+
+            dto.setSfje(detail.getCopeextract());
+
+            dto.setKkje(detail.getCopeextract().subtract(detail.getShouldSendExtract()));
+            oaDetailList.add(dto);
+        }
+        String oldRequestId = application.getRequestId();
+        if (oldRequestId != null) {
+            String oaCreatorId = application.getOaCreatorId();
+            oaService.deleteRequest(oldRequestId, oaCreatorId);
+        }
+        Map<String, Object> main = (Map<String, Object>) JSON.toJSON(oaDTO);
+        List<Map<String, Object>> list = (List<Map<String, Object>>) JSON.toJSON(oaDetailList);
+
+        String requestId =  oaService.createWorkflow(wi, oaDTO.getWfid(), main, list);
+        if (requestId == null || Integer.parseInt(requestId) < 0) {
+            throw new RuntimeException("提交失败，oa系统未找到你的上级人员，请联系oa管理员。");
+        }
+
+        application.setRequestId(requestId);
+        application.setOaCreatorId(oaUserId);
+
     }
 
     private void validData(IndividualIssueExportDTO dto) {

@@ -51,4 +51,6 @@ public interface BudgetExtractCommissionApplicationService extends IService<Budg
     IPage<BudgetExtractFeePayDetailBeforeCal> selectFeePage(FeeQuery query);
 
     void validateApplication(BudgetExtractsum extractSum);
+
+    void uploadOA(BudgetExtractCommissionApplication application);
 }
