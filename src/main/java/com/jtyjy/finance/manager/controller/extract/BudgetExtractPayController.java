@@ -1,11 +1,18 @@
 package com.jtyjy.finance.manager.controller.extract;
 
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.metadata.WriteSheet;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.result.ResponseEntity;
 import com.jtyjy.finance.manager.dto.ExtractPreparePayDTO;
+import com.jtyjy.finance.manager.easyexcel.BudgetExtractZhBatchPayExcelData;
+import com.jtyjy.finance.manager.easyexcel.BudgetExtractZhDfPayExcelData;
+import com.jtyjy.finance.manager.easyexcel.BudgetPayTotalExcelData;
 import com.jtyjy.finance.manager.enmus.ExtractPayTemplateEnum;
 import com.jtyjy.finance.manager.service.BudgetExtractPayService;
 import com.jtyjy.finance.manager.service.BudgetReimbursementorderService;
+import com.jtyjy.finance.manager.utils.EasyExcelUtil;
 import com.jtyjy.finance.manager.vo.BudgetExtractPayQueryVO;
 import com.jtyjy.finance.manager.vo.BudgetExtractPayResponseVO;
 import io.swagger.annotations.Api;
@@ -17,10 +24,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.List;
@@ -97,41 +106,46 @@ public class BudgetExtractPayController {
 			ClassPathResource resource = null;
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			InputStream is = null;
-			XSSFWorkbook workbook = null;
-
-			List<Map<String,Object>> extractPayBatchDetailList = null;
-			if(extractPreparePayDTO.getPayTemplateType() == ExtractPayTemplateEnum.ZS_BATCH.type){
-				resource = new ClassPathResource("template/zhbatchpay.xlsx");
-				extractPayBatchDetailList = this.extractPayService.getExtractPayBatchDetailList(extractPreparePayDTO.getPayMoneyIds(),ExtractPayTemplateEnum.ZS_BATCH.type);
-			}else if(extractPreparePayDTO.getPayTemplateType() == ExtractPayTemplateEnum.ZS_DF.type){
-				resource = new ClassPathResource("template/zhdfpay.xlsx");
-				extractPayBatchDetailList = this.extractPayService.getExtractPayBatchDetailList(extractPreparePayDTO.getPayMoneyIds(),ExtractPayTemplateEnum.ZS_DF.type);
-			}
-			try {
-
-//				List<String> outUnitNameList = detailMap.keySet().stream().collect(Collectors.toList());
-//				if(!outUnitNameList.isEmpty()){
-//					workbook = new XSSFWorkbook(resource.getInputStream());
-//					workbook.setSheetName(0, outUnitNameList.get(0));
-//					for (int i = 1; i < outUnitNameList.size(); i++) {
-//						workbook.cloneSheet(0, outUnitNameList.get(i));
-//					}
-//					workbook.write(bos);
-//					is = new ByteArrayInputStream(bos.toByteArray());
-//					ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream("提成付款明细表", response), ExtractOutUnitPayExcelData.class).withTemplate(is).build();
-//					detailMap.forEach((outUnitName,list)->{
-//						WriteSheet sheet = EasyExcel.writerSheet(outUnitNameList.indexOf(outUnitName)).build();
-//						workBook.fill(list, sheet);
-//					});
-//					workBook.finish();
-//				}
-			} catch (Exception e) {
+			try{
+				List<Map<String,Object>> extractPayBatchDetailList = null;
+				if(extractPreparePayDTO.getPayTemplateType() == ExtractPayTemplateEnum.ZS_BATCH.type){
+					resource = new ClassPathResource("template/zhbatchpay.xlsx");
+					extractPayBatchDetailList = this.extractPayService.getExtractPayBatchDetailList(extractPreparePayDTO.getPayMoneyIds(),ExtractPayTemplateEnum.ZS_BATCH.type);
+					exportWorkBook(extractPayBatchDetailList,resource,bos,is,response,BudgetExtractZhBatchPayExcelData.class);
+				}else if(extractPreparePayDTO.getPayTemplateType() == ExtractPayTemplateEnum.ZS_DF.type){
+					resource = new ClassPathResource("template/zhdfpay.xlsx");
+					extractPayBatchDetailList = this.extractPayService.getExtractPayBatchDetailList(extractPreparePayDTO.getPayMoneyIds(),ExtractPayTemplateEnum.ZS_DF.type);
+					exportWorkBook(extractPayBatchDetailList,resource,bos,is,response,BudgetExtractZhDfPayExcelData.class);
+				}
+			}catch (Exception e){
 				LOGGER.error(e.getMessage(), e);
 				throw e;
-			} finally {
+			}finally {
 				if (is != null) is.close();
 			}
+		}
+	}
 
+	private  void  exportWorkBook(List<Map<String,Object>> extractPayBatchDetailList,ClassPathResource resource,ByteArrayOutputStream bos,InputStream is,HttpServletResponse response,Class clazz) throws Exception {
+		if(!CollectionUtils.isEmpty(extractPayBatchDetailList)){
+			Map<String, Object> totalMap = extractPayBatchDetailList.get(0);
+			XSSFWorkbook workbook = new XSSFWorkbook(resource.getInputStream());
+			Map<String, Object> detailMap = extractPayBatchDetailList.get(1);
+			List<String> nameList = detailMap.keySet().stream().collect(Collectors.toList());
+			detailMap.forEach((k,v)->{
+				workbook.cloneSheet(1, k);
+			});
+			workbook.write(bos);
+			is = new ByteArrayInputStream(bos.toByteArray());
+			ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream("提成付款明细表", response), clazz).withTemplate(is).build();
+
+			WriteSheet sheet = EasyExcel.writerSheet(0).build();
+			workBook.fill((List<BudgetPayTotalExcelData>)totalMap.get("付款明细汇总表"),sheet);
+			detailMap.forEach((outUnitName,obj)->{
+				WriteSheet sheet1 = EasyExcel.writerSheet(nameList.indexOf(outUnitName)+1).build();
+				workBook.fill(obj, sheet1);
+			});
+			workBook.finish();
 		}
 	}
 

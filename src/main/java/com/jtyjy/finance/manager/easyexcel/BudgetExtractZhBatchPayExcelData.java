@@ -3,6 +3,8 @@ package com.jtyjy.finance.manager.easyexcel;
 import com.alibaba.excel.annotation.ExcelProperty;
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 /**
  * 描述：<p></p>
  *
@@ -48,7 +50,7 @@ public class BudgetExtractZhBatchPayExcelData {
 	@ExcelProperty("用途")
 	private String yt = "JJ";
 	@ExcelProperty("金额")
-	private String payMoney;
+	private BigDecimal payMoney;
 	@ExcelProperty("收方联行号")
 	private String branchCode;
 	@ExcelProperty("收方开户银行")

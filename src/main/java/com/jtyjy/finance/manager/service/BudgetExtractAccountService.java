@@ -126,7 +126,7 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 			result.setBatch(budgetExtractAccountTask.getBatch());
 
 			Map<String, Object> params = new HashMap<>(5);
-			params.put("extractCode", extractSum.getCode());
+			params.put("extractCode", delayPayApplyOrderNo);
 			params.put("unitId", budgetExtractAccountTask.getBillingUnitId());
 			params.put("personalityIds", Arrays.asList(budgetExtractAccountTask.getPersonalityIds().split(",")));
 			List<ExtractAccountTaskDetailVO> resultList = accountTaskMapper.getExtractAccountTaskDetail(null, params);
@@ -142,7 +142,7 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 			}).collect(Collectors.toList());
 			result.setPayDetailList(payApplyPayDetails);
 
-			List<BudgetExtractPerPayDetail> perPayDetails = perPayDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractPerPayDetail>().eq(BudgetExtractPerPayDetail::getExtractCode, extractSum.getCode()).in(BudgetExtractPerPayDetail::getPersonalityId, Arrays.asList(budgetExtractAccountTask.getPersonalityIds().split(","))));
+			List<BudgetExtractPerPayDetail> perPayDetails = perPayDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractPerPayDetail>().eq(BudgetExtractPerPayDetail::getExtractCode, delayPayApplyOrderNo).in(BudgetExtractPerPayDetail::getPersonalityId, Arrays.asList(budgetExtractAccountTask.getPersonalityIds().split(","))));
 
 			List<ExtractDelayPayApplyVO.ExtractDelayPayApplyPayMoneyDetail> payMoneyPayDetails = new ArrayList<>();
 			perPayDetails.stream().collect(Collectors.groupingBy(BudgetExtractPerPayDetail::getBillingUnitId)).forEach((billingUnitId, list) -> {

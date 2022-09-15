@@ -5461,7 +5461,34 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	public ExtractPayApplyPayDetailVO getExtractPayApplyPayDetail(Long extractSumId) {
 		BudgetExtractsum extractsum = this.getById(extractSumId);
 		ExtractPayApplyPayDetailVO result = new ExtractPayApplyPayDetailVO();
-		if(extractsum.getStatus()>=ExtractStatusEnum.APPROVED.getType()){
+		BudgetExtractTaxHandleRecord extractTaxHandleRecord = getExtractTaxHandleRecord(extractsum.getExtractmonth());
+		if(extractTaxHandleRecord == null || extractsum.getStatus()<ExtractStatusEnum.APPROVED.getType()){
+			return result;
+		}
+
+		boolean isSetExcess = false;
+		boolean isShowPersonality = false;
+		if(extractTaxHandleRecord!=null && extractTaxHandleRecord.getIsCalComplete() && extractTaxHandleRecord.getIsSetExcessComplete()){
+			isSetExcess = true;
+		}
+		if(extractTaxHandleRecord!=null && extractTaxHandleRecord.getIsPersonalityComplete()){
+			Integer integer = personalityPayDetailMapper.selectCount(new LambdaQueryWrapper<BudgetExtractPersonalityPayDetail>()
+					.eq(BudgetExtractPersonalityPayDetail::getExtractMonth, extractsum.getExtractmonth())
+					.eq(BudgetExtractPersonalityPayDetail::getPayStatus, ExtractPersonalityPayStatusEnum.DELAY.type)
+					.isNull(BudgetExtractPersonalityPayDetail::getOperateTime));
+			if(integer == 0) isShowPersonality = true;
+		}
+		Map<Long, BudgetBillingUnit> unitMap = this.billingUnitMapper.selectList(null).stream().collect(Collectors.toMap(BudgetBillingUnit::getId, Function.identity()));
+		//内部发放金额
+		List<BigDecimal> innerPayMoney = new ArrayList<>();
+		//外部发放金额
+		List<BigDecimal> outPayMoney = new ArrayList<>();
+		//付款单位发放
+		Map<Long,Map<String,List<BigDecimal>>> unitPayDetailMap = new HashMap<>();
+		List<BigDecimal> unPayMoney = new ArrayList<>();
+
+		if(isSetExcess){
+			//显示非个体户数据
 			Map<String, Object> params = new HashMap<>();
 			params.put("extractmonth", extractsum.getExtractmonth());
 			List<ExtractPayDetailVO> resultList = getPayDetailsByCondition(null, params);
@@ -5469,13 +5496,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				splitOrder(e, extractSumId);
 			});
 
-			Map<Long, BudgetBillingUnit> unitMap = this.billingUnitMapper.selectList(null).stream().collect(Collectors.toMap(BudgetBillingUnit::getId, Function.identity()));
-			//内部发放金额
-			List<BigDecimal> innerPayMoney = new ArrayList<>();
-			//外部发放金额
-			List<BigDecimal> outPayMoney = new ArrayList<>();
-			//付款单位发放
-			Map<Long,Map<String,List<BigDecimal>>> unitPayDetailMap = new HashMap<>();
+			List<BigDecimal> money = new ArrayList<>();
 			resultList.stream().collect(Collectors.groupingBy(e->{
 				return e.getIsCompanyEmp().toString()+"&&"+e.getEmpno();
 			})).forEach((key,list)->{
@@ -5483,14 +5504,27 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				setUnitPayDetail(unitMap,unitPayDetailMap,extractPayDetailVO.getBillingUnitId(),extractPayDetailVO.getBillingPaymoney(),innerPayMoney,outPayMoney,"1");
 				setUnitPayDetail(unitMap,unitPayDetailMap,extractPayDetailVO.getAvoidBillingUnitId(),extractPayDetailVO.getAvoidBillingPaymoney(),innerPayMoney,outPayMoney,"1");
 				setUnitPayDetail(unitMap,unitPayDetailMap,extractPayDetailVO.getBillingUnitId(),extractPayDetailVO.getBeforeCalFee(),innerPayMoney,outPayMoney,"2");
+				if(extractPayDetailVO.getBillingPaymoney()!=null){
+					money.add(extractPayDetailVO.getBillingPaymoney());
+				}
+				if(extractPayDetailVO.getAvoidBillingPaymoney()!=null){
+					money.add(extractPayDetailVO.getAvoidBillingPaymoney());
+				}
+				if(extractPayDetailVO.getBeforeCalFee()!=null){
+					money.add(extractPayDetailVO.getBeforeCalFee());
+				}
 				list.forEach(l->{
 					setUnitPayDetail(unitMap,unitPayDetailMap,l.getOutUnitId(),l.getOutUnitPayMoney(),innerPayMoney,outPayMoney,"3");
 				});
 			});
+			if(extractsum.getStatus() != ExtractStatusEnum.PAY.type){
+				unPayMoney.add(money.stream().reduce(BigDecimal.ZERO,BigDecimal::add));
+			}
+		}
+		if(isShowPersonality){
 			ExtractPersonalityPayDetailQueryVO vo = new ExtractPersonalityPayDetailQueryVO();
 			vo.setSumId(extractSumId);
 			PageResult<ExtractPersonalityPayDetailVO> extractPersonalityPayDetailVO = this.getExtractPersonalityPayDetailVO(vo, null, null, extractsum.getExtractmonth());
-			List<BigDecimal> unPayMoney = new ArrayList<>();
 			extractPersonalityPayDetailVO.getList().forEach(detail->{
 				IndividualEmployeeFiles individualEmployeeFiles = individualEmployeeFilesMapper.selectById(detail.getPersonalityId());
 				if(individualEmployeeFiles.getAccountType()==1){
@@ -5502,32 +5536,40 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 					unPayMoney.add(detail.getCurExtract().add(detail.getCurSalary()).add(detail.getCurWelfare()));
 				}
 			});
+		}
 
-			result.setInnerPayMoney(innerPayMoney.stream().reduce(BigDecimal.ZERO,BigDecimal::add));
-			result.setOutUnitPayMoney(outPayMoney.stream().reduce(BigDecimal.ZERO,BigDecimal::add));
-			result.setUnPayMoney(unPayMoney.stream().reduce(BigDecimal.ZERO,BigDecimal::add));
-			List<ExtractPayApplyPayDetailVO.ExtractUnitPayDetail> detailList = new ArrayList<>();
-			unitPayDetailMap.forEach((unitId,map)->{
-				ExtractPayApplyPayDetailVO.ExtractUnitPayDetail d = new ExtractPayApplyPayDetailVO.ExtractUnitPayDetail();
-				d.setBillingUnitName(unitMap.get(unitId).getName());
+		result.setInnerPayMoney(innerPayMoney.stream().reduce(BigDecimal.ZERO,BigDecimal::add));
+		result.setOutUnitPayMoney(outPayMoney.stream().reduce(BigDecimal.ZERO,BigDecimal::add));
+		result.setUnPayMoney(unPayMoney.stream().reduce(BigDecimal.ZERO,BigDecimal::add));
+
+		List<ExtractPayApplyPayDetailVO.ExtractUnitPayDetail> detailList = new ArrayList<>();
+		boolean isSetExcess1 = isSetExcess;
+		boolean isShowPersonality1 = isShowPersonality;
+		unitPayDetailMap.forEach((unitId,map)->{
+			ExtractPayApplyPayDetailVO.ExtractUnitPayDetail d = new ExtractPayApplyPayDetailVO.ExtractUnitPayDetail();
+			d.setBillingUnitName(unitMap.get(unitId).getName());
+			if(isSetExcess1){
 				if(map.get("1")!=null){
 					d.setPayMoney(map.get("1").stream().reduce(BigDecimal.ZERO,BigDecimal::add));
 				}
 				if(map.get("2")!=null){
 					d.setFee(map.get("2").stream().reduce(BigDecimal.ZERO,BigDecimal::add));
 				}
+			}
+			if(isShowPersonality1){
 				if(map.get("3")!=null){
 					d.setPersonalityPayMoney1(map.get("3").stream().reduce(BigDecimal.ZERO,BigDecimal::add));
 				}
 				if(map.get("4")!=null){
 					d.setPersonalityPayMoney2(map.get("4").stream().reduce(BigDecimal.ZERO,BigDecimal::add));
 				}
-				d.setTotal(d.getPayMoney().add(d.getFee()).add(d.getPersonalityPayMoney1()).add(d.getPersonalityPayMoney2()));
+			}
+			d.setTotal(d.getPayMoney().add(d.getFee()).add(d.getPersonalityPayMoney1()).add(d.getPersonalityPayMoney2()));
+			if(d.getTotal().compareTo(BigDecimal.ZERO) != 0){
 				detailList.add(d);
-			});
-			result.setPayDetails(detailList);
-		}
-
+			}
+		});
+		result.setPayDetails(detailList);
 		return result;
 	}
 
