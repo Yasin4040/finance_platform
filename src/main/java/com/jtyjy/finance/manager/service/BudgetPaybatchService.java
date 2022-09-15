@@ -13,6 +13,7 @@ import com.jtyjy.finance.manager.bean.*;
 import com.jtyjy.finance.manager.constants.Constants;
 import com.jtyjy.finance.manager.controller.BaseController;
 import com.jtyjy.finance.manager.easyexcel.PayVerifyExcelData;
+import com.jtyjy.finance.manager.enmus.ExtractPayTemplateEnum;
 import com.jtyjy.finance.manager.enmus.PaymoneyStatusEnum;
 import com.jtyjy.finance.manager.enmus.PaymoneyTypeEnum;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
@@ -139,6 +140,7 @@ public class BudgetPaybatchService extends DefaultBaseService<BudgetPaybatchMapp
         BudgetPaybatch.setPaytotalnum(list.size());
         BudgetPaybatch.setRemark(remark);
         BudgetPaybatch.setPaybatchcode(System.currentTimeMillis() + "");
+        BudgetPaybatch.setPayTemplateType(ExtractPayTemplateEnum.OLD.type);
         this.save(BudgetPaybatch);
         Date nowDate = new Date();
         //付款成功添加报销出纳付款时间节点表

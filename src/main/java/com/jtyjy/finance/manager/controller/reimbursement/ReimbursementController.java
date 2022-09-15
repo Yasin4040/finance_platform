@@ -1426,7 +1426,7 @@ public class ReimbursementController {
 	@ApiOperation(value = "准备付款", httpMethod = "GET")
 	@ApiImplicitParams(value = {
 			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
-			@ApiImplicitParam(value = "付款方式【0：其它 1：报销 2：付款失败修改3：现金 4:项目付款】", name = "payBatchType", dataType = "String", required = true),
+			@ApiImplicitParam(value = "付款方式【0：其它 1：报销 2：提成 3：现金 4:项目付款】", name = "payBatchType", dataType = "String", required = true),
 			@ApiImplicitParam(value = "以逗号分割的付款单主键", name = "payids", dataType = "String", required = true),
 			@ApiImplicitParam(value = "备注", name = "remark", dataType = "String", required = false)
 	})

@@ -122,4 +122,7 @@ public class BudgetPaybatch implements Serializable {
     @TableField(value = "exportcount")
     private Integer exportcount;
 
+    @ApiModelProperty(value = "付款模板类型 1:招行批量付款 2:招行代发付款 3:老模板", required = false, hidden = false)
+    @TableField(value = "pay_template_type")
+    private Integer payTemplateType;
 }

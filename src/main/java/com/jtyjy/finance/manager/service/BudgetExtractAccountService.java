@@ -267,7 +267,8 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 
 		if(batchUnCompleteTaskCount == 0){
 			//做账全部完成。
-			extractsumService.finishAccount(isDelay,delayExtractCodeList,accountTasks.get(0).getExtractMonth());
+			Map<Long, BudgetBillingUnit> unitMap = this.billingUnitMapper.selectList(null).stream().collect(Collectors.toMap(BudgetBillingUnit::getId, Function.identity()));
+			extractsumService.finishAccount(isDelay,delayExtractCodeList,accountTasks.get(0).getExtractMonth(),unitMap);
 		}
 	}
 }

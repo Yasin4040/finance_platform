@@ -1,3 +1,4 @@
+alter table budget_paybatch add pay_template_type  int(1) not null comment '付款模板类型 1:招行批量付款 2:招行代发付款 3:老模板' DEFAULT 3;
 CREATE TABLE `budget_extract_account_task` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `extract_code` varchar(255) DEFAULT NULL COMMENT '提成单号',

@@ -4587,17 +4587,17 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			throw new RuntimeException("您已完成提成批次【" + extractBatch + "】员工个体户发放。");
 		}
 
-		int count = taxHandleRecordService.count(new LambdaQueryWrapper<BudgetExtractTaxHandleRecord>().gt(BudgetExtractTaxHandleRecord::getExtractMonth, extractBatch).and(e -> {
-			e.eq(BudgetExtractTaxHandleRecord::getIsCalComplete, 1).or().eq(BudgetExtractTaxHandleRecord::getIsPersonalityComplete, 1);
-		}));
-		if(count>0){
-			throw new RuntimeException("已有后续批次已被税筹处理。");
-		}
-
-		Integer count1 = taxHandleRecordMapper.getOldBatchUnHandleCount(extractBatch);
-		if(count1>0){
-			throw new RuntimeException("有老批次正在被税筹处理。");
-		}
+//		int count = taxHandleRecordService.count(new LambdaQueryWrapper<BudgetExtractTaxHandleRecord>().gt(BudgetExtractTaxHandleRecord::getExtractMonth, extractBatch).and(e -> {
+//			e.eq(BudgetExtractTaxHandleRecord::getIsCalComplete, 1).or().eq(BudgetExtractTaxHandleRecord::getIsPersonalityComplete, 1);
+//		}));
+//		if(count>0){
+//			throw new RuntimeException("已有后续批次已被税筹处理。");
+//		}
+//
+//		Integer count1 = taxHandleRecordMapper.getOldBatchUnHandleCount(extractBatch);
+//		if(count1>0){
+//			throw new RuntimeException("有老批次正在被税筹处理。");
+//		}
 	}
 
 	public void validateExtractIsAllPass(String extractBatch){
@@ -4937,7 +4937,9 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 					splitPersonalityOrder(params.getSumId(),extractBatch,list);
 				}
 				List<ExtractPersonalityPayDetailVO> collect = list.stream().filter(e -> e.getIsSelf()).collect(Collectors.toList());
-				List<ExtractPersonalityPayDetailVO> resultList = collect.stream().skip((page - 1) * rows).limit(rows).collect(Collectors.toList());
+				List<ExtractPersonalityPayDetailVO> resultList = collect.stream().skip((page - 1) * rows).limit(rows).peek(e->{
+					e.setCurPaySum(e.getCurExtract().add(e.getCurSalary()).add(e.getCurWelfare()));
+				}).collect(Collectors.toList());
 				return PageResult.apply(collect.size(), resultList);
 			}
 		}else{
@@ -5041,7 +5043,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				});
 				this.updateBatchById(curBatchExtractSumList);
 				generateExtractStepLog(curBatchExtractSumList.stream().map(BudgetExtractsum::getId).collect(Collectors.toList()), OperationNodeEnum.ACCOUNTING,"【"+OperationNodeEnum.getValue(OperationNodeEnum.ACCOUNTING.getType()) + "】完成",1);
-				finishAccount(false,null,extractBatch);
+				finishAccount(false,null,extractBatch,unitMap);
 			}else{
 				curBatchExtractSumList.forEach(sum -> {
 					sum.setStatus(ExtractStatusEnum.CALCULATION_COMPLETE.getType());
@@ -5206,7 +5208,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 
 			long count = accountTasks.stream().filter(e -> e.getAccountantStatus() == 0).count();
 			if(count == 0){
-				finishAccount(true,accountTasks.stream().map(e->e.getExtractCode()).collect(Collectors.toList()),extractBatch);
+				finishAccount(true,accountTasks.stream().map(e->e.getExtractCode()).collect(Collectors.toList()),extractBatch,unitMap);
 			}
 		}
 	}
@@ -5219,7 +5221,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	 * @param extractCode
 	 * @param extractBatch
 	 */
-	 public void finishAccount(boolean isDelay, List<String> delayExtractCodeList,String extractBatch) {
+	 public void finishAccount(boolean isDelay, List<String> delayExtractCodeList,String extractBatch,Map<Long, BudgetBillingUnit> unitMap) {
 
 
 		List<BudgetExtractPerPayDetail> perPayDetails = null;
@@ -5235,7 +5237,11 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		}else{
 			perPayDetails = perPayDetailService.list(new LambdaQueryWrapper<BudgetExtractPerPayDetail>().eq(BudgetExtractPerPayDetail::getExtractMonth, extractBatch).eq(BudgetExtractPerPayDetail::getPayStatus, ExtractPersonalityPayStatusEnum.COMMON.type));
 		}
-		List<BudgetPaymoney> payMoneyList = perPayDetails.stream().map(e -> {
+		List<BudgetPaymoney> payMoneyList = perPayDetails.stream().filter(e->{
+			BudgetBillingUnit budgetBillingUnit = unitMap.get(e.getBillingUnitId());
+			if(budgetBillingUnit.getOwnFlag() == 1) return false;
+			return true;
+		}).map(e -> {
 			BudgetPaymoney payMoney = new BudgetPaymoney();
 			payMoney.setPaymoneycode(distributedNumber.getPaymoneyNum());
 			payMoney.setPaymoneyobjectcode(e.getExtractCode());

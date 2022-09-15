@@ -135,7 +135,7 @@
             <where>
                 1 = 1
                 <if test="params.orderNo !=null and params.orderNo !=''">
-                    and bes.`code` like concat('%',#{params.orderNo},'%')
+                    and a.extract_code like concat('%',#{params.orderNo},'%')
                 </if>
                 <if test="params.extractBatch !=null and params.extractBatch !=''">
                     and bes.extractmonth like concat('%',#{params.extractBatch},'%')

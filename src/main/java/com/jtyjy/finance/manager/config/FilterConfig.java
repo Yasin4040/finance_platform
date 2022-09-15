@@ -88,6 +88,7 @@ public class FilterConfig {
         apis.add("/api/extractInfo/downInitPersonalityPayDetailTemplate");
         apis.add("/api/extractInfo/downImportPersonalityPayErrorDetail");
         apis.add("/api/extractInfo/exportPersonalityPayDetail");
+        apis.add("/api/extractPay/exportPay");
 
         //消息推送
         apis.add("/api/msg/downWarningTemplate");
