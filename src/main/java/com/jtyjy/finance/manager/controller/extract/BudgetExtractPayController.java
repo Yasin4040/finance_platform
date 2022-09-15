@@ -111,51 +111,11 @@ public class BudgetExtractPayController {
 				if(extractPreparePayDTO.getPayTemplateType() == ExtractPayTemplateEnum.ZS_BATCH.type){
 					resource = new ClassPathResource("template/zhbatchpay.xlsx");
 					extractPayBatchDetailList = this.extractPayService.getExtractPayBatchDetailList(extractPreparePayDTO.getPayMoneyIds(),ExtractPayTemplateEnum.ZS_BATCH.type);
-
-					if(!CollectionUtils.isEmpty(extractPayBatchDetailList)){
-						Map<String, Object> totalMap = extractPayBatchDetailList.get(0);
-						XSSFWorkbook workbook = new XSSFWorkbook(resource.getInputStream());
-						Map<String, Object> detailMap = extractPayBatchDetailList.get(1);
-						List<String> nameList = detailMap.keySet().stream().collect(Collectors.toList());
-						detailMap.forEach((k,v)->{
-							workbook.cloneSheet(1, k);
-						});
-						workbook.write(bos);
-						is = new ByteArrayInputStream(bos.toByteArray());
-						ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream("提成付款明细表", response), BudgetExtractZhBatchPayExcelData.class).withTemplate(is).build();
-
-						WriteSheet sheet = EasyExcel.writerSheet(0).build();
-						workBook.fill((List<BudgetPayTotalExcelData>)totalMap.get("付款明细汇总表"),sheet);
-						detailMap.forEach((outUnitName,obj)->{
-							WriteSheet sheet1 = EasyExcel.writerSheet(nameList.indexOf(outUnitName)+1).build();
-							workBook.fill((List<BudgetExtractZhBatchPayExcelData>)obj, sheet1);
-						});
-						workBook.finish();
-					}
+					exportWorkBook(extractPayBatchDetailList,resource,bos,is,response,BudgetExtractZhBatchPayExcelData.class);
 				}else if(extractPreparePayDTO.getPayTemplateType() == ExtractPayTemplateEnum.ZS_DF.type){
 					resource = new ClassPathResource("template/zhdfpay.xlsx");
 					extractPayBatchDetailList = this.extractPayService.getExtractPayBatchDetailList(extractPreparePayDTO.getPayMoneyIds(),ExtractPayTemplateEnum.ZS_DF.type);
-
-					if(!CollectionUtils.isEmpty(extractPayBatchDetailList)){
-						Map<String, Object> totalMap = extractPayBatchDetailList.get(0);
-						XSSFWorkbook workbook = new XSSFWorkbook(resource.getInputStream());
-						Map<String, Object> detailMap = extractPayBatchDetailList.get(1);
-						List<String> nameList = detailMap.keySet().stream().collect(Collectors.toList());
-						detailMap.forEach((k,v)->{
-							workbook.cloneSheet(1, k);
-						});
-						workbook.write(bos);
-						is = new ByteArrayInputStream(bos.toByteArray());
-						ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream("提成付款明细表", response), BudgetExtractZhDfPayExcelData.class).withTemplate(is).build();
-
-						WriteSheet sheet = EasyExcel.writerSheet(0).build();
-						workBook.fill((List<BudgetPayTotalExcelData>)totalMap.get("付款明细汇总表"),sheet);
-						detailMap.forEach((outUnitName,obj)->{
-							WriteSheet sheet1 = EasyExcel.writerSheet(nameList.indexOf(outUnitName)+1).build();
-							workBook.fill((List<BudgetExtractZhDfPayExcelData>)obj, sheet1);
-						});
-						workBook.finish();
-					}
+					exportWorkBook(extractPayBatchDetailList,resource,bos,is,response,BudgetExtractZhDfPayExcelData.class);
 				}
 			}catch (Exception e){
 				LOGGER.error(e.getMessage(), e);
@@ -163,6 +123,29 @@ public class BudgetExtractPayController {
 			}finally {
 				if (is != null) is.close();
 			}
+		}
+	}
+
+	private  void  exportWorkBook(List<Map<String,Object>> extractPayBatchDetailList,ClassPathResource resource,ByteArrayOutputStream bos,InputStream is,HttpServletResponse response,Class clazz) throws Exception {
+		if(!CollectionUtils.isEmpty(extractPayBatchDetailList)){
+			Map<String, Object> totalMap = extractPayBatchDetailList.get(0);
+			XSSFWorkbook workbook = new XSSFWorkbook(resource.getInputStream());
+			Map<String, Object> detailMap = extractPayBatchDetailList.get(1);
+			List<String> nameList = detailMap.keySet().stream().collect(Collectors.toList());
+			detailMap.forEach((k,v)->{
+				workbook.cloneSheet(1, k);
+			});
+			workbook.write(bos);
+			is = new ByteArrayInputStream(bos.toByteArray());
+			ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream("提成付款明细表", response), clazz).withTemplate(is).build();
+
+			WriteSheet sheet = EasyExcel.writerSheet(0).build();
+			workBook.fill((List<BudgetPayTotalExcelData>)totalMap.get("付款明细汇总表"),sheet);
+			detailMap.forEach((outUnitName,obj)->{
+				WriteSheet sheet1 = EasyExcel.writerSheet(nameList.indexOf(outUnitName)+1).build();
+				workBook.fill(obj, sheet1);
+			});
+			workBook.finish();
 		}
 	}
 

@@ -3,9 +3,13 @@ package com.jtyjy.finance.manager.controller.advice;
 import com.jtyjy.common.enmus.StatusCodeEnmus;
 import com.jtyjy.core.result.ResponseEntity;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.stream.Collectors;
 
 /**
  * @author Admin
@@ -21,6 +25,11 @@ public class ControllerAdvice {
     public ResponseEntity<String> exceptionHandler(MissingServletRequestParameterException e) {
         log.error(e.getMessage(), e);
         return ResponseEntity.apply(StatusCodeEnmus.REQUIRE_PARAMS_NULL, e.getMessage());
+    }
+
+    @ExceptionHandler(value = MethodArgumentNotValidException.class)
+    public ResponseEntity<String> methodArgumentNotValidHandler(MethodArgumentNotValidException exception) {
+        return ResponseEntity.apply(StatusCodeEnmus.OTHER, exception.getBindingResult().getFieldErrors().stream().map(DefaultMessageSourceResolvable::getDefaultMessage).collect(Collectors.joining(";")), null);
     }
 
     /**

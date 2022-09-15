@@ -89,7 +89,7 @@ public class BudgetExtractPayService {
 		paybatchMapper.insert(budgetPaybatch);
 
 		LambdaUpdateWrapper<BudgetPaymoney> updateWrapper = new LambdaUpdateWrapper<>();
-		updateWrapper.in(BudgetPaymoney::getId,budgetPaybatch.getPaymoneyids());
+		updateWrapper.in(BudgetPaymoney::getId,extractPreparePayDTO.getPayMoneyIds());
 		updateWrapper.set(BudgetPaymoney::getPaymoneystatus,PaymoneyStatusEnum.PAYING.type);
 		updateWrapper.set(BudgetPaymoney::getPaybatchid,budgetPaybatch.getId());
 		paymoneyMapper.update(new BudgetPaymoney(),updateWrapper);
