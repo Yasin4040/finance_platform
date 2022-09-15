@@ -74,15 +74,15 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 	 */
 	public void addExtractPersonalityPayDetail(ExtractPersonalityPayDetailVO entity) {
 		this.extractsumService.validateIsCanOperatePersonalityPayDetail(entity.getExtractBatch());
-		List<BudgetExtractPersonalityPayDetail> extractPersonalityPayDetails = validateData(entity);
+		List<BudgetExtractdetail> budgetExtractdetails = extractsumService.getCurBatchPersionalityExtract(entity.getExtractBatch(), entity.getPersonalityId());
+		List<BudgetExtractPersonalityPayDetail> extractPersonalityPayDetails = validateData(entity,budgetExtractdetails);
 		BudgetExtractPersonalityPayDetail payDetail = BudgetExtractPersonalityPayDetail.transfer(entity, null);
 		payDetail.setExtractMonth(entity.getExtractBatch());
 
 		Map<String, ExtractPersonlityDetailExcelData> individualEmployeeAgoPayDetailMap = extractsumService.getIndividualEmployeeAgoPayDetail(Lists.newArrayList(entity.getPersonalityId()), entity.getExtractBatch());
 		ExtractPersonlityDetailExcelData agoExcelData = individualEmployeeAgoPayDetailMap.get(entity.getPersonalityId().toString() + "&&" + entity.getBillingUnitId().toString());
 		extractsumService.setPayDetail(agoExcelData,payDetail,entity.getPersonalityId(),entity.getBillingUnitId());
-		List<BudgetExtractdetail> extractDetailList = extractsumService.getCurBatchPersionalityExtract(entity.getExtractBatch(),entity.getPersonalityId());
-		BigDecimal extract = extractDetailList.stream().map(BudgetExtractdetail::getCopeextract).reduce(BigDecimal.ZERO, BigDecimal::add);
+		BigDecimal extract = budgetExtractdetails.stream().map(BudgetExtractdetail::getCopeextract).reduce(BigDecimal.ZERO, BigDecimal::add);
 		payDetail.setCurExtract(extract);
 		personalityPayDetailMapper.insert(payDetail);
 		extractsumService.reCalculateInvoice(Lists.newArrayList(entity.getPersonalityId()),entity.getExtractBatch());
@@ -131,7 +131,11 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 				BudgetBillingUnit budgetBillingUnit1 = billingUnitMapper.selectById(billingUnitId);
 				return !("0".equals(budgetBillingUnit1.getBillingUnitType()) || ("1".equals(budgetBillingUnit1.getBillingUnitType()) && individualEmployeeFiles.getAccountType() == 1));
 			}).collect(Collectors.toList());
-
+			Map<Long, BigDecimal> initReceiptMap = personalityPayDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractPersonalityPayDetail>().eq(BudgetExtractPersonalityPayDetail::getIsInitData, 1).eq(BudgetExtractPersonalityPayDetail::getPersonalityId, personalityId)).stream().collect(Collectors.toMap(e -> e.getPersonalityId(), e -> e.getReceiptSum(),(e1,e2)->e1));
+			BigDecimal initReceipt = BigDecimal.ZERO;
+			if(initReceiptMap.get(personalityId)!=null){
+				initReceipt = initReceiptMap.get(personalityId);
+			}
 			BigDecimal total = effectList.stream().map(e->{
 				return e.getExtractSum().add(e.getSalarySum()).add(e.getWelfareSum()).add(e.getCurSalary()).add(e.getCurRealExtract()).add(e.getCurWelfare());
 			}).reduce(BigDecimal.ZERO,BigDecimal::add);
@@ -153,6 +157,7 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 				}).reduce(BigDecimal.ZERO, BigDecimal::add);
 				annualQuota = annualQuota.subtract(receiptInfoMoney);
 			}
+			annualQuota = annualQuota.subtract(initReceipt);
 			excelData.setRemainingPayLimitMoney(annualQuota);
 			excelData.setRemainingInvoices(subtract);
 		}
@@ -160,12 +165,7 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 		return excelData;
 	}
 
-	private List<BudgetExtractPersonalityPayDetail> validateData(ExtractPersonalityPayDetailVO entity){
-//		List<BudgetExtractPersonalityPayDetail> extractPersonalityPayDetails = personalityPayDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractPersonalityPayDetail>()
-//				.eq(BudgetExtractPersonalityPayDetail::getExtractMonth, entity.getExtractBatch())
-//				.eq(BudgetExtractPersonalityPayDetail::getPersonalityId, entity.getPersonalityId())
-//				.ne(entity.getId()!=null,BudgetExtractPersonalityPayDetail::getId, entity.getId()));
-
+	private List<BudgetExtractPersonalityPayDetail> validateData(ExtractPersonalityPayDetailVO entity,List<BudgetExtractdetail> budgetExtractdetails){
 		IndividualEmployeeFiles individualEmployeeFiles = individualEmployeeFilesMapper.selectById(entity.getPersonalityId());
 		List<BudgetExtractPersonalityPayDetail> extractPersonalityPayDetails =  personalityPayDetailMapper.getDbMoney(individualEmployeeFiles.getEmployeeJobNum(),individualEmployeeFiles.getEmployeeName(),entity.getId(),entity.getExtractBatch());
 
@@ -180,7 +180,6 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 			throw new RuntimeException("此员工个体户存在发放状态不是【" + ExtractPersonalityPayStatusEnum.getValue(entity.getPayStatus()) + "】的发放明细。");
 		}
 
-		List<BudgetExtractdetail> budgetExtractdetails = extractsumService.getCurBatchPersionalityExtract(entity.getExtractBatch(), entity.getPersonalityId());
 		//待发提成
 		BigDecimal curExtract = budgetExtractdetails.stream().map(BudgetExtractdetail::getCopeextract).reduce(BigDecimal.ZERO, BigDecimal::add);
 		BigDecimal dbMoney = extractPersonalityPayDetails.stream().map(e -> e.getCurRealExtract()).reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -192,7 +191,8 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 
 	public void updateExtractPersonalityPayDetail(ExtractPersonalityPayDetailVO entity) {
 		this.extractsumService.validateIsCanOperatePersonalityPayDetail(entity.getExtractBatch());
-		List<BudgetExtractPersonalityPayDetail> extractPersonalityPayDetails = validateData(entity);
+		List<BudgetExtractdetail> budgetExtractdetails = extractsumService.getCurBatchPersionalityExtract(entity.getExtractBatch(), entity.getPersonalityId());
+		List<BudgetExtractPersonalityPayDetail> extractPersonalityPayDetails = validateData(entity,budgetExtractdetails);
 		BudgetExtractPersonalityPayDetail agoPayDetail = personalityPayDetailMapper.selectById(entity.getId());
 		BudgetExtractPersonalityPayDetail payDetail = BudgetExtractPersonalityPayDetail.transfer(entity, agoPayDetail);
 		payDetail.setExtractMonth(entity.getExtractBatch());
