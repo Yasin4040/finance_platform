@@ -22,7 +22,7 @@ public class ExtractAccountTaskQueryVO {
 	private String extractBatch;
 	@ApiModelProperty(value = "部门", name = "deptName", dataType = "String", required = false)
 	private String deptName;
-	@ApiModelProperty(value = "做账单位", name = "unitName", dataType = "String", required = false)
+	@ApiModelProperty(value = "做账单位", name = "billingUnitName", dataType = "String", required = false)
 	private String billingUnitName;
 	@ApiModelProperty(value = "是否看历史数据(false:否 true:是)", name = "isHistory", dataType = "Boolean", required = true)
 	private Boolean isHistory;

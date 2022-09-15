@@ -22,6 +22,7 @@ import com.jtyjy.finance.manager.vo.ExtractPersonalityPayDetailVO;
 import com.jtyjy.weixin.message.MessageSender;
 import com.jtyjy.weixin.message.QywxTextMsg;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,6 +76,9 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 	public void addExtractPersonalityPayDetail(ExtractPersonalityPayDetailVO entity) {
 		this.extractsumService.validateIsCanOperatePersonalityPayDetail(entity.getExtractBatch());
 		List<BudgetExtractdetail> budgetExtractdetails = extractsumService.getCurBatchPersionalityExtract(entity.getExtractBatch(), entity.getPersonalityId());
+		if(CollectionUtils.isEmpty(budgetExtractdetails)){
+			throw new RuntimeException("该个体户在当前批次下没有待发提成。");
+		}
 		List<BudgetExtractPersonalityPayDetail> extractPersonalityPayDetails = validateData(entity,budgetExtractdetails);
 		BudgetExtractPersonalityPayDetail payDetail = BudgetExtractPersonalityPayDetail.transfer(entity, null);
 		payDetail.setExtractMonth(entity.getExtractBatch());
@@ -98,7 +102,7 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 	 * @param billingUnitId 发放单位id
 	 * @param payTotal 当期发放总额
 	 */
-	public ExtractPersonalityMessageResponseVO getPersonalitySendData(Long personalityId, String extractBatch, Long billingUnitId, BigDecimal payTotal){
+	public ExtractPersonalityMessageResponseVO getPersonalitySendData(Long personalityId, String extractBatch, Long billingUnitId, BigDecimal payTotal,Long id){
 		ExtractPersonalityMessageResponseVO excelData = new ExtractPersonalityMessageResponseVO();
 		Map<String, ExtractPersonlityDetailExcelData> individualEmployeeAgoPayDetailMap = extractsumService.getIndividualEmployeeAgoPayDetail(Lists.newArrayList(personalityId), extractBatch);
 		ExtractPersonlityDetailExcelData agoExcelData = individualEmployeeAgoPayDetailMap.get(personalityId.toString() + "&&" + billingUnitId.toString());
@@ -127,7 +131,7 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 			excelData.setRemainingPayLimitMoney(BigDecimal.ZERO);
 		}else{
 			Map<Long, List<IndividualEmployeeTicketReceiptInfo>> receiptInfoMap = extractsumService.getIndividualEmployeeTicketReceiptInfoList(Lists.newArrayList(personalityId)).stream().collect(Collectors.groupingBy(e -> e.getIndividualEmployeeInfoId()));
-			List<BudgetExtractPersonalityPayDetail> effectList = personalityPayDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractPersonalityPayDetail>().eq(BudgetExtractPersonalityPayDetail::getPersonalityId, personalityId)).stream().filter(e -> {
+			List<BudgetExtractPersonalityPayDetail> effectList = personalityPayDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractPersonalityPayDetail>().eq(BudgetExtractPersonalityPayDetail::getPersonalityId, personalityId).ne(id!=null,BudgetExtractPersonalityPayDetail::getId,id)).stream().filter(e -> {
 				BudgetBillingUnit budgetBillingUnit1 = billingUnitMapper.selectById(billingUnitId);
 				return !("0".equals(budgetBillingUnit1.getBillingUnitType()) || ("1".equals(budgetBillingUnit1.getBillingUnitType()) && individualEmployeeFiles.getAccountType() == 1));
 			}).collect(Collectors.toList());
@@ -175,9 +179,15 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 				throw new RuntimeException("此员工个体户已有发放明细。");
 			}
 		}
-		long count1 = extractPersonalityPayDetails.stream().filter(e -> !e.getPayStatus().equals(entity.getPayStatus())).count();
-		if (count1 > 0) {
-			throw new RuntimeException("此员工个体户存在发放状态不是【" + ExtractPersonalityPayStatusEnum.getValue(entity.getPayStatus()) + "】的发放明细。");
+//		long count1 = extractPersonalityPayDetails.stream().filter(e -> !e.getPayStatus().equals(entity.getPayStatus())).count();
+//		if (count1 > 0) {
+//			throw new RuntimeException("此员工个体户存在发放状态不是【" + ExtractPersonalityPayStatusEnum.getValue(entity.getPayStatus()) + "】的发放明细。");
+//		}
+
+		if( (entity.getCurExtract()==null || entity.getCurExtract().compareTo(BigDecimal.ZERO) == 0) &&
+				(entity.getCurSalary()==null || entity.getCurSalary().compareTo(BigDecimal.ZERO) == 0) &&
+				(entity.getCurWelfare()==null || entity.getCurWelfare().compareTo(BigDecimal.ZERO) == 0)){
+			throw new RuntimeException("当期提成发放金额、当期工资发放金额、当期福利发放金额不能同时为0。");
 		}
 
 		//待发提成
@@ -192,6 +202,9 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 	public void updateExtractPersonalityPayDetail(ExtractPersonalityPayDetailVO entity) {
 		this.extractsumService.validateIsCanOperatePersonalityPayDetail(entity.getExtractBatch());
 		List<BudgetExtractdetail> budgetExtractdetails = extractsumService.getCurBatchPersionalityExtract(entity.getExtractBatch(), entity.getPersonalityId());
+		if(CollectionUtils.isEmpty(budgetExtractdetails)){
+			throw new RuntimeException("该个体户在当前批次下没有待发提成。");
+		}
 		List<BudgetExtractPersonalityPayDetail> extractPersonalityPayDetails = validateData(entity,budgetExtractdetails);
 		BudgetExtractPersonalityPayDetail agoPayDetail = personalityPayDetailMapper.selectById(entity.getId());
 		BudgetExtractPersonalityPayDetail payDetail = BudgetExtractPersonalityPayDetail.transfer(entity, agoPayDetail);
@@ -303,6 +316,21 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 
 	public void doEnsureComplete(String extractBatch,List<BudgetExtractPersonalityPayDetail> extractPersonalityPayDetails){
 
+		StringJoiner error = new StringJoiner(",");
+		Map<Long, IndividualEmployeeFiles> individualEmployeeFilesMap = individualEmployeeFilesMapper.selectList(null).stream().collect(Collectors.toMap(e -> e.getId(), e -> e));
+		extractPersonalityPayDetails.stream().collect(Collectors.groupingBy(e->{
+			IndividualEmployeeFiles individualEmployeeFiles = individualEmployeeFilesMap.get(e.getPersonalityId());
+			return individualEmployeeFiles.getEmployeeJobNum()+"&&"+individualEmployeeFiles.getEmployeeName();
+		})).forEach((key,list)->{
+			int size = list.stream().collect(Collectors.groupingBy(e -> e.getPayStatus())).size();
+			if(size>1){
+				String[] split = key.split("&&");
+				error.add(split[1]+"("+split[0]+")存在多种状态的个体户发放数据。");
+			}
+		});
+		if(StringUtils.isNotBlank(error.toString())){
+			throw new RuntimeException(error.toString());
+		}
 		BudgetExtractTaxHandleRecord extractTaxHandleRecord = extractsumService.getExtractTaxHandleRecord(extractBatch);
 		if(extractTaxHandleRecord==null){
 			extractTaxHandleRecord = new BudgetExtractTaxHandleRecord();

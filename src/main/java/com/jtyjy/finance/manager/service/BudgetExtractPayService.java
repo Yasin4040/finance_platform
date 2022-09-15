@@ -108,10 +108,12 @@ public class BudgetExtractPayService {
 		List<BudgetPaymoney> budgetPaymonies = paymoneyMapper.selectBatchIds(payMoneyIds);
 
 		if(type == ExtractPayTemplateEnum.ZS_BATCH.type){
-			List<BudgetExtractZhBatchPayExcelData> excelDatas = new ArrayList<>();
+
+
+
 			budgetPaymonies.stream().collect(Collectors.groupingBy(BudgetPaymoney::getBunitname)).forEach((bunitname,list)->{
 
-				list.stream().map(pm->{
+				List<BudgetExtractZhBatchPayExcelData> bUnitNameList = list.stream().map(pm -> {
 					BudgetExtractZhBatchPayExcelData excelData = new BudgetExtractZhBatchPayExcelData();
 					excelData.setBankAccount(pm.getBankaccount());
 					excelData.setBankAccountName(pm.getBankaccountname());
@@ -119,8 +121,17 @@ public class BudgetExtractPayService {
 					WbBanks bank = bankCache.getBankByBranchCode(pm.getBankaccountbranchcode());
 					excelData.setProvince(bank.getProvince());
 					excelData.setCity(bank.getCity());
-					return pm;
+					excelData.setBunitAccount(pm.getBunitbankaccount());
+					excelData.setPayMoney(pm.getPaymoney().stripTrailingZeros().toPlainString());
+					excelData.setBranchCode(pm.getBankaccountbranchcode());
+					excelData.setBankName(pm.getBankaccountbranchname());
+					return excelData;
 				}).collect(Collectors.toList());
+
+				Map<String, List<BudgetExtractZhBatchPayExcelData>> bUnitNameBankMap = bUnitNameList.stream().collect(Collectors.groupingBy(e -> {
+					return bunitname + "-" + e.getBankName();
+				}));
+
 			});
 		}
 

@@ -121,7 +121,7 @@ public class BudgetExtractPersonalityPayController {
 			int length = query.split("-").length;
 			if (length != 3) throw new RuntimeException("请先选择导航栏的一个批次！");
 			String extractBatch = query.split("-")[2];
-			ExtractPersonalityMessageResponseVO personalitySendData = personalityPayService.getPersonalitySendData(entity.getPersonalityId(), extractBatch, entity.getBillingUnitId(), entity.getCurExtract().add(entity.getCurSalary()).add(entity.getCurWelfare()));
+			ExtractPersonalityMessageResponseVO personalitySendData = personalityPayService.getPersonalitySendData(entity.getPersonalityId(), extractBatch, entity.getBillingUnitId(), entity.getCurExtract().add(entity.getCurSalary()).add(entity.getCurWelfare()),entity.getId());
 			return ResponseEntity.ok(personalitySendData);
 		} catch (Exception e) {
 			e.printStackTrace();

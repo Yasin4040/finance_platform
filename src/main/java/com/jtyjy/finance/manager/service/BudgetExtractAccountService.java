@@ -159,6 +159,13 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 				payMoneyPayDetails.add(detail);
 			});
 			result.setPayMoneyDetailList(payMoneyPayDetails);
+
+
+			BigDecimal payTotal = payMoneyPayDetails.stream().map(e -> {
+				return e.getPersonalityPayMoney1().add(e.getPersonalityPayMoney2()).add(e.getFee()).add(e.getPayMoney());
+			}).reduce(BigDecimal.ZERO, BigDecimal::add);
+			result.setPayTotal(payTotal);
+
 			return result;
 		}
 		return null;

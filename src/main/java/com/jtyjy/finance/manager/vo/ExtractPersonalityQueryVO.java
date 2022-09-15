@@ -17,6 +17,9 @@ import java.math.BigDecimal;
 @Data
 public class ExtractPersonalityQueryVO {
 
+	@ApiModelProperty("记录id")
+	private Long id;
+
 	@ApiModelProperty("员工个体户id")
 	@NotNull(message = "员工个体户id不能为空")
 	private Long personalityId;

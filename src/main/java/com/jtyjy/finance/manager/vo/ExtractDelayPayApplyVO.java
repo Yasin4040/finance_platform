@@ -39,6 +39,9 @@ public class ExtractDelayPayApplyVO {
 	@ApiModelProperty("付款明细")
 	private List<ExtractDelayPayApplyPayMoneyDetail> payMoneyDetailList;
 
+	@ApiModelProperty("合计发放金额")
+	private BigDecimal payTotal;
+
 	@Data
 	public static class ExtractDelayPayApplyPayDetail{
 		@ApiModelProperty("工号")

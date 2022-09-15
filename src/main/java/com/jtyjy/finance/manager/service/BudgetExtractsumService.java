@@ -1573,18 +1573,17 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				.eq(BudgetExtractdetail::getDeleteflag, 0)
 				.in(BudgetExtractdetail::getExtractsumid, curExtractSumIdList)
 				.ne(BudgetExtractdetail::getBusinessType,ExtractUserTypeEnum.SELF_EMPLOYED_EMPLOYEES.getCode()));
-		if (curBatchExtractDetailList.isEmpty()) return;
-		/**
-		 * 填充基础数据（外部人员发放单位，工资信息，限额规则，发放规则）
-		 */
-		ExtractPayCommonData extractPayCommonData = populateCommonData(extractBatch, curBatchExtractDetailList);
-		extractPayCommonData.setCurBatchExtractSumList(curBatchExtractSumList);
-		extractPayCommonData.setSpecialPersonNameList(specialPersonNameList);
-		//开始计算
-		doCalculate(extractPayCommonData, curBatchExtractDetailList, isReCalculate, empno);
-
-		invokeExtractCalEndPostProcessor(handleRecord, extractPayCommonData.getCurExtractBatch(), curBatchExtractSumList, 1);
-
+		if (!curBatchExtractDetailList.isEmpty()){
+			/**
+			 * 填充基础数据（外部人员发放单位，工资信息，限额规则，发放规则）
+			 */
+			ExtractPayCommonData extractPayCommonData = populateCommonData(extractBatch, curBatchExtractDetailList);
+			extractPayCommonData.setCurBatchExtractSumList(curBatchExtractSumList);
+			extractPayCommonData.setSpecialPersonNameList(specialPersonNameList);
+			//开始计算
+			doCalculate(extractPayCommonData, curBatchExtractDetailList, isReCalculate, empno);
+			invokeExtractCalEndPostProcessor(handleRecord, extractBatch, curBatchExtractSumList, 1);
+		}
 	}
 
 	public BudgetExtractTaxHandleRecord getExtractTaxHandleRecord(String extractBatch) {
@@ -3422,7 +3421,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		if (!CollectionUtils.isEmpty(agoUnCalculateExtractSumList)) {
 			//未计算的所有批次
 			String agoUnCalculateExtractBatchs = agoUnCalculateExtractSumList.stream().map(BudgetExtractsum::getExtractmonth).distinct().collect(Collectors.joining(","));
-			throw new RuntimeException("操作失败！提成批次【" + agoUnCalculateExtractBatchs + "】还未计算发放！");
+			//throw new RuntimeException("操作失败！提成批次【" + agoUnCalculateExtractBatchs + "】还未计算发放！");
 		}
 
 		/**
@@ -3447,7 +3446,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 					}
 				});
 		;
-		if (StringUtils.isNotBlank(errormsg.toString())) throw new RuntimeException(errormsg.toString());
+		//if (StringUtils.isNotBlank(errormsg.toString())) throw new RuntimeException(errormsg.toString());
 
 		/**
 		 * 4.之后的提成已计算  不允许计算
@@ -3456,8 +3455,8 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				&& Integer.valueOf(e.getExtractmonth()).intValue() < Integer.valueOf(curYearEndExtractBatch).intValue()).collect(Collectors.toList());
 		if (!lateExtractSumList.isEmpty()) {
 			String extractmonths = lateExtractSumList.stream().filter(e -> e.getStatus().intValue() >= ExtractStatusEnum.CALCULATION_COMPLETE.getType()).map(e -> e.getExtractmonth()).distinct().collect(Collectors.joining(","));
-			if (StringUtils.isNotEmpty(extractmonths))
-				throw new RuntimeException("操作失败！提成批次【" + extractmonths + "】已计算发放!");
+			//if (StringUtils.isNotEmpty(extractmonths))
+				//throw new RuntimeException("操作失败！提成批次【" + extractmonths + "】已计算发放!");
 		}
 	}
 
@@ -4643,6 +4642,14 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			})).forEach((account,list)->{
 
 				IndividualEmployeeFiles individualEmployeeFiles = employeeFilesMap.get(list.get(0).getEmpNo() + "&&" + list.get(0).getPersonlityName());
+				long count1 = extractDetailList.stream().filter(e -> e.getEmpno().equals(list.get(0).getEmpNo()) && e.getEmpname().equals(list.get(0).getPersonlityName())).count();
+				if(count1 == 0){
+					list.forEach(e->{
+						e.setErrMsg("该个体户在当前批次下没有待发提成。");
+					});
+					return;
+				}
+
 				long count = extractPersonalityPayDetails.stream().filter(e -> e.getPersonalityId().equals(individualEmployeeFiles.getId())).count();
 				if(count>0){
 					list.forEach(e->{
@@ -4982,7 +4989,9 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 					IndividualEmployeeFiles individualEmployeeFiles = individualEmployeeFilesMapper.selectById(e.getPersonalityId());
 					BigDecimal curOrderExtractSum = individualEmployeeMap.get(individualEmployeeFiles.getEmployeeJobNum().toString()+"&&"+individualEmployeeFiles.getEmployeeName());
 					if(curOrderExtractSum == null){
-						e.setIsSelf(false);
+						if(extractsum.getId().equals(sumId)){
+							e.setIsSelf(false);
+						}
 						continue;
 					}
 					BigDecimal extract = e.getExtract();
@@ -4992,9 +5001,14 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 					BigDecimal bigDecimal2 = map1.get(e.getId()).get(1).multiply(percent).setScale(2, BigDecimal.ROUND_HALF_UP);
 					BigDecimal bigDecimal3 = map1.get(e.getId()).get(2).multiply(percent).setScale(2, BigDecimal.ROUND_HALF_UP);
 					if (i == curBatchExtractSum.size() - 1) {
-						BigDecimal m1 = map.get(e.getId()).stream().map(m -> m.get(0)).reduce(BigDecimal.ZERO, BigDecimal::add);
-						BigDecimal m2 = map.get(e.getId()).stream().map(m -> m.get(1)).reduce(BigDecimal.ZERO, BigDecimal::add);
-						BigDecimal m3 = map.get(e.getId()).stream().map(m -> m.get(2)).reduce(BigDecimal.ZERO, BigDecimal::add);
+						BigDecimal m1 = BigDecimal.ZERO;
+						BigDecimal m2 = BigDecimal.ZERO;
+						BigDecimal m3 = BigDecimal.ZERO;
+						if(map.get(e.getId())!=null){
+							m1 = map.get(e.getId()).stream().map(m -> m.get(0)).reduce(BigDecimal.ZERO, BigDecimal::add);
+							m2 = map.get(e.getId()).stream().map(m -> m.get(1)).reduce(BigDecimal.ZERO, BigDecimal::add);
+							m3 = map.get(e.getId()).stream().map(m -> m.get(2)).reduce(BigDecimal.ZERO, BigDecimal::add);
+						}
 						r.put(e.getId(),Lists.newArrayList(map1.get(e.getId()).get(0).subtract(m1),map1.get(e.getId()).get(1).subtract(m2),map1.get(e.getId()).get(2).subtract(m3)));
 						result.put(i,r);
 					} else {
@@ -5013,9 +5027,15 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			}
 			int k1 = k;
 			list.forEach(l->{
-				l.setCurExtract(result.get(k1).get(l.getId()).get(0));
-				l.setCurSalary(result.get(k1).get(l.getId()).get(1));
-				l.setCurWelfare(result.get(k1).get(l.getId()).get(2));
+				if(result.get(k1).get(l.getId())!=null){
+					l.setCurExtract(result.get(k1).get(l.getId()).get(0));
+					l.setCurSalary(result.get(k1).get(l.getId()).get(1));
+					l.setCurWelfare(result.get(k1).get(l.getId()).get(2));
+				}else{
+					l.setCurExtract(BigDecimal.ZERO);
+					l.setCurSalary(BigDecimal.ZERO);
+					l.setCurWelfare(BigDecimal.ZERO);
+				}
 			});
 		}
 	}
