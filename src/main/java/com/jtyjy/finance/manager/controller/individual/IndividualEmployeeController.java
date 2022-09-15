@@ -219,19 +219,32 @@ public class IndividualEmployeeController {
     private List<IndividualImportDTO> getExamples(){
         List<IndividualImportDTO> examples = new ArrayList<>();
         IndividualImportDTO dto = new IndividualImportDTO();
+        dto.setBatchNo("090901");
+        dto.setProvinceOrRegion("福建");
         dto.setEmployeeName("张三");
-        dto.setEmployeeJobNum(20297);
-        dto.setAnnualQuota(BigDecimal.valueOf(100));
-        dto.setIssuedUnit("江西金太阳教育");
-        dto.setAccount("账号");
-        dto.setAccountName("户名");
-        dto.setAccountType("公户");
+        dto.setEmployeeJobNum(10086);
         dto.setPhone("18797815131");
-        dto.setPlatformCompany("...");
-        dto.setBatchNo("20220901");
-        dto.setDepositBank("招商银行");
+        dto.setAccountType("公户");
+
         dto.setSocialSecurityStopDate(new Date());
         dto.setLeaveDate(new Date());
+
+        dto.setAccountName("测试");
+        dto.setAccount("909");
+        dto.setBankType("中国工商银行");
+        dto.setDepositBank("工商银行上海市石门一路支行");
+        dto.setProvince("上海");
+        dto.setCity("市辖区");
+        dto.setElectronicInterBankNo("102290000017");
+        dto.setAnnualQuota(BigDecimal.valueOf(100));
+        dto.setIssuedUnit("江西慧谷文化传播有限公司");
+
+        dto.setReleaseOpinions("测试");
+        dto.setServiceAgreement("测试");
+        dto.setSelfOrAgency("自办");
+        dto.setPlatformCompany("测试");
+        dto.setVerificationAudit("核定");
+        dto.setRemarks("测试");
         examples.add(dto);
         return examples;
     }

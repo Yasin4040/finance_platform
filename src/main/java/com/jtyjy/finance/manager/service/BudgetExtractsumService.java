@@ -115,8 +115,6 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 
 	@Autowired
 	private BudgetExtractOuterpersonMapper outPersonMapper;
-
-
 	@Autowired
 	private DistributedNumber distributedNumber;
 
@@ -1528,6 +1526,14 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		extractsum.setVerifyorid(curUser.getUserName());
 		extractsum.setRemark(remark);
 		this.budgetExtractsumMapper.updateById(extractsum);
+		//删除报销单 TODO
+		Optional<BudgetExtractCommissionApplication> applicationOptional = applicationService.getApplicationBySumId(String.valueOf(sumId));
+		if (applicationOptional.isPresent()) {
+			if (applicationOptional.get().getReimbursementId()!=null) {
+				BudgetReimbursementorder reimbursementorder = reimbursementorderService.getById(applicationOptional.get().getReimbursementId());
+				reimbursementorderService.removeById(reimbursementorder);
+			}
+		}
 
 		try {
 			sender.sendQywxMsgSyn(new QywxTextMsg(extractsum.getCreator(), null, null, 0, "提成单号【" + extractsum.getCode() + "】已被退回。退回意见：" + remark, null));
