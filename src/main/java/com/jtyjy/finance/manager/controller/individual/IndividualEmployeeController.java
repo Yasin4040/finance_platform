@@ -1,11 +1,17 @@
 package com.jtyjy.finance.manager.controller.individual;
 
+import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.EasyExcelFactory;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.metadata.WriteSheet;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.jtyjy.common.enmus.StatusCodeEnmus;
+import com.jtyjy.core.redis.RedisClient;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.result.ResponseEntity;
 import com.jtyjy.finance.manager.bean.IndividualEmployeeFiles;
 import com.jtyjy.finance.manager.dto.individual.*;
+import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.query.individual.IndividualFilesQuery;
 import com.jtyjy.finance.manager.service.IndividualEmployeeFilesService;
 import com.jtyjy.finance.manager.utils.EasyExcelUtil;
@@ -13,14 +19,24 @@ import com.jtyjy.finance.manager.vo.individual.IndividualEmployeeFilesVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+
+import static com.jtyjy.finance.manager.constants.Constants.IMPORT_INDIVIDUAL_FILE;
+import static com.jtyjy.finance.manager.constants.Constants.IMPORT_INDIVIDUAL_TICKET;
 
 /**
  * Description:
@@ -30,12 +46,19 @@ import java.util.List;
 @Api(tags = {"员工个体户档案"})
 @RestController
 @RequestMapping("/api/individualEmployee")
+@Slf4j
 public class IndividualEmployeeController {
     //员工个体户
     private  final IndividualEmployeeFilesService filesService;
+    @Value("${file.shareDir}")
+    private String fileShareDir;
 
-    public IndividualEmployeeController(IndividualEmployeeFilesService filesService) {
+    @Value("${redis.file.key.expiretime}")
+    private Integer expireTime;
+    private final RedisClient redisClient;
+    public IndividualEmployeeController(IndividualEmployeeFilesService filesService, RedisClient redisClient) {
         this.filesService = filesService;
+        this.redisClient = redisClient;
     }
 
     /**
@@ -153,8 +176,25 @@ public class IndividualEmployeeController {
             return ResponseEntity.error(e.getMessage());
         }
         if(CollectionUtils.isNotEmpty(errorDTOList)) {
-            EasyExcelUtil.writeExcel(response, errorDTOList, "员工个体户错误明细", "员工个体户错误明细", IndividualImportErrorDTO.class);
-            return null;
+
+                InputStream iss = null;
+                try {
+                    String key = IMPORT_INDIVIDUAL_FILE + "_" + UserThreadLocal.get().getUserName();
+                    String errorFileName = fileShareDir + File.separator + System.currentTimeMillis() + "_错误信息.xlsx";
+                    ExcelWriter workBook = EasyExcel.write(new File(errorFileName), IndividualImportErrorDTO.class).build();
+                    WriteSheet sheet = EasyExcel.writerSheet(0).build();
+                    workBook.fill(errorDTOList, sheet);
+                    workBook.finish();
+                    redisClient.set(key, errorFileName, expireTime);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    log.error(e.getMessage(), e);
+                }
+                return ResponseEntity.apply(StatusCodeEnmus.ERROR_FORMAT, "文件导入有错误,请点击此处下载");
+
+//            EasyExcelUtil.writeExcel(response, errorDTOList, "员工个体户错误明细", "员工个体户错误明细", IndividualImportErrorDTO.class);
+//
+//            return null;
         }
         return ResponseEntity.ok();
     }
@@ -173,6 +213,52 @@ public class IndividualEmployeeController {
         // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
         String fileName = URLEncoder.encode("员工个体户信息模板", "UTF-8").replaceAll("\\+", "%20");
         response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
-        EasyExcelFactory.write(response.getOutputStream(), IndividualImportDTO.class).sheet("员工个体户信息模板").doWrite(new ArrayList<>());
+        EasyExcelFactory.write(response.getOutputStream(), IndividualImportDTO.class).sheet("员工个体户信息模板").doWrite(getExamples());
+    }
+
+    private List<IndividualImportDTO> getExamples(){
+        List<IndividualImportDTO> examples = new ArrayList<>();
+        IndividualImportDTO dto = new IndividualImportDTO();
+        dto.setEmployeeName("张三");
+        dto.setEmployeeJobNum(20297);
+        dto.setAnnualQuota(BigDecimal.valueOf(100));
+        dto.setIssuedUnit("江西金太阳教育");
+        dto.setAccount("账号");
+        dto.setAccountName("户名");
+        dto.setAccountType("公户");
+        dto.setPhone("18797815131");
+        dto.setPlatformCompany("...");
+        dto.setBatchNo("20220901");
+        dto.setDepositBank("招商银行");
+        dto.setSocialSecurityStopDate(new Date());
+        dto.setLeaveDate(new Date());
+        examples.add(dto);
+        return examples;
+    }
+    /**
+     * 员工个体户 下载错误明细。
+     */
+    @ApiOperation(value = "下载员工个体户错误明细", httpMethod = "GET")
+    @GetMapping("/downLoadError")
+    public void downLoadError(HttpServletResponse response) throws Exception {
+        InputStream is = null;
+        try {
+            if (redisClient.get(IMPORT_INDIVIDUAL_FILE + "_" + UserThreadLocal.get().getUserName()) == null) {
+                throw new RuntimeException("没有员工个体户错误明细可供下载。");
+            }
+            String errorFileName = redisClient.get(IMPORT_INDIVIDUAL_FILE + "_" + UserThreadLocal.get().getUserName());
+            is = new FileInputStream(errorFileName);
+            ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream("员工个体户错误明细", response)).withTemplate(is).build();
+            workBook.finish();
+            File file = new File(errorFileName);
+            if (file.exists()) file.delete();
+            redisClient.delete(IMPORT_INDIVIDUAL_FILE + "_" + UserThreadLocal.get().getUserName());
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage(), e);
+            throw e;
+        } finally {
+            if (is != null) is.close();
+        }
     }
 }

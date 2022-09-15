@@ -237,10 +237,15 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
                 IndividualImportErrorDTO errorDTO = new IndividualImportErrorDTO();
 //                SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");
                 SimpleDateFormat sf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
-                Date socialSecurityStopDate=sf.parse((String)map.get("socialSecurityStopDate"));
-                Date leaveDate=sf.parse((String)map.get("leaveDate"));
-                map.put("socialSecurityStopDate", socialSecurityStopDate);
-                map.put("leaveDate",leaveDate);
+                if (map.get("socialSecurityStopDate")!=null) {
+                    Date socialSecurityStopDate=sf.parse((String)map.get("socialSecurityStopDate"));
+                    map.put("socialSecurityStopDate", socialSecurityStopDate);
+                }
+                if (map.get("leaveDate")!=null) {
+                    Date leaveDate=sf.parse((String)map.get("leaveDate"));
+                    map.put("leaveDate", leaveDate);
+                }
+
                errorDTO = BeanMapUtil.mapToBean(map,IndividualImportErrorDTO.class);
 //                    BeanUtilsBean.getInstance().getConvertUtils().register(false, false, 0);//解决bigdecimal null
 //                    ConvertUtils.register(new DateLocaleConverter(Locale.CHINA,"yyyy-MM-dd"), Date.class);

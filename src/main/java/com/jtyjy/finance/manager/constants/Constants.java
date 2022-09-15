@@ -77,5 +77,9 @@ public class Constants {
                 return "未知";
         }
     }
+    public static final String IMPORT_INDIVIDUAL_TICKET = "INDIVIDUAL_TICKET";
+    public static final String IMPORT_INDIVIDUAL_FILE = "INDIVIDUAL_FILE";
+    public static final String IMPORT_FEE = "IMPORT_FEE";
+
 
 }

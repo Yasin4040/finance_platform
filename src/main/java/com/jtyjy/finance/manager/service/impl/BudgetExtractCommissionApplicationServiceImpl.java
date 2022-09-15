@@ -169,7 +169,8 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     public void updateApplicationInfo(CommissionApplicationInfoUpdateVO updateVO) {
         //状态判断。
         BudgetExtractsum extractsum = extractSumMapper.selectById (updateVO.getExtractSumId());
-        this.validateApplication(extractsum);
+        //判断udpateVO
+        this.validateApplicationByUpdateVO(updateVO);
         if (extractsum.getStatus() != ExtractStatusEnum.DRAFT.getType() && extractsum.getStatus() != ExtractStatusEnum.RETURN.getType())
             throw new RuntimeException("操作失败！只能修改退回和草稿状态的提成明细");
         BudgetExtractCommissionApplication application = this.getById(updateVO.getApplicationId());
@@ -249,6 +250,49 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         this.updateById(application);
 
     }
+
+    private void validateApplicationByUpdateVO(CommissionApplicationInfoUpdateVO updateVO) {
+        //提成明细for
+        List<BudgetExtractImportdetail> importDetails = extractImportDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractImportdetail>()
+                .eq(BudgetExtractImportdetail::getExtractsumid, updateVO.getExtractSumId()));
+        //是否存在 存在绩效奖和预提绩效奖时
+        List<BudgetExtractImportdetail> awardList = importDetails.stream()
+                .filter(x -> ExtractTypeEnum.ACCRUED_PERFORMANCE_AWARD.value.equals(x.getExtractType()) || ExtractTypeEnum.PERFORMANCE_AWARD_COMMISSION.value.equals(x.getExtractType())).collect(Collectors.toList());
+
+        if(CollectionUtils.isNotEmpty(awardList)) {
+            List<BudgetDetailsVO> budgetList = updateVO.getBudgetList();
+            if(CollectionUtils.isEmpty(budgetList)) {
+                throw new RuntimeException("未填写预算明细！");
+            }
+            Optional<BigDecimal> bigDecimal = budgetList.stream().map(x -> x.getBudgetAmount()).reduce(BigDecimal::add);
+            Optional<BigDecimal> reduce = awardList.stream().map(x -> x.getShouldSendExtract()).reduce(BigDecimal::add);
+            if (bigDecimal.isPresent() && reduce.isPresent()) {
+                int i = bigDecimal.get().compareTo(reduce.get());
+                if (i != 0) {
+                    throw new RuntimeException("提成金额应该和预算金额相等！");
+                }
+            }
+        }
+
+//            //budget 不能为空。
+//            Optional<BudgetExtractCommissionApplication> applicationBySumId = this.getApplicationBySumId(String.valueOf(extractSum.getId()));
+//            if(applicationBySumId.isPresent()){
+//                List<BudgetExtractCommissionApplicationBudgetDetails> budgetDetailList
+//                        =budgetDetailsService.lambdaQuery().eq(BudgetExtractCommissionApplicationBudgetDetails::getApplicationId, applicationBySumId.get().getId()).list();
+//                if(CollectionUtils.isEmpty(budgetDetailList)) {
+//                    throw new RuntimeException("未填写预算明细！");
+//                }
+//                Optional<BigDecimal> bigDecimal = budgetDetailList.stream().map(x -> x.getBudgetAmount()).reduce(BigDecimal::add);
+//                Optional<BigDecimal> reduce = awardList.stream().map(x -> x.getShouldSendExtract()).reduce(BigDecimal::add);
+//                if(bigDecimal.isPresent()&&reduce.isPresent()){
+//                    int i = bigDecimal.get().compareTo(reduce.get());
+//                    if (i!=0) {
+//                        throw new RuntimeException("提成金额应该和预算金额相等！");
+//                    }
+//                }
+//            }
+    }
+
     @Override
     /**
      * 根据预算单位及月份查询动因

@@ -19,6 +19,7 @@ import com.jtyjy.finance.manager.converter.CommissionConverter;
 import com.jtyjy.finance.manager.dto.commission.CommissionDetailsImportDTO;
 import com.jtyjy.finance.manager.dto.commission.FeeImportErrorDTO;
 import com.jtyjy.finance.manager.dto.commission.IndividualIssueExportDTO;
+import com.jtyjy.finance.manager.dto.individual.IndividualImportErrorDTO;
 import com.jtyjy.finance.manager.easyexcel.EasyExcelImportListener;
 import com.jtyjy.finance.manager.enmus.ExtractUserTypeEnum;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
@@ -58,6 +59,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.jtyjy.finance.manager.constants.Constants.IMPORT_FEE;
+import static com.jtyjy.finance.manager.constants.Constants.IMPORT_INDIVIDUAL_TICKET;
+
 /**
  * Description: 支付申请单
  * Created by ZiYao Lee on 2022/08/26.
@@ -81,7 +85,7 @@ public class CommissionApplicationController {
     private String fileShareDir;
 
     @Value("${redis.file.key.expiretime}")
-    private Integer expiretime;
+    private Integer expireTime;
 
     public CommissionApplicationController(BudgetExtractCommissionApplicationService applicationService, BudgetExtractsumService extractsumService, BudgetExtractImportdetailService importDetailService, RedisClient redisClient, BudgetYearPeriodMapper yearMapper, CuratorFramework curatorFramework) {
         this.applicationService = applicationService;
@@ -267,7 +271,7 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
                 workBook.fill(heads, sheet);
                 workBook.fill(details, sheet);
                 workBook.finish();
-                redisClient.set(key, errorFileName, expiretime);
+                redisClient.set(key, errorFileName, expireTime);
             } catch (Exception e) {
                 e.printStackTrace();
                 log.error(e.getMessage(), e);
@@ -589,8 +593,22 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
             extractMonth = extractMonth.split("-")[2];
             List<FeeImportErrorDTO> errorDTOList = applicationService.importFeeTemplate(multipartFile,extractMonth);
             if(CollectionUtils.isNotEmpty(errorDTOList)) {
-                EasyExcelUtil.writeExcel(response, errorDTOList, "员工个体户错误明细", "员工个体户错误明细", FeeImportErrorDTO.class);
-                return null;
+                try {
+                    String key = IMPORT_FEE + "_" + UserThreadLocal.get().getUserName();
+                    String errorFileName = fileShareDir + File.separator + System.currentTimeMillis() + "_错误信息.xlsx";
+                    ExcelWriter workBook = EasyExcel.write(new File(errorFileName), IndividualImportErrorDTO.class).build();
+                    WriteSheet sheet = EasyExcel.writerSheet(0).build();
+                    workBook.fill(errorDTOList, sheet);
+                    workBook.finish();
+                    redisClient.set(key, errorFileName, expireTime);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    log.error(e.getMessage(), e);
+                }
+                return ResponseEntity.apply(StatusCodeEnmus.ERROR_FORMAT, "文件导入有错误,请点击此处下载");
+
+//                EasyExcelUtil.writeExcel(response, errorDTOList, "员工个体户错误明细", "员工个体户错误明细", FeeImportErrorDTO.class);
+//                return null;
             }
         } catch (Exception e) {
             return ResponseEntity.error(e.getMessage());
@@ -645,5 +663,31 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
             } catch (Exception e) {
                 e.printStackTrace();
             }
+    }
+    /**
+     * 下载错误明细。
+     */
+    @ApiOperation(value = "下载费用明细错误明细", httpMethod = "GET")
+    @GetMapping("/downLoadFeeError")
+    public void downLoadError(HttpServletResponse response) throws Exception {
+        InputStream is = null;
+        try {
+            if (redisClient.get(IMPORT_FEE + "_" + UserThreadLocal.get().getUserName()) == null) {
+                throw new RuntimeException("没有费用错误明细可供下载。");
+            }
+            String errorFileName = redisClient.get(IMPORT_FEE + "_" + UserThreadLocal.get().getUserName());
+            is = new FileInputStream(errorFileName);
+            ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream("费用错误明细", response)).withTemplate(is).build();
+            workBook.finish();
+            File file = new File(errorFileName);
+            if (file.exists()) file.delete();
+            redisClient.delete(IMPORT_FEE + "_" + UserThreadLocal.get().getUserName());
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage(), e);
+            throw e;
+        } finally {
+            if (is != null) is.close();
+        }
     }
 }
