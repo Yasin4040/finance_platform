@@ -54,12 +54,13 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
 
         List<IndividualEmployeeFilesVO> records = convert.getRecords();
         for (IndividualEmployeeFilesVO record : records) {
-            if(StringUtils.isNotBlank( record.getDepartmentNo())){
-                WbDept dept = DeptCache.getByDeptId(record.getDepartmentNo());
-                if(dept!=null){
-                    record.setDepartmentName(dept.getDeptFullname());
-                }
-            }
+//
+//            if(StringUtils.isNotBlank( record.getDepartmentNo())){
+//                WbDept dept = DeptCache.getByDeptId(record.getDepartmentNo());
+//                if(dept!=null){
+//                    record.setDepartmentName(dept.getDeptFullname());
+//                }
+//            }
             record.setDepositBankName(BankCache.getBankByBranchCode(record.getDepositBank())!=null
                     ?BankCache.getBankByBranchCode(record.getDepositBank()).getSubBranchName():record.getDepositBank());
             record.setIssuedUnitName(UnitCache.get(record.getIssuedUnit())!=null?
@@ -104,6 +105,20 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
         }
         IndividualEmployeeFiles entity = IndividualEmployeeFilesConverter.INSTANCE.dtoToEntity(dto);
 
+        Integer employeeJobNum = dto.getEmployeeJobNum();
+        WbPerson personByEmpNo = PersonCache.getPersonByEmpNo(String.valueOf(employeeJobNum));
+        if(personByEmpNo==null){
+            throw new RuntimeException("工号不存在");
+        }
+        WbDept byDeptId = DeptCache.getByDeptId(personByEmpNo.getDeptId());
+        if(byDeptId == null){
+            throw new RuntimeException("员工部门不存在");
+        }
+
+        entity.setDepartmentNo(personByEmpNo.getDeptId());
+        entity.setDepartmentName(byDeptId.getDeptName());
+        entity.setDepartmentFullName(byDeptId.getDeptFullname());
+
         entity.setCreateTime(new Date());
         entity.setCreateBy(UserThreadLocal.get().getUserName());
 
@@ -119,6 +134,20 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
         if (existsOptional.isPresent()) {
             throw new BusinessException("保存失败!户名不允许重复!");
         }
+        Integer employeeJobNum = file.getEmployeeJobNum();
+        WbPerson personByEmpNo = PersonCache.getPersonByEmpNo(String.valueOf(employeeJobNum));
+        if(personByEmpNo==null){
+            throw new RuntimeException("工号不存在");
+        }
+        WbDept byDeptId = DeptCache.getByDeptId(personByEmpNo.getDeptId());
+        if(byDeptId == null){
+            throw new RuntimeException("员工部门不存在");
+        }
+
+        file.setDepartmentNo(personByEmpNo.getDeptId());
+        file.setDepartmentName(byDeptId.getDeptName());
+        file.setDepartmentFullName(byDeptId.getDeptFullname());
+
         file.setUpdateTime(new Date());
         file.setUpdateBy(UserThreadLocal.get().getUserName());
         this.saveOrUpdate(file);
@@ -197,6 +226,8 @@ public class IndividualEmployeeFilesServiceImpl extends ServiceImpl<IndividualEm
                                     throw new RuntimeException("员工部门不存在");
                                 }
                                 entity.setDepartmentName(byDeptId.getDeptName());
+                                entity.setDepartmentFullName(byDeptId.getDeptFullname());
+
                                 entity.setAccountType(dto.getAccountType().equals("个卡")?1:2);
                                 //通过名称 找id
                                 entity.setDepositBank(BankCache.getBankByBranchName(entity.getDepositBank()) != null ?

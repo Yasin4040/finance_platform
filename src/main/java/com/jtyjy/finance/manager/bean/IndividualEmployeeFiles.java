@@ -155,7 +155,11 @@ public class IndividualEmployeeFiles implements Serializable {
      */
     @TableField(value = "department_name")
     private String departmentName;
-
+    /**
+     * 部门完整名称
+     */
+    @TableField(value = "department_full_name")
+    private String departmentFullName;
     /**
      * 省区/大区
      */

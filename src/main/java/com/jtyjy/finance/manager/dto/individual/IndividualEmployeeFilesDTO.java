@@ -129,6 +129,12 @@ public class IndividualEmployeeFilesDTO {
     private String departmentName;
 
     /**
+     * 部门完整名称
+     */
+    @ApiModelProperty(value = "部门完整名称")
+    private String departmentFullName;
+
+    /**
      * 省区/大区
      */
     @ApiModelProperty(value = "省区/大区")

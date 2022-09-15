@@ -60,12 +60,9 @@ import java.util.stream.Collectors;
 @Service
 public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<BudgetExtractCommissionApplicationMapper, BudgetExtractCommissionApplication>
     implements BudgetExtractCommissionApplicationService{
-    private final CuratorFramework curatorFramework;
     private final BudgetExtractTaxHandleRecordService taxHandleRecordService;
     private final BudgetExtractsumMapper extractSumMapper;
-    private final BudgetExtractdetailService  extractDetailService;
     private final BudgetExtractOuterpersonMapper outPersonMapper;
-    private final IndividualEmployeeFilesService individualService;
     private final BudgetExtractImportdetailMapper extractImportDetailMapper;
     private final BudgetYearPeriodMapper yearMapper;
     private final BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService;
@@ -78,13 +75,11 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     private final HrService hrService;
     private final OaService oaService;
 
-    public BudgetExtractCommissionApplicationServiceImpl(CuratorFramework curatorFramework, BudgetExtractTaxHandleRecordService taxHandleRecordService, BudgetExtractsumMapper extractSumMapper, BudgetExtractdetailService extractDetailService, BudgetExtractOuterpersonMapper outPersonMapper, IndividualEmployeeFilesService individualService, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, BudgetCommonAttachmentService attachmentService, StorageClient storageClient, ReimbursementWorker reimbursementWorker, BudgetReimbursementorderService reimbursementorderService, BudgetExtractFeePayDetailMapper feePayDetailMapper, HrService hrService, OaService oaService) {
-        this.curatorFramework = curatorFramework;
+    private  String tcWorkFlowId = "5263";
+    public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractTaxHandleRecordService taxHandleRecordService, BudgetExtractsumMapper extractSumMapper, BudgetExtractOuterpersonMapper outPersonMapper, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, BudgetCommonAttachmentService attachmentService, StorageClient storageClient, ReimbursementWorker reimbursementWorker, BudgetReimbursementorderService reimbursementorderService, BudgetExtractFeePayDetailMapper feePayDetailMapper, HrService hrService, OaService oaService) {
         this.taxHandleRecordService = taxHandleRecordService;
         this.extractSumMapper = extractSumMapper;
-        this.extractDetailService = extractDetailService;
         this.outPersonMapper = outPersonMapper;
-        this.individualService = individualService;
         this.extractImportDetailMapper = extractImportDetailMapper;
         this.yearMapper = yearMapper;
         this.budgetDetailsService = budgetDetailsService;
@@ -557,15 +552,13 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         }
         Map<String, Object> main = (Map<String, Object>) JSON.toJSON(oaDTO);
         List<Map<String, Object>> list = (List<Map<String, Object>>) JSON.toJSON(oaDetailList);
-
-        String requestId =  oaService.createWorkflow(wi, oaDTO.getWfid(), main, list);
+//       http://192.168.4.63/workflow/workflow/addwf0.jsp?ajax=1&src=editwf&wfid=5263&isTemplate=0
+        String requestId =  oaService.createWorkflow(wi, tcWorkFlowId, main, list);
         if (requestId == null || Integer.parseInt(requestId) < 0) {
             throw new RuntimeException("提交失败，oa系统未找到你的上级人员，请联系oa管理员。");
         }
-
         application.setRequestId(requestId);
         application.setOaCreatorId(oaUserId);
-
     }
 
     private void validData(IndividualIssueExportDTO dto) {

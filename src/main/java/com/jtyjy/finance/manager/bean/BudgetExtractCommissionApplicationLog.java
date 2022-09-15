@@ -73,18 +73,18 @@ public class BudgetExtractCommissionApplicationLog implements Serializable {
 
 
     /**
-     * oa流程编号
+     * oa流程 nodeId编号
      */
-    @ApiModelProperty(value = "oa流程编号")
-    @TableField(value = "request_code")
-    private String request_code;
+    @ApiModelProperty(value = "oa流程 nodeId编号")
+    @TableField(value = "oa_node_id")
+    private String oaNodeId;
 
     /**
      * 流程id
      */
     @ApiModelProperty(value = "流程id")
-    @TableField(value = "request_id")
-    private String request_id;
+    @TableField(value = "oa_request_id")
+    private String oaRequestId;
     /**
      * 操作人
      */

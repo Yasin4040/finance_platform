@@ -11,6 +11,7 @@ import com.jtyjy.finance.manager.dto.commission.EntryCompletedDTO;
 import com.jtyjy.finance.manager.enmus.ExtractStatusEnum;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.mapper.BudgetExtractDelayApplicationMapper;
+import com.jtyjy.finance.manager.mapper.BudgetExtractsumMapper;
 import com.jtyjy.finance.manager.mapper.BudgetYearPeriodMapper;
 import com.jtyjy.finance.manager.query.AccountEntryQuery;
 import com.jtyjy.finance.manager.service.BudgetExtractPerPayDetailService;
@@ -38,13 +39,13 @@ import java.util.stream.Collectors;
 public class ExtractAccountEntryTaskServiceImpl extends ServiceImpl<ExtractAccountEntryTaskMapper, ExtractAccountEntryTask>
     implements ExtractAccountEntryTaskService{
 
-    private final BudgetExtractsumService extractSumService;
+    private final BudgetExtractsumMapper extractSumMapper;
     private final BudgetYearPeriodMapper yearMapper;
     private final BudgetExtractPerPayDetailService perPayDetailService;
     private final BudgetExtractDelayApplicationMapper delayApplicationMapper;
     private final BudgetUnitService budgetUnitService;
-    public ExtractAccountEntryTaskServiceImpl(BudgetExtractsumService extractSumService, BudgetYearPeriodMapper yearMapper, BudgetExtractPerPayDetailService perPayDetailService, BudgetExtractDelayApplicationMapper delayApplicationMapper, BudgetUnitService budgetUnitService) {
-        this.extractSumService = extractSumService;
+    public ExtractAccountEntryTaskServiceImpl(BudgetExtractsumMapper extractSumMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractPerPayDetailService perPayDetailService, BudgetExtractDelayApplicationMapper delayApplicationMapper, BudgetUnitService budgetUnitService) {
+        this.extractSumMapper = extractSumMapper;
         this.yearMapper = yearMapper;
         this.perPayDetailService = perPayDetailService;
         this.delayApplicationMapper = delayApplicationMapper;
@@ -73,12 +74,15 @@ public class ExtractAccountEntryTaskServiceImpl extends ServiceImpl<ExtractAccou
             List<BudgetExtractDelayApplication> delayApplications = delayApplicationMapper.selectList(new LambdaQueryWrapper<BudgetExtractDelayApplication>()
                     .in(BudgetExtractDelayApplication::getDelayCode, delayList));
             for (BudgetExtractDelayApplication delayApplication : delayApplications) {
-                BudgetExtractsum extractSum = extractSumService.getById(delayApplication.getRelationExtractCode());
+                //获取extractSum
+                BudgetExtractsum extractSum = extractSumMapper.selectOne(new LambdaQueryWrapper<BudgetExtractsum>()
+                        .eq(BudgetExtractsum::getCode, delayApplication.getRelationExtractCode()));
                 //获取单个任务
                 getSingleEntryTask(extractMonth, taskList, delayApplication.getDelayCode(), extractSum);
             }
         }else {
-            List<BudgetExtractsum> curBatchExtractSum = extractSumService.getCurBatchExtractSum(extractMonth);
+            List<BudgetExtractsum> curBatchExtractSum =
+                    extractSumMapper.selectList(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getExtractmonth, extractMonth).eq(BudgetExtractsum::getDeleteflag, 0).ne(BudgetExtractsum::getStatus, ExtractStatusEnum.REJECT.getType()));
             long count = curBatchExtractSum.stream().filter(x -> !x.getStatus().equals(ExtractStatusEnum.ACCOUNT.type)).count();
             if (count>0) {
                 throw new BusinessException("存在没有做账完成的订单。");

@@ -46,7 +46,7 @@ public class IndividualImportErrorDTO extends ImportErrorDTO{
 
     @ApiModelProperty(value = "员工工号")
     @ExcelProperty(value = "*工号")
-    private Integer employeeJobNum;
+    private String employeeJobNum;
 
     @ApiModelProperty(value = "员工名称")
     @ExcelProperty(value = "*姓名")
