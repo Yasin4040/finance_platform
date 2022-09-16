@@ -1,11 +1,13 @@
 package com.jtyjy.finance.manager.interceptor;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.jtyjy.core.interceptor.BaseUser;
 import com.jtyjy.core.interceptor.LoginThreadLocal;
 import com.jtyjy.core.redis.RedisClient;
 import com.jtyjy.finance.manager.bean.WbUser;
 import com.jtyjy.finance.manager.service.WbUserService;
+import com.jtyjy.finance.manager.utils.HttpUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,7 @@ import org.springframework.web.servlet.ModelAndView;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -36,6 +39,12 @@ public class ConverUserInterceptor implements HandlerInterceptor, InitializingBe
 
     @Value("${token.prefix}")
     private String tokenPrefix;
+
+    @Value("${hit.flush.uesr.role.url}")
+    private String userRoleUrl;
+
+    @Value("${app.id}")
+    private String serverId;
 
     @Autowired
     private RedisClient redis;
@@ -57,6 +66,9 @@ public class ConverUserInterceptor implements HandlerInterceptor, InitializingBe
                         if (wbUser == null) {
                             return false;
                         }
+                        String result = HttpUtil.doGet(this.userRoleUrl + wbUser.getUserName()+"&serverId="+serverId);
+                        List<String> roles = JSON.parseArray(result, String.class);
+                        wbUser.setRoleNameList(roles);
                         userMap.put(token, wbUser);
                     }
                     UserThreadLocal.set(wbUser);

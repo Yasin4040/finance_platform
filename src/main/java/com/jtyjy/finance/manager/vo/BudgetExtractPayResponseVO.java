@@ -20,6 +20,8 @@ public class BudgetExtractPayResponseVO {
 	private Long id;
 	@ApiModelProperty(value = "支付状态",hidden = true)
 	private Integer payStatus;
+	@ApiModelProperty(value = "提成id")
+	private Long sumId;
 	@ApiModelProperty(value = "付款状态名称")
 	private String payStatusName;
 	@ApiModelProperty(value = "任务接收时间")
