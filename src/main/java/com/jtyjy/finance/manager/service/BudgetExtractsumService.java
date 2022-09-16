@@ -1593,6 +1593,26 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			//开始计算
 			doCalculate(extractPayCommonData, curBatchExtractDetailList, isReCalculate, empno);
 			invokeExtractCalEndPostProcessor(handleRecord, extractBatch, curBatchExtractSumList, 1);
+		}else{
+			List<BudgetExtractdetail> individualExtractDetailList = curBatchExtractDetailList.stream().filter(e -> ExtractUserTypeEnum.SELF_EMPLOYED_EMPLOYEES.getCode().equals(e.getBusinessType())).collect(Collectors.toList());
+			if (handleRecord == null) {
+				handleRecord = new BudgetExtractTaxHandleRecord();
+				handleRecord.setExtractMonth(extractBatch);
+				handleRecord.setIsCalComplete(true);
+				handleRecord.setIsSetExcessComplete(true);
+				handleRecord.setIsPersonalityComplete(false);
+				if (CollectionUtils.isEmpty(individualExtractDetailList)) {
+					handleRecord.setIsPersonalityComplete(true);
+				}
+				taxHandleRecordService.save(handleRecord);
+			}else{
+				handleRecord.setIsCalComplete(true);
+				handleRecord.setIsSetExcessComplete(true);
+				if (CollectionUtils.isEmpty(individualExtractDetailList)) {
+					handleRecord.setIsPersonalityComplete(true);
+				}
+				taxHandleRecordService.updateById(handleRecord);
+			}
 		}
 	}
 
