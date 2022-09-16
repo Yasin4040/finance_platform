@@ -338,7 +338,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
 
         BudgetBillingUnit billingUnit;
         for (IndividualIssueExportDTO dto : issueExportDTOList) {
-            if (ExtractUserTypeEnum.EXTERNAL_STAFF.equals(dto.getBusinessType())) {
+            if (ExtractUserTypeEnum.EXTERNAL_STAFF.getCode().equals(dto.getBusinessType())) {
                 billingUnit = UnitCache.get(outerPayUnit);
                 if (billingUnit != null) {
                     //没有就置空
@@ -354,8 +354,8 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                         dto.setIssuedUnit(billingUnit.getName());
                     }
                 }
-                exportDTOList.add(dto);
             }
+            exportDTOList.add(dto);
         }
         return exportDTOList;
     }

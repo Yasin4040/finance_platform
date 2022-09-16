@@ -214,13 +214,12 @@
 		AND bet.bunitname2 like concat('%陈彩莲%')
 		AND bet.paymoney2 > 0    
     </select>
-	<select id="selectAllDetailList"
-			resultType="com.jtyjy.finance.manager.dto.commission.IndividualIssueExportDTO">
+	<select id="selectAllDetailList" resultType="com.jtyjy.finance.manager.dto.commission.IndividualIssueExportDTO">
 		select
 			bei.business_type as businessType,bei.empno as employeeJobNum,bei.empname as employeeName,sum(bei.copeextract) as  copeextract
 		from budget_extractsum be
 				 left join budget_extract_importdetail bei on be.id = bei.extractsumid
 		where  be.extractmonth = #{extractMonth}  and bei.business_type !=3
-		group by bei.empno,employeeName
+		group by bei.empno,employeeName,bei.business_type
 	</select>
 </mapper>

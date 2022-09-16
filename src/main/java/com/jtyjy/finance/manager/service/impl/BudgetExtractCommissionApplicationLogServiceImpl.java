@@ -10,11 +10,16 @@ import com.jtyjy.finance.manager.bean.BudgetExtractCommissionApplicationLog;
 import com.jtyjy.finance.manager.enmus.OperationNodeEnum;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.mapper.BudgetExtractCommissionApplicationMapper;
+import com.jtyjy.finance.manager.oadao.OAMapper;
 import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationLogService;
 import com.jtyjy.finance.manager.mapper.BudgetExtractCommissionApplicationLogMapper;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
 * @author User
@@ -23,12 +28,15 @@ import java.util.Date;
 */
 @Service
 public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImpl<BudgetExtractCommissionApplicationLogMapper, BudgetExtractCommissionApplicationLog>
-    implements BudgetExtractCommissionApplicationLogService{
+    implements BudgetExtractCommissionApplicationLogService, InitializingBean {
 
     private final BudgetExtractCommissionApplicationMapper applicationMapper;
+    private final OAMapper oaMapper;
+    private Map<String,String> nodeMap = new HashMap<>();
 
-    public BudgetExtractCommissionApplicationLogServiceImpl(BudgetExtractCommissionApplicationMapper applicationMapper) {
+    public BudgetExtractCommissionApplicationLogServiceImpl(BudgetExtractCommissionApplicationMapper applicationMapper, OAMapper oaMapper) {
         this.applicationMapper = applicationMapper;
+        this.oaMapper = oaMapper;
     }
 
     @Override
@@ -45,15 +53,18 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
 
     @Override
     public void doRecordOA(EcologyParams params) {
-
         //打印参数 观察。
         System.out.println("6666开始");
         System.out.println( JSONObject.toJSONString(params));
-
         EcologyRequestManager requestManager = params.getRequestManager();
+        int nodeId = requestManager.getNodeid();
+        String value = nodeMap.get(nodeId);
+        //先找到相应的nodeId  flowType 对应的 节点信息。
+//        OperationNodeEnum.getTypeEnum();
+
         //流程类型 请求 表名
         String flowtype = requestManager.getBillTableName();
-        int nodeid = requestManager.getNodeid();
+
         String requestId = params.getRequestid();
 
         //nodeId 也是固定的。
@@ -83,7 +94,7 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
         extractLog.setApplicationId(application.getId());
         extractLog.setCreateTime(new Date());
         extractLog.setOaRequestId(requestId);
-        extractLog.setOaNodeId(String.valueOf(nodeid));
+//        extractLog.setOaNodeId(String.valueOf(nodeid));
 
         extractLog.setCreateBy(empNo);
         extractLog.setCreatorName(username);
@@ -92,6 +103,15 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
         extractLog.setStatus(0);
         extractLog.setRemarks(remark);
         this.save(extractLog);
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        List<String> values = OperationNodeEnum.getValues();
+        List<Map<String,String>> allMap =  oaMapper.getNodeList(values);
+        allMap.stream().forEach(x->{
+            nodeMap.put(x.get("id"),x.get("name"));
+        });
     }
 }
 
