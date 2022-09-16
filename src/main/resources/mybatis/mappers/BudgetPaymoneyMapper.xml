@@ -388,7 +388,7 @@
     <select id="getExtractPayMoneyList" resultType="com.jtyjy.finance.manager.vo.BudgetExtractPayResponseVO">
          SELECT
             pm.id,
-            pm.paymoneystatus payStatus,
+            pm.paymoneystatus payStatus,bes.id sumId,
         IF
             ( pm.paymoneystatus = 1, '待支付', '支付中' ) payStatusName,
             pm.createtime createTime,

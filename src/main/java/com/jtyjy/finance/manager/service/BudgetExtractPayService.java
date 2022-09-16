@@ -16,7 +16,9 @@ import com.jtyjy.finance.manager.easyexcel.BudgetPayTotalExcelData;
 import com.jtyjy.finance.manager.enmus.ExtractPayTemplateEnum;
 import com.jtyjy.finance.manager.enmus.PayBatchTypeEnum;
 import com.jtyjy.finance.manager.enmus.PaymoneyStatusEnum;
+import com.jtyjy.finance.manager.enmus.PaymoneyTypeEnum;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
+import com.jtyjy.finance.manager.mapper.BudgetExtractDelayApplicationMapper;
 import com.jtyjy.finance.manager.mapper.BudgetPaybatchMapper;
 import com.jtyjy.finance.manager.mapper.BudgetPaymoneyMapper;
 import com.jtyjy.finance.manager.vo.BudgetExtractPayQueryVO;
@@ -59,6 +61,8 @@ public class BudgetExtractPayService {
 	private ExtractAccountEntryTaskService accountEntryTaskService;
 	@Autowired
 	private BudgetExtractPersonalityPayService extractPersonalityPayService;
+	@Autowired
+	private BudgetExtractDelayApplicationMapper delayApplicationMapper;
 	@Value("${tc.redis.key}")
 	private String TC_REDIS_KEY;
 
@@ -254,14 +258,31 @@ public class BudgetExtractPayService {
 
 			if(orderPrefix.equals(Constants.EXTRACT_DELAY_ORDER_PREFIX)){
 				//延期
-				//orderDetailList.stream()
+				orderDetailList.stream().collect(Collectors.groupingBy(BudgetExtractPerPayDetail::getExtractMonth)).forEach((extractBatch,batchDetailList)->{
+					/**
+					 * 一个提成批次下，一批的延期全部付款
+					 */
+					batchDetailList.stream().collect(Collectors.groupingBy(e->{
+						BudgetExtractDelayApplication delayApplication = delayApplicationMapper.selectOne(new LambdaQueryWrapper<BudgetExtractDelayApplication>().eq(BudgetExtractDelayApplication::getDelayCode, e.getExtractCode()));
+						return delayApplication.getBatch()==null?1:delayApplication.getBatch();
+					})).forEach((batch,delayBatchList)->{
 
+						List<Long> delayPayDetails = delayBatchList.stream().map(e -> e.getId()).collect(Collectors.toList());
+						List<String> codeList = delayBatchList.stream().map(e -> e.getExtractCode()).collect(Collectors.toList());
+						int unPaySuccessCount = paymoneyService.count(new LambdaQueryWrapper<BudgetPaymoney>().eq(BudgetPaymoney::getPaymoneytype, PaymoneyTypeEnum.EXTRACT_PAY.type).in(BudgetPaymoney::getPaymoneyobjectcode,codeList).in(BudgetPaymoney::getPaymoneyobjectid, delayPayDetails).ne(BudgetPaymoney::getPaymoneystatus, PaymoneyStatusEnum.PAYED.type));
+						if(unPaySuccessCount == 0){
+							//该批次全部支付成功
+							accountEntryTaskService.addEntryTask(true,codeList,extractBatch);
+						}
+					});
+				});
 
 			}else if(orderPrefix.equals(TC_REDIS_KEY)){
 				orderDetailList.stream().collect(Collectors.groupingBy(BudgetExtractPerPayDetail::getExtractMonth)).forEach((extractBatch,batchDetailList)->{
 					List<BudgetExtractPerPayDetail> list = perPayDetailService.list(new LambdaQueryWrapper<BudgetExtractPerPayDetail>().eq(BudgetExtractPerPayDetail::getExtractMonth, extractBatch));
 					if(!CollectionUtils.isEmpty(list)){
-						int unPaySuccessCount = paymoneyService.count(new LambdaQueryWrapper<BudgetPaymoney>().in(BudgetPaymoney::getPaymoneyobjectid, list.stream().map(e -> e.getId()).collect(Collectors.toList())).ne(BudgetPaymoney::getPaymoneystatus, PaymoneyStatusEnum.PAYED.type));
+						List<String> codeList = list.stream().map(e -> e.getExtractCode()).collect(Collectors.toList());
+						int unPaySuccessCount = paymoneyService.count(new LambdaQueryWrapper<BudgetPaymoney>().eq(BudgetPaymoney::getPaymoneytype, PaymoneyTypeEnum.EXTRACT_PAY.type).in(BudgetPaymoney::getPaymoneyobjectcode,codeList).in(BudgetPaymoney::getPaymoneyobjectid, list.stream().map(e -> e.getId()).collect(Collectors.toList())).ne(BudgetPaymoney::getPaymoneystatus, PaymoneyStatusEnum.PAYED.type));
 						if(unPaySuccessCount == 0){
 							//该批次全部支付成功
 							accountEntryTaskService.addEntryTask(false,null,extractBatch);
