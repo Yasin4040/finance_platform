@@ -4646,7 +4646,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				return e.getEmpNo().toString().concat(e.getEmpName());
 			})).forEach((account,list)->{
 
-				long count1 = extractDetailList.stream().filter(e -> e.getEmpno().equals(list.get(0).getEmpNo()) && e.getEmpname().equals(list.get(0).getEmpName())).count();
+				long count1 = extractDetailList.stream().filter(e -> e.getEmpno().equals(list.get(0).getEmpNo().toString()) && e.getEmpname().equals(list.get(0).getEmpName())).count();
 				if(count1 == 0){
 					list.forEach(e->{
 						e.setErrMsg("该个体户在当前批次下没有待发提成。");

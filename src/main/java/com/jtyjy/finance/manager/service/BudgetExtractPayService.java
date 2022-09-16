@@ -50,6 +50,8 @@ public class BudgetExtractPayService {
 	private BudgetPaybatchMapper paybatchMapper;
 	@Autowired
 	private BankCache bankCache;
+	@Autowired
+	private BudgetPaymoneyService paymoneyService;
 
 	/**
 	 * <p>获取提成付款单</p>
@@ -221,7 +223,14 @@ public class BudgetExtractPayService {
 		List<BudgetPaymoney> budgetPaymonies = paymoneyMapper.selectBatchIds(extractPayCompleteDTO.getPayMoneyIds());
 		long count = budgetPaymonies.stream().filter(e -> e.getPaymoneystatus() != PaymoneyStatusEnum.PAYING.type).count();
 		if(count > 0 ){
-			throw new RuntimeException("请选择待支付的付款单！");
+			throw new RuntimeException("请选择支付中的付款单！");
 		}
+
+		budgetPaymonies.stream().peek(e->{
+			e.setPaymoneystatus(PaymoneyStatusEnum.PAYED.type);
+			e.setPaytime(new Date());
+
+		});
+
 	}
 }
