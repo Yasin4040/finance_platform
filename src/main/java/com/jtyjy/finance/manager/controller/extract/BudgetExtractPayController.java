@@ -5,6 +5,7 @@ import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.result.ResponseEntity;
+import com.jtyjy.finance.manager.dto.ExtractPayCompleteDTO;
 import com.jtyjy.finance.manager.dto.ExtractPreparePayDTO;
 import com.jtyjy.finance.manager.easyexcel.BudgetExtractZhBatchPayExcelData;
 import com.jtyjy.finance.manager.easyexcel.BudgetExtractZhDfPayExcelData;
@@ -32,6 +33,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -122,6 +126,7 @@ public class BudgetExtractPayController {
 				throw e;
 			}finally {
 				if (is != null) is.close();
+				if(bos!=null) bos.close();
 			}
 		}
 	}
@@ -129,24 +134,55 @@ public class BudgetExtractPayController {
 	private  void  exportWorkBook(List<Map<String,Object>> extractPayBatchDetailList,ClassPathResource resource,ByteArrayOutputStream bos,InputStream is,HttpServletResponse response,Class clazz) throws Exception {
 		if(!CollectionUtils.isEmpty(extractPayBatchDetailList)){
 			Map<String, Object> totalMap = extractPayBatchDetailList.get(0);
+			String firsetSheetName = totalMap.keySet().stream().collect(Collectors.joining(","));
+			List<BudgetPayTotalExcelData> totalExcelData = (List<BudgetPayTotalExcelData>) totalMap.get(firsetSheetName);
+			totalExcelData.add(new BudgetPayTotalExcelData(null,"总计：",totalExcelData.stream().map(BudgetPayTotalExcelData::getPayMoney).reduce(BigDecimal.ZERO,BigDecimal::add).setScale(2,BigDecimal.ROUND_HALF_UP)));
 			XSSFWorkbook workbook = new XSSFWorkbook(resource.getInputStream());
+			workbook.setSheetName(0, firsetSheetName);
+			Map<String,Object> totalDetailMap = new HashMap<>();
+			List<String> nameList = new ArrayList<>();
 			Map<String, Object> detailMap = extractPayBatchDetailList.get(1);
-			List<String> nameList = detailMap.keySet().stream().collect(Collectors.toList());
-			detailMap.forEach((k,v)->{
-				workbook.cloneSheet(1, k);
-			});
+			totalDetailMap.putAll(detailMap);
+			String name = detailMap.keySet().stream().collect(Collectors.joining(","));
+			workbook.setSheetName(1, name);
+			nameList.add(name);
+			for (int i = 2; i < extractPayBatchDetailList.size(); i++) {
+				Map<String, Object> detailMapTemp = extractPayBatchDetailList.get(i);
+				detailMapTemp.forEach((k,v)->{
+					workbook.cloneSheet(1, k);
+					nameList.add(k);
+				});
+				totalDetailMap.putAll(detailMapTemp);
+			}
 			workbook.write(bos);
 			is = new ByteArrayInputStream(bos.toByteArray());
 			ExcelWriter workBook = EasyExcel.write(EasyExcelUtil.getOutputStream("提成付款明细表", response), clazz).withTemplate(is).build();
-
 			WriteSheet sheet = EasyExcel.writerSheet(0).build();
-			workBook.fill((List<BudgetPayTotalExcelData>)totalMap.get("付款明细汇总表"),sheet);
-			detailMap.forEach((outUnitName,obj)->{
+			workBook.fill(totalExcelData,sheet);
+			totalDetailMap.forEach((outUnitName,obj)->{
 				WriteSheet sheet1 = EasyExcel.writerSheet(nameList.indexOf(outUnitName)+1).build();
 				workBook.fill(obj, sheet1);
 			});
 			workBook.finish();
 		}
+	}
+
+
+	@ApiOperation(value = "提成付款完成", httpMethod = "POST")
+	@ApiImplicitParams(value = {
+			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
+	})
+	@PostMapping("/paySuccess")
+	public ResponseEntity<String> paySuccess(@RequestBody @Validated ExtractPayCompleteDTO extractPayCompleteDTO) {
+
+		try{
+			this.extractPayService.paySuccess(extractPayCompleteDTO);
+		}catch (Exception e){
+			e.printStackTrace();
+			return ResponseEntity.error(e.getMessage());
+		}
+		return ResponseEntity.ok("操作成功！");
+
 	}
 
 }

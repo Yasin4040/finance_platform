@@ -4483,7 +4483,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		List<ExtractPersonlityDetailExcelData> resultList = new ArrayList<>();
 		if(CollectionUtils.isEmpty(extractDetailList)) return resultList;
 		//员工个体户
-		Map<String, List<IndividualEmployeeFiles>> individualEmployeeFilesMap = this.individualEmployeeFilesMapper.selectList(null).stream().collect(Collectors.groupingBy(e -> e.getEmployeeJobNum().toString() + "&&" + e.getEmployeeName()));
+		Map<String, List<IndividualEmployeeFiles>> individualEmployeeFilesMap = this.individualEmployeeFilesMapper.selectList(new LambdaQueryWrapper<IndividualEmployeeFiles>().eq(IndividualEmployeeFiles::getStatus,1)).stream().collect(Collectors.groupingBy(e -> e.getEmployeeJobNum().toString() + "&&" + e.getEmployeeName()));
 		List<Long> individualEmployeeIdList = individualEmployeeFilesMap.values().stream().flatMap(e->e.stream()).map(e->e.getId()).collect(Collectors.toList());
 		Map<String, ExtractPersonlityDetailExcelData> individualEmployeeAgoPayDetailMap = getIndividualEmployeeAgoPayDetail(individualEmployeeIdList, extractBatch);
 		Map<Long, BigDecimal> receiptSum = getReceiptSum(individualEmployeeIdList, extractBatch);
@@ -4646,8 +4646,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				return e.getEmpNo().toString().concat(e.getEmpName());
 			})).forEach((account,list)->{
 
-				IndividualEmployeeFiles individualEmployeeFiles = employeeFilesMap.get(list.get(0).getEmpNo() + "&&" + list.get(0).getPersonlityName());
-				long count1 = extractDetailList.stream().filter(e -> e.getEmpno().equals(list.get(0).getEmpNo()) && e.getEmpname().equals(list.get(0).getPersonlityName())).count();
+				long count1 = extractDetailList.stream().filter(e -> e.getEmpno().equals(list.get(0).getEmpNo()) && e.getEmpname().equals(list.get(0).getEmpName())).count();
 				if(count1 == 0){
 					list.forEach(e->{
 						e.setErrMsg("该个体户在当前批次下没有待发提成。");
@@ -4655,6 +4654,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 					return;
 				}
 
+				IndividualEmployeeFiles individualEmployeeFiles = employeeFilesMap.get(list.get(0).getEmpNo() + "&&" + list.get(0).getPersonlityName());
 				long count = extractPersonalityPayDetails.stream().filter(e -> e.getPersonalityId().equals(individualEmployeeFiles.getId())).count();
 				if(count>0){
 					list.forEach(e->{

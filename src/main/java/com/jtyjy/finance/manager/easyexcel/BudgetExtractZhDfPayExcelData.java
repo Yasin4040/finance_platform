@@ -25,5 +25,11 @@ public class BudgetExtractZhDfPayExcelData {
 	@ExcelProperty("开户地")
 	private String city;
 	@ExcelProperty("汇款备注")
-	private String remark = "JJ";
+	private String remark;
+
+	public BudgetExtractZhDfPayExcelData(){
+		remark = "JJ";
+	}
+	public BudgetExtractZhDfPayExcelData(boolean initFalse){
+	}
 }
