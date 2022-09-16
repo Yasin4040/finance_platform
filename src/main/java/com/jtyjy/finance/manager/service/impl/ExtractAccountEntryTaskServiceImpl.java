@@ -143,8 +143,9 @@ public class ExtractAccountEntryTaskServiceImpl extends ServiceImpl<ExtractAccou
 
         //2020 11 08
         String monthId = extractMonth.substring(4, 6);
-        entryTask.setMonthId(monthId);
-        entryTask.setMonthName(monthId+"月");
+        int itemId = Integer.parseInt(monthId);
+        entryTask.setMonthId(String.valueOf(itemId));
+        entryTask.setMonthName(itemId+"月");
         //用 cache mapper层缓存
         entryTask.setStatus(0);
         entryTask.setDeptName(extractSum.getDeptname());
