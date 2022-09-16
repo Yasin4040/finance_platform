@@ -29,6 +29,8 @@ public class BudgetExtractPayResponseVO {
 	private String payMoneyCode;
 	@ApiModelProperty(value = "提成单号")
 	private String extractCode;
+	@ApiModelProperty(value = "是否是延期支付申请单")
+	private Boolean isDelay;
 	@ApiModelProperty(value = "批次")
 	private String extractBatch;
 	@ApiModelProperty(value = "部门")

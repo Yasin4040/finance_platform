@@ -20,7 +20,7 @@ import java.math.BigDecimal;
 public class BudgetPayTotalExcelData {
 
 	@ExcelProperty("付款单位")
-	private String bUnitName;
+	private String unitName;
 
 	@ExcelProperty("收款银行")
 	private String bankName;

@@ -8,6 +8,8 @@ import com.jtyjy.finance.manager.bean.BudgetPaybatch;
 import com.jtyjy.finance.manager.bean.BudgetPaymoney;
 import com.jtyjy.finance.manager.bean.WbBanks;
 import com.jtyjy.finance.manager.cache.BankCache;
+import com.jtyjy.finance.manager.constants.Constants;
+import com.jtyjy.finance.manager.dto.ExtractPayCompleteDTO;
 import com.jtyjy.finance.manager.dto.ExtractPreparePayDTO;
 import com.jtyjy.finance.manager.easyexcel.BudgetExtractZhBatchPayExcelData;
 import com.jtyjy.finance.manager.easyexcel.BudgetExtractZhDfPayExcelData;
@@ -60,6 +62,9 @@ public class BudgetExtractPayService {
 	public PageResult<BudgetExtractPayResponseVO> getExtractPayMoneyList(BudgetExtractPayQueryVO params, Integer page, Integer rows) {
 		Page<BudgetExtractPayResponseVO> pageCond = new Page<>(page, rows);
 		List<BudgetExtractPayResponseVO> resultList = paymoneyMapper.getExtractPayMoneyList(pageCond, params);
+		resultList.forEach(e->{
+			e.setIsDelay(e.getExtractCode().startsWith(Constants.EXTRACT_DELAY_ORDER_PREFIX));
+		});
 		return PageResult.apply(pageCond.getTotal(), resultList);
 	}
 
@@ -109,14 +114,20 @@ public class BudgetExtractPayService {
 		Map<String,Object> map = new HashMap<>();
 		map.put("付款明细汇总表",excelDatas);
 		resultList.add(map);
-		List<Map<String,Object>> sheetMapList = new ArrayList<>();
 		if(type == ExtractPayTemplateEnum.ZS_BATCH.type){
 			budgetPaymonies.stream().collect(Collectors.groupingBy(BudgetPaymoney::getBunitname)).forEach((bunitname,list)->{
 				Map<String,Object> sheetMap = new LinkedHashMap<>();
 				List<BudgetExtractZhBatchPayExcelData> bUnitNameList = list.stream().map(pm -> {
 					return setBudgetExtractZhBatchPayExcelData(pm);
 				}).collect(Collectors.toList());
+
+				//合计行
+				BudgetExtractZhBatchPayExcelData hj = new BudgetExtractZhBatchPayExcelData(false);
+				hj.setYt("合计：");
+				hj.setPayMoney(bUnitNameList.stream().map(e->e.getPayMoney()).reduce(BigDecimal.ZERO,BigDecimal::add).setScale(2,BigDecimal.ROUND_HALF_UP));
+				bUnitNameList.add(hj);
 				sheetMap.put(bunitname,bUnitNameList);
+				resultList.add(sheetMap);
 				list.stream().collect(Collectors.groupingBy(e -> {
 					return e.getBankaccountbranchname();
 				})).forEach((key,list1)->{
@@ -125,9 +136,17 @@ public class BudgetExtractPayService {
 					List<BudgetExtractZhBatchPayExcelData> bunitBankList = list1.stream().map(pm -> {
 						return setBudgetExtractZhBatchPayExcelData(pm);
 					}).collect(Collectors.toList());
-					sheetMap.put(bunitname+"-"+key,bunitBankList);
+
+					//合计行
+					BudgetExtractZhBatchPayExcelData hj1 = new BudgetExtractZhBatchPayExcelData(false);
+					hj1.setYt("合计：");
+					hj1.setPayMoney(bunitBankList.stream().map(e->e.getPayMoney()).reduce(BigDecimal.ZERO,BigDecimal::add).setScale(2,BigDecimal.ROUND_HALF_UP));
+					bunitBankList.add(hj1);
+					Map<String,Object> sheetMap1 = new LinkedHashMap<>();
+					sheetMap1.put(bunitname+"-"+key,bunitBankList);
+					resultList.add(sheetMap1);
 				});
-				sheetMapList.add(sheetMap);
+
 			});
 
 		}else if(type == ExtractPayTemplateEnum.ZS_DF.type){
@@ -136,7 +155,13 @@ public class BudgetExtractPayService {
 				List<BudgetExtractZhDfPayExcelData> bUnitNameList = list.stream().map(pm -> {
 					return setBudgetExtractZhDfPayExcelData(pm);
 				}).collect(Collectors.toList());
+				//合计行
+				BudgetExtractZhDfPayExcelData hj = new BudgetExtractZhDfPayExcelData(false);
+				hj.setBankAccountName("合计：");
+				hj.setPayMoney(bUnitNameList.stream().map(e->e.getPayMoney()).reduce(BigDecimal.ZERO,BigDecimal::add).setScale(2,BigDecimal.ROUND_HALF_UP));
+				bUnitNameList.add(hj);
 				sheetMap.put(bunitname,bUnitNameList);
+				resultList.add(sheetMap);
 				list.stream().collect(Collectors.groupingBy(e -> {
 					return e.getBankaccountbranchname();
 				})).forEach((key,list1)->{
@@ -145,12 +170,18 @@ public class BudgetExtractPayService {
 					List<BudgetExtractZhDfPayExcelData> bunitBankList = list1.stream().map(pm -> {
 						return setBudgetExtractZhDfPayExcelData(pm);
 					}).collect(Collectors.toList());
-					sheetMap.put(bunitname+"-"+key,bunitBankList);
+
+					//合计行
+					BudgetExtractZhDfPayExcelData hj1 = new BudgetExtractZhDfPayExcelData(false);
+					hj1.setBankAccountName("合计：");
+					hj1.setPayMoney(bunitBankList.stream().map(e->e.getPayMoney()).reduce(BigDecimal.ZERO,BigDecimal::add).setScale(2,BigDecimal.ROUND_HALF_UP));
+					bunitBankList.add(hj1);
+					Map<String,Object> sheetMap1 = new LinkedHashMap<>();
+					sheetMap1.put(bunitname+"-"+key,bunitBankList);
+					resultList.add(sheetMap1);
 				});
-				sheetMapList.add(sheetMap);
 			});
 		}
-		resultList.addAll(sheetMapList);
 		return resultList;
 	}
 
@@ -178,5 +209,19 @@ public class BudgetExtractPayService {
 		excelData.setCity(bank.getCity());
 		excelData.setPayMoney(pm.getPaymoney().setScale(2,BigDecimal.ROUND_HALF_UP));
 		return excelData;
+	}
+
+	/**
+	 * <p>提成付款完成</p>
+	 * @author minzhq
+	 * @date 2022/9/16 9:58
+	 * @param extractPayCompleteDTO
+	 */
+	public void paySuccess(ExtractPayCompleteDTO extractPayCompleteDTO) {
+		List<BudgetPaymoney> budgetPaymonies = paymoneyMapper.selectBatchIds(extractPayCompleteDTO.getPayMoneyIds());
+		long count = budgetPaymonies.stream().filter(e -> e.getPaymoneystatus() != PaymoneyStatusEnum.PAYING.type).count();
+		if(count > 0 ){
+			throw new RuntimeException("请选择待支付的付款单！");
+		}
 	}
 }

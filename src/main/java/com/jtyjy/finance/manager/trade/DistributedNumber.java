@@ -106,11 +106,11 @@ public class DistributedNumber {
         key = this.TC_REDIS_KEY + key;
         return this.redis.getRedisIncrNum(key, 3, this.NUM_TTL, this.NUM_FILL_VALUE);
     }
-
+    //延期支付申请单
     public String getExtractDelayNum() {
         //组装key
         String key = Constants.FORMAT_8.format(new Date());
-        key = "YQ" + key;
+        key = Constants.EXTRACT_DELAY_ORDER_PREFIX + key;
         return this.redis.getRedisIncrNum(key, 3, this.NUM_TTL, this.NUM_FILL_VALUE);
     }
 

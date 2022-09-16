@@ -60,6 +60,8 @@ public class Constants {
         Integer REIMBURSEMENT = 2;
     }
 
+    public static final String EXTRACT_DELAY_ORDER_PREFIX = "YQ";
+
     /**
      * 获取审核状态描述
      */
