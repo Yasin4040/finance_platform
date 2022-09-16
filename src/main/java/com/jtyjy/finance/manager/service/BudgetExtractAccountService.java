@@ -226,7 +226,7 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 		if (accountTasks.get(0).getTaskType() == ExtractTaskTypeEnum.COMMON.type) {
 			//提成支付申请单
 			BudgetExtractsum extractSum = budgetExtractsumMapper.selectOne(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getCode, accountDTO.getExtractCode()));
-			extractsumService.generateExtractStepLog(Lists.newArrayList(extractSum.getId()), OperationNodeEnum.ACCOUNTING,"【"+OperationNodeEnum.getValue(OperationNodeEnum.ACCOUNTING.getType()) + "】完成",1);
+			extractsumService.generateExtractStepLog(Lists.newArrayList(extractSum.getId()), OperationNodeEnum.ACCOUNTING,"【"+OperationNodeEnum.getValue(OperationNodeEnum.ACCOUNTING.getType()) + "】完成",LogStatusEnum.COMPLETE.getCode());
 			Integer orderUnCompleteTaskCount = accountTaskMapper.selectCount(new LambdaQueryWrapper<BudgetExtractAccountTask>()
 					.eq(BudgetExtractAccountTask::getTaskType, accountTasks.get(0).getTaskType())
 					.eq(BudgetExtractAccountTask::getExtractCode, accountDTO.getExtractCode())

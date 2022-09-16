@@ -1496,6 +1496,8 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		List<BudgetExtractsum> budgetExtractsums = this.budgetExtractsumMapper.selectBatchIds(Arrays.asList(ids.split(",")));
 
 		budgetExtractsums.forEach(extractsum -> {
+			//审核。确认完成 直接计算完成 todo
+			applicationLogService.dealHandleRecord(extractsum.getId());
 			if (extractsum.getStatus() != ExtractStatusEnum.VERIFYING.getType())
 				throw new RuntimeException("操作失败!只允许审核已提交的单子");
 			extractsum.setStatus(ExtractStatusEnum.APPROVED.getType());
@@ -1667,7 +1669,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				}
 				taxHandleRecordService.updateById(handleRecord);
 			}
-			generateExtractStepLog(sumIds, OperationNodeEnum.TAX_PREPARATION_CALCULATION_1, "【"+OperationNodeEnum.getValue(OperationNodeEnum.TAX_PREPARATION_CALCULATION_1.getType()) + "】完成", 1);
+			generateExtractStepLog(sumIds, OperationNodeEnum.TAX_PREPARATION_CALCULATION, "【"+OperationNodeEnum.getValue(OperationNodeEnum.TAX_PREPARATION_CALCULATION.getType()) + "】完成", LogStatusEnum.COMPLETE.getCode());
 			taxGroupSuccess(curExtractBatch);
 
 			if (type == 1) {
@@ -1723,7 +1725,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			extractLog.setNode(nodeEnum.getType());
 			extractLog.setApplicationId(e.getId());
 			extractLog.setCreateTime(new Date());
-			extractLog.setCreateBy(LoginThreadLocal.get().getEmpno());
+			extractLog.setCreateBy(UserThreadLocal.getEmpName());
 			extractLog.setStatus(status);
 			extractLog.setRemarks(remark);
 			return extractLog;
@@ -3863,6 +3865,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		if (!CollectionUtils.isEmpty(budgetExtractsums)) {
 			List<Long> sumIds = budgetExtractsums.stream().map(BudgetExtractsum::getId).collect(Collectors.toList());
 			Integer status = budgetExtractsums.get(0).getStatus();
+			//todo
 			if (status >= ExtractStatusEnum.CALCULATION_COMPLETE.getType()) {
 				throw new RuntimeException("撤回失败！单据已流转至后续环节！");
 			}
@@ -3872,7 +3875,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			}
 			clearaCalculatedData(extractBatch, null);
 			extractFeePayDetailMapper.delete(new LambdaQueryWrapper<BudgetExtractFeePayDetailBeforeCal>().eq(BudgetExtractFeePayDetailBeforeCal::getExtractMonth, extractBatch));
-			generateExtractStepLog(sumIds, OperationNodeEnum.TAX_PREPARATION_CALCULATION_1, "【" + OperationNodeEnum.TAX_PREPARATION_CALCULATION_1.getValue(OperationNodeEnum.TAX_PREPARATION_CALCULATION_1.getType()) + "】撤回计算", 2);
+			generateExtractStepLog(sumIds, OperationNodeEnum.TAX_PREPARATION_CALCULATION, "【" + OperationNodeEnum.TAX_PREPARATION_CALCULATION.getValue(OperationNodeEnum.TAX_PREPARATION_CALCULATION.getType()) + "】撤回计算", LogStatusEnum.REJECT.getCode());
 
 			LambdaUpdateWrapper<BudgetExtractdetail> updateWrapper = new LambdaUpdateWrapper<>();
 			updateWrapper.in(BudgetExtractdetail::getExtractsumid, sumIds);

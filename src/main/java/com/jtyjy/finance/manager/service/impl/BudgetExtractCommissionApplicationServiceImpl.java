@@ -583,6 +583,19 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         application.setOaCreatorId(oaUserId);
     }
 
+    @Override
+    public void validateExtractMonth(String extractMonth) {
+
+        //是否计算。
+        BudgetExtractTaxHandleRecord recordServiceOne =
+                taxHandleRecordService.getOne(new LambdaQueryWrapper<BudgetExtractTaxHandleRecord>().eq(BudgetExtractTaxHandleRecord::getExtractMonth, extractMonth));
+        if (recordServiceOne != null) {
+            if(recordServiceOne.getIsCalComplete()||recordServiceOne.getIsSetExcessComplete()||recordServiceOne.getIsPersonalityComplete()){
+                throw new BusinessException("导入失败！批次已经进行过计算！");
+            }
+        }
+    }
+
     private void validData(IndividualIssueExportDTO dto) {
         //发放单位验证
 //        String issuedUnit = dto.getIssuedUnit();

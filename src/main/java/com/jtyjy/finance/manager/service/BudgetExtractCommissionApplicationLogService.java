@@ -14,4 +14,6 @@ public interface BudgetExtractCommissionApplicationLogService extends IService<B
     void saveLog(Long applicationId);
 
     void doRecordOA(EcologyParams params);
+
+    void dealHandleRecord(Long sumId);
 }

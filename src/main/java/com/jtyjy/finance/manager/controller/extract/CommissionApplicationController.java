@@ -591,6 +591,9 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
     public ResponseEntity importFeeTemplate(@RequestParam("file") MultipartFile multipartFile,@RequestParam("extractMonth") String extractMonth,HttpServletResponse response) throws Exception {
         try {
             extractMonth = extractMonth.split("-")[2];
+            //计算发放之前  //发放之后
+            applicationService.validateExtractMonth(extractMonth);
+
             List<FeeImportErrorDTO> errorDTOList = applicationService.importFeeTemplate(multipartFile,extractMonth);
             if(CollectionUtils.isNotEmpty(errorDTOList)) {
                 try {

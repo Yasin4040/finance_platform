@@ -53,4 +53,6 @@ public interface BudgetExtractCommissionApplicationService extends IService<Budg
     void validateApplication(BudgetExtractsum extractSum);
 
     void uploadOA(BudgetExtractCommissionApplication application);
+
+    void validateExtractMonth(String extractMonth);
 }

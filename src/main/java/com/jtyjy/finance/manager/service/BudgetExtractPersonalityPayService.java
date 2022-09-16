@@ -12,6 +12,7 @@ import com.jtyjy.finance.manager.easyexcel.ExtractPersonalityPayDetailExcelData;
 import com.jtyjy.finance.manager.easyexcel.ExtractPersonlityDetailExcelData;
 import com.jtyjy.finance.manager.enmus.ExtractPersonalityPayStatusEnum;
 import com.jtyjy.finance.manager.enmus.ExtractStatusEnum;
+import com.jtyjy.finance.manager.enmus.LogStatusEnum;
 import com.jtyjy.finance.manager.enmus.OperationNodeEnum;
 import com.jtyjy.finance.manager.exception.MyException;
 import com.jtyjy.finance.manager.mapper.*;
@@ -352,7 +353,7 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 			}
 		}
 		List<BudgetExtractsum> curBatchExtractSumList = extractsumService.getCurBatchExtractSum(extractBatch);
-		extractsumService.generateExtractStepLog(curBatchExtractSumList.stream().map(BudgetExtractsum::getId).collect(Collectors.toList()), OperationNodeEnum.TAX_PREPARATION_CALCULATION_2,"【"+OperationNodeEnum.getValue(OperationNodeEnum.TAX_PREPARATION_CALCULATION_2.getType()) + "】完成",1);
+		extractsumService.generateExtractStepLog(curBatchExtractSumList.stream().map(BudgetExtractsum::getId).collect(Collectors.toList()), OperationNodeEnum.TAX_PREPARATION_CALCULATION,"【"+OperationNodeEnum.getValue(OperationNodeEnum.TAX_PREPARATION_CALCULATION.getType()) + "】完成", LogStatusEnum.COMPLETE.getCode());
 
 		List<BudgetExtractPersonalityPayDetail> payCommonDetails = extractPersonalityPayDetails.stream().filter(e -> e.getPayStatus() == ExtractPersonalityPayStatusEnum.COMMON.type).collect(Collectors.toList());
 		if(!CollectionUtils.isEmpty(payCommonDetails)){

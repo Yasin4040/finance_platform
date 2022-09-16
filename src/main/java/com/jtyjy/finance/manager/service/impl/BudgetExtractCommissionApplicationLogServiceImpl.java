@@ -20,6 +20,7 @@ import com.jtyjy.finance.manager.service.BudgetExtractTaxHandleRecordService;
 import com.jtyjy.finance.manager.service.BudgetReimbursementorderService;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
@@ -63,6 +64,7 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void doRecordOA(EcologyParams params) {
         //打印参数 观察。
         System.out.println("6666开始");
@@ -91,7 +93,7 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
             return;
         }
         Long sumId=application.getExtractSumId();
-        BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
+
         //node  对应  OperationNodeEnum
         BudgetExtractCommissionApplicationLog extractLog = new BudgetExtractCommissionApplicationLog();
         extractLog.setNode(nodeEnum.getType());
@@ -108,10 +110,6 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
         this.save(extractLog);
         //如果节点通过
 
-
-        if(nodeEnum.getType()==OperationNodeEnum.FINANCIAL_DIRECTOR.getType()){
-
-        }
         //如果拒绝了  就是删除报销单。退回申请单。
         //删除报销表
         if(nodeType.equals("1")) {
@@ -119,41 +117,49 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
                 BudgetReimbursementorder reimbursementOrder = reimburseService.getById(application.getReimbursementId());
                 reimburseService.removeById(reimbursementOrder);
             }
+            BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
             budgetExtractsum.setStatus(ExtractStatusEnum.RETURN.getType());
             extractSumMapper.updateById(budgetExtractsum);
 //            applicationMapper.updateById(application);
         }else{
             //财务负责人同意  同意
             if(nodeEnum.getType()==OperationNodeEnum.FINANCIAL_DIRECTOR.getType()){
-                budgetExtractsum.setStatus(ExtractStatusEnum.APPROVED.getType());
-                extractSumMapper.updateById(budgetExtractsum);
-                //不用申请单的状态 用主单状态
+                //处理计算记录
+                dealHandleRecord(sumId);
+            }
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void dealHandleRecord(Long sumId) {
+        BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
+        budgetExtractsum.setStatus(ExtractStatusEnum.APPROVED.getType());
+        extractSumMapper.updateById(budgetExtractsum);
+        //不用申请单的状态 用主单状态
 //                applicationMapper.updateById(application);
 
-                List<BudgetExtractImportdetail> importDetailList = importDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractImportdetail>().eq(BudgetExtractImportdetail::getExtractsumid, sumId));
+        List<BudgetExtractImportdetail> importDetailList = importDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractImportdetail>().eq(BudgetExtractImportdetail::getExtractsumid, sumId));
 
-                long selfCount = importDetailList.stream().filter(x -> x.getBusinessType().equals(ExtractUserTypeEnum.SELF_EMPLOYED_EMPLOYEES)).count();
-                BudgetExtractTaxHandleRecord  handleRecord;
-                //没有个体户
-                if(selfCount==0){
-                    //oa 审批通过。增加判断 批次所有通过，改变记录表  如果批次所有通过
-                    handleRecord = new BudgetExtractTaxHandleRecord();
-                    handleRecord.setExtractMonth(budgetExtractsum.getExtractmonth());
-                    handleRecord.setIsCalComplete(false);
-                    handleRecord.setIsSetExcessComplete(false);
-                    handleRecord.setIsPersonalityComplete(true);
-                    taxHandleRecordService.save(handleRecord);
-                }else if(selfCount==importDetailList.size()){
-                    //全是个体户
-                    handleRecord = new BudgetExtractTaxHandleRecord();
-                    handleRecord.setExtractMonth(budgetExtractsum.getExtractmonth());
-                    handleRecord.setIsCalComplete(true);
-                    handleRecord.setIsSetExcessComplete(true);
-                    handleRecord.setIsPersonalityComplete(false);
-                    taxHandleRecordService.save(handleRecord);
-                }
-
-            }
+        long selfCount = importDetailList.stream().filter(x -> x.getBusinessType().equals(ExtractUserTypeEnum.SELF_EMPLOYED_EMPLOYEES)).count();
+        BudgetExtractTaxHandleRecord  handleRecord;
+        //没有个体户
+        if(selfCount==0){
+            //oa 审批通过。增加判断 批次所有通过，改变记录表  如果批次所有通过
+            handleRecord = new BudgetExtractTaxHandleRecord();
+            handleRecord.setExtractMonth(budgetExtractsum.getExtractmonth());
+            handleRecord.setIsCalComplete(false);
+            handleRecord.setIsSetExcessComplete(false);
+            handleRecord.setIsPersonalityComplete(true);
+            taxHandleRecordService.save(handleRecord);
+        }else if(selfCount==importDetailList.size()){
+            //全是个体户
+            handleRecord = new BudgetExtractTaxHandleRecord();
+            handleRecord.setExtractMonth(budgetExtractsum.getExtractmonth());
+            handleRecord.setIsCalComplete(true);
+            handleRecord.setIsSetExcessComplete(true);
+            handleRecord.setIsPersonalityComplete(false);
+            taxHandleRecordService.save(handleRecord);
         }
     }
 

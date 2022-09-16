@@ -18,17 +18,20 @@ import java.math.BigDecimal;
 public class IndividualIssueExportDTO {
 
     @ExcelProperty(value = "*工号")
-    @ExcelValid(message = "工号必填")
+    @ExcelValid(message = "工号不能为空")
     private String employeeJobNum;
     @ExcelProperty(value = "*姓名")
-    @ExcelValid(message = "姓名")
+    @ExcelValid(message = "姓名不能为空")
     private String employeeName;
     @ExcelDecimalValid(min = 0, max = 100000000,message = "实发金额大于0小于1亿")
     @ExcelProperty(value = "*实发金额")
+    @ExcelValid(message = "实发金额不能为空")
     private BigDecimal copeextract;
     @ExcelProperty(value = "*发放单位")
+//    @ExcelValid(message = "发放单位不能为空")
     private String issuedUnit;
     @ExcelProperty(value = "*费用发放金额")
+    @ExcelValid(message = "费用发放金额不能为空")
     @ExcelDecimalValid(min = 0, max = 100000000,message = "实发金额大于0小于1亿")
     private BigDecimal paymentAmount;
 
