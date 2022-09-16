@@ -8,6 +8,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -44,6 +45,7 @@ public class ExtractAccountEntryTask implements Serializable {
      */
     @ApiModelProperty(value = "创建时间（任务接收时间）")
     @TableField(value = "create_time")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date createTime;
 
     /**
@@ -141,6 +143,7 @@ public class ExtractAccountEntryTask implements Serializable {
      * 做账完成时间
      */
     @ApiModelProperty(value = "做账完成时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @TableField(value = "accountant_time")
     private Date accountantTime;
 

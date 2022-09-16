@@ -118,6 +118,8 @@ public class ExtractAccountEntryTaskServiceImpl extends ServiceImpl<ExtractAccou
             return new Page<>();
         }
         Page<ExtractAccountEntryTask> page = this.page(new Page<>(query.getPage(), query.getRows()), new LambdaQueryWrapper<ExtractAccountEntryTask>()
+                .eq( StringUtils.isNotBlank(query.getYearId()),ExtractAccountEntryTask::getYearId, query.getYearId())
+                .eq( StringUtils.isNotBlank(query.getMonthId()),ExtractAccountEntryTask::getMonthId, query.getMonthId())
                 .eq(query.getStatus()!=null,ExtractAccountEntryTask::getStatus, query.getStatus())
                 .in(CollectionUtils.isNotEmpty(deptIds),ExtractAccountEntryTask::getDeptId, deptIds)
                 .like(StringUtils.isNotBlank( query.getExtractCode()),ExtractAccountEntryTask::getExtractCode, query.getExtractCode())

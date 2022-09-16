@@ -23,6 +23,12 @@ public class AccountEntryQuery extends PageQuery {
     private String deptName;
     @ApiModelProperty("状态 是否是历史数据 0 待做  1历史完成")
     private Integer status;
+
+    @ApiModelProperty("届别")
+    private String yearId;
+    @ApiModelProperty("月份")
+    private String monthId;
 //    @ApiModelProperty(value = "做账单位")
 //    private String unitName;
+
 }
