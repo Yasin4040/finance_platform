@@ -1,8 +1,10 @@
 package com.jtyjy.finance.manager.dto.commission;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.jtyjy.finance.manager.annotation.ExcelDecimalValid;
 import com.jtyjy.finance.manager.annotation.ExcelValid;
+import jdk.nashorn.internal.ir.annotations.Ignore;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -29,6 +31,9 @@ public class IndividualIssueExportDTO {
     @ExcelProperty(value = "*费用发放金额")
     @ExcelDecimalValid(min = 0, max = 100000000,message = "实发金额大于0小于1亿")
     private BigDecimal paymentAmount;
+
+    @ExcelIgnore
+    private Integer businessType;
 
 
 }

@@ -81,9 +81,9 @@ public class HtmlUtil {
 		sb.append("<title>"+title+"</title>").append("\r\n");		
 		sb.append("</head>").append("\r\n");
 
-		sb.append("<input type=\"hidden\" id=\"id\" value='"+id+"'>").append("\r\n");
-		sb.append("<input type=\"hidden\" id=\"myUrl\" value='"+serverUrl+"'>").append("\r\n");
-		sb.append("<input type=\"hidden\" id=\"isObjection\" value='"+isObjection+"'>").append("\r\n");
+		sb.append("<input type=\"hidden\" id=\"id\" desc='"+id+"'>").append("\r\n");
+		sb.append("<input type=\"hidden\" id=\"myUrl\" desc='"+serverUrl+"'>").append("\r\n");
+		sb.append("<input type=\"hidden\" id=\"isObjection\" desc='"+isObjection+"'>").append("\r\n");
 
 		sb.append("<body>").append("\r\n");
 		sb.append("<div>").append("\r\n");

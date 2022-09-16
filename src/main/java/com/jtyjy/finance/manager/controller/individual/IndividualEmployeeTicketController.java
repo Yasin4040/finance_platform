@@ -9,6 +9,7 @@ import com.jtyjy.common.enmus.StatusCodeEnmus;
 import com.jtyjy.core.redis.RedisClient;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.result.ResponseEntity;
+import com.jtyjy.finance.manager.dto.commission.FeeImportErrorDTO;
 import com.jtyjy.finance.manager.dto.individual.*;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.query.individual.IndividualTicketQuery;
@@ -186,10 +187,16 @@ public class IndividualEmployeeTicketController {
                 try {
                     String key = IMPORT_INDIVIDUAL_TICKET + "_" + UserThreadLocal.get().getUserName();
                     String errorFileName = fileShareDir + File.separator + System.currentTimeMillis() + "_错误信息.xlsx";
-                    ExcelWriter workBook = EasyExcel.write(new File(errorFileName), IndividualImportErrorDTO.class).build();
-                    WriteSheet sheet = EasyExcel.writerSheet(0).build();
-                    workBook.fill(errorDTOList, sheet);
-                    workBook.finish();
+                    File file = new File(errorFileName);
+                    if (!file.exists()) {
+                        file.getParentFile().mkdirs();
+                        file.createNewFile();
+                    }
+                    EasyExcel.write(file, IndividualTicketImportErrorDTO.class).sheet("错误信息").doWrite(errorDTOList);
+//                    ExcelWriter workBook = EasyExcel.write(new File(errorFileName), IndividualImportErrorDTO.class).build();
+//                    WriteSheet sheet = EasyExcel.writerSheet(0).build();
+//                    workBook.fill(errorDTOList, sheet);
+//                    workBook.finish();
                     redisClient.set(key, errorFileName, expireTime);
                 } catch (Exception e) {
                     e.printStackTrace();

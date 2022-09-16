@@ -46,13 +46,13 @@ public class FilterConfig {
         apis.add("/api/individualTicket/downLoadTemplate");
         apis.add("/api/individualTicket/exportTicket");
         apis.add("/api/individualTicket/importTicket");
-        apis.add("/api/commissionApplication/downLoadError");
+        apis.add("/api/individualTicket/downLoadError");
 
         //个人维护档案
         apis.add("/api/individualEmployee/downLoadTemplate");
         apis.add("/api/individualEmployee/exportIndividual");
         apis.add("/api/individualEmployee/importIndividual");
-        apis.add("/api/commissionApplication/downLoadError");
+        apis.add("/api/individualEmployee/downLoadError");
 
         apis.add("/api/test/upload");
         //稿费信息

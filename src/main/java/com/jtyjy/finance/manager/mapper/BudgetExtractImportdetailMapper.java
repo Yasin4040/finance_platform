@@ -3,6 +3,8 @@ package com.jtyjy.finance.manager.mapper;
 import java.util.List;
 import java.util.Map;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.jtyjy.finance.manager.vo.application.CommissionImportDetailVO;
 import org.apache.ibatis.annotations.Param;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -18,5 +20,7 @@ public interface BudgetExtractImportdetailMapper extends BaseMapper<BudgetExtrac
 	void clearExtractDetail(@Param("ids")String ids);
 
 	List<ExtractImportDetailVO> getExtractImportDetails(Page<ExtractImportDetailVO> pageCond, @Param("params")Map<String, Object> params);
-	
+
+    IPage<CommissionImportDetailVO> selectCommissionPage(Page<Object> objectPage,@Param("employeeName") String employeeName,@Param("departmentName") String departmentName
+			,@Param("yearId") String yearId,@Param("monthId") String monthId,@Param("extractMonth") String extractMonth,@Param("empNo") String empNo,@Param("deptId") String deptId);
 }

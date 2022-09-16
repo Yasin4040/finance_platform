@@ -176,15 +176,20 @@ public class IndividualEmployeeController {
             return ResponseEntity.error(e.getMessage());
         }
         if(CollectionUtils.isNotEmpty(errorDTOList)) {
-
-                InputStream iss = null;
                 try {
                     String key = IMPORT_INDIVIDUAL_FILE + "_" + UserThreadLocal.get().getUserName();
                     String errorFileName = fileShareDir + File.separator + System.currentTimeMillis() + "_错误信息.xlsx";
-                    ExcelWriter workBook = EasyExcel.write(new File(errorFileName), IndividualImportErrorDTO.class).build();
-                    WriteSheet sheet = EasyExcel.writerSheet(0).build();
-                    workBook.fill(errorDTOList, sheet);
-                    workBook.finish();
+                    File file = new File(errorFileName);
+                    if (!file.exists()) {
+                        file.getParentFile().mkdirs();
+                        file.createNewFile();
+                    }
+                    EasyExcel.write(file, IndividualImportErrorDTO.class).sheet("错误信息").doWrite(errorDTOList);
+//                    excelWriter.write(data(), writeSheet);
+//                    workBook.write()
+//                    WriteSheet sheet = EasyExcel.writerSheet(0).build();
+//                    workBook.fill(errorDTOList,sheet);
+//                    workBook.finish();
                     redisClient.set(key, errorFileName, expireTime);
                 } catch (Exception e) {
                     e.printStackTrace();

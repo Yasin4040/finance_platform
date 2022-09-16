@@ -35,7 +35,6 @@ import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.beanutils.locale.converters.DateLocaleConverter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.curator.framework.CuratorFramework;
 import org.csource.common.MyException;
 import org.csource.fastdfs.StorageClient;
 import org.springframework.stereotype.Service;
@@ -74,9 +73,10 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     private final BudgetExtractFeePayDetailMapper feePayDetailMapper;
     private final HrService hrService;
     private final OaService oaService;
+    private final TabDmMapper tabDmMapper;
 
     private  String tcWorkFlowId = "5263";
-    public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractTaxHandleRecordService taxHandleRecordService, BudgetExtractsumMapper extractSumMapper, BudgetExtractOuterpersonMapper outPersonMapper, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, BudgetCommonAttachmentService attachmentService, StorageClient storageClient, ReimbursementWorker reimbursementWorker, BudgetReimbursementorderService reimbursementorderService, BudgetExtractFeePayDetailMapper feePayDetailMapper, HrService hrService, OaService oaService) {
+    public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractTaxHandleRecordService taxHandleRecordService, BudgetExtractsumMapper extractSumMapper, BudgetExtractOuterpersonMapper outPersonMapper, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, BudgetCommonAttachmentService attachmentService, StorageClient storageClient, ReimbursementWorker reimbursementWorker, BudgetReimbursementorderService reimbursementorderService, BudgetExtractFeePayDetailMapper feePayDetailMapper, HrService hrService, OaService oaService, TabDmMapper tabDmMapper) {
         this.taxHandleRecordService = taxHandleRecordService;
         this.extractSumMapper = extractSumMapper;
         this.outPersonMapper = outPersonMapper;
@@ -91,6 +91,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         this.feePayDetailMapper = feePayDetailMapper;
         this.hrService = hrService;
         this.oaService = oaService;
+        this.tabDmMapper = tabDmMapper;
     }
 
     @Override
@@ -327,24 +328,34 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         //根据批次，找到所有主表。
         //只返回，工号，姓名，实发金额，发放单位。 累加实发金额。
         List<IndividualIssueExportDTO> issueExportDTOList = extractSumMapper.selectAllDetailList(extractMonth);
-
+        String outerPayUnit= getOuterPayUnit();
 
 
         List<String> empNos = issueExportDTOList.stream().map(x->String.valueOf(x.getEmployeeJobNum())).collect(Collectors.toList());
+
         List<Map<String, String>> unitByEmpNoList = hrService.getSalaryUnitByEmpNos(empNos);
         Map<String, String> unitByEmpNos = unitByEmpNoList.stream().collect(Collectors.toMap(x -> x.get("empNo"), x -> String.valueOf( x.get("companyId")), (k1, k2) -> k1));
 
+        BudgetBillingUnit billingUnit;
         for (IndividualIssueExportDTO dto : issueExportDTOList) {
-            //发放单位
-            String unitId = unitByEmpNos.get(String.valueOf(dto.getEmployeeJobNum()));
-            if(StringUtils.isNotBlank(unitId)){
-                BudgetBillingUnit billingUnit = UnitCache.getByOutKey(unitId);
-                if(billingUnit != null){
+            if (ExtractUserTypeEnum.EXTERNAL_STAFF.equals(dto.getBusinessType())) {
+                billingUnit = UnitCache.get(outerPayUnit);
+                if (billingUnit != null) {
                     //没有就置空
                     dto.setIssuedUnit(billingUnit.getName());
                 }
+            }else {
+                //发放单位
+                String unitId = unitByEmpNos.get(String.valueOf(dto.getEmployeeJobNum()));
+                if (StringUtils.isNotBlank(unitId)) {
+                     billingUnit = UnitCache.getByOutKey(unitId);
+                    if (billingUnit != null) {
+                        //没有就置空
+                        dto.setIssuedUnit(billingUnit.getName());
+                    }
+                }
+                exportDTOList.add(dto);
             }
-            exportDTOList.add(dto);
         }
         return exportDTOList;
     }
@@ -993,7 +1004,16 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         BudgetYearPeriod yearPeriod = yearMapper.selectOne(new QueryWrapper<BudgetYearPeriod>().eq("period", name));
         return yearPeriod;
     }
-
+    private String getOuterPayUnit() {
+        //EXTRACTPAY,OUTER_PAYUNIT,提成外部人员发放单位,1,,"69,74,76"
+        TabDm tabDm = tabDmMapper.selectOne(new LambdaQueryWrapper<TabDm>()
+                .eq(TabDm::getDmType, "EXTRACTPAY")
+                .eq(TabDm::getDm, "OUTER_PAYUNIT"));
+        String dmValue = tabDm.getDmValue();
+        //69,74,76
+        String[] split = dmValue.split(",");
+        return split[0];
+    }
 }
 
 

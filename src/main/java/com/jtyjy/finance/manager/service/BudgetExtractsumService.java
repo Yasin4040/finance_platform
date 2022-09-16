@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
+import com.iamxiongx.util.message.exception.BusinessException;
 import com.jtyjy.core.anno.JdbcSelector;
 import com.jtyjy.core.interceptor.BaseUser;
 import com.jtyjy.core.interceptor.LoginThreadLocal;
@@ -426,13 +427,19 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		 * 判断当前导入的提成期间后面有没有已计算或者已计算过的提成批次
 		 * 如果存在则不允许导入
 		 */
-		String maxextractmonth = extractMonth.substring(0, 4) + "1299";
-		Integer count = this.budgetExtractsumMapper.selectCount(
-				new QueryWrapper<BudgetExtractsum>().eq("deleteflag", 0)
-						.gt("extractmonth", Integer.valueOf(extractMonth))
-						.le("extractmonth", Integer.valueOf(maxextractmonth))
-						.gt("status", ExtractStatusEnum.APPROVED.getType()));
-		if (count > 0) throw new RuntimeException("导入失败！存在当前提成批次之后且已经计算的提成批次");
+//		String maxextractmonth = extractMonth.substring(0, 4) + "1299";
+//		Integer count = this.budgetExtractsumMapper.selectCount(
+//				new QueryWrapper<BudgetExtractsum>().eq("deleteflag", 0)
+//						.gt("extractmonth", Integer.valueOf(extractMonth))
+//						.le("extractmonth", Integer.valueOf(maxextractmonth))
+//						.gt("status", ExtractStatusEnum.APPROVED.getType()));
+//		if (count > 0) throw new RuntimeException("导入失败！存在当前提成批次之后且已经计算的提成批次");
+		BudgetExtractTaxHandleRecord recordServiceOne = taxHandleRecordService.getOne(new LambdaQueryWrapper<BudgetExtractTaxHandleRecord>().eq(BudgetExtractTaxHandleRecord::getExtractMonth, extractMonth));
+		if (recordServiceOne != null) {
+			if(recordServiceOne.getIsCalComplete()||recordServiceOne.getIsSetExcessComplete()||recordServiceOne.getIsPersonalityComplete()){
+				throw new BusinessException("退回失败！任务已计算！");
+			}
+		}
 	}
 
 	private List<String> getPeriodMonthList(Integer code) {
