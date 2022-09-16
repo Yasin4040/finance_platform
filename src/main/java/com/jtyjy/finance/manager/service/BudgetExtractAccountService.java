@@ -156,6 +156,7 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 				}).map(BudgetExtractPerPayDetail::getPayMoney).reduce(BigDecimal.ZERO, BigDecimal::add);
 				detail.setPersonalityPayMoney2(personalityPayMoney2);
 				detail.setPersonalityPayMoney1(total.subtract(personalityPayMoney2));
+				detail.setPayTotal(total);
 				payMoneyPayDetails.add(detail);
 			});
 			result.setPayMoneyDetailList(payMoneyPayDetails);
