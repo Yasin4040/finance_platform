@@ -72,8 +72,12 @@
     </where>
     
     </select>
-    <select id="selectCommissionPage"
+    <select id="selectCommissionPageForManager"
             resultType="com.jtyjy.finance.manager.vo.application.CommissionImportDetailVO">
-		select
+
+	</select>
+	<select id="selectCommissionPageForBigManager"
+			resultType="com.jtyjy.finance.manager.vo.application.CommissionImportDetailVO">
+
 	</select>
 </mapper>

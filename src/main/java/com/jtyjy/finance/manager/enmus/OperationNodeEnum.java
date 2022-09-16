@@ -14,7 +14,7 @@ public enum OperationNodeEnum {
 	DEPARTMENT_HEAD(2,"部门负责人审核"),
 	FUNCTIONAL_DEPARTMENT(3,"职能管理部门审核"),
 	FINANCIAL_SALES_TEAM(4,"财务销售组审核"),
-    FINANCIAL_SALES_TEAM_HEAD(4,"财务销售处长审核"),
+    FINANCIAL_SALES_TEAM_HEAD(5,"财务销售处长审核"),
     FINANCIAL_DIRECTOR(6,"财务负责人审核"),
 
     TAX_PREPARATION_CALCULATION_1(7,"税筹组计算1"),
@@ -46,7 +46,9 @@ public enum OperationNodeEnum {
     public int getType() {
 		return type;
     }
-    
+    public String getValue() {
+        return value;
+    }
     public static OperationNodeEnum getTypeEnum(int type){
     	OperationNodeEnum[] types = OperationNodeEnum.values();
         if (types.length > 0){

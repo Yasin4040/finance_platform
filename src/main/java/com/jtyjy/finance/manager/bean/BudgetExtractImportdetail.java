@@ -349,7 +349,10 @@ public class BudgetExtractImportdetail implements Serializable {
      */
     @TableField(value = "create_by")
     private String createBy;
-
+    @TableField(value = "if_big_manager")
+    private Integer ifBigManager;
+    @TableField(value = "if_manager")
+    private Integer ifManager;
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 

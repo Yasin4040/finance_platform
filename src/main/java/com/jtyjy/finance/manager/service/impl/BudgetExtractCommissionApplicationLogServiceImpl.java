@@ -5,21 +5,24 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jtyjy.ecology.EcologyParams;
 import com.jtyjy.ecology.EcologyRequestManager;
-import com.jtyjy.finance.manager.bean.BudgetExtractCommissionApplication;
-import com.jtyjy.finance.manager.bean.BudgetExtractCommissionApplicationLog;
+import com.jtyjy.finance.manager.bean.*;
+import com.jtyjy.finance.manager.enmus.ExtractStatusEnum;
+import com.jtyjy.finance.manager.enmus.ExtractUserTypeEnum;
 import com.jtyjy.finance.manager.enmus.OperationNodeEnum;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.mapper.BudgetExtractCommissionApplicationMapper;
+import com.jtyjy.finance.manager.mapper.BudgetExtractImportdetailMapper;
+import com.jtyjy.finance.manager.mapper.BudgetExtractsumMapper;
 import com.jtyjy.finance.manager.oadao.OAMapper;
 import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationLogService;
 import com.jtyjy.finance.manager.mapper.BudgetExtractCommissionApplicationLogMapper;
+import com.jtyjy.finance.manager.service.BudgetExtractTaxHandleRecordService;
+import com.jtyjy.finance.manager.service.BudgetReimbursementorderService;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
 * @author User
@@ -31,12 +34,20 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
     implements BudgetExtractCommissionApplicationLogService, InitializingBean {
 
     private final BudgetExtractCommissionApplicationMapper applicationMapper;
+    private final BudgetExtractsumMapper extractSumMapper;
+    private final BudgetExtractImportdetailMapper importDetailMapper;
     private final OAMapper oaMapper;
+    private final BudgetReimbursementorderService reimburseService;
+    private final BudgetExtractTaxHandleRecordService taxHandleRecordService;
     private Map<String,String> nodeMap = new HashMap<>();
 
-    public BudgetExtractCommissionApplicationLogServiceImpl(BudgetExtractCommissionApplicationMapper applicationMapper, OAMapper oaMapper) {
+    public BudgetExtractCommissionApplicationLogServiceImpl(BudgetExtractCommissionApplicationMapper applicationMapper, BudgetExtractsumMapper extractSumMapper, BudgetExtractImportdetailMapper importDetailMapper, OAMapper oaMapper, BudgetReimbursementorderService reimburseService, BudgetExtractTaxHandleRecordService taxHandleRecordService) {
         this.applicationMapper = applicationMapper;
+        this.extractSumMapper = extractSumMapper;
+        this.importDetailMapper = importDetailMapper;
         this.oaMapper = oaMapper;
+        this.reimburseService = reimburseService;
+        this.taxHandleRecordService = taxHandleRecordService;
     }
 
     @Override
@@ -57,22 +68,15 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
         System.out.println("6666开始");
         System.out.println( JSONObject.toJSONString(params));
         EcologyRequestManager requestManager = params.getRequestManager();
+        String requestId = params.getRequestid();
         int nodeId = requestManager.getNodeid();
+        //7111
         String value = nodeMap.get(nodeId);
         //先找到相应的nodeId  flowType 对应的 节点信息。
-//        OperationNodeEnum.getTypeEnum();
-
-        //流程类型 请求 表名
-        String flowtype = requestManager.getBillTableName();
-
-        String requestId = params.getRequestid();
-
-        //nodeId 也是固定的。
-        //获取当前节点nodeId 和当前requestId  就可以生成相应的日志记录
-
+        OperationNodeEnum nodeEnum = OperationNodeEnum.getTypeEnumByDesc(value);
         String requestname = requestManager.getRequestname();
         //哪一个是操作类型。
-        String nodetype = requestManager.getNodetype();
+        String nodeType = requestManager.getNodetype();
         String remark = requestManager.getRemark();
         //工号
         String username = requestManager.getUser().getUsername();
@@ -86,28 +90,82 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
         if (application == null) {
             return;
         }
-
+        Long sumId=application.getExtractSumId();
+        BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
         //node  对应  OperationNodeEnum
-        BudgetExtractCommissionApplicationLog applicationLog = new BudgetExtractCommissionApplicationLog();
         BudgetExtractCommissionApplicationLog extractLog = new BudgetExtractCommissionApplicationLog();
-        extractLog.setNode(OperationNodeEnum.DEPARTMENT_HEAD.getType());
+        extractLog.setNode(nodeEnum.getType());
         extractLog.setApplicationId(application.getId());
         extractLog.setCreateTime(new Date());
         extractLog.setOaRequestId(requestId);
-//        extractLog.setOaNodeId(String.valueOf(nodeid));
-
+        extractLog.setOaNodeId(String.valueOf(nodeId));
         extractLog.setCreateBy(empNo);
         extractLog.setCreatorName(username);
         extractLog.setCreateTime(new Date());
         //）0已完成   1 同意 2退回  todo
-        extractLog.setStatus(0);
+        extractLog.setStatus(Integer.valueOf(nodeType));
         extractLog.setRemarks(remark);
         this.save(extractLog);
+        //如果节点通过
+
+
+        if(nodeEnum.getType()==OperationNodeEnum.FINANCIAL_DIRECTOR.getType()){
+
+        }
+        //如果拒绝了  就是删除报销单。退回申请单。
+        //删除报销表
+        if(nodeType.equals("1")) {
+            if (application.getReimbursementId() != null) {
+                BudgetReimbursementorder reimbursementOrder = reimburseService.getById(application.getReimbursementId());
+                reimburseService.removeById(reimbursementOrder);
+            }
+            budgetExtractsum.setStatus(ExtractStatusEnum.RETURN.getType());
+            extractSumMapper.updateById(budgetExtractsum);
+//            applicationMapper.updateById(application);
+        }else{
+            //财务负责人同意  同意
+            if(nodeEnum.getType()==OperationNodeEnum.FINANCIAL_DIRECTOR.getType()){
+                budgetExtractsum.setStatus(ExtractStatusEnum.APPROVED.getType());
+                extractSumMapper.updateById(budgetExtractsum);
+                //不用申请单的状态 用主单状态
+//                applicationMapper.updateById(application);
+
+                List<BudgetExtractImportdetail> importDetailList = importDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractImportdetail>().eq(BudgetExtractImportdetail::getExtractsumid, sumId));
+
+                long selfCount = importDetailList.stream().filter(x -> x.getBusinessType().equals(ExtractUserTypeEnum.SELF_EMPLOYED_EMPLOYEES)).count();
+                BudgetExtractTaxHandleRecord  handleRecord;
+                //没有个体户
+                if(selfCount==0){
+                    //oa 审批通过。增加判断 批次所有通过，改变记录表  如果批次所有通过
+                    handleRecord = new BudgetExtractTaxHandleRecord();
+                    handleRecord.setExtractMonth(budgetExtractsum.getExtractmonth());
+                    handleRecord.setIsCalComplete(false);
+                    handleRecord.setIsSetExcessComplete(false);
+                    handleRecord.setIsPersonalityComplete(true);
+                    taxHandleRecordService.save(handleRecord);
+                }else if(selfCount==importDetailList.size()){
+                    //全是个体户
+                    handleRecord = new BudgetExtractTaxHandleRecord();
+                    handleRecord.setExtractMonth(budgetExtractsum.getExtractmonth());
+                    handleRecord.setIsCalComplete(true);
+                    handleRecord.setIsSetExcessComplete(true);
+                    handleRecord.setIsPersonalityComplete(false);
+                    taxHandleRecordService.save(handleRecord);
+                }
+
+            }
+        }
     }
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        List<String> values = OperationNodeEnum.getValues();
+//        List<String> values = OperationNodeEnum.getValues();
+        List<String> values = new ArrayList<>();
+        values.add(OperationNodeEnum.DEPARTMENT_HEAD.getValue());
+        values.add(OperationNodeEnum.FUNCTIONAL_DEPARTMENT.getValue());
+        values.add(OperationNodeEnum.FINANCIAL_SALES_TEAM.getValue());
+        values.add(OperationNodeEnum.FINANCIAL_SALES_TEAM_HEAD.getValue());
+        values.add(OperationNodeEnum.FINANCIAL_DIRECTOR.getValue());
         List<Map<String,String>> allMap =  oaMapper.getNodeList(values);
         allMap.stream().forEach(x->{
             nodeMap.put(x.get("id"),x.get("name"));

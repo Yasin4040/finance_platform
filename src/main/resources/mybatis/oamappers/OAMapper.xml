@@ -14,7 +14,7 @@
 			AND hr2.LOGINID IS NOT NULL and hr.LOGINID is not null
     </select>
     <select id="getNodeList" resultType="java.util.Map">
-		SELECT ID AS id ,NODENAME AS name FROM WORKFLOW_NODEBASE wn
+		SELECT ID AS id ,NODENAME AS name FROM ECOLOGY2.WORKFLOW_NODEBASE wn
 		<where>
 			wn.NODENAME  IN
 			<foreach collection="values" separator="," open="(" close=")" item="item">

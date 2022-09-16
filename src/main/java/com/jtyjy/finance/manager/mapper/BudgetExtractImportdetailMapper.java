@@ -21,6 +21,10 @@ public interface BudgetExtractImportdetailMapper extends BaseMapper<BudgetExtrac
 
 	List<ExtractImportDetailVO> getExtractImportDetails(Page<ExtractImportDetailVO> pageCond, @Param("params")Map<String, Object> params);
 
-    IPage<CommissionImportDetailVO> selectCommissionPage(Page<Object> objectPage,@Param("employeeName") String employeeName,@Param("departmentName") String departmentName
+//    IPage<CommissionImportDetailVO> selectCommissionPage(Page<Object> objectPage,@Param("employeeName") String employeeName,@Param("departmentName") String departmentName
+//			,@Param("yearId") String yearId,@Param("monthId") String monthId,@Param("extractMonth") String extractMonth,@Param("empNo") String empNo,@Param("deptId") String deptId);
+	IPage<CommissionImportDetailVO> selectCommissionPageForManager(Page<Object> objectPage,@Param("employeeName") String employeeName,@Param("departmentName") String departmentName
+			,@Param("yearId") String yearId,@Param("monthId") String monthId,@Param("extractMonth") String extractMonth,@Param("empNo") String empNo,@Param("deptId") String deptId);
+	IPage<CommissionImportDetailVO> selectCommissionPageForBigManager(Page<Object> objectPage,@Param("employeeName") String employeeName,@Param("departmentName") String departmentName
 			,@Param("yearId") String yearId,@Param("monthId") String monthId,@Param("extractMonth") String extractMonth,@Param("empNo") String empNo,@Param("deptId") String deptId);
 }

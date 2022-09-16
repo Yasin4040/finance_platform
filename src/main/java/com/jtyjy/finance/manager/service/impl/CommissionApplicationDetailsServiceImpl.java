@@ -23,6 +23,7 @@ public class CommissionApplicationDetailsServiceImpl extends ServiceImpl<BudgetE
         implements CommissionApplicationDetailsService {
     @Override
     public IPage<CommissionImportDetailVO> selectCommissionPage(CommissionQuery query) {
+        IPage<CommissionImportDetailVO> page;
         String deptId="";
         String empNo="";
         //假设当前用户为业务经理。1，只看工号。 empNo。
@@ -33,13 +34,15 @@ public class CommissionApplicationDetailsServiceImpl extends ServiceImpl<BudgetE
         //部门id
         if(2==2) {
             empNo = loginUser.getUserName();
+            page  = this.baseMapper.selectCommissionPageForManager(new Page<>(query.getPage(),query.getRows())
+                    ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth(),empNo,deptId);
+
         }else if(1==1) {
             deptId = loginUser.getUserId();
         }else{
             //other
         }
-        IPage<CommissionImportDetailVO> page = this.baseMapper.selectCommissionPage(new Page<>(query.getPage(),query.getRows())
-                ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth(),empNo,deptId);
+
 
         BudgetExtractImportdetail budgetExtractImportdetail = new BudgetExtractImportdetail();
         ViewStatusEnum viewStatusEnum;

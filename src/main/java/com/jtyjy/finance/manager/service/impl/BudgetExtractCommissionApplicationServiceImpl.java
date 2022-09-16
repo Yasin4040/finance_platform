@@ -495,9 +495,10 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         BudgetExtractsum extractSum = extractSumMapper.selectById(extractSumId);
 
         WbUser user = UserThreadLocal.get();
-        String userIdDeptId = oaService.getOaUserId(user.getUserName(),null);
+        String userIdDeptId = oaService.getOaUserId(user.getUserName(),new ArrayList<>());
         String oaUserId = userIdDeptId.split(",")[0];
 //        String oaDeptId = userIdDeptId.split(",")[1];
+//        oaUserId = "5001";
         application.setOaCreatorId(oaUserId);
         //todo 需要更新
 
@@ -519,14 +520,23 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         String fj = "";
         for (BudgetCommonAttachment attachment : attachments) {
             String fileUrl = attachment.getFileUrl();
+            //http://tuku.jtyjy.com/
+            String prefix = "http://tuku.jtyjy.com/";
+            if(!fileUrl.contains(prefix)){
+                fileUrl = prefix+fileUrl;
+            }
             int code = -1;
             if (StringUtils.isNotBlank(fileUrl)) {
+
                 String oaPassword = attachment.getOaPassword();
+//                oaPassword = "1";
                 URL url = new URL(fileUrl);
                 URLConnection connection = url.openConnection();
                 InputStream is = connection.getInputStream();
                 String fileOriginName = attachment.getFileName();
-                code = this.oaService.createDoc(attachment.getCreator(), oaPassword, is, fileOriginName, fileUrl, "月度追加流程附件");
+                //todo
+                code = this.oaService.createDoc("17474", "1", is, fileOriginName, fileUrl, fileOriginName);
+//                code = this.oaService.createDoc(attachment.getCreator(), oaPassword, is, fileOriginName, fileUrl, fileOriginName);
                 if (code == 0) {
                     throw new RuntimeException("系统错误!创建文档失败!");
                 }
@@ -566,6 +576,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
 //       http://192.168.4.63/workflow/workflow/addwf0.jsp?ajax=1&src=editwf&wfid=5263&isTemplate=0
         String requestId =  oaService.createWorkflow(wi, tcWorkFlowId, main, list);
         if (requestId == null || Integer.parseInt(requestId) < 0) {
+            System.out.println(requestId+"???");
             throw new RuntimeException("提交失败，oa系统未找到你的上级人员，请联系oa管理员。");
         }
         application.setRequestId(requestId);
