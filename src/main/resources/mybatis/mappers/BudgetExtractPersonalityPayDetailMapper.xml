@@ -46,7 +46,7 @@
         SELECT
             bepd.id,
             bief.batch_no batch,
-            bief.department_name firstDept,
+            bief.department_full_name firstDept,
           bief.province_or_region secondDept,
           bief.employee_job_num empNo,
           bief.employee_name empName,
