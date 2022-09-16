@@ -3839,7 +3839,8 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			if (status >= ExtractStatusEnum.CALCULATION_COMPLETE.getType()) {
 				throw new RuntimeException("撤回失败！单据已流转至后续环节！");
 			}
-			if (status < ExtractStatusEnum.APPROVED.getType()) {
+			BudgetExtractTaxHandleRecord extractTaxHandleRecord = getExtractTaxHandleRecord(extractBatch);
+			if(extractTaxHandleRecord==null || !extractTaxHandleRecord.getIsCalComplete()){
 				throw new RuntimeException("撤回失败！单据还未计算发放");
 			}
 			clearaCalculatedData(extractBatch, null);
