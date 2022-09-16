@@ -5493,9 +5493,9 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			Map<String, Object> params = new HashMap<>();
 			params.put("extractmonth", extractsum.getExtractmonth());
 			List<ExtractPayDetailVO> resultList = getPayDetailsByCondition(null, params);
-			resultList.forEach(e -> {
+			resultList = resultList.stream().peek(e -> {
 				splitOrder(e, extractSumId);
-			});
+			}).filter(e->e.getIsSelf()).collect(Collectors.toList());
 
 			List<BigDecimal> money = new ArrayList<>();
 			resultList.stream().collect(Collectors.groupingBy(e->{
