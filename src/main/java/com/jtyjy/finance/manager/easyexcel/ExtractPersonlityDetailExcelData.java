@@ -91,7 +91,7 @@ public class ExtractPersonlityDetailExcelData {
 	public static ExtractPersonlityDetailExcelData transfer(IndividualEmployeeFiles individualEmployeeFiles){
 		ExtractPersonlityDetailExcelData excelData = new ExtractPersonlityDetailExcelData();
 		excelData.setBatch(individualEmployeeFiles.getBatchNo());
-		excelData.setFirstDept(individualEmployeeFiles.getDepartmentName());
+		excelData.setFirstDept(individualEmployeeFiles.getDepartmentFullName());
 		excelData.setSecondDept(individualEmployeeFiles.getProvinceOrRegion());
 		excelData.setEmpNo(individualEmployeeFiles.getEmployeeJobNum());
 		excelData.setEmpName(individualEmployeeFiles.getEmployeeName());
