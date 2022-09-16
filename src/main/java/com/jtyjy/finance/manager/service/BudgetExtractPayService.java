@@ -1,12 +1,11 @@
 package com.jtyjy.finance.manager.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jtyjy.core.anno.JdbcSelector;
 import com.jtyjy.core.result.PageResult;
-import com.jtyjy.finance.manager.bean.BudgetPaybatch;
-import com.jtyjy.finance.manager.bean.BudgetPaymoney;
-import com.jtyjy.finance.manager.bean.WbBanks;
+import com.jtyjy.finance.manager.bean.*;
 import com.jtyjy.finance.manager.cache.BankCache;
 import com.jtyjy.finance.manager.constants.Constants;
 import com.jtyjy.finance.manager.dto.ExtractPayCompleteDTO;
@@ -24,8 +23,10 @@ import com.jtyjy.finance.manager.vo.BudgetExtractPayQueryVO;
 import com.jtyjy.finance.manager.vo.BudgetExtractPayResponseVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -50,6 +51,16 @@ public class BudgetExtractPayService {
 	private BudgetPaybatchMapper paybatchMapper;
 	@Autowired
 	private BankCache bankCache;
+	@Autowired
+	private BudgetPaymoneyService paymoneyService;
+	@Autowired
+	private BudgetExtractPerPayDetailService perPayDetailService;
+	@Autowired
+	private ExtractAccountEntryTaskService accountEntryTaskService;
+	@Autowired
+	private BudgetExtractPersonalityPayService extractPersonalityPayService;
+	@Value("${tc.redis.key}")
+	private String TC_REDIS_KEY;
 
 	/**
 	 * <p>获取提成付款单</p>
@@ -221,7 +232,45 @@ public class BudgetExtractPayService {
 		List<BudgetPaymoney> budgetPaymonies = paymoneyMapper.selectBatchIds(extractPayCompleteDTO.getPayMoneyIds());
 		long count = budgetPaymonies.stream().filter(e -> e.getPaymoneystatus() != PaymoneyStatusEnum.PAYING.type).count();
 		if(count > 0 ){
-			throw new RuntimeException("请选择待支付的付款单！");
+			throw new RuntimeException("请选择支付中的付款单！");
 		}
+		budgetPaymonies.forEach(e->{
+			e.setPaymoneystatus(PaymoneyStatusEnum.PAYED.type);
+			e.setPaytime(new Date());
+		});
+		paymoneyService.updateBatchById(budgetPaymonies);
+
+		List<Long> perPayDetailIds = budgetPaymonies.stream().map(e -> e.getPaymoneyobjectid()).collect(Collectors.toList());
+		List<BudgetExtractPerPayDetail> perPayDetails = perPayDetailService.listByIds(perPayDetailIds);
+
+		List<Long> personalityPayIds = perPayDetails.stream().filter(e -> e.getExtractCode().startsWith(Constants.EXTRACT_DELAY_ORDER_PREFIX) && e.getSourceId() != null).map(e -> e.getSourceId()).collect(Collectors.toList());
+		if(!CollectionUtils.isEmpty(personalityPayIds)){
+			LambdaUpdateWrapper<BudgetExtractPersonalityPayDetail> updateWrapper = new LambdaUpdateWrapper<>();
+			updateWrapper.set(BudgetExtractPersonalityPayDetail::getIsSend,1);
+			updateWrapper.in(BudgetExtractPersonalityPayDetail::getId,personalityPayIds);
+			extractPersonalityPayService.update(updateWrapper);
+		}
+		perPayDetails.stream().collect(Collectors.groupingBy(e->e.getExtractCode().substring(0,2))).forEach((orderPrefix,orderDetailList)->{
+
+			if(orderPrefix.equals(Constants.EXTRACT_DELAY_ORDER_PREFIX)){
+				//延期
+				//orderDetailList.stream()
+
+
+			}else if(orderPrefix.equals(TC_REDIS_KEY)){
+				orderDetailList.stream().collect(Collectors.groupingBy(BudgetExtractPerPayDetail::getExtractMonth)).forEach((extractBatch,batchDetailList)->{
+					List<BudgetExtractPerPayDetail> list = perPayDetailService.list(new LambdaQueryWrapper<BudgetExtractPerPayDetail>().eq(BudgetExtractPerPayDetail::getExtractMonth, extractBatch));
+					if(!CollectionUtils.isEmpty(list)){
+						int unPaySuccessCount = paymoneyService.count(new LambdaQueryWrapper<BudgetPaymoney>().in(BudgetPaymoney::getPaymoneyobjectid, list.stream().map(e -> e.getId()).collect(Collectors.toList())).ne(BudgetPaymoney::getPaymoneystatus, PaymoneyStatusEnum.PAYED.type));
+						if(unPaySuccessCount == 0){
+							//该批次全部支付成功
+							accountEntryTaskService.addEntryTask(false,null,extractBatch);
+						}
+					}
+
+				});
+			}
+		});
+
 	}
 }

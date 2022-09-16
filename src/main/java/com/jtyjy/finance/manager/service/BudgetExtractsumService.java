@@ -4653,7 +4653,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				return e.getEmpNo().toString().concat(e.getEmpName());
 			})).forEach((account,list)->{
 
-				long count1 = extractDetailList.stream().filter(e -> e.getEmpno().equals(list.get(0).getEmpNo()) && e.getEmpname().equals(list.get(0).getEmpName())).count();
+				long count1 = extractDetailList.stream().filter(e -> e.getEmpno().equals(list.get(0).getEmpNo().toString()) && e.getEmpname().equals(list.get(0).getEmpName())).count();
 				if(count1 == 0){
 					list.forEach(e->{
 						e.setErrMsg("该个体户在当前批次下没有待发提成。");
@@ -4936,6 +4936,9 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	public PageResult<ExtractPersonalityPayDetailVO> getExtractPersonalityPayDetailVO(ExtractPersonalityPayDetailQueryVO params, Integer page, Integer rows, String extractBatch) {
 		if(StringUtils.isBlank(extractBatch) && params.getSumId()!=null){
 			BudgetExtractsum extractsum = this.getById(params.getSumId());
+			if(extractsum.getStatus() < ExtractStatusEnum.APPROVED.getType()){
+				return PageResult.apply(0,null);
+			}
 			extractBatch = extractsum.getExtractmonth();
 		}
 		List<ExtractPersonalityPayDetailVO> list = null;
@@ -5039,7 +5042,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			}
 			int k1 = k;
 			list.forEach(l->{
-				if(result.get(k1).get(l.getId())!=null){
+				if(result.get(k1)!=null && result.get(k1).get(l.getId())!=null){
 					l.setCurExtract(result.get(k1).get(l.getId()).get(0));
 					l.setCurSalary(result.get(k1).get(l.getId()).get(1));
 					l.setCurWelfare(result.get(k1).get(l.getId()).get(2));
@@ -5308,6 +5311,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				return e.getIsCompanyEmp().toString()+"&&"+e.getIdnumber();
 			})).forEach((key,list)->{
 				ExtractPayDetailVO e = list.get(0);
+
 				if(e.getBillingUnitId()!=null && e.getBillingPaymoney()!=null && e.getBillingPaymoney().compareTo(BigDecimal.ZERO)>0){
 					BigDecimal money = BigDecimal.ZERO;
 					if(e.getBillingPaymoney()!=null && e.getBillingPaymoney().compareTo(BigDecimal.ZERO)>0){
@@ -5358,7 +5362,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				perPayDetail.setPayMoney(personality.getCurExtract().add(personality.getCurWelfare()).add(personality.getCurSalary()));
 				perPayDetail.setIsCompanyEmp(false);
 				perPayDetail.setPersonalityId(personality.getPersonalityId());
-
+				perPayDetail.setSourceId(personality.getId());
 				perPayDetail.setReceiverCode(individualEmployeeFiles.getEmployeeJobNum().toString());
 				perPayDetail.setReceiverName(individualEmployeeFiles.getEmployeeName());
 				perPayDetail.setReceiverAccountName(individualEmployeeFiles.getAccountName());
@@ -5422,6 +5426,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		perPayDetail.setReceiveBankAccountBankName(extractpayment.getBankaccountbranchname());
 		perPayDetail.setReceiverOpenBank(extractpayment.getBankaccountopenbank());
 		perPayDetail.setCreateTime(new Date());
+		perPayDetail.setSourceId(e.getId1());
 		return perPayDetail;
 	}
 
@@ -5480,11 +5485,12 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			isSetExcess = true;
 		}
 		if(extractTaxHandleRecord!=null && extractTaxHandleRecord.getIsPersonalityComplete()){
-			Integer integer = personalityPayDetailMapper.selectCount(new LambdaQueryWrapper<BudgetExtractPersonalityPayDetail>()
-					.eq(BudgetExtractPersonalityPayDetail::getExtractMonth, extractsum.getExtractmonth())
-					.eq(BudgetExtractPersonalityPayDetail::getPayStatus, ExtractPersonalityPayStatusEnum.DELAY.type)
-					.isNull(BudgetExtractPersonalityPayDetail::getOperateTime));
-			if(integer == 0) isShowPersonality = true;
+//			Integer integer = personalityPayDetailMapper.selectCount(new LambdaQueryWrapper<BudgetExtractPersonalityPayDetail>()
+//					.eq(BudgetExtractPersonalityPayDetail::getExtractMonth, extractsum.getExtractmonth())
+//					.eq(BudgetExtractPersonalityPayDetail::getPayStatus, ExtractPersonalityPayStatusEnum.DELAY.type)
+//					.isNull(BudgetExtractPersonalityPayDetail::getOperateTime));
+//			if(integer == 0)
+			isShowPersonality = true;
 		}
 		Map<Long, BudgetBillingUnit> unitMap = this.billingUnitMapper.selectList(null).stream().collect(Collectors.toMap(BudgetBillingUnit::getId, Function.identity()));
 		//内部发放金额
@@ -5495,56 +5501,55 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		Map<Long,Map<String,List<BigDecimal>>> unitPayDetailMap = new HashMap<>();
 		List<BigDecimal> unPayMoney = new ArrayList<>();
 
-		if(isSetExcess){
-			//显示非个体户数据
-			Map<String, Object> params = new HashMap<>();
-			params.put("extractmonth", extractsum.getExtractmonth());
-			List<ExtractPayDetailVO> resultList = getPayDetailsByCondition(null, params);
-			resultList.forEach(e -> {
-				splitOrder(e, extractSumId);
-			});
 
-			List<BigDecimal> money = new ArrayList<>();
-			resultList.stream().collect(Collectors.groupingBy(e->{
-				return e.getIsCompanyEmp().toString()+"&&"+e.getEmpno();
-			})).forEach((key,list)->{
-				ExtractPayDetailVO extractPayDetailVO = list.get(0);
-				setUnitPayDetail(unitMap,unitPayDetailMap,extractPayDetailVO.getBillingUnitId(),extractPayDetailVO.getBillingPaymoney(),innerPayMoney,outPayMoney,"1");
-				setUnitPayDetail(unitMap,unitPayDetailMap,extractPayDetailVO.getAvoidBillingUnitId(),extractPayDetailVO.getAvoidBillingPaymoney(),innerPayMoney,outPayMoney,"1");
-				setUnitPayDetail(unitMap,unitPayDetailMap,extractPayDetailVO.getBillingUnitId(),extractPayDetailVO.getBeforeCalFee(),innerPayMoney,outPayMoney,"2");
-				if(extractPayDetailVO.getBillingPaymoney()!=null){
-					money.add(extractPayDetailVO.getBillingPaymoney());
-				}
-				if(extractPayDetailVO.getAvoidBillingPaymoney()!=null){
-					money.add(extractPayDetailVO.getAvoidBillingPaymoney());
-				}
-				if(extractPayDetailVO.getBeforeCalFee()!=null){
-					money.add(extractPayDetailVO.getBeforeCalFee());
-				}
-				list.forEach(l->{
-					setUnitPayDetail(unitMap,unitPayDetailMap,l.getOutUnitId(),l.getOutUnitPayMoney(),innerPayMoney,outPayMoney,"3");
-				});
-			});
-			if(extractsum.getStatus() != ExtractStatusEnum.PAY.type){
-				unPayMoney.add(money.stream().reduce(BigDecimal.ZERO,BigDecimal::add));
+		//显示非个体户数据
+		Map<String, Object> params = new HashMap<>();
+		params.put("extractmonth", extractsum.getExtractmonth());
+		List<ExtractPayDetailVO> resultList = getPayDetailsByCondition(null, params);
+		resultList = resultList.stream().peek(e -> {
+			splitOrder(e, extractSumId);
+		}).filter(e->e.getIsSelf()).collect(Collectors.toList());
+
+		List<BigDecimal> money = new ArrayList<>();
+		resultList.stream().collect(Collectors.groupingBy(e->{
+			return e.getIsCompanyEmp().toString()+"&&"+e.getEmpno();
+		})).forEach((key,list)->{
+			ExtractPayDetailVO extractPayDetailVO = list.get(0);
+			setUnitPayDetail(unitMap,unitPayDetailMap,extractPayDetailVO.getBillingUnitId(),extractPayDetailVO.getBillingPaymoney(),innerPayMoney,outPayMoney,"1");
+			setUnitPayDetail(unitMap,unitPayDetailMap,extractPayDetailVO.getAvoidBillingUnitId(),extractPayDetailVO.getAvoidBillingPaymoney(),innerPayMoney,outPayMoney,"1");
+			setUnitPayDetail(unitMap,unitPayDetailMap,extractPayDetailVO.getBillingUnitId(),extractPayDetailVO.getBeforeCalFee(),innerPayMoney,outPayMoney,"2");
+			if(extractPayDetailVO.getBillingPaymoney()!=null){
+				money.add(extractPayDetailVO.getBillingPaymoney());
 			}
-		}
-		if(isShowPersonality){
-			ExtractPersonalityPayDetailQueryVO vo = new ExtractPersonalityPayDetailQueryVO();
-			vo.setSumId(extractSumId);
-			PageResult<ExtractPersonalityPayDetailVO> extractPersonalityPayDetailVO = this.getExtractPersonalityPayDetailVO(vo, null, null, extractsum.getExtractmonth());
-			extractPersonalityPayDetailVO.getList().forEach(detail->{
-				IndividualEmployeeFiles individualEmployeeFiles = individualEmployeeFilesMapper.selectById(detail.getPersonalityId());
-				if(individualEmployeeFiles.getAccountType()==1){
-					setUnitPayDetail(unitMap,unitPayDetailMap,detail.getBillingUnitId(),detail.getCurExtract().add(detail.getCurSalary()).add(detail.getCurWelfare()),innerPayMoney,outPayMoney,"3");
-				}else if(individualEmployeeFiles.getAccountType()==2){
-					setUnitPayDetail(unitMap,unitPayDetailMap,detail.getBillingUnitId(),detail.getCurExtract().add(detail.getCurSalary()).add(detail.getCurWelfare()),innerPayMoney,outPayMoney,"4");
-				}
-				if(detail.getIsSend()==null || !detail.getIsSend()){
-					unPayMoney.add(detail.getCurExtract().add(detail.getCurSalary()).add(detail.getCurWelfare()));
-				}
+			if(extractPayDetailVO.getAvoidBillingPaymoney()!=null){
+				money.add(extractPayDetailVO.getAvoidBillingPaymoney());
+			}
+			if(extractPayDetailVO.getBeforeCalFee()!=null){
+				money.add(extractPayDetailVO.getBeforeCalFee());
+			}
+			list.forEach(l->{
+				setUnitPayDetail(unitMap,unitPayDetailMap,l.getOutUnitId(),l.getOutUnitPayMoney(),innerPayMoney,outPayMoney,"3");
 			});
+		});
+		if(extractsum.getStatus() != ExtractStatusEnum.PAY.type){
+			unPayMoney.add(money.stream().reduce(BigDecimal.ZERO,BigDecimal::add));
 		}
+
+
+		ExtractPersonalityPayDetailQueryVO vo = new ExtractPersonalityPayDetailQueryVO();
+		vo.setSumId(extractSumId);
+		PageResult<ExtractPersonalityPayDetailVO> extractPersonalityPayDetailVO = this.getExtractPersonalityPayDetailVO(vo, null, null, extractsum.getExtractmonth());
+		extractPersonalityPayDetailVO.getList().stream().filter(e->e.getPayStatus() == ExtractPersonalityPayStatusEnum.COMMON.type).forEach(detail->{
+			IndividualEmployeeFiles individualEmployeeFiles = individualEmployeeFilesMapper.selectById(detail.getPersonalityId());
+			if(individualEmployeeFiles.getAccountType()==1){
+				setUnitPayDetail(unitMap,unitPayDetailMap,detail.getBillingUnitId(),detail.getCurExtract().add(detail.getCurSalary()).add(detail.getCurWelfare()),innerPayMoney,outPayMoney,"3");
+			}else if(individualEmployeeFiles.getAccountType()==2){
+				setUnitPayDetail(unitMap,unitPayDetailMap,detail.getBillingUnitId(),detail.getCurExtract().add(detail.getCurSalary()).add(detail.getCurWelfare()),innerPayMoney,outPayMoney,"4");
+			}
+		});
+		extractPersonalityPayDetailVO.getList().stream().filter(e->e.getPayStatus() != ExtractPersonalityPayStatusEnum.COMMON.type).forEach(detail->{
+			unPayMoney.add(detail.getCurExtract().add(detail.getCurSalary()).add(detail.getCurWelfare()));
+		});
 
 		result.setInnerPayMoney(innerPayMoney.stream().reduce(BigDecimal.ZERO,BigDecimal::add));
 		result.setOutUnitPayMoney(outPayMoney.stream().reduce(BigDecimal.ZERO,BigDecimal::add));

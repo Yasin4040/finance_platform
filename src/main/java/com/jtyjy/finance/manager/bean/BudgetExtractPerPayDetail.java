@@ -123,6 +123,11 @@ public class BudgetExtractPerPayDetail implements Serializable {
      */
     private Integer payStatus;
 
+    /**
+     * 来源id(非个体户)(budget_extract_payment,(个体户)budget_extract_personality_pay_detail)
+     */
+    private Long sourceId;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 

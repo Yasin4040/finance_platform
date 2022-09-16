@@ -174,6 +174,7 @@ public class SyncUserAndBankAccountJob {
 						budgetBankAccount.setWagesflag(true);
 						budgetBankAccount.setStopflag(false);
 						budgetBankAccount.setUpdateTime(new Date());
+						budgetBankAccount.setBranchcode(unionpayno);
 						bankAccountService.updateById(budgetBankAccount);
 						empNoBudgetBankAccounts.stream().filter(e->!e.getId().equals(budgetBankAccount.getId())).forEach(b->{
 							bankAccountMapper.update(b,

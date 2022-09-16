@@ -76,5 +76,8 @@ public class ExtractDelayPayApplyVO {
 
 		@ApiModelProperty("员工个体户发放金额（个卡）")
 		private BigDecimal personalityPayMoney2 = BigDecimal.ZERO;
+
+		@ApiModelProperty("发放合计")
+		private BigDecimal payTotal;
 	}
 }
