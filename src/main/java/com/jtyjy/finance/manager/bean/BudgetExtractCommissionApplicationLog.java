@@ -41,7 +41,7 @@ public class BudgetExtractCommissionApplicationLog implements Serializable {
     /**
      * 操作节点    枚举
      */
-    @TableField(exist = false)
+    @TableField(value = "node_name")
     @ApiModelProperty(value = "操作节点名称")
     private String nodeName;
 

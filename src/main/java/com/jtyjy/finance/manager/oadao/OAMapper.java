@@ -11,4 +11,8 @@ public interface OAMapper extends BaseMapper<OaUser> {
 	List<Map<String, Object>> getSpecialPerson();
 
     List<Map<String, String>> getNodeList(@Param("values") List<String> values);
+
+    String getOaUserId(@Param("empNo") String empNo);
+
+    String getNodeName(int nodeId);
 }

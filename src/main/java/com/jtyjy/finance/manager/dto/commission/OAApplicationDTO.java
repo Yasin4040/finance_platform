@@ -24,7 +24,7 @@ public class OAApplicationDTO extends WorkflowBase {
     @ApiModelProperty(value = "部门")
     private String bm;
     @ApiModelProperty(value = "制表日期")
-    private Date zbrq;
+    private String zbrq;
     @ApiModelProperty(value = "支付事由")
     private String zfsy;
     @ApiModelProperty(value = "备注")

@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.iamxiongx.util.message.DateUtil;
 import com.iamxiongx.util.message.exception.BusinessException;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.ecology.webservice.workflow.WorkflowInfo;
@@ -25,9 +26,9 @@ import com.jtyjy.finance.manager.enmus.*;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.listener.easyexcel.PageReadListener;
 import com.jtyjy.finance.manager.mapper.*;
+import com.jtyjy.finance.manager.oadao.OAMapper;
 import com.jtyjy.finance.manager.query.commission.FeeQuery;
 import com.jtyjy.finance.manager.service.*;
-import com.jtyjy.finance.manager.utils.AesUtil;
 import com.jtyjy.finance.manager.utils.FileUtils;
 import com.jtyjy.finance.manager.vo.application.*;
 import lombok.SneakyThrows;
@@ -76,9 +77,10 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     private final HrService hrService;
     private final OaService oaService;
     private final TabDmMapper tabDmMapper;
+    private final OAMapper oaMapper;
 
     private  String tcWorkFlowId = "5263";
-    public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractTaxHandleRecordService taxHandleRecordService, BudgetExtractsumMapper extractSumMapper, BudgetExtractOuterpersonMapper outPersonMapper, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, BudgetCommonAttachmentService attachmentService, StorageClient storageClient, ReimbursementWorker reimbursementWorker, BudgetReimbursementorderService reimbursementorderService, BudgetExtractFeePayDetailMapper feePayDetailMapper, HrService hrService, OaService oaService, TabDmMapper tabDmMapper) {
+    public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractTaxHandleRecordService taxHandleRecordService, BudgetExtractsumMapper extractSumMapper, BudgetExtractOuterpersonMapper outPersonMapper, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, BudgetCommonAttachmentService attachmentService, StorageClient storageClient, ReimbursementWorker reimbursementWorker, BudgetReimbursementorderService reimbursementorderService, BudgetExtractFeePayDetailMapper feePayDetailMapper, HrService hrService, OaService oaService, TabDmMapper tabDmMapper,OAMapper oaMapper) {
         this.taxHandleRecordService = taxHandleRecordService;
         this.extractSumMapper = extractSumMapper;
         this.outPersonMapper = outPersonMapper;
@@ -94,6 +96,8 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         this.hrService = hrService;
         this.oaService = oaService;
         this.tabDmMapper = tabDmMapper;
+        this.oaMapper = oaMapper;
+
     }
 
     @Override
@@ -505,10 +509,15 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         BudgetExtractsum extractSum = extractSumMapper.selectById(extractSumId);
 
         WbUser user = UserThreadLocal.get();
-        String userIdDeptId = oaService.getOaUserId(user.getUserName(),new ArrayList<>());
+        //获取oa 用户
+        String userIdDeptId = oaMapper.getOaUserId(user.getUserName());
+//        String userIdDeptId = oaService.getOaUserId(user.getUserName(),new ArrayList<>());
         String oaUserId = userIdDeptId.split(",")[0];
-//        String oaDeptId = userIdDeptId.split(",")[1];
+        String oaDeptId = userIdDeptId.split(",")[1];
 //        oaUserId = "5001";
+        if(oaUserId.equals("0")){
+            throw new RuntimeException("环境问题找不到oa的userId");
+        }
         application.setOaCreatorId(oaUserId);
         //todo 需要更新
 
@@ -519,21 +528,24 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         wi.setRequestName("提成申请单流程--" + userName);
         OAApplicationDTO oaDTO = new OAApplicationDTO();
         oaDTO.setSqr(user.getUserName());
-        oaDTO.setBm(application.getDepartmentName());
-        oaDTO.setZbrq(application.getCreateTime());
+        oaDTO.setBm(oaDeptId);
+        oaDTO.setZbrq(DateUtil.getStrYMDByDate(application.getCreateTime()) );
         oaDTO.setZfsy(application.getPaymentReason());
-        oaDTO.setBz(application.getRemarks());
+        oaDTO.setBz(StringUtils.isNotBlank(application.getRemarks())?application.getRemarks():"");
         oaDTO.setBh(extractSum.getCode());
+        oaDTO.setWfid(tcWorkFlowId);
 
         //附件上传
         List<BudgetCommonAttachment> attachments = attachmentService.lambdaQuery().eq(BudgetCommonAttachment::getContactId, application.getId()).list();
         String fj = "";
-        for (BudgetCommonAttachment attachment : attachments) {
-            String fileUrl = attachment.getFileUrl();
+        for (int i = 0; i < attachments.size(); i++) {
+
+            BudgetCommonAttachment attachment = attachments.get(i);
+            String fileUrl = attachments.get(i).getFileUrl();
             //http://tuku.jtyjy.com/
             String prefix = "http://tuku.jtyjy.com/";
-            if(!fileUrl.contains(prefix)){
-                fileUrl = prefix+fileUrl;
+            if (!fileUrl.contains(prefix)) {
+                fileUrl = prefix + fileUrl;
             }
             int code = -1;
             if (StringUtils.isNotBlank(fileUrl)) {
@@ -545,15 +557,19 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                 InputStream is = connection.getInputStream();
                 String fileOriginName = attachment.getFileName();
                 //todo
-                code = this.oaService.createDoc("20192", AesUtil.encrypt("067540"), is, fileOriginName, fileUrl, fileOriginName);
-//                code = this.oaService.createDoc(attachment.getCreator(), oaPassword, is, fileOriginName, fileUrl, fileOriginName);
+//                code = this.oaService.createDoc("20192", AesUtil.encrypt("067540"), is, fileOriginName, fileUrl, fileOriginName);
+                code = this.oaService.createDoc(attachment.getCreator(), oaPassword, is, fileOriginName, fileUrl, fileOriginName);
                 if (code == 0) {
                     throw new RuntimeException("系统错误!创建文档失败!");
                 }
                 //docCode
-                String temp = code+";";
-                fj = fj+temp;
-                is.close();
+                String charName = ",";
+                String temp = String.valueOf(code);
+                //不是最后一个就拼 ","
+                if (i != attachments.size() - 1) {
+                    temp = temp + charName;
+                }
+                fj = fj + temp;
             }
         }
         oaDTO.setFj(fj);
@@ -568,12 +584,12 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             String yearName = yearMapper.getNameById(detail.getYearid());
             dto.setGslx(yearName);
 
-            dto.setSqtc(detail.getShouldSendExtract());
+            dto.setSqtc(String.valueOf(detail.getShouldSendExtract()));
 
 
-            dto.setSfje(detail.getCopeextract());
-
-            dto.setKkje(detail.getCopeextract().subtract(detail.getShouldSendExtract()));
+            dto.setSfje(String.valueOf(detail.getCopeextract()));
+            dto.setKkje(String.valueOf(detail.getCopeextract().subtract(detail.getShouldSendExtract())));
+            dto.setWfid(tcWorkFlowId);
             oaDetailList.add(dto);
         }
         String oldRequestId = application.getRequestId();
@@ -766,7 +782,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                     String returnId = reimbursementWorker.saveReturnId(reimbursementRequest, true);
                     if (StringUtils.isNotBlank(returnId)) {
                         application.setReimbursementId(Long.valueOf(returnId));
-                        this.save(application);
+                        this.saveOrUpdate(application);
                     }
 //                    reimbursementController.opt(reimbursementRequest);
                 } catch (Exception e) {

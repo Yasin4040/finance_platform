@@ -32,7 +32,7 @@ import java.util.*;
 */
 @Service
 public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImpl<BudgetExtractCommissionApplicationLogMapper, BudgetExtractCommissionApplicationLog>
-    implements BudgetExtractCommissionApplicationLogService, InitializingBean {
+    implements BudgetExtractCommissionApplicationLogService{
 
     private final BudgetExtractCommissionApplicationMapper applicationMapper;
     private final BudgetExtractsumMapper extractSumMapper;
@@ -40,7 +40,6 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
     private final OAMapper oaMapper;
     private final BudgetReimbursementorderService reimburseService;
     private final BudgetExtractTaxHandleRecordService taxHandleRecordService;
-    private Map<String,String> nodeMap = new HashMap<>();
 
     public BudgetExtractCommissionApplicationLogServiceImpl(BudgetExtractCommissionApplicationMapper applicationMapper, BudgetExtractsumMapper extractSumMapper, BudgetExtractImportdetailMapper importDetailMapper, OAMapper oaMapper, BudgetReimbursementorderService reimburseService, BudgetExtractTaxHandleRecordService taxHandleRecordService) {
         this.applicationMapper = applicationMapper;
@@ -60,6 +59,7 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
         log.setCreateTime(new Date());
         log.setNode(OperationNodeEnum.SUBMITTED.getType());
         log.setStatus(0);//无操作。默认提交
+        log.setNodeName(OperationNodeEnum.SUBMITTED.getValue());
         this.save(log);
     }
 
@@ -73,9 +73,10 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
         String requestId = params.getRequestid();
         int nodeId = requestManager.getNodeid();
         //7111
-        String value = nodeMap.get(nodeId);
+        //通过ia获取
+        String nodeName = oaMapper.getNodeName(nodeId);
         //先找到相应的nodeId  flowType 对应的 节点信息。
-        OperationNodeEnum nodeEnum = OperationNodeEnum.getTypeEnumByDesc(value);
+        OperationNodeEnum nodeEnum = OperationNodeEnum.getTypeEnumByDesc(nodeName);
         String requestname = requestManager.getRequestname();
         //哪一个是操作类型。
         String nodeType = requestManager.getNodetype();
@@ -96,7 +97,8 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
 
         //node  对应  OperationNodeEnum
         BudgetExtractCommissionApplicationLog extractLog = new BudgetExtractCommissionApplicationLog();
-        extractLog.setNode(nodeEnum.getType());
+        extractLog.setNode(nodeEnum!=null?nodeEnum.getType():nodeId);
+        extractLog.setNodeName(nodeEnum!=null?nodeEnum.getValue():nodeName);
         extractLog.setApplicationId(application.getId());
         extractLog.setCreateTime(new Date());
         extractLog.setOaRequestId(requestId);
@@ -169,20 +171,20 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
         }
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-//        List<String> values = OperationNodeEnum.getValues();
-        List<String> values = new ArrayList<>();
-        values.add(OperationNodeEnum.DEPARTMENT_HEAD.getValue());
-        values.add(OperationNodeEnum.FUNCTIONAL_DEPARTMENT.getValue());
-        values.add(OperationNodeEnum.FINANCIAL_SALES_TEAM.getValue());
-        values.add(OperationNodeEnum.FINANCIAL_SALES_TEAM_HEAD.getValue());
-        values.add(OperationNodeEnum.FINANCIAL_DIRECTOR.getValue());
-        List<Map<String,String>> allMap =  oaMapper.getNodeList(values);
-        allMap.stream().forEach(x->{
-            nodeMap.put(x.get("id"),x.get("name"));
-        });
-    }
+//    @Override
+//    public void afterPropertiesSet() throws Exception {
+////        List<String> values = OperationNodeEnum.getValues();
+//        List<String> values = new ArrayList<>();
+//        values.add(OperationNodeEnum.DEPARTMENT_HEAD.getValue());
+//        values.add(OperationNodeEnum.FUNCTIONAL_DEPARTMENT.getValue());
+//        values.add(OperationNodeEnum.FINANCIAL_SALES_TEAM.getValue());
+//        values.add(OperationNodeEnum.FINANCIAL_SALES_TEAM_HEAD.getValue());
+//        values.add(OperationNodeEnum.FINANCIAL_DIRECTOR.getValue());
+//        List<Map<String,String>> allMap =  oaMapper.getNodeList(values);
+//        allMap.stream().forEach(x->{
+//            nodeMap.put(x.get("id"),x.get("name"));
+//        });
+//    }
 }
 
 

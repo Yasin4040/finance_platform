@@ -64,7 +64,7 @@ public enum OperationNodeEnum {
         OperationNodeEnum[] types = OperationNodeEnum.values();
         if (types.length > 0){
             for (OperationNodeEnum lType : types){
-                if (lType.value == desc){
+                if (desc.contains(lType.value)){
                     return lType;
                 }
             }

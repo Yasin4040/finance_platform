@@ -37,10 +37,10 @@ public class OAApplicationDetailDTO extends WorkflowBase {
     @ApiModelProperty(value = "归属类型")
     private String gslx;
     @ApiModelProperty(value = "申请提成")
-    private BigDecimal sqtc;
+    private String sqtc;
     @ApiModelProperty(value = "扣款金额")
-    private BigDecimal kkje;
+    private String kkje;
     @ApiModelProperty(value = "实发金额")
-    private BigDecimal sfje;
+    private String sfje;
 
 }
