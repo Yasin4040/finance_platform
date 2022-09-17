@@ -594,8 +594,17 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         BudgetExtractTaxHandleRecord recordServiceOne =
                 taxHandleRecordService.getOne(new LambdaQueryWrapper<BudgetExtractTaxHandleRecord>().eq(BudgetExtractTaxHandleRecord::getExtractMonth, extractMonth));
         if (recordServiceOne != null) {
-            if(recordServiceOne.getIsCalComplete()||recordServiceOne.getIsSetExcessComplete()||recordServiceOne.getIsPersonalityComplete()){
-                throw new BusinessException("导入失败！批次已经进行过计算！");
+            List<BudgetExtractImportdetail> importDetailList = extractImportDetailMapper.getAllByExtractMonth(extractMonth);
+            long selfCount = importDetailList.stream().filter(x -> x.getBusinessType().equals(ExtractUserTypeEnum.SELF_EMPLOYED_EMPLOYEES)).count();
+            if (selfCount == 0) {
+                //个体户为0
+                if (recordServiceOne.getIsCalComplete() || recordServiceOne.getIsSetExcessComplete()) {
+                    throw new BusinessException("导入失败！批次已经进行过计算！");
+                }
+            } else {
+                if (recordServiceOne.getIsCalComplete() || recordServiceOne.getIsSetExcessComplete() || recordServiceOne.getIsPersonalityComplete()) {
+                    throw new BusinessException("导入失败！批次已经进行过计算！");
+                }
             }
         }
     }
@@ -652,11 +661,11 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                     }
                     //计算任务
                     BudgetExtractTaxHandleRecord recordServiceOne = taxHandleRecordService.getOne(new LambdaQueryWrapper<BudgetExtractTaxHandleRecord>().eq(BudgetExtractTaxHandleRecord::getExtractMonth, extractMonth));
-
-                    if (recordServiceOne != null) {
-                        if(recordServiceOne.getIsCalComplete()||recordServiceOne.getIsSetExcessComplete()||recordServiceOne.getIsPersonalityComplete()){
-                            throw new BusinessException("退回失败！任务已计算！");
-                        }
+                    //如果个体户结果
+//                    List<BudgetExtractImportdetail> importDetailList = extractImportDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractImportdetail>().eq(BudgetExtractImportdetail::getExtractsumid, sumId));
+//                    long selfCount = importDetailList.stream().filter(x -> x.getBusinessType().equals(ExtractUserTypeEnum.SELF_EMPLOYED_EMPLOYEES)).count();
+                    if(recordServiceOne.getIsCalComplete()||recordServiceOne.getIsSetExcessComplete()||recordServiceOne.getIsPersonalityComplete()){
+                        throw new BusinessException("退回失败！任务已计算！");
                     }
                     break;
                 case DRAFT:

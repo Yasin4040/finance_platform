@@ -27,4 +27,6 @@ public interface BudgetExtractImportdetailMapper extends BaseMapper<BudgetExtrac
 			,@Param("yearId") String yearId,@Param("monthId") String monthId,@Param("extractMonth") String extractMonth,@Param("empNo") String empNo,@Param("deptId") String deptId);
 	IPage<CommissionImportDetailVO> selectCommissionPageForBigManager(Page<Object> objectPage,@Param("employeeName") String employeeName,@Param("departmentName") String departmentName
 			,@Param("yearId") String yearId,@Param("monthId") String monthId,@Param("extractMonth") String extractMonth,@Param("empNo") String empNo,@Param("deptId") String deptId);
+
+    List<BudgetExtractImportdetail> getAllByExtractMonth(String extractMonth);
 }
