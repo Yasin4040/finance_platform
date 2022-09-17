@@ -2,6 +2,7 @@ package com.jtyjy.finance.manager.controller.extract;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.common.collect.Lists;
 import com.jtyjy.core.auth.anno.NoLoginAnno;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.result.ResponseEntity;
@@ -67,6 +68,19 @@ public class AccountEntryController {
     public ResponseEntity<String> addEntryTask(@RequestBody  String extractMonth) {
         try {
             entryTaskService.addEntryTask(false,new ArrayList<>(),extractMonth);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.error(e.getMessage()==null?e.toString():e.getMessage());
+        }
+        return ResponseEntity.ok();
+    }
+
+    @ApiOperation(value = "添加yq预算", httpMethod = "POST")
+    @NoLoginAnno
+    @PostMapping(value = "/addYQEntryTask")
+    public ResponseEntity<String> addYQEntryTask(@RequestBody  String yqCode) {
+        try {
+            entryTaskService.addEntryTask(true, Lists.newArrayList(yqCode),"");
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.error(e.getMessage()==null?e.toString():e.getMessage());

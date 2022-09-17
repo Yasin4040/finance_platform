@@ -145,21 +145,27 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
         BudgetExtractTaxHandleRecord  handleRecord;
         //没有个体户
         if(selfCount==0){
+            handleRecord = taxHandleRecordService.lambdaQuery().eq(BudgetExtractTaxHandleRecord::getExtractMonth, budgetExtractsum.getExtractmonth()).last("limit 1").one();
+            if(handleRecord == null){
+                handleRecord = new BudgetExtractTaxHandleRecord();
+            }
             //oa 审批通过。增加判断 批次所有通过，改变记录表  如果批次所有通过
-            handleRecord = new BudgetExtractTaxHandleRecord();
             handleRecord.setExtractMonth(budgetExtractsum.getExtractmonth());
             handleRecord.setIsCalComplete(false);
             handleRecord.setIsSetExcessComplete(false);
             handleRecord.setIsPersonalityComplete(true);
-            taxHandleRecordService.save(handleRecord);
+            taxHandleRecordService.saveOrUpdate(handleRecord);
         }else if(selfCount==importDetailList.size()){
+            handleRecord = taxHandleRecordService.lambdaQuery().eq(BudgetExtractTaxHandleRecord::getExtractMonth, budgetExtractsum.getExtractmonth()).last("limit 1").one();
             //全是个体户
-            handleRecord = new BudgetExtractTaxHandleRecord();
+            if(handleRecord == null){
+                handleRecord = new BudgetExtractTaxHandleRecord();
+            }
             handleRecord.setExtractMonth(budgetExtractsum.getExtractmonth());
             handleRecord.setIsCalComplete(true);
             handleRecord.setIsSetExcessComplete(true);
             handleRecord.setIsPersonalityComplete(false);
-            taxHandleRecordService.save(handleRecord);
+            taxHandleRecordService.saveOrUpdate(handleRecord);
         }
     }
 
