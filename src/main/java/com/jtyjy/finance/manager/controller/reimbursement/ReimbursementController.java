@@ -140,6 +140,9 @@ public class ReimbursementController {
 	
 	@Value("${bx.step.ttl}")
 	private Integer bx_step_ttl;
+
+	@Autowired
+	private CommonService commonService;
 	
 	public static final String STEP_OPT_SPLIT = "_";
 	
@@ -1446,7 +1449,7 @@ public class ReimbursementController {
     })
     @GetMapping("/exportPreparePay")
     public void exportPreparePay(@RequestParam(name="payids", defaultValue = "")String payids, @RequestParam(name="paybatchid", defaultValue = "")Long paybatchid, HttpServletResponse response) throws Exception{
-        this.service.exportPreparePay(payids, paybatchid, response);
+        this.commonService.exportPreparePay(payids, paybatchid, response);
     }	
     @GetMapping("setPayFail")
     @ApiOperation(value = "设置付款失败", httpMethod = "GET")

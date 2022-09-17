@@ -279,4 +279,15 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 			extractsumService.finishAccount(isDelay,delayExtractCodeList,accountTasks.get(0).getExtractMonth(),unitMap);
 		}
 	}
+
+	/**
+	 * <p>做账退回</p>
+	 * @author minzhq
+	 * @date 2022/9/17 10:43
+	 * @param extractBatch
+	 */
+	public void accountReject(String extractBatch) {
+
+
+	}
 }

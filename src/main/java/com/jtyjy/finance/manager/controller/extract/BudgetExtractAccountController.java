@@ -127,4 +127,23 @@ public class BudgetExtractAccountController {
 			return ResponseEntity.error(e.getMessage());
 		}
 	}
+
+	@ApiOperation(value = "做账退回", httpMethod = "GET")
+	@ApiImplicitParams(value = {
+			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
+			@ApiImplicitParam(value = "导航栏查询条件", name = "query", dataType = "String", required = true)
+	})
+	@GetMapping("/accountReject")
+	public ResponseEntity<String> accountReject(@RequestParam(name = "query", required = true) String query) {
+		try {
+			int length = query.split("-").length;
+			if (length != 3) throw new RuntimeException("请先选择导航栏的一个批次！");
+			String extractBatch = query.split("-")[2];
+			accountService.accountReject(extractBatch);
+			return ResponseEntity.ok();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.error(e.getMessage());
+		}
+	}
 }
