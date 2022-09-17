@@ -29,6 +29,7 @@ import com.jtyjy.finance.manager.dto.ReimbursementRequest;
 import com.jtyjy.finance.manager.dto.bxExcel.*;
 import com.jtyjy.finance.manager.easyexcel.PayUnitBankSumExcelData;
 import com.jtyjy.finance.manager.easyexcel.PayeeDetailExcelData;
+import com.jtyjy.finance.manager.enmus.ExtractPayTemplateEnum;
 import com.jtyjy.finance.manager.enmus.LendTypeEnum;
 import com.jtyjy.finance.manager.enmus.PaymoneyTypeEnum;
 import com.jtyjy.finance.manager.enmus.ReimbursementTypeEnmu;
@@ -120,7 +121,7 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
     @Autowired
     private BudgetMonthAgentService monthAgentService;
     @Autowired
-    private BudgetMonthAgentMapper monthAgentMapper;
+    private BudgetPaybatchMapper paybatchMapper;
     @Autowired
     private TabProcedureService procedureService;
     @Autowired
@@ -2293,128 +2294,6 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
         pageCond.setRecords(retList);
         return pageCond;
     }
-
-    public void exportPreparePay(String payids, Long paybatchid, HttpServletResponse response) throws Exception {
-        try {
-
-            QueryWrapper<BudgetPaymoney> wrapper = new QueryWrapper<BudgetPaymoney>();
-            if (StringUtils.isNotBlank(payids)) {
-                List<String> payIds = Arrays.asList(payids.split(","));
-                wrapper.in("id", payIds);
-            }
-            if (null != paybatchid) {
-                wrapper.eq("paybatchid", paybatchid);
-            }
-            List<BudgetPaymoney> list = this.paymoneyService.list(wrapper);
-
-
-            Map<Integer, Long> paymoneyTypeCountMap = list.stream().collect(Collectors.groupingBy(e -> {
-                if (e.getPaymoneytype() == PaymoneyTypeEnum.EXTRACT_PAY.type) {
-                    return PaymoneyTypeEnum.REIMBURSEMENT_PAY.type;
-                }
-                return e.getPaymoneytype();
-            }, Collectors.counting()));
-            String paymoneySystem = "";
-            if(paymoneyTypeCountMap.size()>1){
-                paymoneySystem = "-OA-预算";
-            }else{
-                if(paymoneyTypeCountMap.containsKey(PaymoneyTypeEnum.REIMBURSEMENT_PAY.type)){
-                    paymoneySystem = "-预算";
-                }
-                if(paymoneyTypeCountMap.containsKey(PaymoneyTypeEnum.LEND_PAY.type)){
-                    paymoneySystem = "-OA";
-                }
-            }
-
-            Set<String> unitNameSet = new LinkedHashSet<>();//付款单位set
-            Map<String, List<PayeeDetailExcelData>> unitNameListMap = new HashMap<>();
-            Set<PayUnitBankSumExcelData> sumDataSet = new LinkedHashSet<>();
-            Map<String, WbBanks> banksMap = this.wbMapper.queryAllBanks();//获取所有银行信息
-            for (int i = 0; i < list.size(); i++) {
-                BudgetPaymoney pm = list.get(i);
-                if (Constants.PAY_TYPE.CASH.equals(pm.getPaytype())) {
-                    //现金不统计
-                    continue;
-                }
-                if (unitNameSet.add(pm.getBunitname())) {
-                    List<PayeeDetailExcelData> detailList = new ArrayList<>();
-                    WbBanks bankInfo = banksMap.get(pm.getBankaccountbranchcode());
-                    if (null != bankInfo) {
-                        PayeeDetailExcelData detailInfo = new PayeeDetailExcelData(pm.getBankaccount(), pm.getBankaccountname(), bankInfo.getSubBranchName(), bankInfo.getProvince(), bankInfo.getCity(), pm.getPaymoney(), bankInfo.getSubBranchCode(), pm.getBankaccountbranchname());
-                        detailList.add(detailInfo);
-                        unitNameListMap.put(pm.getBunitname(), detailList);
-                    }
-                } else {
-                    WbBanks bankInfo = banksMap.get(pm.getBankaccountbranchcode());
-                    if (null != bankInfo) {
-                        List<PayeeDetailExcelData> detailList = unitNameListMap.get(pm.getBunitname());
-                        PayeeDetailExcelData detailInfo = new PayeeDetailExcelData(pm.getBankaccount(), pm.getBankaccountname(), bankInfo.getSubBranchName(), bankInfo.getProvince(), bankInfo.getCity(), pm.getPaymoney(), bankInfo.getSubBranchCode(), pm.getBankaccountbranchname());
-                        detailList.add(detailInfo);
-                    }
-                }
-                PayUnitBankSumExcelData excelData = new PayUnitBankSumExcelData(pm.getBunitname(), pm.getBankaccountbranchname(), pm.getPaymoney());
-                if (sumDataSet.add(excelData)) {
-                    excelData.getIndexList().add(i);
-                } else {
-                    for (PayUnitBankSumExcelData tempData : sumDataSet) {
-                        if (tempData.equals(excelData)) {
-                            BigDecimal totolMoney = tempData.getPayMoney().add(excelData.getPayMoney());
-                            tempData.setPayMoney(totolMoney);
-                            tempData.getIndexList().add(i);
-                            break;
-                        }
-                    }
-                }
-            }
-            Map<String, List<PayeeDetailExcelData>> unitAndBankListMap = new HashMap<>();
-            BigDecimal sumAllMoney = new BigDecimal(0);
-            for (PayUnitBankSumExcelData excelData : sumDataSet) {
-                List<PayeeDetailExcelData> detailList = new ArrayList<>();
-                BigDecimal totalMoney = new BigDecimal(0);
-                for (Integer index : excelData.getIndexList()) {
-                    BudgetPaymoney pm = list.get(index);
-                    WbBanks bankInfo = banksMap.get(pm.getBankaccountbranchcode());
-                    PayeeDetailExcelData detailInfo = new PayeeDetailExcelData(pm.getBankaccount(), pm.getBankaccountname(), bankInfo.getSubBranchName(), bankInfo.getProvince(), bankInfo.getCity(), pm.getPaymoney(), bankInfo.getSubBranchCode(), pm.getBankaccountbranchname());
-                    detailList.add(detailInfo);
-                    totalMoney = totalMoney.add(pm.getPaymoney());
-                }
-                PayeeDetailExcelData sumData = new PayeeDetailExcelData("", "", "", "", "总计：", totalMoney, "", "");
-                detailList.add(sumData);//总计为单独一行
-                unitAndBankListMap.put(excelData.getUnitName() + "-" + excelData.getBankName(), detailList);
-                sumAllMoney = sumAllMoney.add(excelData.getPayMoney());//所有金额总计
-            }
-            ExcelWriter excelWriter = EasyExcel.write(EasyExcelUtil.getOutputStream("付款明细表"+paymoneySystem, response)).build();
-
-            WriteSheet sumSheet = EasyExcel.writerSheet("付款明细汇总").build();
-            WriteTable sumTable = EasyExcel.writerTable(0).head(PayUnitBankSumExcelData.class).needHead(true).build();
-            List<PayUnitBankSumExcelData> sumList = new ArrayList<>(sumDataSet);
-            PayUnitBankSumExcelData allSumData = new PayUnitBankSumExcelData("", "总计：", sumAllMoney);
-            sumList.add(allSumData);
-            excelWriter.write(sumList, sumSheet, sumTable);
-            WriteTable detailTable = EasyExcel.writerTable(1).head(PayeeDetailExcelData.class).needHead(true).build();
-            detailTable.setUseDefaultStyle(true);
-            for (Map.Entry<String, List<PayeeDetailExcelData>> entry : unitNameListMap.entrySet()) {
-                List<PayeeDetailExcelData> tempList = entry.getValue();
-                BigDecimal totalMoney = new BigDecimal(0);
-                for (PayeeDetailExcelData tempData : tempList) {
-                    totalMoney = totalMoney.add(tempData.getPayMoney());
-                }
-                PayeeDetailExcelData sumData = new PayeeDetailExcelData("", "", "", "", "总计：", totalMoney, "", "");
-                tempList.add(sumData);//总计为单独一行
-                WriteSheet detailSheet = EasyExcel.writerSheet(entry.getKey()).build();
-                excelWriter.write(tempList, detailSheet, detailTable);
-            }
-            for (Map.Entry<String, List<PayeeDetailExcelData>> entry : unitAndBankListMap.entrySet()) {
-                WriteSheet detailSheet = EasyExcel.writerSheet(entry.getKey()).build();
-                excelWriter.write(entry.getValue(), detailSheet, detailTable);
-            }
-            excelWriter.finish();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
-    }
-
     /**
      * 根据报销单号获取二维码
      *

@@ -13,12 +13,10 @@ import com.jtyjy.finance.manager.dto.ExtractPreparePayDTO;
 import com.jtyjy.finance.manager.easyexcel.BudgetExtractZhBatchPayExcelData;
 import com.jtyjy.finance.manager.easyexcel.BudgetExtractZhDfPayExcelData;
 import com.jtyjy.finance.manager.easyexcel.BudgetPayTotalExcelData;
-import com.jtyjy.finance.manager.enmus.ExtractPayTemplateEnum;
-import com.jtyjy.finance.manager.enmus.PayBatchTypeEnum;
-import com.jtyjy.finance.manager.enmus.PaymoneyStatusEnum;
-import com.jtyjy.finance.manager.enmus.PaymoneyTypeEnum;
+import com.jtyjy.finance.manager.enmus.*;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.mapper.BudgetExtractDelayApplicationMapper;
+import com.jtyjy.finance.manager.mapper.BudgetExtractsumMapper;
 import com.jtyjy.finance.manager.mapper.BudgetPaybatchMapper;
 import com.jtyjy.finance.manager.mapper.BudgetPaymoneyMapper;
 import com.jtyjy.finance.manager.vo.BudgetExtractPayQueryVO;
@@ -63,6 +61,10 @@ public class BudgetExtractPayService {
 	private BudgetExtractPersonalityPayService extractPersonalityPayService;
 	@Autowired
 	private BudgetExtractDelayApplicationMapper delayApplicationMapper;
+	@Autowired
+	private BudgetExtractsumMapper extractsumMapper;
+	@Autowired
+	private BudgetExtractsumService extractsumService;
 	@Value("${tc.redis.key}")
 	private String TC_REDIS_KEY;
 
@@ -273,6 +275,10 @@ public class BudgetExtractPayService {
 						if(unPaySuccessCount == 0){
 							//该批次全部支付成功
 							accountEntryTaskService.addEntryTask(true,codeList,extractBatch);
+							LambdaUpdateWrapper<BudgetExtractDelayApplication> updateWrapper = new LambdaUpdateWrapper<>();
+							updateWrapper.in(BudgetExtractDelayApplication::getDelayCode,codeList);
+							updateWrapper.set(BudgetExtractDelayApplication::getStatus,ExtractDelayStatusEnum.PAY.type);
+							delayApplicationMapper.update(new BudgetExtractDelayApplication(),updateWrapper);
 						}
 					});
 				});
@@ -285,6 +291,12 @@ public class BudgetExtractPayService {
 						int unPaySuccessCount = paymoneyService.count(new LambdaQueryWrapper<BudgetPaymoney>().eq(BudgetPaymoney::getPaymoneytype, PaymoneyTypeEnum.EXTRACT_PAY.type).in(BudgetPaymoney::getPaymoneyobjectcode,codeList).in(BudgetPaymoney::getPaymoneyobjectid, list.stream().map(e -> e.getId()).collect(Collectors.toList())).ne(BudgetPaymoney::getPaymoneystatus, PaymoneyStatusEnum.PAYED.type));
 						if(unPaySuccessCount == 0){
 							//该批次全部支付成功
+							LambdaUpdateWrapper<BudgetExtractsum> updateWrapper = new LambdaUpdateWrapper<>();
+							updateWrapper.set(BudgetExtractsum::getStatus, ExtractStatusEnum.PAY.type);
+							updateWrapper.eq(BudgetExtractsum::getExtractmonth,extractBatch);
+							updateWrapper.ne(BudgetExtractsum::getStatus,ExtractStatusEnum.REJECT.type);
+							extractsumMapper.update(new BudgetExtractsum(),updateWrapper);
+							extractsumService.generateExtractStepLog(extractsumService.getCurBatchExtractSum(extractBatch).stream().map(e->e.getId()).collect(Collectors.toList()), OperationNodeEnum.CASHIER_PAYMENT, "【" + OperationNodeEnum.CASHIER_PAYMENT.getValue(OperationNodeEnum.CASHIER_PAYMENT.getType()) + "】完成", LogStatusEnum.COMPLETE.getCode());
 							accountEntryTaskService.addEntryTask(false,null,extractBatch);
 						}
 					}

@@ -5561,7 +5561,8 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		ExtractPersonalityPayDetailQueryVO vo = new ExtractPersonalityPayDetailQueryVO();
 		vo.setSumId(extractSumId);
 		PageResult<ExtractPersonalityPayDetailVO> extractPersonalityPayDetailVO = this.getExtractPersonalityPayDetailVO(vo, null, null, extractsum.getExtractmonth());
-		extractPersonalityPayDetailVO.getList().stream().filter(e->e.getPayStatus() == ExtractPersonalityPayStatusEnum.COMMON.type).forEach(detail->{
+		List<ExtractPersonalityPayDetailVO> personalityPayDetailVOList = extractPersonalityPayDetailVO.getList();
+		personalityPayDetailVOList.stream().filter(e->e.getPayStatus() == ExtractPersonalityPayStatusEnum.COMMON.type).forEach(detail->{
 			IndividualEmployeeFiles individualEmployeeFiles = individualEmployeeFilesMapper.selectById(detail.getPersonalityId());
 			if(individualEmployeeFiles.getAccountType()==1){
 				setUnitPayDetail(unitMap,unitPayDetailMap,detail.getBillingUnitId(),detail.getCurExtract().add(detail.getCurSalary()).add(detail.getCurWelfare()),innerPayMoney,outPayMoney,"4");
@@ -5570,14 +5571,10 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			}
 		});
 		if(isShowPersonality){
-			extractPersonalityPayDetailVO.getList().stream().filter(e->e.getPayStatus() != ExtractPersonalityPayStatusEnum.COMMON.type).forEach(detail->{
+			personalityPayDetailVOList.stream().filter(e->e.getPayStatus() != ExtractPersonalityPayStatusEnum.COMMON.type).forEach(detail->{
 				unPayMoney.add(detail.getCurExtract().add(detail.getCurSalary()).add(detail.getCurWelfare()));
 			});
-			innerPayMoney.add(extractPersonalityPayDetailVO.getList().stream().filter(e->{
-				BudgetBillingUnit budgetBillingUnit = unitMap.get(e.getBillingUnitId());
-				return budgetBillingUnit.getOwnFlag() == 0;
-			}).map(detail -> detail.getCurExtract().add(detail.getCurSalary()).add(detail.getCurWelfare())).reduce(BigDecimal.ZERO, BigDecimal::add));
-			outPayMoney.add(extractPersonalityPayDetailVO.getList().stream().filter(e->{
+			outPayMoney.add(personalityPayDetailVOList.stream().filter(e->{
 				BudgetBillingUnit budgetBillingUnit = unitMap.get(e.getBillingUnitId());
 				return budgetBillingUnit.getOwnFlag() == 1;
 			}).map(detail -> detail.getCurExtract().add(detail.getCurSalary()).add(detail.getCurWelfare())).reduce(BigDecimal.ZERO, BigDecimal::add));
