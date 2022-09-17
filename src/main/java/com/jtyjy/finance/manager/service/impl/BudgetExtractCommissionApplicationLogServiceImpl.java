@@ -8,6 +8,7 @@ import com.jtyjy.ecology.EcologyRequestManager;
 import com.jtyjy.finance.manager.bean.*;
 import com.jtyjy.finance.manager.enmus.ExtractStatusEnum;
 import com.jtyjy.finance.manager.enmus.ExtractUserTypeEnum;
+import com.jtyjy.finance.manager.enmus.LogStatusEnum;
 import com.jtyjy.finance.manager.enmus.OperationNodeEnum;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.mapper.BudgetExtractCommissionApplicationMapper;
@@ -51,15 +52,16 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
     }
 
     @Override
-    public void saveLog(Long applicationId) {
+    public void saveLog(Long applicationId, OperationNodeEnum nodeEnum, LogStatusEnum logStatusEnum) {
         BudgetExtractCommissionApplicationLog log = new BudgetExtractCommissionApplicationLog();
         log.setApplicationId(applicationId);
         log.setCreatorName(UserThreadLocal.getEmpName());
         log.setCreateBy(UserThreadLocal.getEmpNo());
         log.setCreateTime(new Date());
-        log.setNode(OperationNodeEnum.SUBMITTED.getType());
-        log.setStatus(0);//无操作。默认提交
-        log.setNodeName(OperationNodeEnum.SUBMITTED.getValue());
+        log.setNode(nodeEnum.getType());
+        log.setStatus(logStatusEnum.getCode());//无操作。默认提交
+        log.setStatusName(logStatusEnum.getMsg());
+        log.setNodeName(nodeEnum.getValue());
         this.save(log);
     }
 
@@ -127,7 +129,10 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
             //财务负责人同意  同意
             if(nodeEnum.getType()==OperationNodeEnum.FINANCIAL_DIRECTOR.getType()){
                 //处理计算记录
-                dealHandleRecord(sumId);
+                BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
+                budgetExtractsum.setStatus(ExtractStatusEnum.APPROVED.getType());
+                extractSumMapper.updateById(budgetExtractsum);
+//                dealHandleRecord(sumId);
             }
         }
     }
@@ -135,40 +140,38 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void dealHandleRecord(Long sumId) {
-        BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
-        budgetExtractsum.setStatus(ExtractStatusEnum.APPROVED.getType());
-        extractSumMapper.updateById(budgetExtractsum);
+
         //不用申请单的状态 用主单状态
 //                applicationMapper.updateById(application);
 
-        List<BudgetExtractImportdetail> importDetailList = importDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractImportdetail>().eq(BudgetExtractImportdetail::getExtractsumid, sumId));
-
-        long selfCount = importDetailList.stream().filter(x -> x.getBusinessType().equals(ExtractUserTypeEnum.SELF_EMPLOYED_EMPLOYEES)).count();
-        BudgetExtractTaxHandleRecord  handleRecord;
-        //没有个体户
-        if(selfCount==0){
-            handleRecord = taxHandleRecordService.lambdaQuery().eq(BudgetExtractTaxHandleRecord::getExtractMonth, budgetExtractsum.getExtractmonth()).last("limit 1").one();
-            if(handleRecord == null){
-                handleRecord = new BudgetExtractTaxHandleRecord();
-            }
-            //oa 审批通过。增加判断 批次所有通过，改变记录表  如果批次所有通过
-            handleRecord.setExtractMonth(budgetExtractsum.getExtractmonth());
-            handleRecord.setIsCalComplete(false);
-            handleRecord.setIsSetExcessComplete(false);
-            handleRecord.setIsPersonalityComplete(true);
-            taxHandleRecordService.saveOrUpdate(handleRecord);
-        }else if(selfCount==importDetailList.size()){
-            handleRecord = taxHandleRecordService.lambdaQuery().eq(BudgetExtractTaxHandleRecord::getExtractMonth, budgetExtractsum.getExtractmonth()).last("limit 1").one();
-            //全是个体户
-            if(handleRecord == null){
-                handleRecord = new BudgetExtractTaxHandleRecord();
-            }
-            handleRecord.setExtractMonth(budgetExtractsum.getExtractmonth());
-            handleRecord.setIsCalComplete(true);
-            handleRecord.setIsSetExcessComplete(true);
-            handleRecord.setIsPersonalityComplete(false);
-            taxHandleRecordService.saveOrUpdate(handleRecord);
-        }
+//        List<BudgetExtractImportdetail> importDetailList = importDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractImportdetail>().eq(BudgetExtractImportdetail::getExtractsumid, sumId));
+//
+//        long selfCount = importDetailList.stream().filter(x -> x.getBusinessType().equals(ExtractUserTypeEnum.SELF_EMPLOYED_EMPLOYEES)).count();
+//        BudgetExtractTaxHandleRecord  handleRecord;
+//        //没有个体户
+//        if(selfCount==0){
+//            handleRecord = taxHandleRecordService.lambdaQuery().eq(BudgetExtractTaxHandleRecord::getExtractMonth, budgetExtractsum.getExtractmonth()).last("limit 1").one();
+//            if(handleRecord == null){
+//                handleRecord = new BudgetExtractTaxHandleRecord();
+//            }
+//            //oa 审批通过。增加判断 批次所有通过，改变记录表  如果批次所有通过
+//            handleRecord.setExtractMonth(budgetExtractsum.getExtractmonth());
+//            handleRecord.setIsCalComplete(false);
+//            handleRecord.setIsSetExcessComplete(false);
+//            handleRecord.setIsPersonalityComplete(true);
+//            taxHandleRecordService.saveOrUpdate(handleRecord);
+//        }else if(selfCount==importDetailList.size()){
+//            handleRecord = taxHandleRecordService.lambdaQuery().eq(BudgetExtractTaxHandleRecord::getExtractMonth, budgetExtractsum.getExtractmonth()).last("limit 1").one();
+//            //全是个体户
+//            if(handleRecord == null){
+//                handleRecord = new BudgetExtractTaxHandleRecord();
+//            }
+//            handleRecord.setExtractMonth(budgetExtractsum.getExtractmonth());
+//            handleRecord.setIsCalComplete(true);
+//            handleRecord.setIsSetExcessComplete(true);
+//            handleRecord.setIsPersonalityComplete(false);
+//            taxHandleRecordService.saveOrUpdate(handleRecord);
+//        }
     }
 
 //    @Override

@@ -1194,8 +1194,10 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				application.setUpdateBy(UserThreadLocal.getEmpNo());
 
 
+
 				//日志记录
-				applicationLogService.saveLog(application.getId());
+
+				applicationLogService.saveLog(application.getId(),OperationNodeEnum.SUBMITTED, LogStatusEnum.COMPLETE);
 				//uploadOA 上传OA
 				applicationService.uploadOA(application);
 				applicationService.updateById(application);
@@ -1497,7 +1499,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 
 		budgetExtractsums.forEach(extractsum -> {
 			//审核。确认完成 直接计算完成 todo
-			applicationLogService.dealHandleRecord(extractsum.getId());
+//			applicationLogService.dealHandleRecord(extractsum.getId());
 			if (extractsum.getStatus() != ExtractStatusEnum.VERIFYING.getType())
 				throw new RuntimeException("操作失败!只允许审核已提交的单子");
 			extractsum.setStatus(ExtractStatusEnum.APPROVED.getType());

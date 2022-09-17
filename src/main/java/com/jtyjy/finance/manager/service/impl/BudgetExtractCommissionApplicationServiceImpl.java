@@ -700,6 +700,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                     if(recordServiceOne.getIsCalComplete()||recordServiceOne.getIsSetExcessComplete()||recordServiceOne.getIsPersonalityComplete()){
                         throw new BusinessException("退回失败！任务已计算！");
                     }
+                    applicationLogService.saveLog(application.getId(),OperationNodeEnum.TAX_RETURN, LogStatusEnum.REJECT);
                     break;
                 case DRAFT:
                     //撤回  申请单必须没有人审批过

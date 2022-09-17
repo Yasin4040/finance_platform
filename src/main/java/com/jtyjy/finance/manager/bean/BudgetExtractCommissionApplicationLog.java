@@ -61,7 +61,7 @@ public class BudgetExtractCommissionApplicationLog implements Serializable {
     /**
      * 操作状态  （本系统操作）0已完成   1 同意 2退回
      */
-    @TableField(exist = false)
+    @TableField(value = "status_name")
     @ApiModelProperty(value = "操作状态名称")
     private String statusName;
     /**
