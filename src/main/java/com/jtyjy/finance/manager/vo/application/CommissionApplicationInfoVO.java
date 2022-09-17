@@ -65,6 +65,8 @@ public class CommissionApplicationInfoVO {
      */
     @ApiModelProperty(value = "备注")
     private String remarks;
+    @ApiModelProperty(value = "密码")
+    private String oaPassword;
 
 
     @ApiModelProperty(value = "合计发放 费用发放+提成发放+公户+个卡")

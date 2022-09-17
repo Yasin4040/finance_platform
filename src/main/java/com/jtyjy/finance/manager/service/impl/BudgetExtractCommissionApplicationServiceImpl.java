@@ -2,6 +2,7 @@ package com.jtyjy.finance.manager.service.impl;
 
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -26,6 +27,7 @@ import com.jtyjy.finance.manager.listener.easyexcel.PageReadListener;
 import com.jtyjy.finance.manager.mapper.*;
 import com.jtyjy.finance.manager.query.commission.FeeQuery;
 import com.jtyjy.finance.manager.service.*;
+import com.jtyjy.finance.manager.utils.AesUtil;
 import com.jtyjy.finance.manager.utils.FileUtils;
 import com.jtyjy.finance.manager.vo.application.*;
 import lombok.SneakyThrows;
@@ -170,10 +172,11 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             infoVO.setDistributionList(distributionList);
             //附件明細
             List<BudgetCommonAttachment> attachmentList = attachmentService.lambdaQuery().eq(BudgetCommonAttachment::getContactId, application.getId()).list();
-
+            if (CollectionUtils.isNotEmpty(attachmentList)) {
+                 infoVO.setOaPassword(attachmentList.get(0).getOaPassword());
+            }
             List<BudgetCommonAttachmentVO> attachmentVOList = CommonAttachmentConverter.INSTANCE.toVOList(attachmentList);
             infoVO.setAttachmentList(attachmentVOList);
-
         }
 
         return infoVO;
@@ -535,7 +538,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                 InputStream is = connection.getInputStream();
                 String fileOriginName = attachment.getFileName();
                 //todo
-                code = this.oaService.createDoc("17474", "1", is, fileOriginName, fileUrl, fileOriginName);
+                code = this.oaService.createDoc("20192", AesUtil.encrypt("067540"), is, fileOriginName, fileUrl, fileOriginName);
 //                code = this.oaService.createDoc(attachment.getCreator(), oaPassword, is, fileOriginName, fileUrl, fileOriginName);
                 if (code == 0) {
                     throw new RuntimeException("系统错误!创建文档失败!");
@@ -573,6 +576,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         }
         Map<String, Object> main = (Map<String, Object>) JSON.toJSON(oaDTO);
         List<Map<String, Object>> list = (List<Map<String, Object>>) JSON.toJSON(oaDetailList);
+        System.out.println(JSONObject.toJSON(wi));
 //       http://192.168.4.63/workflow/workflow/addwf0.jsp?ajax=1&src=editwf&wfid=5263&isTemplate=0
         String requestId =  oaService.createWorkflow(wi, tcWorkFlowId, main, list);
         if (requestId == null || Integer.parseInt(requestId) < 0) {

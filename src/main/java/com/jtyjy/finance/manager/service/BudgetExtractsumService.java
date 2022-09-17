@@ -1197,7 +1197,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				//日志记录
 				applicationLogService.saveLog(application.getId());
 				//uploadOA 上传OA
-				applicationService.uploadOA(application);
+//				applicationService.uploadOA(application);
 				applicationService.updateById(application);
 			}
 		});
