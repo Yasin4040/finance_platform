@@ -78,7 +78,7 @@ public class ExtractAccountEntryTaskServiceImpl extends ServiceImpl<ExtractAccou
                 BudgetExtractsum extractSum = extractSumMapper.selectOne(new LambdaQueryWrapper<BudgetExtractsum>()
                         .eq(BudgetExtractsum::getCode, delayApplication.getRelationExtractCode()));
                 //获取单个任务
-                getSingleEntryTask(extractMonth, taskList, delayApplication.getDelayCode(), extractSum);
+                getSingleEntryTask(extractSum.getExtractmonth(), taskList, delayApplication.getDelayCode(), extractSum);
             }
         }else {
             List<BudgetExtractsum> curBatchExtractSum =

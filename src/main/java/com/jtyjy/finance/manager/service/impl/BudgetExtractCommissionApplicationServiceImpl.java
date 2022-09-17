@@ -242,7 +242,10 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         List<Long> nowIdList = giveAttachmentList.stream()
                 .map(BudgetCommonAttachmentVO::getId).filter(Objects::nonNull).collect(Collectors.toList());
 
+        //有id的。就删除。
         List<BudgetCommonAttachment> deleteAttachments = oldAttachments.stream().filter(x -> !nowIdList.contains(x.getId())).collect(Collectors.toList());
+        //updateId
+        List<BudgetCommonAttachment> updateAttachments = oldAttachments.stream().filter(x -> nowIdList.contains(x.getId())).collect(Collectors.toList());
          List<Long> delIds = deleteAttachments.stream().map(BudgetCommonAttachment::getId).collect(Collectors.toList());
         //原来有id，1、保留下来就保留下来。2、没有保留下来，就删除
         //原来没有id，新增。
@@ -267,6 +270,10 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             attachment.setCreateTime(new Date());
             attachments.add(attachment);
         }
+        updateAttachments.forEach(x->{
+            x.setOaPassword(updateVO.getOaPassword()==null?"":updateVO.getOaPassword());
+            attachments.add(x);
+        });
         attachmentService.saveOrUpdateBatch(attachments);
         extractsum.setStatus(ExtractStatusEnum.DRAFT.getType());
         extractSumMapper.updateById(extractsum);
