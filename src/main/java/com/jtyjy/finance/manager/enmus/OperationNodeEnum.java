@@ -17,11 +17,16 @@ public enum OperationNodeEnum {
     FINANCIAL_SALES_TEAM_HEAD(5,"财务销售处长审核"),
     FINANCIAL_DIRECTOR(6,"财务负责人审核"),
 
-    TAX_PREPARATION_CALCULATION(7,"税筹计算"),
-//    TAX_PREPARATION_CALCULATION_2(8,"税筹组计算"),
-    ACCOUNTING(8,"会计做账"),
-    CASHIER_PAYMENT(9,"出纳付款"),
-    VOUCHER_ENTRY(10,"凭证录入");
+    TAX_PREPARATION_CALCULATION_EMP(7,"税筹计算(员工)"),
+    TAX_PREPARATION_CALCULATION_SELF(8,"税筹计算(个体户)"),
+    ACCOUNTING(9,"会计做账"),
+    CASHIER_PAYMENT(10,"出纳付款"),
+    VOUCHER_ENTRY(11,"凭证录入"),
+
+    TAX_RETURN(-1,"税务退回"),
+    ACCOUNTING_RETURN(-2,"做账退回"),
+    CASHIER_RETURN(-3,"出纳退回");
+
 
     private final String value;
     private final int type;

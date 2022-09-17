@@ -78,9 +78,10 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     private final OaService oaService;
     private final TabDmMapper tabDmMapper;
     private final OAMapper oaMapper;
+    private final BudgetExtractCommissionApplicationLogService logService;
 
     private  String tcWorkFlowId = "5263";
-    public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractTaxHandleRecordService taxHandleRecordService, BudgetExtractsumMapper extractSumMapper, BudgetExtractOuterpersonMapper outPersonMapper, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, BudgetCommonAttachmentService attachmentService, StorageClient storageClient, ReimbursementWorker reimbursementWorker, BudgetReimbursementorderService reimbursementorderService, BudgetExtractFeePayDetailMapper feePayDetailMapper, HrService hrService, OaService oaService, TabDmMapper tabDmMapper,OAMapper oaMapper) {
+    public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractTaxHandleRecordService taxHandleRecordService, BudgetExtractsumMapper extractSumMapper, BudgetExtractOuterpersonMapper outPersonMapper, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, BudgetCommonAttachmentService attachmentService, StorageClient storageClient, ReimbursementWorker reimbursementWorker, BudgetReimbursementorderService reimbursementorderService, BudgetExtractFeePayDetailMapper feePayDetailMapper, HrService hrService, OaService oaService, TabDmMapper tabDmMapper, OAMapper oaMapper, BudgetExtractCommissionApplicationLogService logService) {
         this.taxHandleRecordService = taxHandleRecordService;
         this.extractSumMapper = extractSumMapper;
         this.outPersonMapper = outPersonMapper;
@@ -98,6 +99,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         this.tabDmMapper = tabDmMapper;
         this.oaMapper = oaMapper;
 
+        this.logService = logService;
     }
 
     @Override
@@ -181,7 +183,15 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             }
             List<BudgetCommonAttachmentVO> attachmentVOList = CommonAttachmentConverter.INSTANCE.toVOList(attachmentList);
             infoVO.setAttachmentList(attachmentVOList);
+
+            List<BudgetExtractCommissionApplicationLog> applicationLogs = logService.list(new LambdaQueryWrapper<BudgetExtractCommissionApplicationLog>().eq(BudgetExtractCommissionApplicationLog::getApplicationId, application.getId()));
+            for (BudgetExtractCommissionApplicationLog record : applicationLogs) {
+                record.setStatusName(LogStatusEnum.getValue(record.getStatus()));
+                record.setNodeName(OperationNodeEnum.getValue(record.getNode())==null?record.getNodeName():OperationNodeEnum.getValue(record.getNode()));
+            }
+            infoVO.setLogList(applicationLogs);
         }
+
 
         return infoVO;
     }

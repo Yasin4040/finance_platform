@@ -1669,7 +1669,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				}
 				taxHandleRecordService.updateById(handleRecord);
 			}
-			generateExtractStepLog(sumIds, OperationNodeEnum.TAX_PREPARATION_CALCULATION, "【"+OperationNodeEnum.getValue(OperationNodeEnum.TAX_PREPARATION_CALCULATION.getType()) + "】完成", LogStatusEnum.COMPLETE.getCode());
+			generateExtractStepLog(sumIds, OperationNodeEnum.TAX_PREPARATION_CALCULATION_EMP, "【"+OperationNodeEnum.TAX_PREPARATION_CALCULATION_EMP.getValue() + "】完成", LogStatusEnum.COMPLETE.getCode());
 			taxGroupSuccess(curExtractBatch);
 
 			if (type == 1) {
@@ -3875,7 +3875,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			}
 			clearaCalculatedData(extractBatch, null);
 			extractFeePayDetailMapper.delete(new LambdaQueryWrapper<BudgetExtractFeePayDetailBeforeCal>().eq(BudgetExtractFeePayDetailBeforeCal::getExtractMonth, extractBatch));
-			generateExtractStepLog(sumIds, OperationNodeEnum.TAX_PREPARATION_CALCULATION, "【" + OperationNodeEnum.TAX_PREPARATION_CALCULATION.getValue(OperationNodeEnum.TAX_PREPARATION_CALCULATION.getType()) + "】撤回计算", LogStatusEnum.REJECT.getCode());
+//			generateExtractStepLog(sumIds, OperationNodeEnum.TAX_PREPARATION_CALCULATION_SELF, "【" + OperationNodeEnum.TAX_PREPARATION_CALCULATION_SELF.getValue() + "】撤回计算", LogStatusEnum.REJECT.getCode());
 
 			LambdaUpdateWrapper<BudgetExtractdetail> updateWrapper = new LambdaUpdateWrapper<>();
 			updateWrapper.in(BudgetExtractdetail::getExtractsumid, sumIds);

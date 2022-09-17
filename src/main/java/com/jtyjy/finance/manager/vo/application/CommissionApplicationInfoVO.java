@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.jtyjy.finance.manager.bean.BudgetCommonAttachment;
+import com.jtyjy.finance.manager.bean.BudgetExtractCommissionApplication;
+import com.jtyjy.finance.manager.bean.BudgetExtractCommissionApplicationLog;
 import com.jtyjy.finance.manager.vo.application.BudgetDetailsVO;
 import com.jtyjy.finance.manager.vo.application.CommissionDetailsVO;
 import io.swagger.annotations.ApiModelProperty;
@@ -84,4 +86,6 @@ public class CommissionApplicationInfoVO {
     List<DistributionDetailsVO> distributionList;
     //附件 明细
     List<BudgetCommonAttachmentVO> attachmentList;
+    //流转记录 明细
+    List<BudgetExtractCommissionApplicationLog> logList;
 }
