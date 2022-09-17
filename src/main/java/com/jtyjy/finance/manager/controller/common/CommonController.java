@@ -1,5 +1,6 @@
 package com.jtyjy.finance.manager.controller.common;
 
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -7,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.jtyjy.api.OAServiceProxy;
 import com.jtyjy.core.auth.anno.NoLoginAnno;
 import com.jtyjy.finance.manager.bean.BudgetCommonAttachment;
 import com.jtyjy.finance.manager.enmus.*;
@@ -87,7 +89,22 @@ public class CommonController extends BaseController {
     public List<BudgetYearPeriod> getYearList(){
     	return yearMapper.selectList(new QueryWrapper<BudgetYearPeriod>().orderByDesc("code"));
     }
-    
+
+    @ApiOperation(value = "getOAUserinfo",httpMethod="GET")
+    @NoLoginAnno
+    @GetMapping("/getOAUserinfo")
+    public String getOAUserinfo(String empNo){
+        OAServiceProxy oaServiceProxy = new OAServiceProxy("http://api.jtyjy.com/services/OAService?wsdl");
+        String result = null;
+        try {
+            result = oaServiceProxy.getOAUserinfo(empNo);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        System.out.println(result);
+        return result;
+    }
+
     /**
      * author minzhq
      */
