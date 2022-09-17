@@ -46,6 +46,7 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 	private final IndividualEmployeeFilesMapper individualEmployeeFilesMapper;
 	private final BudgetExtractsumService extractsumService;
 	private final BudgetExtractDelayApplicationMapper delayApplicationMapper;
+	private final BudgetExtractTaxHandleRecordMapper taxHandleRecordMapper;
 
 	@Override
 	public BaseMapper<TabChangeLog> getLoggerMapper() {
@@ -65,7 +66,7 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 	public PageResult<ExtractAccountTaskResponseVO> getExtractAccountTaskList(ExtractAccountTaskQueryVO params, Integer page, Integer rows) {
 		params.setEmpNo(UserThreadLocal.get().getUserId());
 		Page<ExtractAccountTaskResponseVO> pageCond = new Page<>(page, rows);
-		List<ExtractAccountTaskResponseVO> resultList = null;
+		List<ExtractAccountTaskResponseVO> resultList;
 		if(!params.getIsHistory()){
 			//不是历史数据
 			resultList = accountTaskMapper.getExtractAccountTaskList(pageCond, params);
@@ -162,9 +163,7 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 			result.setPayMoneyDetailList(payMoneyPayDetails);
 
 
-			BigDecimal payTotal = payMoneyPayDetails.stream().map(e -> {
-				return e.getPersonalityPayMoney1().add(e.getPersonalityPayMoney2()).add(e.getFee()).add(e.getPayMoney());
-			}).reduce(BigDecimal.ZERO, BigDecimal::add);
+			BigDecimal payTotal = payMoneyPayDetails.stream().map(e -> e.getPersonalityPayMoney1().add(e.getPersonalityPayMoney2()).add(e.getFee()).add(e.getPayMoney())).reduce(BigDecimal.ZERO, BigDecimal::add);
 			result.setPayTotal(payTotal);
 
 			return result;
@@ -248,7 +247,7 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 		 * 延期支付申请单一个单号完成做账就生成付款。
 		 * 提成支付申请单一个批次完成做账就生成付款。
 		 */
-		Integer batchUnCompleteTaskCount = 100;
+		Integer batchUnCompleteTaskCount;
 		List<String> delayExtractCodeList = null;
 		if(isDelay){
 			BudgetExtractAccountTask budgetExtractAccountTask = accountTaskMapper.selectOne(new LambdaQueryWrapper<BudgetExtractAccountTask>().eq(BudgetExtractAccountTask::getExtractCode, accountDTO.getExtractCode()));
@@ -259,12 +258,14 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 					.eq(BudgetExtractAccountTask::getAccountantStatus, 0)
 					.eq(BudgetExtractAccountTask::getIsShouldAccount, 1));
 
-			if(batchUnCompleteTaskCount == 0) delayExtractCodeList = accountTaskMapper.selectList(new LambdaQueryWrapper<BudgetExtractAccountTask>()
-					.eq(BudgetExtractAccountTask::getTaskType, ExtractTaskTypeEnum.DELAY.type)
-					.eq(BudgetExtractAccountTask::getExtractMonth, budgetExtractAccountTask.getExtractMonth())
-					.eq(BudgetExtractAccountTask::getBatch,budgetExtractAccountTask.getBatch())
-					.eq(BudgetExtractAccountTask::getAccountantStatus, 1)
-					.eq(BudgetExtractAccountTask::getIsShouldAccount, 1)).stream().map(BudgetExtractAccountTask::getExtractCode).collect(Collectors.toList());
+			if(batchUnCompleteTaskCount == 0) {
+				delayExtractCodeList = accountTaskMapper.selectList(new LambdaQueryWrapper<BudgetExtractAccountTask>()
+						.eq(BudgetExtractAccountTask::getTaskType, ExtractTaskTypeEnum.DELAY.type)
+						.eq(BudgetExtractAccountTask::getExtractMonth, budgetExtractAccountTask.getExtractMonth())
+						.eq(BudgetExtractAccountTask::getBatch,budgetExtractAccountTask.getBatch())
+						.eq(BudgetExtractAccountTask::getAccountantStatus, 1)
+						.eq(BudgetExtractAccountTask::getIsShouldAccount, 1)).stream().map(BudgetExtractAccountTask::getExtractCode).collect(Collectors.toList());
+			}
 		}else{
 			batchUnCompleteTaskCount = accountTaskMapper.selectCount(new LambdaQueryWrapper<BudgetExtractAccountTask>()
 					.eq(BudgetExtractAccountTask::getTaskType, accountTasks.get(0).getTaskType())
@@ -284,10 +285,35 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 	 * <p>做账退回</p>
 	 * @author minzhq
 	 * @date 2022/9/17 10:43
-	 * @param extractBatch
+	 * @param extractBatch 提成批次
 	 */
 	public void accountReject(String extractBatch) {
-
-
+		List<BudgetExtractsum> batchExtractSums = extractsumService.getFutureBatchExtractSumContainSelf(extractBatch);
+//		batchExtractSums.stream().collect(Collectors.groupingBy(BudgetExtractsum::getExtractmonth)).forEach((batch,curBatchExtractSums)->{
+//			if(extractBatch.equals(batch)){
+//				long accountFinishCount = curBatchExtractSums.stream().filter(e -> e.getStatus() >= ExtractStatusEnum.ACCOUNT.type).count();
+//				if(accountFinishCount>0){
+//					throw new RuntimeException("提成批次"+batch+"已有提成支付申请单流转至后续环节！");
+//				}
+//				//当前批次存在延期支付申请单到了后续环节，不允许做账退回
+//				Integer delayAccountFinishCount = delayApplicationMapper.selectCount(new LambdaQueryWrapper<BudgetExtractDelayApplication>().in(BudgetExtractDelayApplication::getExtractMonth, extractBatch).ge(BudgetExtractDelayApplication::getStatus, ExtractDelayStatusEnum.ACCOUNT.type));
+//				if(delayAccountFinishCount > 0 ){
+//					throw new RuntimeException("提成批次"+batch+"已有延期支付申请单流转至后续环节！");
+//				}
+//			}else{
+//				BudgetExtractTaxHandleRecord extractTaxHandleRecord = extractsumService.getExtractTaxHandleRecord(batch);
+//				if(extractTaxHandleRecord!=null && (extractTaxHandleRecord.getIsCalComplete() || extractTaxHandleRecord.getIsPersonalityComplete())){
+//					throw new RuntimeException("已有后续批次"+batch+"已被处理！");
+//				}
+//			}
+//
+//		});
+		List<Long> sumIds = batchExtractSums.stream().filter(e -> e.getExtractmonth().equals(extractBatch)).map(BudgetExtractsum::getId).collect(Collectors.toList());
+		extractsumService.update(new LambdaUpdateWrapper<BudgetExtractsum>().set(BudgetExtractsum::getStatus,ExtractStatusEnum.APPROVED.type).in(BudgetExtractsum::getId,sumIds));
+		delayApplicationMapper.delete(new LambdaUpdateWrapper<BudgetExtractDelayApplication>().eq(BudgetExtractDelayApplication::getExtractMonth,extractBatch));
+		accountTaskMapper.delete(new LambdaQueryWrapper<BudgetExtractAccountTask>().eq(BudgetExtractAccountTask::getExtractMonth,extractBatch));
+		extractsumService.generateExtractStepLog(sumIds, OperationNodeEnum.ACCOUNTING,"【"+OperationNodeEnum.getValue(OperationNodeEnum.ACCOUNTING.getType()) + "】退回",LogStatusEnum.REJECT.getCode());
+		taxHandleRecordMapper.update(new BudgetExtractTaxHandleRecord(),new LambdaUpdateWrapper<BudgetExtractTaxHandleRecord>().eq(BudgetExtractTaxHandleRecord::getExtractMonth,extractBatch).set(BudgetExtractTaxHandleRecord::getIsPersonalityComplete,0));
+		perPayDetailMapper.delete(new LambdaQueryWrapper<BudgetExtractPerPayDetail>().eq(BudgetExtractPerPayDetail::getExtractMonth,extractBatch));
 	}
 }

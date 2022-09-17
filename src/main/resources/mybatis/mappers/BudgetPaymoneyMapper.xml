@@ -410,7 +410,7 @@
         FROM
             budget_paymoney pm
             INNER JOIN budget_extract_per_pay_detail bepd ON pm.paymoneyobjectid = bepd.id
-            LEFT JOIN budget_extractsum bes ON ifnull( bepd.relation_extract_code, bepd.extract_code ) = bes.`code`
+            LEFT JOIN budget_extractsum bes ON bepd.relation_extract_code = bes.`code`
             LEFT JOIN wb_banks wb ON wb.sub_branch_code = pm.bankaccountbranchcode
             LEFT JOIN wb_user sus ON sus.USER_NAME = pm.receiver
         WHERE

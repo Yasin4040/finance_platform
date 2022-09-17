@@ -78,12 +78,12 @@ public class BudgetExtractPayController {
 
 	}
 
-	@ApiOperation(value = "提成准备付款(准备付款成功后调)", httpMethod = "POST")
+	@ApiOperation(value = "提成准备付款(准备付款成功后调)", httpMethod = "GET")
 	@ApiImplicitParams(value = {
 			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true)
 	})
-	@PostMapping("/exportPay")
-	public void exportPay(@RequestBody @Validated ExtractPreparePayDTO extractPreparePayDTO, HttpServletResponse response) throws Exception {
+	@GetMapping("/exportPay")
+	public void exportPay(@Validated ExtractPreparePayDTO extractPreparePayDTO, HttpServletResponse response) throws Exception {
 
 		if(extractPreparePayDTO.getPayTemplateType() == ExtractPayTemplateEnum.OLD.type){
 			commonService.exportPreparePay(extractPreparePayDTO.getPayMoneyIds().stream().map(e->e.toString()).collect(Collectors.joining(",")), null,response);
@@ -109,6 +109,25 @@ public class BudgetExtractPayController {
 		}
 		return ResponseEntity.ok("操作成功！");
 
+	}
+
+	@ApiOperation(value = "出纳退回", httpMethod = "GET")
+	@ApiImplicitParams(value = {
+			@ApiImplicitParam(value = "登录唯一标识", name = "token", dataType = "String", required = true),
+			@ApiImplicitParam(value = "导航栏查询条件", name = "query", dataType = "String", required = true)
+	})
+	@GetMapping("/payReject")
+	public ResponseEntity<String> payReject(@RequestParam(name = "query", required = true) String query) {
+		try {
+			int length = query.split("-").length;
+			if (length != 3) throw new RuntimeException("请先选择导航栏的一个批次！");
+			String extractBatch = query.split("-")[2];
+			extractPayService.payReject(extractBatch);
+			return ResponseEntity.ok();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.error(e.getMessage());
+		}
 	}
 
 }

@@ -3489,7 +3489,14 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		List<BudgetExtractsum> lateExtractSumList = allSumList.stream().filter(e -> Integer.valueOf(e.getExtractmonth()).intValue() > Integer.valueOf(curExtractBatch).intValue()
 				&& Integer.valueOf(e.getExtractmonth()).intValue() < Integer.valueOf(curYearEndExtractBatch).intValue()).collect(Collectors.toList());
 		if (!lateExtractSumList.isEmpty()) {
-			String extractmonths = lateExtractSumList.stream().filter(e -> e.getStatus().intValue() >= ExtractStatusEnum.CALCULATION_COMPLETE.getType()).map(e -> e.getExtractmonth()).distinct().collect(Collectors.joining(","));
+			String extractmonths = lateExtractSumList.stream().filter(e -> {
+				boolean isCal = false;
+				BudgetExtractTaxHandleRecord extractTaxHandleRecord = getExtractTaxHandleRecord(e.getExtractmonth());
+				if(extractTaxHandleRecord!=null){
+					isCal = extractTaxHandleRecord.getIsCalComplete() || extractTaxHandleRecord.getIsPersonalityComplete();
+				}
+				return e.getStatus().intValue() >= ExtractStatusEnum.CALCULATION_COMPLETE.getType() || isCal;
+			}).map(e -> e.getExtractmonth()).distinct().collect(Collectors.joining(","));
 			//if (StringUtils.isNotEmpty(extractmonths))
 				//throw new RuntimeException("操作失败！提成批次【" + extractmonths + "】已计算发放!");
 		}
@@ -4360,6 +4367,10 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		return this.budgetExtractsumMapper.selectList(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getExtractmonth, extractBatch).eq(BudgetExtractsum::getDeleteflag, 0).ne(BudgetExtractsum::getStatus, ExtractStatusEnum.REJECT.getType()));
 	}
 
+	public List<BudgetExtractsum> getFutureBatchExtractSumContainSelf(String extractBatch){
+		return this.budgetExtractsumMapper.selectList(new LambdaQueryWrapper<BudgetExtractsum>().ge(BudgetExtractsum::getExtractmonth, extractBatch).eq(BudgetExtractsum::getDeleteflag, 0).ne(BudgetExtractsum::getStatus, ExtractStatusEnum.REJECT.getType()));
+	}
+
 	private List<BudgetExtractdetail> getExtractDetailBySumIds(List<Long> sumIds,boolean isPersonlity,Long personalityId){
 		LambdaQueryWrapper<BudgetExtractdetail> qw = new LambdaQueryWrapper<>();
 		if(!CollectionUtils.isEmpty(sumIds)){
@@ -4622,17 +4633,20 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		if (extractTaxHandleRecord!=null && extractTaxHandleRecord.getIsPersonalityComplete()) {
 			throw new RuntimeException("您已完成提成批次【" + extractBatch + "】员工个体户发放。");
 		}
-
-//		int count = taxHandleRecordService.count(new LambdaQueryWrapper<BudgetExtractTaxHandleRecord>().gt(BudgetExtractTaxHandleRecord::getExtractMonth, extractBatch).and(e -> {
-//			e.eq(BudgetExtractTaxHandleRecord::getIsCalComplete, 1).or().eq(BudgetExtractTaxHandleRecord::getIsPersonalityComplete, 1);
-//		}));
-//		if(count>0){
-//			throw new RuntimeException("已有后续批次已被税筹处理。");
-//		}
+		validateFuturePersonality(extractBatch);
 //
 //		Integer count1 = taxHandleRecordMapper.getOldBatchUnHandleCount(extractBatch);
 //		if(count1>0){
 //			throw new RuntimeException("有老批次正在被税筹处理。");
+//		}
+	}
+
+	public void validateFuturePersonality(String extractBatch){
+		//int count = taxHandleRecordService.count(new LambdaQueryWrapper<BudgetExtractTaxHandleRecord>().gt(BudgetExtractTaxHandleRecord::getExtractMonth, extractBatch).and(e -> {
+//			e.eq(BudgetExtractTaxHandleRecord::getIsCalComplete, 1).or().eq(BudgetExtractTaxHandleRecord::getIsPersonalityComplete, 1);
+//		}));
+//		if(count>0){
+//			throw new RuntimeException("已有后续批次已被税筹处理。");
 //		}
 	}
 
@@ -4823,7 +4837,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 
 			list.stream().filter(e->{
 				BudgetBillingUnit budgetBillingUnit = billingUnitMap.get(e.getBillingUnitId());
-				return ("0".equals(budgetBillingUnit.getBillingUnitType()) || ("1".equals(budgetBillingUnit.getBillingUnitType()) && individualEmployeeFiles.getAccountType() == 1));
+				return (budgetBillingUnit.getCorporation() == 0 || (budgetBillingUnit.getCorporation() == 1 && individualEmployeeFiles.getAccountType() == 1));
 			}).forEach(payDetail->{
 				payDetail.setRemainingInvoices(BigDecimal.ZERO);
 				payDetail.setRemainingPayLimitMoney(BigDecimal.ZERO);
@@ -4831,7 +4845,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 
 			List<BudgetExtractPersonalityPayDetail> effectList = list.stream().filter(e -> {
 				BudgetBillingUnit budgetBillingUnit = billingUnitMap.get(e.getBillingUnitId());
-				return !("0".equals(budgetBillingUnit.getBillingUnitType()) || ("1".equals(budgetBillingUnit.getBillingUnitType()) && individualEmployeeFiles.getAccountType() == 1));
+				return !(budgetBillingUnit.getCorporation() == 0 || (budgetBillingUnit.getCorporation() == 1 && individualEmployeeFiles.getAccountType() == 1));
 			}).collect(Collectors.toList());
 
 			if(!CollectionUtils.isEmpty(effectList)){
@@ -5220,9 +5234,10 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		Integer batch = dbTasks.isEmpty()?1:dbTasks.get(0).getBatch()+1;
 		Date date = new Date();
 		perPayDetails.stream().collect(Collectors.groupingBy(e->e.getExtractCode())).forEach((code,list)->{
-			String personalityIds = list.stream().map(e -> e.getPersonalityId().toString()).collect(Collectors.joining(","));
-			accountTasks.addAll(list.stream().map(e->{
-				BudgetBillingUnit budgetBillingUnit = unitMap.get(e.getBillingUnitId());
+
+			list.stream().collect(Collectors.groupingBy(e->e.getBillingUnitId())).forEach((billingUnitId,sameBillingUnitList)->{
+				String personalityIds = sameBillingUnitList.stream().map(e -> e.getPersonalityId().toString()).collect(Collectors.joining(","));
+				BudgetBillingUnit budgetBillingUnit = unitMap.get(billingUnitId);
 				BudgetExtractAccountTask task = new BudgetExtractAccountTask();
 				task.setExtractMonth(extractBatch);
 				task.setCreateTime(date);
@@ -5243,13 +5258,15 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 					task.setIsShouldAccount(false);
 				}
 				task.setExtractCode(distributedNumber.getExtractDelayNum());
-				e.setExtractCode(task.getExtractCode());
 				task.setTaskType(ExtractTaskTypeEnum.DELAY.type);
-				e.setPayStatus(task.getTaskType());
+				list.forEach(e->{
+					e.setExtractCode(task.getExtractCode());
+					e.setPayStatus(task.getTaskType());
+				});
 				task.setPersonalityIds(personalityIds);
 				task.setBatch(batch);
-				return task;
-			}).collect(Collectors.toList()));
+				accountTasks.add(task);
+			});
 		});
 		if(!CollectionUtils.isEmpty(perPayDetails)) perPayDetailService.saveBatch(perPayDetails);
 		if(!accountTasks.isEmpty()) {
@@ -5402,6 +5419,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				perPayDetail.setReceiveBankAccountBankName(bank1.getBankName());
 				perPayDetail.setReceiverOpenBank(bank1.getSubBranchName());
 				perPayDetail.setCreateTime(new Date());
+				perPayDetail.setRelationExtractCode(extractsum.getCode());
 				perPayDetail.setPayStatus(ExtractPersonalityPayStatusEnum.COMMON.type);
 				return perPayDetail;
 			}).collect(Collectors.toList()));
@@ -5453,6 +5471,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		perPayDetail.setReceiveBankAccountBankName(extractpayment.getBankaccountbranchname());
 		perPayDetail.setReceiverOpenBank(extractpayment.getBankaccountopenbank());
 		perPayDetail.setCreateTime(new Date());
+		perPayDetail.setRelationExtractCode(perPayDetail.getExtractCode());
 		perPayDetail.setSourceId(e.getId1());
 		return perPayDetail;
 	}
@@ -5475,6 +5494,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				task.setAccountantStatus(0);
 				task.setTaskType(ExtractTaskTypeEnum.COMMON.type);
 				task.setIsShouldAccount(true);
+				task.setRelationExtractCode(code);
 				BudgetBillingUnit budgetBillingUnit = unitMap.get(e);
 				String accountants = budgetBillingUnit.getAccountants();
 				if (StringUtils.isBlank(accountants)) {

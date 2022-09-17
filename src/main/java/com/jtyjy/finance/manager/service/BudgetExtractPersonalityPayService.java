@@ -126,15 +126,15 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 
 		BudgetBillingUnit budgetBillingUnit = billingUnitMapper.selectById(billingUnitId);
 		IndividualEmployeeFiles individualEmployeeFiles = individualEmployeeFilesMapper.selectById(personalityId);
-		if(("0".equals(budgetBillingUnit.getBillingUnitType()) || ("1".equals(budgetBillingUnit.getBillingUnitType()) && individualEmployeeFiles.getAccountType() == 1))){
+		if((budgetBillingUnit.getCorporation() == 0 || (budgetBillingUnit.getCorporation() == 1 && individualEmployeeFiles.getAccountType() == 1))){
 			//不需要计算剩余票额
 			excelData.setRemainingInvoices(BigDecimal.ZERO);
 			excelData.setRemainingPayLimitMoney(BigDecimal.ZERO);
 		}else{
 			Map<Long, List<IndividualEmployeeTicketReceiptInfo>> receiptInfoMap = extractsumService.getIndividualEmployeeTicketReceiptInfoList(Lists.newArrayList(personalityId)).stream().collect(Collectors.groupingBy(e -> e.getIndividualEmployeeInfoId()));
-			List<BudgetExtractPersonalityPayDetail> effectList = personalityPayDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractPersonalityPayDetail>().eq(BudgetExtractPersonalityPayDetail::getPersonalityId, personalityId).ne(id!=null,BudgetExtractPersonalityPayDetail::getId,id)).stream().filter(e -> {
+			List<BudgetExtractPersonalityPayDetail> effectList = personalityPayDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractPersonalityPayDetail>().eq(BudgetExtractPersonalityPayDetail::getExtractMonth,extractBatch).eq(BudgetExtractPersonalityPayDetail::getPersonalityId, personalityId).ne(id!=null,BudgetExtractPersonalityPayDetail::getId,id)).stream().filter(e -> {
 				BudgetBillingUnit budgetBillingUnit1 = billingUnitMapper.selectById(billingUnitId);
-				return !("0".equals(budgetBillingUnit1.getBillingUnitType()) || ("1".equals(budgetBillingUnit1.getBillingUnitType()) && individualEmployeeFiles.getAccountType() == 1));
+				return !(budgetBillingUnit.getCorporation() == 0 || (budgetBillingUnit.getCorporation() == 1 && individualEmployeeFiles.getAccountType() == 1));
 			}).collect(Collectors.toList());
 			Map<Long, BigDecimal> initReceiptMap = personalityPayDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractPersonalityPayDetail>().eq(BudgetExtractPersonalityPayDetail::getIsInitData, 1).eq(BudgetExtractPersonalityPayDetail::getPersonalityId, personalityId)).stream().collect(Collectors.toMap(e -> e.getPersonalityId(), e -> e.getReceiptSum(),(e1,e2)->e1));
 			BigDecimal initReceipt = BigDecimal.ZERO;
@@ -317,7 +317,7 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 
 	public void doEnsureComplete(String extractBatch,List<BudgetExtractPersonalityPayDetail> extractPersonalityPayDetails){
 
-		StringJoiner error = new StringJoiner(",");
+		StringJoiner error = new StringJoiner("<br>");
 		Map<Long, IndividualEmployeeFiles> individualEmployeeFilesMap = individualEmployeeFilesMapper.selectList(null).stream().collect(Collectors.toMap(e -> e.getId(), e -> e));
 		extractPersonalityPayDetails.stream().collect(Collectors.groupingBy(e->{
 			IndividualEmployeeFiles individualEmployeeFiles = individualEmployeeFilesMap.get(e.getPersonalityId());
@@ -376,6 +376,7 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 		if (extractTaxHandleRecord!=null && !extractTaxHandleRecord.getIsPersonalityComplete()) {
 			throw new RuntimeException("取消失败！您还未完成员工个体户发放。");
 		}
+		extractsumService.validateFuturePersonality(extractBatch);
 		LambdaUpdateWrapper<BudgetExtractPersonalityPayDetail> updateWrapper = new LambdaUpdateWrapper<>();
 		updateWrapper.eq(BudgetExtractPersonalityPayDetail::getExtractMonth,extractBatch);
 		updateWrapper.set(BudgetExtractPersonalityPayDetail::getOperateTime,null);

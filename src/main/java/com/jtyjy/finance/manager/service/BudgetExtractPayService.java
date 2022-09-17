@@ -15,10 +15,7 @@ import com.jtyjy.finance.manager.easyexcel.BudgetExtractZhDfPayExcelData;
 import com.jtyjy.finance.manager.easyexcel.BudgetPayTotalExcelData;
 import com.jtyjy.finance.manager.enmus.*;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
-import com.jtyjy.finance.manager.mapper.BudgetExtractDelayApplicationMapper;
-import com.jtyjy.finance.manager.mapper.BudgetExtractsumMapper;
-import com.jtyjy.finance.manager.mapper.BudgetPaybatchMapper;
-import com.jtyjy.finance.manager.mapper.BudgetPaymoneyMapper;
+import com.jtyjy.finance.manager.mapper.*;
 import com.jtyjy.finance.manager.vo.BudgetExtractPayQueryVO;
 import com.jtyjy.finance.manager.vo.BudgetExtractPayResponseVO;
 import lombok.RequiredArgsConstructor;
@@ -45,26 +42,18 @@ import java.util.stream.Collectors;
 @SuppressWarnings("all")
 public class BudgetExtractPayService {
 
-	@Autowired
-	private BudgetPaymoneyMapper paymoneyMapper;
-	@Autowired
-	private BudgetPaybatchMapper paybatchMapper;
-	@Autowired
-	private BankCache bankCache;
-	@Autowired
-	private BudgetPaymoneyService paymoneyService;
-	@Autowired
-	private BudgetExtractPerPayDetailService perPayDetailService;
-	@Autowired
-	private ExtractAccountEntryTaskService accountEntryTaskService;
-	@Autowired
-	private BudgetExtractPersonalityPayService extractPersonalityPayService;
-	@Autowired
-	private BudgetExtractDelayApplicationMapper delayApplicationMapper;
-	@Autowired
-	private BudgetExtractsumMapper extractsumMapper;
-	@Autowired
-	private BudgetExtractsumService extractsumService;
+	private final BudgetPaymoneyMapper paymoneyMapper;
+	private final BudgetPaybatchMapper paybatchMapper;
+	private final BankCache bankCache;
+	private final BudgetPaymoneyService paymoneyService;
+	private final BudgetExtractPerPayDetailService perPayDetailService;
+	private final ExtractAccountEntryTaskService accountEntryTaskService;
+	private final BudgetExtractPersonalityPayService extractPersonalityPayService;
+	private final BudgetExtractDelayApplicationMapper delayApplicationMapper;
+	private final BudgetExtractsumMapper extractsumMapper;
+	private final BudgetExtractsumService extractsumService;
+	private final BudgetExtractAccountTaskMapper accountTaskMapper;
+	private final BudgetExtractTaxHandleRecordMapper taxHandleRecordMapper;
 	@Value("${tc.redis.key}")
 	private String TC_REDIS_KEY;
 
@@ -305,5 +294,54 @@ public class BudgetExtractPayService {
 			}
 		});
 
+	}
+	/**
+	 * <p>出纳退回</p>
+	 * @author minzhq
+	 * @date 2022/9/17 14:19
+	 * @param extractBatch
+	 */
+	public void payReject(String extractBatch) {
+		List<BudgetExtractsum> batchExtractSums = extractsumService.getFutureBatchExtractSumContainSelf(extractBatch);
+//		batchExtractSums.stream().collect(Collectors.groupingBy(BudgetExtractsum::getExtractmonth)).forEach((batch,curBatchExtractSums)->{
+//			if(extractBatch.equals(batch)){
+//				long payFinishCount = curBatchExtractSums.stream().filter(e -> e.getStatus() >= ExtractStatusEnum.PAY.type).count();
+//				if(payFinishCount>0){
+//					throw new RuntimeException("提成批次"+batch+"已有提成支付申请单流转至后续环节！");
+//				}
+//				//当前批次存在延期支付申请单到了后续环节，不允许退回
+//				Integer delayPayFinishCount = delayApplicationMapper.selectCount(new LambdaQueryWrapper<BudgetExtractDelayApplication>().in(BudgetExtractDelayApplication::getExtractMonth, extractBatch).ge(BudgetExtractDelayApplication::getStatus, ExtractDelayStatusEnum.PAY.type));
+//				if(delayPayFinishCount > 0 ){
+//					throw new RuntimeException("提成批次"+batch+"已有延期支付申请单流转至后续环节！");
+//				}
+//			}else{
+//				BudgetExtractTaxHandleRecord extractTaxHandleRecord = extractsumService.getExtractTaxHandleRecord(batch);
+//				if(extractTaxHandleRecord!=null && (extractTaxHandleRecord.getIsCalComplete() || extractTaxHandleRecord.getIsPersonalityComplete())){
+//					throw new RuntimeException("已有后续批次"+batch+"已被处理！");
+//				}
+//			}
+//		});
+		List<Long> sumIds = batchExtractSums.stream().filter(e -> e.getExtractmonth().equals(extractBatch)).map(BudgetExtractsum::getId).collect(Collectors.toList());
+		List<String> extractCodeList = batchExtractSums.stream().filter(e -> e.getExtractmonth().equals(extractBatch)).map(BudgetExtractsum::getCode).collect(Collectors.toList());
+		List<String> delayCodeList = delayApplicationMapper.selectList(new LambdaQueryWrapper<BudgetExtractDelayApplication>().eq(BudgetExtractDelayApplication::getExtractMonth, extractBatch)).stream().map(e -> e.getDelayCode()).collect(Collectors.toList());
+		extractCodeList.addAll(delayCodeList);
+		LambdaQueryWrapper<BudgetPaymoney> queryWrapper = new LambdaQueryWrapper<>();
+		queryWrapper.eq(BudgetPaymoney::getPaymoneytype,PaymoneyTypeEnum.EXTRACT_PAY.type);
+		queryWrapper.eq(BudgetPaymoney::getPaymoneystatus,PaymoneyStatusEnum.PAYED.type);
+		queryWrapper.in(BudgetPaymoney::getPaymoneyobjectcode,extractCodeList);
+		int count = paymoneyService.count(queryWrapper);
+		if(count >0){
+			throw new RuntimeException("该批次已有付款单已支付完成！");
+		}
+		LambdaQueryWrapper<BudgetPaymoney> qw = new LambdaQueryWrapper<>();
+		qw.eq(BudgetPaymoney::getPaymoneytype,PaymoneyTypeEnum.EXTRACT_PAY.type);
+		qw.in(BudgetPaymoney::getPaymoneyobjectcode,extractCodeList);
+		paymoneyService.remove(qw);
+		extractsumService.update(new LambdaUpdateWrapper<BudgetExtractsum>().set(BudgetExtractsum::getStatus,ExtractStatusEnum.APPROVED.type).in(BudgetExtractsum::getId,sumIds));
+		delayApplicationMapper.delete(new LambdaUpdateWrapper<BudgetExtractDelayApplication>().eq(BudgetExtractDelayApplication::getExtractMonth,extractBatch));
+		accountTaskMapper.delete(new LambdaQueryWrapper<BudgetExtractAccountTask>().eq(BudgetExtractAccountTask::getExtractMonth,extractBatch));
+		extractsumService.generateExtractStepLog(sumIds, OperationNodeEnum.CASHIER_PAYMENT,"【"+OperationNodeEnum.getValue(OperationNodeEnum.CASHIER_PAYMENT.getType()) + "】退回",LogStatusEnum.REJECT.getCode());
+		taxHandleRecordMapper.update(new BudgetExtractTaxHandleRecord(),new LambdaUpdateWrapper<BudgetExtractTaxHandleRecord>().eq(BudgetExtractTaxHandleRecord::getExtractMonth,extractBatch).set(BudgetExtractTaxHandleRecord::getIsPersonalityComplete,0));
+		perPayDetailService.remove(new LambdaQueryWrapper<BudgetExtractPerPayDetail>().eq(BudgetExtractPerPayDetail::getExtractMonth,extractBatch));
 	}
 }

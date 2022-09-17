@@ -123,6 +123,8 @@ public class BudgetExtractPerPayDetail implements Serializable {
      */
     private Integer payStatus;
 
+    private String relationExtractCode;
+
     /**
      * 来源id(非个体户)(budget_extract_payment,(个体户)budget_extract_personality_pay_detail)
      */
