@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtyjy.finance.manager.mapper.BusinessPayCollectionMapper">
+
+    <resultMap id="BaseResultMap" type="com.jtyjy.finance.manager.bean.BusinessPayCollection">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="extractType" column="extract_type" jdbcType="VARCHAR"/>
+            <result property="year" column="year" jdbcType="VARCHAR"/>
+            <result property="month" column="month" jdbcType="VARCHAR"/>
+            <result property="batchNo" column="batch_no" jdbcType="VARCHAR"/>
+            <result property="empName" column="emp_name" jdbcType="VARCHAR"/>
+            <result property="empNo" column="emp_no" jdbcType="VARCHAR"/>
+            <result property="collectionEmpName" column="collection_emp_name" jdbcType="VARCHAR"/>
+            <result property="unitName" column="unit_Name" jdbcType="VARCHAR"/>
+            <result property="contactPerson" column="contact_person" jdbcType="VARCHAR"/>
+            <result property="bookkeepingNo" column="Bookkeeping_no" jdbcType="VARCHAR"/>
+            <result property="productName" column="product_name" jdbcType="VARCHAR"/>
+            <result property="totalPrice" column="total_price" jdbcType="DECIMAL"/>
+            <result property="actualPrice" column="actual_price" jdbcType="DECIMAL"/>
+            <result property="floorPrice" column="floor_price" jdbcType="DECIMAL"/>
+            <result property="currentCollection" column="current_collection" jdbcType="DECIMAL"/>
+            <result property="currentCommission" column="current_commission" jdbcType="DECIMAL"/>
+            <result property="reservedCommission" column="reserved_commission" jdbcType="DECIMAL"/>
+            <result property="earlyCollection" column="early_collection" jdbcType="DECIMAL"/>
+            <result property="earlyCommission" column="early_commission" jdbcType="DECIMAL"/>
+            <result property="ifBigManager" column="if_big_manager" jdbcType="INTEGER"/>
+            <result property="ifManager" column="if_manager" jdbcType="INTEGER"/>
+            <result property="createBy" column="create_by" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateBy" column="update_by" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+
+            <result property="deptFullName" column="dept_full_name" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="searchQuery">
+        <if test="employeeName != null and employeeName !=''">
+            and (bbpc.emp_no like concat('%',#{employeeName},'%') or bbpc.emp_name like concat('%',#{employeeName},'%'))
+        </if>
+        <if test="departmentName != null and departmentName !=''">
+            and bbpc.dept_fulle_name like concat('%',#{departmentName},'%')
+        </if>
+        <if test="yearId != null and yearId !=''">
+            and bbpc.`year` = #{yearId}
+        </if>
+        <if test="monthId != null and monthId !=''">
+            and bbpc.`month`  = #{monthId}
+        </if>
+        <if test="extractMonth != null and extractMonth !=''">
+            and be.extractmonth like concat('%',#{extractMonth},'%')
+        </if>
+    </sql>
+
+
+    <select id="selectPageForBigManager" resultType="com.jtyjy.finance.manager.bean.BusinessPayCollection">
+        select * from (
+        select *from db_budget.budget_business_pay_collection bbpc
+        where bbpc.if_big_manager != -1
+          and bbpc.create_time >=date_sub(now(),interval 3 month) and bbpc.dept_id=#{deptId}
+        <include refid="searchQuery"></include>
+        union
+        select *from db_budget.budget_business_pay_collection bbpc
+        where bbpc.if_big_manager = 1 and bbpc.dept_id=#{deptId}
+        <include refid="searchQuery"></include>
+        ) temp order by temp.create_time desc
+    </select>
+
+    <select id="selectPageForManager" resultType="com.jtyjy.finance.manager.bean.BusinessPayCollection">
+        select * from (
+        select *from db_budget.budget_business_pay_collection bbpc
+        where bbpc.if_manager != -1
+          and bbpc.create_time >=date_sub(now(),interval 3 month) and bbpc.emp_no =#{empNo}
+        <include refid="searchQuery"></include>
+        union
+
+        select *from db_budget.budget_business_pay_collection bbpc
+        where bbpc.if_manager = 1 and bbpc.emp_no =#{empNo}
+        <include refid="searchQuery"></include>
+        ) temp order by temp.create_time desc
+    </select>
+    <select id="selectPageForCommercialCommission"
+            resultType="com.jtyjy.finance.manager.bean.BusinessPayCollection">
+        select * from (
+        select *from db_budget.budget_business_pay_collection bbpc
+        <include refid="searchQuery"></include>)
+        ) temp order by temp.create_time desc
+    </select>
+</mapper>

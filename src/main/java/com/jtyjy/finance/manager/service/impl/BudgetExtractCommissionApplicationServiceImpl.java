@@ -33,6 +33,7 @@ import com.jtyjy.finance.manager.utils.FileUtils;
 import com.jtyjy.finance.manager.vo.application.*;
 import lombok.SneakyThrows;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.beanutils.BeanUtilsBean;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.beanutils.locale.converters.DateLocaleConverter;
@@ -451,6 +452,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             for (Map map : errorMap) {
                 FeeImportErrorDTO errorDTO = new FeeImportErrorDTO();
                 try {
+                    BeanUtilsBean.getInstance().getConvertUtils().register(false, false, 0);
                     ConvertUtils.register(new DateLocaleConverter(), Date.class);//BeanUtils.populate对日期类型进行处理，否则无法封装
                     BeanUtils.populate(errorDTO,map);
                 } catch (IllegalAccessException | InvocationTargetException e) {
@@ -622,7 +624,13 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
 
     @Override
     public void validateExtractMonth(String extractMonth) {
+        //全部都得是已经审核。
+        List<BudgetExtractsum> nowSums = extractSumMapper.selectList(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getExtractmonth, extractMonth));
 
+        long count = nowSums.stream().filter(x -> !x.getStatus().equals(ExtractStatusEnum.APPROVED.getType())).count();
+        if(count!=0){
+            throw new BusinessException("批次需要全部审核通过，才能进行导入费用");
+        }
         //是否计算。
         BudgetExtractTaxHandleRecord recordServiceOne =
                 taxHandleRecordService.getOne(new LambdaQueryWrapper<BudgetExtractTaxHandleRecord>().eq(BudgetExtractTaxHandleRecord::getExtractMonth, extractMonth));

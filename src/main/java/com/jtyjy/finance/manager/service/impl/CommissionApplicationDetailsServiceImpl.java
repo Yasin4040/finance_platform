@@ -26,7 +26,7 @@ public class CommissionApplicationDetailsServiceImpl extends ServiceImpl<BudgetE
         implements CommissionApplicationDetailsService {
     @Override
     public IPage<CommissionImportDetailVO> selectCommissionPage(CommissionQuery query) {
-        IPage<CommissionImportDetailVO> page;
+        IPage<CommissionImportDetailVO> page = new Page<>();
         String deptId="";
         String empNo="";
         //假设当前用户为业务经理。1，只看工号。 empNo。
@@ -64,10 +64,6 @@ public class CommissionApplicationDetailsServiceImpl extends ServiceImpl<BudgetE
             default:
                 break;
         }
-
-        BudgetExtractImportdetail budgetExtractImportdetail = new BudgetExtractImportdetail();
-        ViewStatusEnum viewStatusEnum;
-
-        return null;
+        return page;
     }
 }

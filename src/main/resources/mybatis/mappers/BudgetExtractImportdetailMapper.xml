@@ -17,11 +17,6 @@
         <result column="createtime" jdbcType="TIMESTAMP" property="createtime"/>
         <result column="updatetime" jdbcType="TIMESTAMP" property="updatetime"/>
     </resultMap>
-    <sql id="Base_Column_List">
-        id
-        , extractsumid, extractdetailid, yearid, iscompanyemp, isbaddebt, empid, idnumber,
-    empno, empname, copeextract, consotax, createtime, updatetime
-    </sql>
     
     <update id="clearExtractDetail" parameterType="java.lang.String">
     	update budget_extract_importdetail set extractdetailid=null where extractsumid in (${ids})
@@ -73,20 +68,71 @@
     
     </select>
 
+	<sql id="searchQuery">
+		<if test="employeeName != null and employeeName !=''">
+			and (bei.empno like concat('%',#{employeeName},'%') or bei.enpname like concat('%',#{employeeName},'%'))
+		</if>
+		<if test="departmentName != null and departmentName !=''">
+			and be.deptname like concat('%',#{departmentName},'%')
+		</if>
+		<if test="yearId != null and yearId !=''">
+			and be.yearid = #{yearId}
+		</if>
+		<if test="monthId != null and monthId !=''">
+			and substr(be.extractmonth,5,2)  = #{monthId}
+		</if>
+		<if test="extractMonth != null and extractMonth !=''">
+			and be.extractmonth like concat('%',#{extractMonth},'%')
+		</if>
+   </sql>
+
+
 	<select id="selectCommissionPageForCommercialCommission"
 			resultType="com.jtyjy.finance.manager.vo.application.CommissionImportDetailVO">
-
+		select * from (
+		select bei.* from budget_extractsum be
+						 left join budget_extract_importdetail bei on be.id = bei.extractsumid
+			where 1=1
+		<include refid="searchQuery"></include>
+		) temp order by temp.createtime desc
 	</select>
 
 	<select id="selectCommissionPageForBigManager"
 			resultType="com.jtyjy.finance.manager.vo.application.CommissionImportDetailVO">
 
+		select * from (
+		select bei.* from budget_extractsum be
+		left join budget_extract_importdetail bei on be.id = bei.extractsumid
+		where bei.if_big_manager != -1
+		and bei.createtime >= date_sub(now(), interval 3 month) and be.deptid = #{deptId}
+		<include refid="searchQuery"></include>
+		union
+		select bei.* from budget_extractsum be
+		left join budget_extract_importdetail bei on be.id = bei.extractsumid
+		where bei.if_big_manager = 1 and be.deptid = #{deptId}
+		<include refid="searchQuery"></include>
+		) temp order by temp.createtime desc
 	</select>
 
-    <select id="selectCommissionPageForManager"
-            resultType="com.jtyjy.finance.manager.vo.application.CommissionImportDetailVO">
-
+    <select id="selectCommissionPageForManager" resultType="com.jtyjy.finance.manager.vo.application.CommissionImportDetailVO">
+		select * from (
+		select bei.* from budget_extractsum be
+		left join budget_extract_importdetail bei on be.id = bei.extractsumid
+		where bei.if_manager != -1
+		and bei.createtime >= date_sub(now(), interval 3 month) and bei.empno = #{empNo}
+		<include refid="searchQuery"></include>
+		union
+		select bei.* from budget_extractsum be
+		left join budget_extract_importdetail bei on be.id = bei.extractsumid
+		where bei.if_manager = 1 d bei.empno = #{empNo}
+		<include refid="searchQuery"></include>
+		    ) temp order by temp.createtime desc
 	</select>
+
+
+
+
+
     <select id="getAllByExtractMonth" resultType="com.jtyjy.finance.manager.bean.BudgetExtractImportdetail">
 		select bei.* from budget_extractsum be left join budget_extract_importdetail bei on be.id =bei.extractsumid where be.extractmonth = #{extractMonth}
 	</select>

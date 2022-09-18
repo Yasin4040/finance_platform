@@ -24,6 +24,7 @@ import com.jtyjy.finance.manager.vo.individual.IndividualEmployeeFilesVO;
 import com.jtyjy.finance.manager.vo.individual.IndividualTicketVO;
 import lombok.SneakyThrows;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.beanutils.BeanUtilsBean;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.beanutils.locale.converters.DateLocaleConverter;
@@ -248,6 +249,7 @@ public class IndividualEmployeeTicketReceiptInfoServiceImpl extends ServiceImpl<
             for (Map map : errorMap) {
                 IndividualTicketImportErrorDTO errorDTO = new IndividualTicketImportErrorDTO();
                 try {
+                    BeanUtilsBean.getInstance().getConvertUtils().register(false, false, 0);
                     ConvertUtils.register(new DateLocaleConverter(), Date.class);//BeanUtils.populate对日期类型进行处理，否则无法封装
                     BeanUtils.populate(errorDTO, map);
                 } catch (IllegalAccessException | InvocationTargetException e) {

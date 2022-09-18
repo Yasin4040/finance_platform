@@ -589,7 +589,11 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		if (StringUtils.isBlank(businessType)) {
 			throw new RuntimeException("是否公司员工不能为空!");
 		}
-		switch (ExtractUserTypeEnum.getEnumByValue(businessType)){
+		ExtractUserTypeEnum enumByValue = ExtractUserTypeEnum.getEnumByValue(businessType);
+		if(enumByValue==null){
+			throw new RuntimeException("业务类型 请填写公司员工，外部人员，员工个体户!");
+		}
+		switch (enumByValue){
 			case COMPANY_STAFF:
 				WbUser user = getUserByEmpno(empNo);
 				if (user == null) {

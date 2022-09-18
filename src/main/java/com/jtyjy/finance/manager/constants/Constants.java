@@ -83,5 +83,7 @@ public class Constants {
     public static final String IMPORT_INDIVIDUAL_FILE = "INDIVIDUAL_FILE";
     public static final String IMPORT_FEE = "IMPORT_FEE";
 
+    public static final String IMPORT_COLLECTION = "IMPORT_COLLECTION";
+
 
 }
