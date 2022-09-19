@@ -757,7 +757,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             //删除报销表
             if (application.getReimbursementId()!=null) {
                 BudgetReimbursementorder reimbursementorder = reimbursementorderService.getById(application.getReimbursementId());
-                reimbursementorderService.removeById(reimbursementorder);
+                reimbursementorderService.removeById(reimbursementorder.getId());
             }
             this.lambdaUpdate().eq(BudgetExtractCommissionApplication::getExtractSumId,sumId).set(BudgetExtractCommissionApplication::getStatus,status);
             budgetExtractsum.setStatus(status);

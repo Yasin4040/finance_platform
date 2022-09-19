@@ -1311,7 +1311,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		//3、提成主表
 		budgetExtractsumMapper.deleteById(sumId);
 		//4、删除报销表
-		reimbursementorderService.removeById(reimbursementorder);
+		reimbursementorderService.removeById(reimbursementorder.getId());
 			//0草稿（-1 退回 不能 -2 作废）
 		//application.getStatus()== ExtractStatusEnum.RETURN.getType()
 			if (application.getStatus()== ExtractStatusEnum.DRAFT.getType()) {
