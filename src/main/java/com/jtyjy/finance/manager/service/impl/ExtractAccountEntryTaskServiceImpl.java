@@ -151,7 +151,6 @@ public class ExtractAccountEntryTaskServiceImpl extends ServiceImpl<ExtractAccou
         entryTask.setDeptName(extractSum.getDeptname());
         entryTask.setDeptId(extractSum.getDeptid());
         entryTask.setSumId(String.valueOf(extractSum.getId()));
-        entryTask.setExtractCode(extractSum.getCode());
         entryTask.setCreateTime(new Date());
         //获取发放金额
         entryTask.setIssuedAmount(getIssuedAmount(nowCode));

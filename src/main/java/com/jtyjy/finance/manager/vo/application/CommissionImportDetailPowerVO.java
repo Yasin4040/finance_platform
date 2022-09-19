@@ -3,6 +3,7 @@ package com.jtyjy.finance.manager.vo.application;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModelProperty;
+import io.swagger.models.auth.In;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -31,6 +32,8 @@ public class CommissionImportDetailPowerVO {
 //    private Long yearid;
     @ApiModelProperty(value = "*提成届别")
     private String yearName;
+    @ApiModelProperty(value = "*提成届别Id")
+    private String yearId;
 
     @ApiModelProperty(value = "码洋")
     private BigDecimal totalPrice;
@@ -124,9 +127,9 @@ public class CommissionImportDetailPowerVO {
     private BigDecimal copeextract;
 
     @ApiModelProperty(value = "是否允许大区经理查看。")
-    private Boolean ifBigManager;
+    private Integer ifBigManager;
     @ApiModelProperty(value = "是否允许经理查看。")
-    private Boolean ifManager;
+    private Integer ifManager;
 
     @ApiModelProperty(value = "创建人")
     private String createBy;
@@ -145,5 +148,8 @@ public class CommissionImportDetailPowerVO {
     private String monthName;
     @ApiModelProperty(value = "客户类型--员工二级部门 完整名称")
     private String empDeptFullName;
+    @ApiModelProperty(value = "提成批次")
+    private String extractMonth;
+
 
 }

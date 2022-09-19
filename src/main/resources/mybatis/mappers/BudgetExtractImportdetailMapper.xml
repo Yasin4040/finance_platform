@@ -72,9 +72,9 @@
 		<if test="employeeName != null and employeeName !=''">
 			and (bei.empno like concat('%',#{employeeName},'%') or bei.enpname like concat('%',#{employeeName},'%'))
 		</if>
-		<if test="departmentName != null and departmentName !=''">
-			and be.deptname like concat('%',#{departmentName},'%')
-		</if>
+<!--		<if test="departmentName != null and departmentName !=''">-->
+<!--			and be.deptname like concat('%',#{departmentName},'%')-->
+<!--		</if>-->
 		<if test="yearId != null and yearId !=''">
 			and be.yearid = #{yearId}
 		</if>
@@ -90,7 +90,9 @@
 	<select id="selectCommissionPageForCommercialCommission"
 			resultType="com.jtyjy.finance.manager.vo.application.CommissionImportDetailPowerVO">
 		select * from (
-		select bei.* from budget_extractsum be
+		select
+		       be.code as extractCode, be.extractmonth as extractMonth,
+		     bei.* from budget_extractsum be
 						 left join budget_extract_importdetail bei on be.id = bei.extractsumid
 			where 1=1
 		<include refid="searchQuery"></include>
@@ -101,36 +103,79 @@
 			resultType="com.jtyjy.finance.manager.vo.application.CommissionImportDetailPowerVO">
 
 		select * from (
-		select bei.* from budget_extractsum be
+		select
+		be.code as extractCode, be.extractmonth as extractMonth,
+		       bei.* from budget_extractsum be
 		left join budget_extract_importdetail bei on be.id = bei.extractsumid
 		where bei.if_big_manager != -1
-		and bei.createtime >= date_sub(now(), interval 3 month) and be.deptid = #{deptId}
+		and bei.createtime >= date_sub(now(), interval 3 month)
+		<choose>
+			<when test="empNoList != null and empNoList.size() != 0">
+				and	bei.empno in
+				<foreach collection="empNoList" item="empNo" open="(" close=")" separator=",">
+					#{empNo}
+				</foreach>
+			</when>
+			<otherwise>  and 1 = 1 </otherwise>
+		</choose>
+
 		<include refid="searchQuery"></include>
 		union
-		select bei.* from budget_extractsum be
+		select
+		be.code as extractCode, be.extractmonth as extractMonth,
+		       bei.* from budget_extractsum be
 		left join budget_extract_importdetail bei on be.id = bei.extractsumid
-		where bei.if_big_manager = 1 and be.deptid = #{deptId}
+		where bei.if_big_manager = 1
+		<choose>
+			<when test="empNoList != null and empNoList.size() != 0">
+				and	bei.empno in
+				<foreach collection="empNoList" item="empNo" open="(" close=")" separator=",">
+					#{empNo}
+				</foreach>
+			</when>
+			<otherwise>  and 1 = 1 </otherwise>
+		</choose>
 		<include refid="searchQuery"></include>
 		) temp order by temp.createtime desc
 	</select>
 
     <select id="selectCommissionPageForManager" resultType="com.jtyjy.finance.manager.vo.application.CommissionImportDetailPowerVO">
 		select * from (
-		select bei.* from budget_extractsum be
+
+		select
+		be.code as extractCode, be.extractmonth as extractMonth,
+		       bei.* from budget_extractsum be
 		left join budget_extract_importdetail bei on be.id = bei.extractsumid
 		where bei.if_manager != -1
-		and bei.createtime >= date_sub(now(), interval 3 month) and bei.empno = #{empNo}
+		and bei.createtime >= date_sub(now(), interval 3 month)
+		<choose>
+			<when test="empNoList != null and empNoList.size() != 0">
+			and	bei.empno in
+			<foreach collection="empNoList" item="empNo" open="(" close=")" separator=",">
+				#{empNo}
+			</foreach>
+			</when>
+		<otherwise>  and 1 = 1 </otherwise>
+	    </choose>
 		<include refid="searchQuery"></include>
 		union
-		select bei.* from budget_extractsum be
+		select
+		be.code as extractCode, be.extractmonth as extractMonth,
+		       bei.* from budget_extractsum be
 		left join budget_extract_importdetail bei on be.id = bei.extractsumid
-		where bei.if_manager = 1 and bei.empno = #{empNo}
+		where bei.if_manager = 1
+		<choose>
+		<when test="empNoList != null and empNoList.size() != 0">
+			and	bei.empno in
+			<foreach collection="empNoList" item="empNo" open="(" close=")" separator=",">
+				#{empNo}
+			</foreach>
+		</when>
+		<otherwise>  and 1 = 1 </otherwise>
+	    </choose>
 		<include refid="searchQuery"></include>
 		    ) temp order by temp.createtime desc
 	</select>
-
-
-
 
 
     <select id="getAllByExtractMonth" resultType="com.jtyjy.finance.manager.bean.BudgetExtractImportdetail">

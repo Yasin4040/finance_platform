@@ -21,15 +21,15 @@ public class PersonCache extends BaseCache{
 
 	public static Map<String, WbPerson> USERID_MAP = new HashMap<String, WbPerson>();
 
-	public static Map<String,WbPerson> EMPNO_USER_MAP = new HashMap<String,WbPerson>();
-	
+	public static Map<String,WbPerson> EMP_NO_USER_MAP = new HashMap<String,WbPerson>();
+
 
 	public static WbPerson getPersonByUserId(String userId) {
 		return USERID_MAP.get(userId);
 	}
 	
 	public static WbPerson getPersonByEmpNo(String empNo) {
-		return EMPNO_USER_MAP.get(empNo);
+		return EMP_NO_USER_MAP.get(empNo);
 	}
 	
 
@@ -49,7 +49,7 @@ public class PersonCache extends BaseCache{
 		String sql = "SELECT * FROM wb_person";
 		List<WbPerson> users = personService.query(sql, WbPerson.class);
 		setMapByList(users, USERID_MAP, "userId", WbPerson.class);
-		setMapByList(users, EMPNO_USER_MAP, "personCode", WbPerson.class);
+		setMapByList(users, EMP_NO_USER_MAP, "personCode", WbPerson.class);
 	}
 	
 }

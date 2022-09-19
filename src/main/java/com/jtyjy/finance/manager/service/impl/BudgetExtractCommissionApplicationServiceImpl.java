@@ -41,6 +41,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.csource.common.MyException;
 import org.csource.fastdfs.StorageClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -81,7 +82,8 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     private final OAMapper oaMapper;
     private final BudgetExtractCommissionApplicationLogService logService;
 
-    private  String tcWorkFlowId = "5263";
+    @Value("${commission.application.workflowid}")
+    private  String tcWorkFlowId;
     public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractTaxHandleRecordService taxHandleRecordService, BudgetExtractsumMapper extractSumMapper, BudgetExtractOuterpersonMapper outPersonMapper, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, BudgetCommonAttachmentService attachmentService, StorageClient storageClient, ReimbursementWorker reimbursementWorker, BudgetReimbursementorderService reimbursementorderService, BudgetExtractFeePayDetailMapper feePayDetailMapper, HrService hrService, OaService oaService, TabDmMapper tabDmMapper, OAMapper oaMapper, BudgetExtractCommissionApplicationLogService logService) {
         this.taxHandleRecordService = taxHandleRecordService;
         this.extractSumMapper = extractSumMapper;

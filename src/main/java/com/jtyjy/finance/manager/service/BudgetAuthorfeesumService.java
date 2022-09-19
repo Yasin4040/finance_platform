@@ -1946,7 +1946,7 @@ public class BudgetAuthorfeesumService extends DefaultBaseService<BudgetAuthorfe
 			}
 			//子部门的id
 			List<String> allChildDeptIdList = allChildDeptList.stream().map(e -> e.getDeptId()).distinct().collect(Collectors.toList());
-			isExistDept = PersonCache.EMPNO_USER_MAP.values().stream().filter(e -> allChildDeptIdList.contains(e.getDeptId()) && e.getPersonCode().equals(empNo)).findFirst().isPresent();
+			isExistDept = PersonCache.EMP_NO_USER_MAP.values().stream().filter(e -> allChildDeptIdList.contains(e.getDeptId()) && e.getPersonCode().equals(empNo)).findFirst().isPresent();
 		}
 		if (!isExistUser && !isExistDept)
 			throw new RuntimeException("预算单位【" + unit.getName() + "】下不存在报销人【" + empNo + "】");
