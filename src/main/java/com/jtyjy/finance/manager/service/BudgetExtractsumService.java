@@ -1731,7 +1731,9 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			extractLog.setNode(nodeEnum.getType());
 			extractLog.setApplicationId(e.getId());
 			extractLog.setCreateTime(new Date());
-			extractLog.setCreateBy(UserThreadLocal.getEmpName());
+			extractLog.setCreateBy(UserThreadLocal.getEmpNo());
+			extractLog.setCreatorName(UserThreadLocal.getEmpName());
+			extractLog.setStatusName(LogStatusEnum.getValue(status));
 			extractLog.setStatus(status);
 			extractLog.setRemarks(remark);
 			return extractLog;
