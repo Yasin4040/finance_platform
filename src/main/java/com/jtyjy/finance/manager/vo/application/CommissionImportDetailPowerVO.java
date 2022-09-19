@@ -16,6 +16,8 @@ import java.util.Date;
  */
 @Data
 public class CommissionImportDetailPowerVO {
+    @ApiModelProperty(value = "id")
+    private Long id;
     @ApiModelProperty(value = "*业务类型 提成类型")
     private String businessType;
     @ApiModelProperty(value = "*工号")
