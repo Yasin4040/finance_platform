@@ -258,11 +258,13 @@ public class BudgetExtractPayService {
 		}
 		boolean test = extractsumService.isTest();
 		String testNotice = extractsumService.getTestNotice();
+		Map<String,Boolean> extratBatchPayMap = new HashMap<>();
 		perPayDetails.stream().collect(Collectors.groupingBy(e->e.getExtractCode().substring(0,2))).forEach((orderPrefix,orderDetailList)->{
 
 			if(orderPrefix.equals(Constants.EXTRACT_DELAY_ORDER_PREFIX)){
 				//延期
 				orderDetailList.stream().collect(Collectors.groupingBy(BudgetExtractPerPayDetail::getExtractMonth)).forEach((extractBatch,batchDetailList)->{
+					setIsPayFlag(extractBatch,extratBatchPayMap);
 					/**
 					 * 一个提成批次下，一批的延期全部付款
 					 */
@@ -311,6 +313,7 @@ public class BudgetExtractPayService {
 
 			}else if(orderPrefix.equals(TC_REDIS_KEY)){
 				orderDetailList.stream().collect(Collectors.groupingBy(BudgetExtractPerPayDetail::getExtractMonth)).forEach((extractBatch,batchDetailList)->{
+					setIsPayFlag(extractBatch,extratBatchPayMap);
 					List<BudgetExtractPerPayDetail> list = perPayDetailService.list(new LambdaQueryWrapper<BudgetExtractPerPayDetail>().eq(BudgetExtractPerPayDetail::getExtractMonth, extractBatch));
 					if(!CollectionUtils.isEmpty(list)){
 						List<String> codeList = list.stream().map(e -> e.getExtractCode()).collect(Collectors.toList());
@@ -352,8 +355,47 @@ public class BudgetExtractPayService {
 				});
 			}
 		});
+		extratBatchPayMap.forEach((extractBatch,isEverPay)->{
+			if(!isEverPay){
+				//从来没有付款成功过
+				try{
+					List<BudgetExtractsum> list = extractsumService.getCurBatchExtractSum(extractBatch);
+					BudgetYearPeriod budgetYearPeriod = yearPeriodMapper.selectById(list.get(0).getYearid());
+					//所有的大区经理
+					List<String> empNoList = commonService.getEmpNoListByRoleNames(RoleNameEnum.BIG_MANAGER.value);
+					if(!CollectionUtils.isEmpty(empNoList)){
+						sender.sendQywxMsg(new QywxTextMsg(String.join("|",empNoList), null, null, 0, "提成明细发布通知：<br>"+budgetYearPeriod.getPeriod()+Integer.parseInt(extractBatch.substring(4,6))+"月第"+Integer.parseInt(extractBatch.substring(6,8))+"批提成明细数据已发布，请登录http://ys.jtyjy.com查看。", null));
+					}
+					List<BudgetExtractdetail> extractDetails = extractsumService.getExtractDetailBySumIds(list.stream().map(e -> e.getId()).collect(Collectors.toList()), null, null);
 
+				}catch (Exception e){
+
+				}
+			}
+		});
 	}
+
+	/**
+	 * <p>获取当前批次有没有付款成功</p>
+	 * @author minzhq
+	 * @date 2022/9/19 15:04
+	 * @param extractBatch
+	 * @param extratBatchPayMap
+	 */
+	private void setIsPayFlag(String extractBatch, Map<String, Boolean> extratBatchPayMap) {
+		List<String> codeList = extractsumService.getCurBatchExtractSum(extractBatch).stream().map(e -> e.getCode()).collect(Collectors.toList());
+		List<String> delayCodeList = delayApplicationMapper.selectList(new LambdaQueryWrapper<BudgetExtractDelayApplication>().in(BudgetExtractDelayApplication::getRelationExtractCode, codeList)).stream().map(e -> e.getDelayCode()).collect(Collectors.toList());
+		codeList.addAll(delayCodeList);
+		if(!CollectionUtils.isEmpty(codeList)){
+			int count = paymoneyService.count(new LambdaQueryWrapper<BudgetPaymoney>().in(BudgetPaymoney::getPaymoneyobjectcode, codeList).eq(BudgetPaymoney::getPaymoneytype, PaymoneyTypeEnum.EXTRACT_PAY.type).eq(BudgetPaymoney::getPaymoneystatus, PaymoneyStatusEnum.PAYED.type));
+			if(count > 0 ){
+				extratBatchPayMap.put(extractBatch,true);
+			}else{
+				extratBatchPayMap.put(extractBatch,false);
+			}
+		}
+	}
+
 	/**
 	 * <p>出纳退回</p>
 	 * @author minzhq

@@ -292,7 +292,7 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 			Map<Long, BudgetBillingUnit> unitMap = this.billingUnitMapper.selectList(null).stream().collect(Collectors.toMap(BudgetBillingUnit::getId, Function.identity()));
 			extractsumService.finishAccount(isDelay,delayExtractCodeList,accountTasks.get(0).getExtractMonth(),unitMap);
 			try{
-				List<BudgetExtractsum> list = extractsumService.list(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getExtractmonth, extractBatch));
+				List<BudgetExtractsum> list = extractsumService.getCurBatchExtractSum(extractBatch);
 				BudgetYearPeriod budgetYearPeriod = yearPeriodMapper.selectById(list.get(0).getYearid());
 				List<String> empNo = commonService.getEmpNoListByRoleNames(RoleNameEnum.PAY.value);
 				if(!CollectionUtils.isEmpty(empNo))sender.sendQywxMsg(new QywxTextMsg(String.join("|", empNo), null, null, 0, delayFlag+budgetYearPeriod.getPeriod()+Integer.parseInt(extractBatch.substring(4,6))+"月"+Integer.parseInt(extractBatch.substring(6,8))+"批提成已做账完成，可进行付款操作！", null));
