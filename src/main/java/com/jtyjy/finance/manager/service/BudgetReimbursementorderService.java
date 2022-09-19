@@ -1361,7 +1361,7 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
      * @param order
      * @throws Exception
      */
-    private void syncagnentexecute(BudgetReimbursementorder order) throws Exception {
+    public void syncagnentexecute(BudgetReimbursementorder order) throws Exception {
         ZookeeperShareLock lock = new ZookeeperShareLock(this.client, "/finance-platform/syncagnentexecute/" + order.getId(), null);
         try {
             this.updateMonthAgentExecMoney(order);
