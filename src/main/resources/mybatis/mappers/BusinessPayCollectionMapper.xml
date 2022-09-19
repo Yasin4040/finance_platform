@@ -49,14 +49,14 @@
             and bbpc.`month`  = #{monthId}
         </if>
         <if test="extractMonth != null and extractMonth !=''">
-            and be.extractmonth like concat('%',#{extractMonth},'%')
+            and bbpc.extractmonth like concat('%',#{extractMonth},'%')
         </if>
     </sql>
 
 
     <select id="selectPageForBigManager" resultType="com.jtyjy.finance.manager.bean.BusinessPayCollection">
         select * from (
-        select *from db_budget.budget_business_pay_collection bbpc
+        select * from db_budget.budget_business_pay_collection bbpc
         where bbpc.if_big_manager != -1
           and bbpc.create_time >=date_sub(now(),interval 3 month)
         <choose>
@@ -70,7 +70,7 @@
         </choose>
         <include refid="searchQuery"></include>
         union
-        select *from db_budget.budget_business_pay_collection bbpc
+        select * from db_budget.budget_business_pay_collection bbpc
         where bbpc.if_big_manager = 1
         <choose>
         <when test="deptIdList != null and deptIdList.size() != 0">
@@ -87,13 +87,13 @@
 
     <select id="selectPageForManager" resultType="com.jtyjy.finance.manager.bean.BusinessPayCollection">
         select * from (
-        select *from db_budget.budget_business_pay_collection bbpc
+        select * from db_budget.budget_business_pay_collection bbpc
         where bbpc.if_manager != -1
           and bbpc.create_time >=date_sub(now(),interval 3 month) and bbpc.emp_no =#{empNo}
         <include refid="searchQuery"></include>
         union
 
-        select *from db_budget.budget_business_pay_collection bbpc
+        select * from db_budget.budget_business_pay_collection bbpc
         where bbpc.if_manager = 1 and bbpc.emp_no =#{empNo}
         <include refid="searchQuery"></include>
         ) temp order by temp.create_time desc
@@ -101,8 +101,8 @@
     <select id="selectPageForCommercialCommission"
             resultType="com.jtyjy.finance.manager.bean.BusinessPayCollection">
         select * from (
-        select *from db_budget.budget_business_pay_collection bbpc
-        <include refid="searchQuery"></include>)
+        select * from db_budget.budget_business_pay_collection bbpc
+        <include refid="searchQuery"></include>
         ) temp order by temp.create_time desc
     </select>
 </mapper>

@@ -82,7 +82,7 @@ public class BusinessPayCollectionServiceImpl extends ServiceImpl<BusinessPayCol
                         ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth());
                 break;
             case BIG_MANAGER:
-                WbPerson person = PersonCache.getPersonByEmpNo(empNo);
+                WbPerson person = PersonCache.getPersonByEmpNo(loginUser.getUserName());
                 if(person==null){
                    throw new RuntimeException("找不到员工");
                 }
@@ -120,8 +120,8 @@ public class BusinessPayCollectionServiceImpl extends ServiceImpl<BusinessPayCol
 
                         for (BusinessPayCollection entity : dataList) {
                             try {
-                                String collectionEmpNo = entity.getEmpNo();
-                                WbPerson thisPerson = PersonCache.getPersonByEmpNo(collectionEmpNo);
+                                String empNo = entity.getEmpNo();
+                                WbPerson thisPerson = PersonCache.getPersonByEmpNo(empNo);
                                 if(thisPerson==null){
                                     throw new RuntimeException("工号不存在");
                                 }
@@ -142,6 +142,7 @@ public class BusinessPayCollectionServiceImpl extends ServiceImpl<BusinessPayCol
                                 try {
                                     this.save(entity);
                                 } catch (Exception e) {
+                                    throw new RuntimeException("保存失败");
 //                                    throw new DuplicateKeyException("工号:"+employeeJobNum+"户名:"+entity.getAccountName()+"已存在");
                                 }
                             } catch (DuplicateKeyException e){

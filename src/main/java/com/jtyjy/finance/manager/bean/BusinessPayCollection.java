@@ -64,7 +64,7 @@ public class BusinessPayCollection implements Serializable {
     /**
      * 员工工号
      */
-    @TableField(value = "empNo")
+    @TableField(value = "emp_no")
     @ApiModelProperty(value = "员工工号")
     @ExcelProperty(value = "员工工号")
     private String empNo;
