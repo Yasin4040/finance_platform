@@ -557,7 +557,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         wi.setRequestLevel("0");
         wi.setRequestName("提成申请单流程--" + userName);
         OAApplicationDTO oaDTO = new OAApplicationDTO();
-        oaDTO.setSqr(user.getUserName());
+        oaDTO.setSqr(oaUserId);
         oaDTO.setBm(oaDeptId);
         oaDTO.setZbrq(DateUtil.getStrYMDByDate(application.getCreateTime()) );
         oaDTO.setZfsy(application.getPaymentReason());
