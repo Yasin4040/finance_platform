@@ -124,7 +124,7 @@
 		union
 		select bei.* from budget_extractsum be
 		left join budget_extract_importdetail bei on be.id = bei.extractsumid
-		where bei.if_manager = 1 d bei.empno = #{empNo}
+		where bei.if_manager = 1 and bei.empno = #{empNo}
 		<include refid="searchQuery"></include>
 		    ) temp order by temp.createtime desc
 	</select>

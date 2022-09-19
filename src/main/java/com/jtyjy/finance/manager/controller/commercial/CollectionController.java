@@ -45,7 +45,7 @@ import static com.jtyjy.finance.manager.constants.Constants.IMPORT_INDIVIDUAL_FI
  * Description:
  * Created by ZiYao Lee on 2022/09/16.
  * Time: 10:17
- */@Api(tags = { "商务提成接口" })
+ */@Api(tags = { "商务回款明细接口" })
 @RestController
 @RequestMapping("/api/collection")
 @Slf4j

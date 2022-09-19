@@ -14,6 +14,7 @@ import com.jtyjy.finance.manager.vo.application.CommissionApplicationInfoUpdateV
 import com.jtyjy.finance.manager.vo.application.CommissionApplicationInfoVO;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +53,7 @@ public interface BudgetExtractCommissionApplicationService extends IService<Budg
 
     void validateApplication(BudgetExtractsum extractSum);
 
-    void uploadOA(BudgetExtractCommissionApplication application);
+    void uploadOA(BudgetExtractCommissionApplication application) throws IOException;
 
     void validateExtractMonth(String extractMonth);
 }

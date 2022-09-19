@@ -514,9 +514,9 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         }
     }
 
-    @SneakyThrows
+//    @SneakyThrows
     @Override
-    public void uploadOA(BudgetExtractCommissionApplication application) {
+    public void uploadOA(BudgetExtractCommissionApplication application) throws IOException {
         Long extractSumId = application.getExtractSumId();
         BudgetExtractsum extractSum = extractSumMapper.selectById(extractSumId);
 
@@ -582,6 +582,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                     temp = temp + charName;
                 }
                 fj = fj + temp;
+                is.close();
             }
         }
         oaDTO.setFj(fj);

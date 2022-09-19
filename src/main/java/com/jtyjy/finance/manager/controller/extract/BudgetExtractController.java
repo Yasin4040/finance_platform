@@ -437,6 +437,7 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 			String lockKey = "/finance-platform/extract/submit/" + ids;
 			ZookeeperShareLock zookeeperShareLock = new ZookeeperShareLock(this.curatorFramework, lockKey, null);
 			try {
+//				zookeeperShareLock.unLock();
 				zookeeperShareLock.tryLock();
 				this.extractsumService.submit(ids);
 			} catch (Exception e) {

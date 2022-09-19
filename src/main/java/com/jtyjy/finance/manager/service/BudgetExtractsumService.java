@@ -1178,7 +1178,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			// 2、用户填写了预算明细，则预算明细金额与绩效奖和预提绩效奖金额和一致
 			applicationService.validateApplication(extractsum);
 			//审核通过及已计算的不允许提交
-			if (extractsum.getStatus()!=0){
+			if (extractsum.getStatus()!=ExtractStatusEnum.DRAFT.getType()){
 				throw new RuntimeException("操作失败！非草稿状态，提成单号【" + extractsum.getCode() + "】不允许提交!");
 			}
 			//合并
@@ -1203,7 +1203,12 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 
 				applicationLogService.saveLog(application.getId(),OperationNodeEnum.SUBMITTED, LogStatusEnum.COMPLETE);
 				//uploadOA 上传OA
-				applicationService.uploadOA(application);
+				try {
+					applicationService.uploadOA(application);
+				} catch (IOException e) {
+					e.printStackTrace();
+					throw new RuntimeException("上传OA流程失败");
+				}
 				applicationService.updateById(application);
 			}
 		});

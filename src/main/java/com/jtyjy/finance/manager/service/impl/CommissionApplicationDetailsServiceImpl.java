@@ -3,8 +3,11 @@ package com.jtyjy.finance.manager.service.impl;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.jtyjy.core.interceptor.LoginThreadLocal;
 import com.jtyjy.finance.manager.bean.BudgetExtractImportdetail;
 import com.jtyjy.finance.manager.bean.WbUser;
+import com.jtyjy.finance.manager.cache.DeptCache;
+import com.jtyjy.finance.manager.cache.PersonCache;
 import com.jtyjy.finance.manager.enmus.RoleNameEnum;
 import com.jtyjy.finance.manager.enmus.ViewStatusEnum;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
@@ -54,7 +57,12 @@ public class CommissionApplicationDetailsServiceImpl extends ServiceImpl<BudgetE
                         ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth(),empNo,deptId);
                 break;
             case BIG_MANAGER:
-                deptId = loginUser.getUserId();
+                deptId = loginUser.getDeptId();
+               ;
+                //004IH0DMOLZGJ
+//                DeptCache.getByDeptId( PersonCache.getPersonByEmpNo().getDeptId());
+//                DeptCache.getByDeptId();
+//                UserThreadLocal.get().getDeptId();
                 page  = this.baseMapper.selectCommissionPageForBigManager(new Page<>(query.getPage(),query.getRows())
                         ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth(),empNo,deptId);
 
