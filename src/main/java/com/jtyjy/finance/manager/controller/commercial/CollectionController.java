@@ -15,6 +15,7 @@ import com.jtyjy.finance.manager.dto.commission.BusinessPayCollectionErrorDTO;
 import com.jtyjy.finance.manager.dto.individual.*;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.query.commission.CommissionQuery;
+import com.jtyjy.finance.manager.query.commission.UpdateViewRequest;
 import com.jtyjy.finance.manager.query.individual.IndividualFilesQuery;
 import com.jtyjy.finance.manager.service.BusinessPayCollectionService;
 import com.jtyjy.finance.manager.utils.EasyExcelUtil;
@@ -200,6 +201,21 @@ public class CollectionController {
         } finally {
             if (is != null) is.close();
         }
+    }
+
+    /**
+     * 批量 修改是否允许
+     */
+    @ApiOperation(value = "根据不同登陆用户 获取相应提成数据", httpMethod = "GET")
+    @PostMapping("/updateView")
+    public ResponseEntity updateView(@RequestBody UpdateViewRequest request) throws Exception {
+        try {
+            payCollectionService.updateView(request);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.error("修改失败");
+        }
+        return ResponseEntity.ok();
     }
 
 

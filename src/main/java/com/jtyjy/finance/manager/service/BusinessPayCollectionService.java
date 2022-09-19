@@ -6,6 +6,7 @@ import com.jtyjy.finance.manager.bean.BusinessPayCollection;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.jtyjy.finance.manager.dto.commission.BusinessPayCollectionErrorDTO;
 import com.jtyjy.finance.manager.query.commission.CommissionQuery;
+import com.jtyjy.finance.manager.query.commission.UpdateViewRequest;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -22,4 +23,6 @@ public interface BusinessPayCollectionService extends IService<BusinessPayCollec
     List<BusinessPayCollectionErrorDTO> importCollection(MultipartFile multipartFile);
 
     List<BusinessPayCollection> exportCollection(CommissionQuery query);
+
+    void updateView(UpdateViewRequest request);
 }

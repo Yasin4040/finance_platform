@@ -720,7 +720,15 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                                 .eq(BudgetExtractCommissionApplicationLog::getStatus, 1).count();
                         if (draftCount>0) {
                             throw new BusinessException("撤回失败,申请单已审批！");
+                        }else{
+                            String requestId = application.getRequestId();
+                            String oaCreatorId = application.getOaCreatorId();
+                            if (requestId != null) {
+                                this.oaService.deleteRequest(requestId, oaCreatorId);
+                            }
                         }
+
+
                     }else{
                         throw new BusinessException("撤回失败,申请单不是提交状态！");
                     }

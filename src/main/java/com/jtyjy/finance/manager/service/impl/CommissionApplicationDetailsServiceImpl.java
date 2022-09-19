@@ -13,6 +13,7 @@ import com.jtyjy.finance.manager.enmus.ViewStatusEnum;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.mapper.BudgetExtractImportdetailMapper;
 import com.jtyjy.finance.manager.query.commission.CommissionQuery;
+import com.jtyjy.finance.manager.query.commission.UpdateViewRequest;
 import com.jtyjy.finance.manager.service.CommissionApplicationDetailsService;
 import com.jtyjy.finance.manager.vo.application.CommissionImportDetailVO;
 import org.springframework.stereotype.Service;
@@ -76,5 +77,25 @@ public class CommissionApplicationDetailsServiceImpl extends ServiceImpl<BudgetE
                 break;
         }
         return page;
+    }
+
+    @Override
+    public void updateView(UpdateViewRequest request) {
+        List<BudgetExtractImportdetail> list = this.lambdaQuery().in(BudgetExtractImportdetail::getId, request.getIds()).list();
+        Boolean ifBig = request.getIfBig();
+        if(ifBig){
+            if(request.getIfAllow()){
+                list.forEach(x->x.setIfBigManager(1));
+            }else{
+                list.forEach(x->x.setIfBigManager(-1));
+            }
+        }else{
+            if(request.getIfAllow()){
+                list.forEach(x->x.setIfManager(1));
+            }else{
+                list.forEach(x->x.setIfManager(-1));
+            }
+        }
+        this.saveOrUpdateBatch(list);
     }
 }

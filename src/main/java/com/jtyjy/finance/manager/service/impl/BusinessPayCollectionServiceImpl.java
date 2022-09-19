@@ -13,6 +13,7 @@ import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.listener.easyexcel.PageReadListener;
 import com.jtyjy.finance.manager.mapper.BudgetYearPeriodMapper;
 import com.jtyjy.finance.manager.query.commission.CommissionQuery;
+import com.jtyjy.finance.manager.query.commission.UpdateViewRequest;
 import com.jtyjy.finance.manager.service.BusinessPayCollectionService;
 import com.jtyjy.finance.manager.mapper.BusinessPayCollectionMapper;
 import com.jtyjy.finance.manager.utils.BeanMapUtil;
@@ -200,6 +201,26 @@ public class BusinessPayCollectionServiceImpl extends ServiceImpl<BusinessPayCol
 //                    UnitCache.get(dto.getIssuedUnit()).getName():dto.getIssuedUnit());
 //        }
         return list;
+    }
+
+    @Override
+    public void updateView(UpdateViewRequest request) {
+        List<BusinessPayCollection> list = this.lambdaQuery().in(BusinessPayCollection::getId,request.getIds()).list();
+        Boolean ifBig = request.getIfBig();
+        if(ifBig){
+            if(request.getIfAllow()){
+                list.forEach(x->x.setIfBigManager(1));
+            }else{
+                list.forEach(x->x.setIfBigManager(-1));
+            }
+        }else{
+            if(request.getIfAllow()){
+                list.forEach(x->x.setIfManager(1));
+            }else{
+                list.forEach(x->x.setIfManager(-1));
+            }
+        }
+        this.saveOrUpdateBatch(list);
     }
 }
 

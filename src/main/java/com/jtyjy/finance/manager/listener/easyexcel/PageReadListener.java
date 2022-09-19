@@ -118,6 +118,8 @@ public class PageReadListener<T> implements ReadListener<T> {
     public void doAfterAllAnalysed(AnalysisContext context) {
         if (CollectionUtils.isNotEmpty(cachedDataList)) {
             consumer.accept(cachedDataList);
+        }else {
+            throw new RuntimeException("未获取到任何有效数据，模板导入错误");
         }
     }
 
