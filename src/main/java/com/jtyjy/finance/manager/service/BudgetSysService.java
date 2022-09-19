@@ -633,7 +633,7 @@ public class BudgetSysService {
             //历史信息
             QueryWrapper<BudgetMonthSubjectHis> wrapper = new QueryWrapper<BudgetMonthSubjectHis>().eq("yearid", yearid).eq("unitid", unitid).eq("subjectid", subjectid).eq("type", 0).eq("monthid", monthid);
             BudgetMonthSubjectHis budgetmonthSubjectHis = this.monthSubjecthisMapper.selectOne(wrapper);
-
+            if(budgetMonthSubject == null) return;
             budgetMonthSubject.setTotal(budgetMonthSubject.getTotal().add(total));
 
             this.monthSubjectMapper.updateById(budgetMonthSubject);

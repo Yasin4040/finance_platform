@@ -324,13 +324,18 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 			return individualEmployeeFiles.getEmployeeJobNum()+"&&"+individualEmployeeFiles.getEmployeeName();
 		})).forEach((key,list)->{
 			int size = list.stream().collect(Collectors.groupingBy(e -> e.getPayStatus())).size();
-			if(size>1){
+			if(size>1) {
 				String[] split = key.split("&&");
-				error.add(split[1]+"("+split[0]+")存在多种状态的个体户发放数据。");
+				error.add(split[1] + "(" + split[0] + ")存在多种状态的个体户发放数据。");
 			}
 		});
 		if(StringUtils.isNotBlank(error.toString())){
 			throw new RuntimeException(error.toString());
+		}
+		List<Long> billingUnitIdList = extractPersonalityPayDetails.stream().map(e -> e.getBillingUnitId()).distinct().collect(Collectors.toList());
+		List<BudgetBillingUnit> stopUnitList = billingUnitMapper.selectList(new LambdaQueryWrapper<BudgetBillingUnit>().in(BudgetBillingUnit::getId, billingUnitIdList).eq(BudgetBillingUnit::getStopFlag, 1));
+		if(!CollectionUtils.isEmpty(stopUnitList)){
+			throw new RuntimeException("发放单位【"+stopUnitList.stream().map(BudgetBillingUnit::getName).collect(Collectors.joining(","))+"】已被禁用。");
 		}
 		BudgetExtractTaxHandleRecord extractTaxHandleRecord = extractsumService.getExtractTaxHandleRecord(extractBatch);
 		if(extractTaxHandleRecord==null){
@@ -432,6 +437,12 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 			throw new RuntimeException("操作失败！该单据不支持此操作。");
 		}
 		List<BudgetExtractPersonalityPayDetail> extractPersonalityPayDetails = personalityPayDetailMapper.selectBatchIds(Arrays.asList(ids.split(",")));
+
+		List<Long> billingUnitIdList = extractPersonalityPayDetails.stream().map(e -> e.getBillingUnitId()).distinct().collect(Collectors.toList());
+		List<BudgetBillingUnit> stopUnitList = billingUnitMapper.selectList(new LambdaQueryWrapper<BudgetBillingUnit>().in(BudgetBillingUnit::getId, billingUnitIdList).eq(BudgetBillingUnit::getStopFlag, 1));
+		if(!CollectionUtils.isEmpty(stopUnitList)){
+			throw new RuntimeException("发放单位【"+stopUnitList.stream().map(BudgetBillingUnit::getName).collect(Collectors.joining(","))+"】已被禁用。");
+		}
 
 		long count = extractPersonalityPayDetails.stream().filter(e -> e.getPayStatus() == ExtractPersonalityPayStatusEnum.COMMON.type || e.getPayStatus() == ExtractPersonalityPayStatusEnum.TRANSFER.type).count();
 		if(count > 0){

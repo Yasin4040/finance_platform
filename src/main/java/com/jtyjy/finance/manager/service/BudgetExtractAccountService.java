@@ -14,10 +14,13 @@ import com.jtyjy.finance.manager.enmus.*;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.mapper.*;
 import com.jtyjy.finance.manager.vo.*;
+import com.jtyjy.weixin.message.MessageSender;
+import com.jtyjy.weixin.message.QywxTextMsg;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -48,6 +51,8 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 	private final BudgetExtractDelayApplicationMapper delayApplicationMapper;
 	private final BudgetExtractTaxHandleRecordMapper taxHandleRecordMapper;
 	private final BudgetExtractPersonalityPayDetailMapper personalityPayDetailMapper;
+	private final CommonService commonService;
+	private final MessageSender sender;
 
 	@Override
 	public BaseMapper<TabChangeLog> getLoggerMapper() {
@@ -250,6 +255,8 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 		 */
 		Integer batchUnCompleteTaskCount;
 		List<String> delayExtractCodeList = null;
+		String extractBatch = "";
+		String delayFlag = "";
 		if(isDelay){
 			BudgetExtractAccountTask budgetExtractAccountTask = accountTaskMapper.selectOne(new LambdaQueryWrapper<BudgetExtractAccountTask>().eq(BudgetExtractAccountTask::getExtractCode, accountDTO.getExtractCode()));
 			batchUnCompleteTaskCount = accountTaskMapper.selectCount(new LambdaQueryWrapper<BudgetExtractAccountTask>()
@@ -258,6 +265,7 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 					.eq(BudgetExtractAccountTask::getBatch,budgetExtractAccountTask.getBatch())
 					.eq(BudgetExtractAccountTask::getAccountantStatus, 0)
 					.eq(BudgetExtractAccountTask::getIsShouldAccount, 1));
+			extractBatch = budgetExtractAccountTask.getExtractMonth();
 
 			if(batchUnCompleteTaskCount == 0) {
 				delayExtractCodeList = accountTaskMapper.selectList(new LambdaQueryWrapper<BudgetExtractAccountTask>()
@@ -267,18 +275,28 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 						.eq(BudgetExtractAccountTask::getAccountantStatus, 1)
 						.eq(BudgetExtractAccountTask::getIsShouldAccount, 1)).stream().map(BudgetExtractAccountTask::getExtractCode).collect(Collectors.toList());
 			}
+			delayFlag = "【延期】";
 		}else{
 			batchUnCompleteTaskCount = accountTaskMapper.selectCount(new LambdaQueryWrapper<BudgetExtractAccountTask>()
 					.eq(BudgetExtractAccountTask::getTaskType, accountTasks.get(0).getTaskType())
 					.eq(BudgetExtractAccountTask::getExtractMonth, accountTasks.get(0).getExtractMonth())
 					.eq(BudgetExtractAccountTask::getAccountantStatus, 0)
 					.eq(BudgetExtractAccountTask::getIsShouldAccount, 1));
+			extractBatch = accountTasks.get(0).getExtractMonth();
 		}
 
 		if(batchUnCompleteTaskCount == 0){
 			//做账全部完成。
 			Map<Long, BudgetBillingUnit> unitMap = this.billingUnitMapper.selectList(null).stream().collect(Collectors.toMap(BudgetBillingUnit::getId, Function.identity()));
 			extractsumService.finishAccount(isDelay,delayExtractCodeList,accountTasks.get(0).getExtractMonth(),unitMap);
+			try{
+				List<BudgetExtractsum> list = extractsumService.list(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getExtractmonth, extractBatch));
+				BudgetYearPeriod budgetYearPeriod = yearPeriodMapper.selectById(list.get(0).getYearid());
+				List<String> empNo = commonService.getEmpNoListByRoleNames(RoleNameEnum.PAY.value);
+				if(!CollectionUtils.isEmpty(empNo))sender.sendQywxMsg(new QywxTextMsg(String.join("|", empNo), null, null, 0, delayFlag+budgetYearPeriod.getPeriod()+Integer.parseInt(extractBatch.substring(4,6))+"月"+Integer.parseInt(extractBatch.substring(6,8))+"批提成已做账完成，可进行付款操作！", null));
+			}catch (Exception ignored){
+
+			}
 		}
 	}
 
