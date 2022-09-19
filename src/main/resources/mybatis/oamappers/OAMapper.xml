@@ -25,6 +25,9 @@
     <select id="getOaUserId" resultType="java.lang.String">
 		SELECT CONCAT(CONCAT(id,','),DEPARTMENTID) FROM ECOLOGY2.HRMRESOURCE h WHERE LOGINID  = #{empNo}
 	</select>
+	<select id="getDeptId" resultType="java.lang.String">
+		SELECT h.id FROM ECOLOGY2.HRMDEPARTMENT h WHERE DEPARTMENTNAME = #{deptName}
+	</select>
 	<select id="getNodeName" resultType="java.lang.String">
 		SELECT NODENAME AS name FROM ECOLOGY2.WORKFLOW_NODEBASE wn where wn.ID = #{nodeId}
 	</select>

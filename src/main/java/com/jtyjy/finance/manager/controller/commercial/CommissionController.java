@@ -16,6 +16,7 @@ import com.jtyjy.finance.manager.query.commission.UpdateViewRequest;
 import com.jtyjy.finance.manager.query.individual.IndividualFilesQuery;
 import com.jtyjy.finance.manager.service.CommissionApplicationDetailsService;
 import com.jtyjy.finance.manager.utils.EasyExcelUtil;
+import com.jtyjy.finance.manager.vo.application.CommissionImportDetailPowerVO;
 import com.jtyjy.finance.manager.vo.application.CommissionImportDetailVO;
 import com.jtyjy.finance.manager.vo.individual.IndividualEmployeeFilesVO;
 import io.swagger.annotations.Api;
@@ -58,8 +59,8 @@ public class CommissionController {
      */
     @ApiOperation(value = "根据不同登陆用户 获取相应提成数据", httpMethod = "GET")
     @GetMapping("/selectCommissionPage")
-    public ResponseEntity<PageResult<CommissionImportDetailVO>> selectCommissionPage(@ModelAttribute CommissionQuery query) throws Exception {
-        IPage<CommissionImportDetailVO> page = detailsService.selectCommissionPage(query);
+    public ResponseEntity<PageResult<CommissionImportDetailPowerVO>> selectCommissionPage(@ModelAttribute CommissionQuery query) throws Exception {
+        IPage<CommissionImportDetailPowerVO> page = detailsService.selectCommissionPage(query);
         return ResponseEntity.ok(PageResult.apply(page.getTotal(), page.getRecords()));
     }
 

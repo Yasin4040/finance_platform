@@ -135,7 +135,8 @@ public class CommissionDetailsImportDTO {
 
 
     //其他罚款
-
+    @ExcelProperty(value = "往来成本")
+    private BigDecimal previousCost;
     @ExcelProperty(value = "往来扣款")
     private BigDecimal currentDeduction;
     @ExcelProperty(value = "扣担保")

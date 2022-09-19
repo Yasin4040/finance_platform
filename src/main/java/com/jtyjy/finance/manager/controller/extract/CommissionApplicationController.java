@@ -425,14 +425,16 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
         String nonConformancePenalty = data.get(35);//未达标罚款   30 列
 
         //其他罚款
-        String currentDeduction = data.get(36);//往来扣款
-        String deductionGuarantee = data.get(37);//扣担保
-        String deductCreditInformation = data.get(38);//扣征信
+        //其他罚款
+        String previousCost = data.get(36);//往届成本
+        String currentDeduction = data.get(37);//往来扣款
+        String deductionGuarantee = data.get(38);//扣担保
+        String deductCreditInformation = data.get(39);//扣征信
 
-        String salesmanAdvance = data.get(39);//业务员垫支
-        String otherTypesDeduction = data.get(40);//其他类型 扣款
-        String subtotalOfDeduction = data.get(41);//扣款小计
-        String copeextract = data.get(42);//实发金额
+        String salesmanAdvance = data.get(40);//业务员垫支
+        String otherTypesDeduction = data.get(41);//其他类型 扣款
+        String subtotalOfDeduction = data.get(42);//扣款小计
+        String copeextract = data.get(43);//实发金额
 
 
 //        extractImportdetail.setExtractsumid(extractSum.getId());
@@ -492,6 +494,7 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
         extractImportdetail.setNonConformancePenalty(getBigDecimal(nonConformancePenalty));
 
         //其他罚款
+        extractImportdetail.setPreviousCost(getBigDecimal(previousCost));
         extractImportdetail.setCurrentDeduction(getBigDecimal(currentDeduction));
         extractImportdetail.setDeductionGuarantee(getBigDecimal(deductionGuarantee));
         extractImportdetail.setDeductCreditInformation(getBigDecimal(deductCreditInformation));
@@ -500,7 +503,7 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
         extractImportdetail.setSubtotalOfDeduction(getBigDecimal(subtotalOfDeduction));
         extractImportdetail.setCopeextract(getBigDecimal(copeextract));
 
-        extractImportdetail.setErrMsg( data.get(43)!=null?data.get(43).toString():"");
+        extractImportdetail.setErrMsg( data.get(44)!=null?data.get(44).toString():"");
         return extractImportdetail;
     }
     private BigDecimal getBigDecimal(String object){

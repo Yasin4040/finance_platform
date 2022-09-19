@@ -353,6 +353,8 @@ public class BudgetExtractImportdetail implements Serializable {
     private Integer ifBigManager;
     @TableField(value = "if_manager")
     private Integer ifManager;
+    @TableField(value = "previous_cost")
+    private BigDecimal previousCost;
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 

@@ -13,6 +13,6 @@ public interface OAMapper extends BaseMapper<OaUser> {
     List<Map<String, String>> getNodeList(@Param("values") List<String> values);
 
     String getOaUserId(@Param("empNo") String empNo);
-
+    String getDeptId(@Param("deptName") String deptName);
     String getNodeName(int nodeId);
 }

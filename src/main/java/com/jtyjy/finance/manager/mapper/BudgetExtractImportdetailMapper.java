@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.jtyjy.finance.manager.vo.application.CommissionImportDetailPowerVO;
 import com.jtyjy.finance.manager.vo.application.CommissionImportDetailVO;
 import org.apache.ibatis.annotations.Param;
 
@@ -21,11 +22,11 @@ public interface BudgetExtractImportdetailMapper extends BaseMapper<BudgetExtrac
 
 	List<ExtractImportDetailVO> getExtractImportDetails(Page<ExtractImportDetailVO> pageCond, @Param("params")Map<String, Object> params);
 
-    IPage<CommissionImportDetailVO> selectCommissionPageForCommercialCommission(Page<Object> objectPage,@Param("employeeName") String employeeName,@Param("departmentName") String departmentName
+    IPage<CommissionImportDetailPowerVO> selectCommissionPageForCommercialCommission(Page<Object> objectPage, @Param("employeeName") String employeeName, @Param("departmentName") String departmentName
+			, @Param("yearId") String yearId, @Param("monthId") String monthId, @Param("extractMonth") String extractMonth, @Param("empNo") String empNo, @Param("deptId") String deptId);
+	IPage<CommissionImportDetailPowerVO> selectCommissionPageForManager(Page<Object> objectPage,@Param("employeeName") String employeeName,@Param("departmentName") String departmentName
 			,@Param("yearId") String yearId,@Param("monthId") String monthId,@Param("extractMonth") String extractMonth,@Param("empNo") String empNo,@Param("deptId") String deptId);
-	IPage<CommissionImportDetailVO> selectCommissionPageForManager(Page<Object> objectPage,@Param("employeeName") String employeeName,@Param("departmentName") String departmentName
-			,@Param("yearId") String yearId,@Param("monthId") String monthId,@Param("extractMonth") String extractMonth,@Param("empNo") String empNo,@Param("deptId") String deptId);
-	IPage<CommissionImportDetailVO> selectCommissionPageForBigManager(Page<Object> objectPage,@Param("employeeName") String employeeName,@Param("departmentName") String departmentName
+	IPage<CommissionImportDetailPowerVO> selectCommissionPageForBigManager(Page<Object> objectPage,@Param("employeeName") String employeeName,@Param("departmentName") String departmentName
 			,@Param("yearId") String yearId,@Param("monthId") String monthId,@Param("extractMonth") String extractMonth,@Param("empNo") String empNo,@Param("deptId") String deptId);
 
     List<BudgetExtractImportdetail> getAllByExtractMonth(String extractMonth);

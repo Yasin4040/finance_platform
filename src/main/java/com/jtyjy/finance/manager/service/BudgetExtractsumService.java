@@ -583,7 +583,8 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			throw new RuntimeException(businessType+","+empNo+","+empName+"存在重复数据");
 		}
 
-		String sftc = data.get(42);//实发金额
+//		String sftc = data.get(42);//实发金额 增加了一个字段
+		String sftc = data.get(43);//实发金额
 		String zhs = data.get(21); //综合税
 
 		if (StringUtils.isBlank(businessType)) {

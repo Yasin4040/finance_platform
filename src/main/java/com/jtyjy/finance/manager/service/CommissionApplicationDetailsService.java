@@ -7,6 +7,7 @@ import com.jtyjy.finance.manager.bean.BudgetExtractImportdetail;
 import com.jtyjy.finance.manager.bean.BudgetExtractdetail;
 import com.jtyjy.finance.manager.query.commission.CommissionQuery;
 import com.jtyjy.finance.manager.query.commission.UpdateViewRequest;
+import com.jtyjy.finance.manager.vo.application.CommissionImportDetailPowerVO;
 import com.jtyjy.finance.manager.vo.application.CommissionImportDetailVO;
 
 /**
@@ -16,7 +17,7 @@ import com.jtyjy.finance.manager.vo.application.CommissionImportDetailVO;
 */
 public interface CommissionApplicationDetailsService extends IService<BudgetExtractImportdetail> {
 
-    IPage<CommissionImportDetailVO> selectCommissionPage(CommissionQuery query);
+    IPage<CommissionImportDetailPowerVO> selectCommissionPage(CommissionQuery query);
 
     void updateView(UpdateViewRequest request);
 }

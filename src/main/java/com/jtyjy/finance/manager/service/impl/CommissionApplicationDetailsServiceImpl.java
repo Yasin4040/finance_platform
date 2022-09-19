@@ -15,6 +15,7 @@ import com.jtyjy.finance.manager.mapper.BudgetExtractImportdetailMapper;
 import com.jtyjy.finance.manager.query.commission.CommissionQuery;
 import com.jtyjy.finance.manager.query.commission.UpdateViewRequest;
 import com.jtyjy.finance.manager.service.CommissionApplicationDetailsService;
+import com.jtyjy.finance.manager.vo.application.CommissionImportDetailPowerVO;
 import com.jtyjy.finance.manager.vo.application.CommissionImportDetailVO;
 import org.springframework.stereotype.Service;
 
@@ -29,8 +30,8 @@ import java.util.List;
 public class CommissionApplicationDetailsServiceImpl extends ServiceImpl<BudgetExtractImportdetailMapper, BudgetExtractImportdetail>
         implements CommissionApplicationDetailsService {
     @Override
-    public IPage<CommissionImportDetailVO> selectCommissionPage(CommissionQuery query) {
-        IPage<CommissionImportDetailVO> page = new Page<>();
+    public IPage<CommissionImportDetailPowerVO> selectCommissionPage(CommissionQuery query) {
+        IPage<CommissionImportDetailPowerVO> page = new Page<>();
         String deptId="";
         String empNo="";
         //假设当前用户为业务经理。1，只看工号。 empNo。

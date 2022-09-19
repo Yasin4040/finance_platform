@@ -186,6 +186,19 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             infoVO.setAttachmentList(attachmentVOList);
 
             List<BudgetExtractCommissionApplicationLog> applicationLogs = logService.list(new LambdaQueryWrapper<BudgetExtractCommissionApplicationLog>().eq(BudgetExtractCommissionApplicationLog::getApplicationId, application.getId()));
+            List<String> nodeList = new ArrayList<>();
+            nodeList.add("部门负责人");
+            nodeList.add("职能管理部门");
+            nodeList.add("财务销售组");
+            nodeList.add("财务销售处长");
+            nodeList.add("财务负责人");
+            applicationLogs = applicationLogs.stream().filter(x->nodeList.contains(x.getNodeName())).collect(Collectors.toList());
+
+//            DEPARTMENT_HEAD(2,"部门负责人审核"),
+//                    FUNCTIONAL_DEPARTMENT(3,"职能管理部门审核"),
+//                    FINANCIAL_SALES_TEAM(4,"财务销售组审核"),
+//                    FINANCIAL_SALES_TEAM_HEAD(5,"财务销售处长审核"),
+//                    FINANCIAL_DIRECTOR(6,"财务负责人审核"),
             for (BudgetExtractCommissionApplicationLog record : applicationLogs) {
                 record.setStatusName(LogStatusEnum.getValue(record.getStatus()));
                 record.setNodeName(OperationNodeEnum.getValue(record.getNode())==null?record.getNodeName():OperationNodeEnum.getValue(record.getNode()));
@@ -519,16 +532,21 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     public void uploadOA(BudgetExtractCommissionApplication application) throws IOException {
         Long extractSumId = application.getExtractSumId();
         BudgetExtractsum extractSum = extractSumMapper.selectById(extractSumId);
-
+        //预算单位
+        String deptName = extractSum.getDeptname();
+        String oaDeptId = oaMapper.getDeptId(deptName);
+        if(StringUtils.isNotBlank(oaDeptId)){
+            throw new RuntimeException("没有找到oa中对应的预算单位！");
+        }
         WbUser user = UserThreadLocal.get();
         //获取oa 用户
         String userIdDeptId = oaMapper.getOaUserId(user.getUserName());
 //        String userIdDeptId = oaService.getOaUserId(user.getUserName(),new ArrayList<>());
         String oaUserId = userIdDeptId.split(",")[0];
-        String oaDeptId = userIdDeptId.split(",")[1];
+//        String oaDeptId = userIdDeptId.split(",")[1];
 //        oaUserId = "5001";
         if(oaUserId.equals("0")){
-            throw new RuntimeException("环境问题找不到oa的userId");
+            throw new RuntimeException("环境问题找不到oa的userId!");
         }
         application.setOaCreatorId(oaUserId);
         //todo 需要更新
@@ -941,15 +959,26 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         String badDebtAssessment = data.get(34);//坏账考核   30 列
         String nonConformancePenalty = data.get(35);//未达标罚款   30 列
 
-        //其他罚款
-        String currentDeduction = data.get(36);//往来扣款
-        String deductionGuarantee = data.get(37);//扣担保
-        String deductCreditInformation = data.get(38);//扣征信
+//        //其他罚款
+//        String currentDeduction = data.get(36);//往来扣款
+//        String deductionGuarantee = data.get(37);//扣担保
+//        String deductCreditInformation = data.get(38);//扣征信
+//
+//        String salesmanAdvance = data.get(39);//业务员垫支
+//        String otherTypesDeduction = data.get(40);//其他类型 扣款
+//        String subtotalOfDeduction = data.get(41);//扣款小计
+//        String copeextract = data.get(42);//实发金额
 
-        String salesmanAdvance = data.get(39);//业务员垫支
-        String otherTypesDeduction = data.get(40);//其他类型 扣款
-        String subtotalOfDeduction = data.get(41);//扣款小计
-        String copeextract = data.get(42);//实发金额
+        //其他罚款
+        String previousCost = data.get(36);//往届成本
+        String currentDeduction = data.get(37);//往来扣款
+        String deductionGuarantee = data.get(38);//扣担保
+        String deductCreditInformation = data.get(39);//扣征信
+
+        String salesmanAdvance = data.get(40);//业务员垫支
+        String otherTypesDeduction = data.get(41);//其他类型 扣款
+        String subtotalOfDeduction = data.get(42);//扣款小计
+        String copeextract = data.get(43);//实发金额
 
 
         BudgetYearPeriod yearPeriod = getPeriodByName(tcPeriod);
@@ -1021,6 +1050,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             extractImportdetail.setNonConformancePenalty(getBigDecimal(nonConformancePenalty));
 
             //其他罚款
+            extractImportdetail.setPreviousCost(getBigDecimal(previousCost));
             extractImportdetail.setCurrentDeduction(getBigDecimal(currentDeduction));
             extractImportdetail.setDeductionGuarantee(getBigDecimal(deductionGuarantee));
             extractImportdetail.setDeductCreditInformation(getBigDecimal(deductCreditInformation));
