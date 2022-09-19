@@ -5270,7 +5270,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				}
 				task.setExtractCode(distributedNumber.getExtractDelayNum());
 				task.setTaskType(ExtractTaskTypeEnum.DELAY.type);
-				list.forEach(e->{
+				sameBillingUnitList.forEach(e->{
 					e.setExtractCode(task.getExtractCode());
 					e.setPayStatus(task.getTaskType());
 				});
@@ -5529,7 +5529,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			try{
 				List<BudgetExtractsum> list = this.list(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getExtractmonth, extractBatch));
 				BudgetYearPeriod budgetYearPeriod = yearMapper.selectById(list.get(0).getYearid());
-				sender.sendQywxMsg(new QywxTextMsg(accountants, null, null, 0, budgetYearPeriod.getPeriod()+Integer.parseInt(extractBatch.substring(4,6))+"月"+Integer.parseInt(extractBatch.substring(6,8))+"批提成已计算完成，可进行账务操作！", null));
+				if(StringUtils.isNotBlank(accountants))sender.sendQywxMsg(new QywxTextMsg(accountants, null, null, 0, budgetYearPeriod.getPeriod()+Integer.parseInt(extractBatch.substring(4,6))+"月"+Integer.parseInt(extractBatch.substring(6,8))+"批提成已计算完成，可进行账务操作！", null));
 			}catch (Exception e){}
 			accountTaskService.saveBatch(accountTasks);
 		}

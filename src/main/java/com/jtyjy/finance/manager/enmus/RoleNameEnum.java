@@ -7,7 +7,10 @@ package com.jtyjy.finance.manager.enmus;
 public enum RoleNameEnum {
 	COMMERCIAL_COMMISSION(1,"商务提成"),
     BIG_MANAGER(2,"大区经理"),
-    MANAGER(3,"业务经理");
+    MANAGER(3,"业务经理"),
+    TAX(4,"税筹计算"),
+    ACCOUNT(5,"账务做账"),
+    PAY(6,"出纳付款");
 
 	public String value;
     public int type;
