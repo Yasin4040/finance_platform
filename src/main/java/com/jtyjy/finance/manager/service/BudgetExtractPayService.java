@@ -54,6 +54,7 @@ public class BudgetExtractPayService {
 	private final BudgetExtractsumService extractsumService;
 	private final BudgetExtractAccountTaskMapper accountTaskMapper;
 	private final BudgetExtractTaxHandleRecordMapper taxHandleRecordMapper;
+	private final BudgetExtractPersonalityPayDetailMapper personalityPayDetailMapper;
 	@Value("${tc.redis.key}")
 	private String TC_REDIS_KEY;
 
@@ -303,24 +304,24 @@ public class BudgetExtractPayService {
 	 */
 	public void payReject(String extractBatch) {
 		List<BudgetExtractsum> batchExtractSums = extractsumService.getFutureBatchExtractSumContainSelf(extractBatch);
-//		batchExtractSums.stream().collect(Collectors.groupingBy(BudgetExtractsum::getExtractmonth)).forEach((batch,curBatchExtractSums)->{
-//			if(extractBatch.equals(batch)){
-//				long payFinishCount = curBatchExtractSums.stream().filter(e -> e.getStatus() >= ExtractStatusEnum.PAY.type).count();
-//				if(payFinishCount>0){
-//					throw new RuntimeException("提成批次"+batch+"已有提成支付申请单流转至后续环节！");
-//				}
-//				//当前批次存在延期支付申请单到了后续环节，不允许退回
-//				Integer delayPayFinishCount = delayApplicationMapper.selectCount(new LambdaQueryWrapper<BudgetExtractDelayApplication>().in(BudgetExtractDelayApplication::getExtractMonth, extractBatch).ge(BudgetExtractDelayApplication::getStatus, ExtractDelayStatusEnum.PAY.type));
-//				if(delayPayFinishCount > 0 ){
-//					throw new RuntimeException("提成批次"+batch+"已有延期支付申请单流转至后续环节！");
-//				}
-//			}else{
+		batchExtractSums.stream().collect(Collectors.groupingBy(BudgetExtractsum::getExtractmonth)).forEach((batch,curBatchExtractSums)->{
+			if(extractBatch.equals(batch)){
+				long payFinishCount = curBatchExtractSums.stream().filter(e -> e.getStatus() >= ExtractStatusEnum.PAY.type).count();
+				if(payFinishCount>0){
+					throw new RuntimeException("提成批次"+batch+"已有提成支付申请单流转至后续环节！");
+				}
+				//当前批次存在延期支付申请单到了后续环节，不允许退回
+				Integer delayPayFinishCount = delayApplicationMapper.selectCount(new LambdaQueryWrapper<BudgetExtractDelayApplication>().in(BudgetExtractDelayApplication::getExtractMonth, extractBatch).ge(BudgetExtractDelayApplication::getStatus, ExtractDelayStatusEnum.PAY.type));
+				if(delayPayFinishCount > 0 ){
+					throw new RuntimeException("提成批次"+batch+"已有延期支付申请单流转至后续环节！");
+				}
+			}else{
 //				BudgetExtractTaxHandleRecord extractTaxHandleRecord = extractsumService.getExtractTaxHandleRecord(batch);
 //				if(extractTaxHandleRecord!=null && (extractTaxHandleRecord.getIsCalComplete() || extractTaxHandleRecord.getIsPersonalityComplete())){
 //					throw new RuntimeException("已有后续批次"+batch+"已被处理！");
 //				}
-//			}
-//		});
+			}
+		});
 		List<Long> sumIds = batchExtractSums.stream().filter(e -> e.getExtractmonth().equals(extractBatch)).map(BudgetExtractsum::getId).collect(Collectors.toList());
 		List<String> extractCodeList = batchExtractSums.stream().filter(e -> e.getExtractmonth().equals(extractBatch)).map(BudgetExtractsum::getCode).collect(Collectors.toList());
 		List<String> delayCodeList = delayApplicationMapper.selectList(new LambdaQueryWrapper<BudgetExtractDelayApplication>().eq(BudgetExtractDelayApplication::getExtractMonth, extractBatch)).stream().map(e -> e.getDelayCode()).collect(Collectors.toList());
@@ -343,5 +344,6 @@ public class BudgetExtractPayService {
 		extractsumService.generateExtractStepLog(sumIds, OperationNodeEnum.CASHIER_PAYMENT,"【"+OperationNodeEnum.getValue(OperationNodeEnum.CASHIER_PAYMENT.getType()) + "】退回",LogStatusEnum.REJECT.getCode());
 		taxHandleRecordMapper.update(new BudgetExtractTaxHandleRecord(),new LambdaUpdateWrapper<BudgetExtractTaxHandleRecord>().eq(BudgetExtractTaxHandleRecord::getExtractMonth,extractBatch).set(BudgetExtractTaxHandleRecord::getIsPersonalityComplete,0));
 		perPayDetailService.remove(new LambdaQueryWrapper<BudgetExtractPerPayDetail>().eq(BudgetExtractPerPayDetail::getExtractMonth,extractBatch));
+		personalityPayDetailMapper.update(new BudgetExtractPersonalityPayDetail(),new LambdaUpdateWrapper<BudgetExtractPersonalityPayDetail>().eq(BudgetExtractPersonalityPayDetail::getExtractMonth,extractBatch).set(BudgetExtractPersonalityPayDetail::getOperateTime,null));
 	}
 }

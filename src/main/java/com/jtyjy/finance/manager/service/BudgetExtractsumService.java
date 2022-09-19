@@ -5485,6 +5485,10 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	private List<BudgetExtractAccountTask> createAccountTask(String extractBatch,List<BudgetExtractPerPayDetail> perPayDetails,List<BudgetExtractsum> curBatchExtractSum,Map<Long, BudgetBillingUnit> unitMap){
 
 		List<BudgetExtractAccountTask> accountTasks = new ArrayList<>();
+		//是否是测试环境
+		boolean test = isTest();
+		//测试消息通知人
+		String testNotice = getTestNotice();
 		Date date = new Date();
 		perPayDetails.stream().collect(Collectors.groupingBy(e->e.getExtractCode())).forEach((code,list)->{
 			accountTasks.addAll(list.stream().map(e->e.getBillingUnitId()).distinct().filter(e->{
@@ -5513,6 +5517,15 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		});
 
 		if(!accountTasks.isEmpty()) {
+			String accountants = accountTasks.stream().flatMap(e -> Arrays.stream(e.getPlanAccountantEmpNos().split(","))).distinct().collect(Collectors.joining("|"));
+			if(test){
+				accountants = testNotice;
+			}
+			try{
+				List<BudgetExtractsum> list = this.list(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getExtractmonth, extractBatch));
+				BudgetYearPeriod budgetYearPeriod = yearMapper.selectById(list.get(0).getYearid());
+				sender.sendQywxMsg(new QywxTextMsg(accountants, null, null, 0, budgetYearPeriod.getPeriod()+Integer.parseInt(extractBatch.substring(4,6))+"月"+Integer.parseInt(extractBatch.substring(6,8))+"批提成已计算完成，可进行账务操作！", null));
+			}catch (Exception e){}
 			accountTaskService.saveBatch(accountTasks);
 		}
 		return accountTasks;

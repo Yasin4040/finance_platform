@@ -4,6 +4,7 @@ import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.WriteTable;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -71,7 +72,8 @@ public class CommonService extends DefaultBaseService<WbBanksMapper, WbBanks> {
     @Value("${sunpay.add.url}")
     private String sunPayUrl;
 
-
+    @Value("${auth.role.user.url}")
+    private String authRoleUserUrl;
 
     @Override
     public void doLog(LoggerAction loggerAction, DefaultChangeLog changeLog) throws Exception {
@@ -372,6 +374,17 @@ public class CommonService extends DefaultBaseService<WbBanksMapper, WbBanks> {
             });
             workBook.finish();
         }
+    }
+
+    /**
+     * <p>通过角色名获取工号列表</p>
+     * @author minzhq
+     * @date 2022/9/19 9:39
+     * @param roleName
+     */
+    public List<String> getEmpNoListByRoleNames(String roleName){
+        String result = HttpUtil.doGet(this.authRoleUserUrl + roleName);
+        return JSON.parseArray(result, String.class);
     }
 
 }
