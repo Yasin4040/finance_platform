@@ -18,6 +18,7 @@ import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -53,7 +54,8 @@ public class CommissionApplicationLogController {
                 List<BudgetExtractCommissionApplicationLog> records = page.getRecords();
                 for (BudgetExtractCommissionApplicationLog record : records) {
                     record.setStatusName(LogStatusEnum.getValue(record.getStatus()));
-                    record.setNodeName(OperationNodeEnum.getValue(record.getNode()));
+
+                    record.setNodeName(StringUtils.isNotBlank(record.getNodeName())?record.getNodeName():OperationNodeEnum.getValue(record.getNode()));
                 }
                 return ResponseEntity.ok(PageResult.apply(page.getTotal(),page.getRecords()));
             }

@@ -108,8 +108,19 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
         extractLog.setCreateBy(empNo);
         extractLog.setCreatorName(username);
         extractLog.setCreateTime(new Date());
-        //）0已完成   1 同意 2退回  todo
-        extractLog.setStatus(Integer.valueOf(nodeType));
+        // 财务       0完成。 1 同意 2退回
+        //oa中    0批准   3和1 哪个是拒绝 5 删除
+        Integer.valueOf(nodeType);
+        //3未知
+        Integer logStatus=3;
+        if(nodeType.equals("0")){
+            logStatus = LogStatusEnum.PASS.getCode();
+        }else if (nodeType.equals("1")){
+            logStatus = LogStatusEnum.REJECT.getCode();
+        }else {
+            logStatus = -1;
+        }
+        extractLog.setStatus(logStatus);
         extractLog.setRemarks(remark);
         this.save(extractLog);
         //如果节点通过
