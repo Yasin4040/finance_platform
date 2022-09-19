@@ -133,18 +133,12 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 			excelData.setRemainingPayLimitMoney(BigDecimal.ZERO);
 		}else{
 			Map<Long, List<IndividualEmployeeTicketReceiptInfo>> receiptInfoMap = extractsumService.getIndividualEmployeeTicketReceiptInfoList(Lists.newArrayList(personalityId)).stream().collect(Collectors.groupingBy(e -> e.getIndividualEmployeeInfoId()));
-			List<BudgetExtractPersonalityPayDetail> effectList = personalityPayDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractPersonalityPayDetail>().eq(BudgetExtractPersonalityPayDetail::getExtractMonth,extractBatch).eq(BudgetExtractPersonalityPayDetail::getPersonalityId, personalityId).ne(id!=null,BudgetExtractPersonalityPayDetail::getId,id)).stream().filter(e -> {
-				BudgetBillingUnit budgetBillingUnit1 = billingUnitMapper.selectById(billingUnitId);
-				return !(budgetBillingUnit.getCorporation() == 0 || (budgetBillingUnit.getCorporation() == 1 && individualEmployeeFiles.getAccountType() == 1));
-			}).collect(Collectors.toList());
 			Map<Long, BigDecimal> initReceiptMap = personalityPayDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractPersonalityPayDetail>().eq(BudgetExtractPersonalityPayDetail::getIsInitData, 1).eq(BudgetExtractPersonalityPayDetail::getPersonalityId, personalityId)).stream().collect(Collectors.toMap(e -> e.getPersonalityId(), e -> e.getReceiptSum(),(e1,e2)->e1));
 			BigDecimal initReceipt = BigDecimal.ZERO;
 			if(initReceiptMap.get(personalityId)!=null){
 				initReceipt = initReceiptMap.get(personalityId);
 			}
-			BigDecimal total = effectList.stream().map(e->{
-				return e.getExtractSum().add(e.getSalarySum()).add(e.getWelfareSum()).add(e.getCurSalary()).add(e.getCurRealExtract()).add(e.getCurWelfare());
-			}).reduce(BigDecimal.ZERO,BigDecimal::add);
+			BigDecimal total = excelData.getExtractSum().add(excelData.getWelfareSum()).add(excelData.getSalarySum());
 			total = total.add(payTotal==null?BigDecimal.ZERO:payTotal);
 			BigDecimal subtract = excelData.getReceiptSum().subtract(total);
 			BigDecimal annualQuota = individualEmployeeFiles.getAnnualQuota() == null ? BigDecimal.ZERO : individualEmployeeFiles.getAnnualQuota();
