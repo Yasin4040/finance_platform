@@ -45,6 +45,9 @@ public class CommissionApplicationDetailsServiceImpl extends ServiceImpl<BudgetE
         }else if(roleNameList.contains(RoleNameEnum.MANAGER.getValue())){
             mainRole = RoleNameEnum.MANAGER;
         }
+        if(mainRole==null){
+            return page;
+        }
         switch (mainRole){
             case COMMERCIAL_COMMISSION:
                 page  = this.baseMapper.selectCommissionPageForCommercialCommission(new Page<>(query.getPage(),query.getRows())

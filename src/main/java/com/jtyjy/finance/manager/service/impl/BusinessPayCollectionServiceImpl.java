@@ -69,6 +69,9 @@ public class BusinessPayCollectionServiceImpl extends ServiceImpl<BusinessPayCol
         if (StringUtils.isNotBlank(query.getMonthId())) {
             query.setMonthId(query.getMonthId()+"月");
         }
+        if(mainRole==null){
+            return page;
+        }
         switch (mainRole){
             case COMMERCIAL_COMMISSION:
                 page  = this.baseMapper.selectPageForCommercialCommission(new Page<>(query.getPage(),query.getRows())

@@ -652,11 +652,11 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
 
     private void validData(IndividualIssueExportDTO dto) {
         //发放单位验证
-//        String issuedUnit = dto.getIssuedUnit();
-//        BudgetBillingUnit billingUnit = UnitCache.getByName(issuedUnit);
-//        if(billingUnit==null){
-//            throw new RuntimeException("请填写正确的发放单位");
-//        }
+        String issuedUnit = dto.getIssuedUnit();
+        BudgetBillingUnit billingUnit = UnitCache.getByName(issuedUnit);
+        if(billingUnit==null){
+            throw new RuntimeException("请填写正确的发放单位");
+        }
         //工号姓名验证
         WbUser user = getUserByEmpno(String.valueOf(dto.getEmployeeJobNum()));
         if (user == null) {
