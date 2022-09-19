@@ -24,6 +24,11 @@ public class FilterConfig {
     @Bean
     public FilterRegistrationBean<RequestResponseFilter> requestResponseFilter() throws Exception {
         List<String> apis = new ArrayList<>();
+        //商务报表 回款明细
+        apis.add("/api/collection/downLoadTemplate");
+        apis.add("/api/collection/importCollection");
+        apis.add("/api/collection/downLoadError");
+        apis.add("/api/collection/exportCollection");
 
         //上传文件
         apis.add("/api/common/upload");

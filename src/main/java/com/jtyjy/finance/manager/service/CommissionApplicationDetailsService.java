@@ -10,6 +10,8 @@ import com.jtyjy.finance.manager.query.commission.UpdateViewRequest;
 import com.jtyjy.finance.manager.vo.application.CommissionImportDetailPowerVO;
 import com.jtyjy.finance.manager.vo.application.CommissionImportDetailVO;
 
+import java.util.List;
+
 /**
 * @author User
 * @description 针对表【budget_extract_commission_application_budget_details(提成支付申请单  附表 预算明细)】的数据库操作Service
@@ -18,6 +20,8 @@ import com.jtyjy.finance.manager.vo.application.CommissionImportDetailVO;
 public interface CommissionApplicationDetailsService extends IService<BudgetExtractImportdetail> {
 
     IPage<CommissionImportDetailPowerVO> selectCommissionPage(CommissionQuery query);
+
+    List<String> getViewEmpNoByLoginUser(String empNo);
 
     void updateView(UpdateViewRequest request);
 }

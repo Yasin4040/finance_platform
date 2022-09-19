@@ -58,11 +58,29 @@
         select * from (
         select *from db_budget.budget_business_pay_collection bbpc
         where bbpc.if_big_manager != -1
-          and bbpc.create_time >=date_sub(now(),interval 3 month) and bbpc.dept_id=#{deptId}
+          and bbpc.create_time >=date_sub(now(),interval 3 month)
+        <choose>
+            <when test="deptIdList != null and deptIdList.size() != 0">
+                and	bbpc.dept_id in
+                <foreach collection="deptIdList" item="deptId" open="(" close=")" separator=",">
+                    #{deptId}
+                </foreach>
+            </when>
+            <otherwise>  and 1 = 1 </otherwise>
+        </choose>
         <include refid="searchQuery"></include>
         union
         select *from db_budget.budget_business_pay_collection bbpc
-        where bbpc.if_big_manager = 1 and bbpc.dept_id=#{deptId}
+        where bbpc.if_big_manager = 1
+        <choose>
+        <when test="deptIdList != null and deptIdList.size() != 0">
+            and	bbpc.dept_id in
+            <foreach collection="deptIdList" item="deptId" open="(" close=")" separator=",">
+                #{deptId}
+            </foreach>
+        </when>
+        <otherwise>  and 1 = 1 </otherwise>
+        </choose>
         <include refid="searchQuery"></include>
         ) temp order by temp.create_time desc
     </select>

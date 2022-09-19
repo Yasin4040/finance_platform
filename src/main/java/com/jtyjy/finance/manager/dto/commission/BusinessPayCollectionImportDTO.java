@@ -1,4 +1,4 @@
-package com.jtyjy.finance.manager.bean;
+package com.jtyjy.finance.manager.dto.commission;
 
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
@@ -6,13 +6,13 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.util.Date;
-
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * 商务导入 回款明细表
@@ -20,15 +20,7 @@ import lombok.Data;
  */
 @TableName(value ="budget_business_pay_collection")
 @Data
-public class BusinessPayCollection implements Serializable {
-    /**
-     * id
-     */
-    @TableId(value = "id", type = IdType.AUTO)
-    @ApiModelProperty(value = "id")
-    @ExcelIgnore
-    private Long id;
-
+public class BusinessPayCollectionImportDTO implements Serializable {
     /**
      * 提成类型
      */
@@ -62,27 +54,27 @@ public class BusinessPayCollection implements Serializable {
     private String batchNo;
 
     /**
-     * 员工工号
+     * 回款工号
      */
-    @TableField(value = "empNo")
+    @TableField(value = "collection_emp_no")
     @ApiModelProperty(value = "员工工号")
     @ExcelProperty(value = "员工工号")
     private String empNo;
-    /**
-     * 部门完整名称   客户类型。
-     */
-    @TableField(value = "dept_full_name")
-    @ApiModelProperty(value = "部门完整名称   客户类型。")
-    @ExcelProperty(value = "客户类型")
-    private String deptFullName;
-
-    /**
-     * 部门id
-     */
-    @TableField(value = "dept_id")
-    @ApiModelProperty(value = "部门id")
-    @ExcelIgnore()
-    private String deptId;
+//    /**
+//     * 部门完整名称   客户类型。
+//     */
+//    @TableField(value = "dept_full_name")
+//    @ApiModelProperty(value = "部门完整名称   客户类型。")
+//    @ExcelProperty(value = "客户类型")
+//    private String deptFullName;
+//
+//    /**
+//     * 部门id
+//     */
+//    @TableField(value = "dept_id")
+//    @ApiModelProperty(value = "部门id")
+//    @ExcelIgnore()
+//    private String deptId;
     /**
      * 业务经理
      */
@@ -196,73 +188,74 @@ public class BusinessPayCollection implements Serializable {
     @ExcelProperty(value = "前期提成")
     private BigDecimal earlyCommission;
 
-    /**
-     * 是否大区经理  0  1  2
-     */
-    @TableField(value = "if_big_manager")
-    @ApiModelProperty(value = "是否大区经理  0  1  2")
-    @ExcelIgnore
-    private Integer ifBigManager;
-
-    /**
-     * 是否业务经理查看 0 1 2
-     */
-    @TableField(value = "if_manager")
-    @ApiModelProperty(value = "是否业务经理查看 0  1  2")
-    @ExcelIgnore
-    private Integer ifManager;
-
-
-    /**
-     * 是否大区经理  0  1  2
-     */
-    @TableField(value = "if_big_manager")
-    @ApiModelProperty(value = "是否大区经理  允许,关闭")
-    @ExcelProperty("大区经理查看状态")
-    private String ifBigManagerView;
-
-    /**
-     * 是否业务经理查看 0 1 2
-     */
-    @TableField(value = "if_manager")
-    @ApiModelProperty(value = "是否业务经理查看  允许,关闭")
-    @ExcelProperty("业务经理查看状态")
-    private String ifManagerView;
-
-
-    /**
-     * 创建人
-     */
-    @TableField(value = "create_by")
-    @ApiModelProperty(value = "创建人")
-    @ExcelIgnore
-    private String createBy;
-
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time")
-    @ApiModelProperty(value = "创建时间")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    @ExcelIgnore
-    private Date createTime;
-
-    /**
-     * 更新人
-     */
-    @TableField(value = "update_by")
-    @ApiModelProperty(value = "更新人")
-    @ExcelIgnore
-    private String updateBy;
-
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time")
-    @ApiModelProperty(value = "更新时间")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    @ExcelIgnore
-    private Date updateTime;
+//
+//    /**
+//     * 是否大区经理  0  1  2
+//     */
+//    @TableField(value = "if_big_manager")
+//    @ApiModelProperty(value = "是否大区经理  0  1  2")
+//    @ExcelIgnore
+//    private Integer ifBigManager;
+//
+//    /**
+//     * 是否业务经理查看 0 1 2
+//     */
+//    @TableField(value = "if_manager")
+//    @ApiModelProperty(value = "是否业务经理查看 0  1  2")
+//    @ExcelIgnore
+//    private Integer ifManager;
+//
+//
+//    /**
+//     * 是否大区经理  0  1  2
+//     */
+//    @TableField(value = "if_big_manager")
+//    @ApiModelProperty(value = "是否大区经理  允许,关闭")
+//    @ExcelProperty("大区经理查看状态")
+//    private String ifBigManagerView;
+//
+//    /**
+//     * 是否业务经理查看 0 1 2
+//     */
+//    @TableField(value = "if_manager")
+//    @ApiModelProperty(value = "是否业务经理查看  允许,关闭")
+//    @ExcelProperty("业务经理查看状态")
+//    private String ifManagerView;
+//
+//
+//    /**
+//     * 创建人
+//     */
+//    @TableField(value = "create_by")
+//    @ApiModelProperty(value = "创建人")
+//    @ExcelIgnore
+//    private String createBy;
+//
+//    /**
+//     * 创建时间
+//     */
+//    @TableField(value = "create_time")
+//    @ApiModelProperty(value = "创建时间")
+//    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+//    @ExcelIgnore
+//    private Date createTime;
+//
+//    /**
+//     * 更新人
+//     */
+//    @TableField(value = "update_by")
+//    @ApiModelProperty(value = "更新人")
+//    @ExcelIgnore
+//    private String updateBy;
+//
+//    /**
+//     * 更新时间
+//     */
+//    @TableField(value = "update_time")
+//    @ApiModelProperty(value = "更新时间")
+//    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+//    @ExcelIgnore
+//    private Date updateTime;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

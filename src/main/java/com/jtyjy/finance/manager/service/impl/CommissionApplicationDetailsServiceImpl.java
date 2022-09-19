@@ -106,7 +106,8 @@ public class CommissionApplicationDetailsServiceImpl extends ServiceImpl<BudgetE
         return page;
     }
 
-    private List<String> getViewEmpNoByLoginUser(String empNo) {
+    @Override
+    public List<String> getViewEmpNoByLoginUser(String empNo) {
         WbDept dept = getDeptByEmpNo(empNo);
         //004IH0DMOLX94-004IH0DMOLX9Y-
         String parentFullId = dept.getParentIds();

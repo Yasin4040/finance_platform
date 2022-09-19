@@ -26,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.lang.reflect.InvocationTargetException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
 * @author User
@@ -37,9 +38,11 @@ public class BusinessPayCollectionServiceImpl extends ServiceImpl<BusinessPayCol
     implements BusinessPayCollectionService{
 
     private final BudgetYearPeriodMapper yearMapper;
+    private final CommissionApplicationDetailsServiceImpl detailsService;
 
-    public BusinessPayCollectionServiceImpl(BudgetYearPeriodMapper yearMapper) {
+    public BusinessPayCollectionServiceImpl(BudgetYearPeriodMapper yearMapper, CommissionApplicationDetailsServiceImpl detailsService) {
         this.yearMapper = yearMapper;
+        this.detailsService = detailsService;
     }
 
     @Override
@@ -76,18 +79,25 @@ public class BusinessPayCollectionServiceImpl extends ServiceImpl<BusinessPayCol
         switch (mainRole){
             case COMMERCIAL_COMMISSION:
                 page  = this.baseMapper.selectPageForCommercialCommission(new Page<>(query.getPage(),query.getRows())
-                        ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth(),empNo,deptId);
+                        ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth());
                 break;
             case BIG_MANAGER:
-                deptId = loginUser.getUserId();
+                WbPerson person = PersonCache.getPersonByEmpNo(empNo);
+                if(person==null){
+                   throw new RuntimeException("找不到员工");
+                }
+                //004IH0DMOLX94-004IH0DMOLX9Y-  长code
+                String parentFullCode = DeptCache.getByDeptId(person.getDeptId()).getParentIds();
+                List<String> deptIdList = DeptCache.getAllDept().stream().filter(x -> x.getParentIds().contains(parentFullCode)).map(WbDept::getDeptId).collect(Collectors.toList());
+
                 page  = this.baseMapper.selectPageForBigManager(new Page<>(query.getPage(),query.getRows())
-                        ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth(),empNo,deptId);
+                        ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth(),deptIdList);
 
                 break;
             case MANAGER:
                 empNo = loginUser.getUserName();
                 page  = this.baseMapper.selectPageForManager(new Page<>(query.getPage(),query.getRows())
-                        ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth(),empNo,deptId);
+                        ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth(),empNo);
                 break;
             default:
                 break;
@@ -176,30 +186,6 @@ public class BusinessPayCollectionServiceImpl extends ServiceImpl<BusinessPayCol
         query.setRows(-1);
         IPage<BusinessPayCollection> page = selectPage(query);
         List<BusinessPayCollection> list = page.getRecords();
-//        List<IndividualExportDTO> dtoList = IndividualEmployeeFilesConverter.INSTANCE.entityToExportDTOList(list);
-//        for (BusinessPayCollection dto : list) {
-//            dto.seti(dto.getAccountType().equals("1")?"个卡":"公户");
-//            dto.setSelfOrAgency(dto.getAccountType().equals("1")?"自办":"代办");
-//            if (dto.getDepositBank()!=null) {
-//                WbBanks bank = BankCache.getBankByBranchCode(dto.getDepositBank());
-//                if (bank!=null) {
-//                    dto.setProvince(bank.getProvince());
-//                    dto.setCity(bank.getCity());
-//                    dto.setBankType(bank.getBankName());
-//                    dto.setDepositBank(bank.getSubBranchName());
-//                    dto.setElectronicInterBankNo(bank.getSubBranchCode());
-//                }
-//            }
-//            //部门名称
-//            if(StringUtils.isNotBlank( dto.getDepartmentNo())){
-//                WbDept dept = DeptCache.getByDeptId(dto.getDepartmentNo());
-//                if(dept!=null){
-//                    dto.setDepartmentName(dept.getDeptFullname());
-//                }
-//            }
-//            dto.setIssuedUnit(UnitCache.get(dto.getIssuedUnit())!=null?
-//                    UnitCache.get(dto.getIssuedUnit()).getName():dto.getIssuedUnit());
-//        }
         return list;
     }
 

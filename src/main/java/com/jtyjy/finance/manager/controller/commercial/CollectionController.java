@@ -12,6 +12,7 @@ import com.jtyjy.core.result.ResponseEntity;
 import com.jtyjy.finance.manager.bean.BusinessPayCollection;
 import com.jtyjy.finance.manager.bean.IndividualEmployeeFiles;
 import com.jtyjy.finance.manager.dto.commission.BusinessPayCollectionErrorDTO;
+import com.jtyjy.finance.manager.dto.commission.BusinessPayCollectionImportDTO;
 import com.jtyjy.finance.manager.dto.individual.*;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.query.commission.CommissionQuery;
@@ -132,16 +133,16 @@ public class CollectionController {
     /**
      * 下载模板。
      */
-    @ApiOperation(value = "员工个体户  下载模板", httpMethod = "GET",produces = "application/octet-stream")
+    @ApiOperation(value = "回款明细  下载模板", httpMethod = "GET",produces = "application/octet-stream")
     @GetMapping("/downLoadTemplate")
     public void downLoadTemplate(HttpServletResponse response) throws Exception {
         // 这里注意 有同学反应使用swagger 会导致各种问题，请直接用浏览器或者用postman
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setCharacterEncoding("utf-8");
         // 这里URLEncoder.encode可以防止中文乱码 当然和easyexcel没有关系
-        String fileName = URLEncoder.encode("员工个体户信息模板", "UTF-8").replaceAll("\\+", "%20");
+        String fileName = URLEncoder.encode("回款明细信息模板", "UTF-8").replaceAll("\\+", "%20");
         response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
-        EasyExcelFactory.write(response.getOutputStream(), IndividualImportDTO.class).sheet("员工个体户信息模板").doWrite(new ArrayList());
+        EasyExcelFactory.write(response.getOutputStream(), BusinessPayCollectionImportDTO.class).sheet("回款明细信息模板").doWrite(new ArrayList());
     }
 
     private List<IndividualImportDTO> getExamples(){
@@ -206,7 +207,7 @@ public class CollectionController {
     /**
      * 批量 修改是否允许
      */
-    @ApiOperation(value = "根据不同登陆用户 获取相应提成数据", httpMethod = "GET")
+    @ApiOperation(value = "批量 修改是否允许", httpMethod = "GET")
     @PostMapping("/updateView")
     public ResponseEntity updateView(@RequestBody UpdateViewRequest request) throws Exception {
         try {

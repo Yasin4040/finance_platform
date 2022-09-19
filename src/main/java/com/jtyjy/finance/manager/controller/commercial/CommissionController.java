@@ -70,7 +70,7 @@ public class CommissionController {
     /**
      * 批量 修改是否允许
      */
-    @ApiOperation(value = "根据不同登陆用户 获取相应提成数据", httpMethod = "GET")
+    @ApiOperation(value = "批量 修改是否允许", httpMethod = "GET")
     @PostMapping("/updateView")
     public ResponseEntity updateView(@RequestBody UpdateViewRequest request) throws Exception {
         try {
