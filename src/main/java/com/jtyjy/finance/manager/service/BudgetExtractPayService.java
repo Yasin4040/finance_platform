@@ -7,6 +7,7 @@ import com.jtyjy.core.anno.JdbcSelector;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.finance.manager.bean.*;
 import com.jtyjy.finance.manager.cache.BankCache;
+import com.jtyjy.finance.manager.cache.UserCache;
 import com.jtyjy.finance.manager.constants.Constants;
 import com.jtyjy.finance.manager.dto.ExtractPayCompleteDTO;
 import com.jtyjy.finance.manager.dto.ExtractPreparePayDTO;
@@ -18,7 +19,10 @@ import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.mapper.*;
 import com.jtyjy.finance.manager.vo.BudgetExtractPayQueryVO;
 import com.jtyjy.finance.manager.vo.BudgetExtractPayResponseVO;
+import com.jtyjy.weixin.message.MessageSender;
+import com.jtyjy.weixin.message.QywxTextMsg;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -27,6 +31,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -55,6 +60,11 @@ public class BudgetExtractPayService {
 	private final BudgetExtractAccountTaskMapper accountTaskMapper;
 	private final BudgetExtractTaxHandleRecordMapper taxHandleRecordMapper;
 	private final BudgetExtractPersonalityPayDetailMapper personalityPayDetailMapper;
+	private final BudgetYearPeriodMapper yearPeriodMapper;
+	private final MessageSender sender;
+	private final CommonService commonService;
+	private final BudgetUnitMapper unitMapper;
+	private final BudgetBillingUnitMapper billingUnitMapper;
 	@Value("${tc.redis.key}")
 	private String TC_REDIS_KEY;
 
@@ -246,6 +256,8 @@ public class BudgetExtractPayService {
 			updateWrapper.in(BudgetExtractPersonalityPayDetail::getId,personalityPayIds);
 			extractPersonalityPayService.update(updateWrapper);
 		}
+		boolean test = extractsumService.isTest();
+		String testNotice = extractsumService.getTestNotice();
 		perPayDetails.stream().collect(Collectors.groupingBy(e->e.getExtractCode().substring(0,2))).forEach((orderPrefix,orderDetailList)->{
 
 			if(orderPrefix.equals(Constants.EXTRACT_DELAY_ORDER_PREFIX)){
@@ -269,6 +281,30 @@ public class BudgetExtractPayService {
 							updateWrapper.in(BudgetExtractDelayApplication::getDelayCode,codeList);
 							updateWrapper.set(BudgetExtractDelayApplication::getStatus,ExtractDelayStatusEnum.PAY.type);
 							delayApplicationMapper.update(new BudgetExtractDelayApplication(),updateWrapper);
+
+
+							try{
+								List<String> extractSumCodeList = delayApplicationMapper.selectList(new LambdaQueryWrapper<BudgetExtractDelayApplication>().in(BudgetExtractDelayApplication::getDelayCode, codeList)).stream().map(e -> e.getRelationExtractCode()).collect(Collectors.toList());
+								List<BudgetExtractsum> sumList = extractsumService.list(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getCode, extractSumCodeList));
+								String accounts = sumList.stream().map(e -> {
+									String deptid = e.getDeptid();
+									BudgetUnit budgetUnit = unitMapper.selectById(deptid);
+									String accounting = budgetUnit.getAccounting();
+									if (StringUtils.isNotBlank(accounting)) {
+										return UserCache.getUserByUserId(accounting).getUserName();
+									}
+									return null;
+								}).filter(e -> StringUtils.isNotBlank(e)).collect(Collectors.joining("|"));
+								BudgetYearPeriod budgetYearPeriod = yearPeriodMapper.selectById(sumList.get(0).getYearid());
+								if(test){
+									accounts = testNotice;
+								}
+								if(StringUtils.isNotBlank(accounts)){
+									sender.sendQywxMsg(new QywxTextMsg(accounts, null, null, 0, "【延期】"+budgetYearPeriod.getPeriod()+Integer.parseInt(extractBatch.substring(4,6))+"月"+Integer.parseInt(extractBatch.substring(6,8))+"批提成已支付完成，可进行入账操作！", null));
+								};
+							}catch (Exception ignored){
+
+							}
 						}
 					});
 				});
@@ -289,6 +325,28 @@ public class BudgetExtractPayService {
 							extractsumService.generateExtractStepLog(extractsumService.getCurBatchExtractSum(extractBatch).stream().map(e->e.getId()).collect(Collectors.toList()), OperationNodeEnum.CASHIER_PAYMENT, "【" + OperationNodeEnum.CASHIER_PAYMENT.getValue(OperationNodeEnum.CASHIER_PAYMENT.getType()) + "】完成", LogStatusEnum.COMPLETE.getCode());
 							accountEntryTaskService.addEntryTask(false,null,extractBatch);
 						}
+					}
+
+					try{
+						List<BudgetExtractsum> sumList = extractsumService.list(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getExtractmonth, extractBatch));
+						String accounts = sumList.stream().map(e -> {
+							String deptid = e.getDeptid();
+							BudgetUnit budgetUnit = unitMapper.selectById(deptid);
+							String accounting = budgetUnit.getAccounting();
+							if (StringUtils.isNotBlank(accounting)) {
+								return UserCache.getUserByUserId(accounting).getUserName();
+							}
+							return null;
+						}).filter(e -> StringUtils.isNotBlank(e)).collect(Collectors.joining("|"));
+						BudgetYearPeriod budgetYearPeriod = yearPeriodMapper.selectById(sumList.get(0).getYearid());
+						if(test){
+							accounts = testNotice;
+						}
+						if(StringUtils.isNotBlank(accounts)){
+							sender.sendQywxMsg(new QywxTextMsg(accounts, null, null, 0, budgetYearPeriod.getPeriod()+Integer.parseInt(extractBatch.substring(4,6))+"月"+Integer.parseInt(extractBatch.substring(6,8))+"批提成已支付完成，可进行入账操作！", null));
+						};
+					}catch (Exception ignored){
+
 					}
 
 				});
@@ -337,6 +395,7 @@ public class BudgetExtractPayService {
 		LambdaQueryWrapper<BudgetPaymoney> qw = new LambdaQueryWrapper<>();
 		qw.eq(BudgetPaymoney::getPaymoneytype,PaymoneyTypeEnum.EXTRACT_PAY.type);
 		qw.in(BudgetPaymoney::getPaymoneyobjectcode,extractCodeList);
+		List<BudgetExtractAccountTask> accountTasks = accountTaskMapper.selectList(new LambdaQueryWrapper<BudgetExtractAccountTask>().eq(BudgetExtractAccountTask::getExtractMonth, extractBatch));
 		paymoneyService.remove(qw);
 		extractsumService.update(new LambdaUpdateWrapper<BudgetExtractsum>().set(BudgetExtractsum::getStatus,ExtractStatusEnum.APPROVED.type).in(BudgetExtractsum::getId,sumIds));
 		delayApplicationMapper.delete(new LambdaUpdateWrapper<BudgetExtractDelayApplication>().eq(BudgetExtractDelayApplication::getExtractMonth,extractBatch));
@@ -345,5 +404,23 @@ public class BudgetExtractPayService {
 		taxHandleRecordMapper.update(new BudgetExtractTaxHandleRecord(),new LambdaUpdateWrapper<BudgetExtractTaxHandleRecord>().eq(BudgetExtractTaxHandleRecord::getExtractMonth,extractBatch).set(BudgetExtractTaxHandleRecord::getIsPersonalityComplete,0));
 		perPayDetailService.remove(new LambdaQueryWrapper<BudgetExtractPerPayDetail>().eq(BudgetExtractPerPayDetail::getExtractMonth,extractBatch));
 		personalityPayDetailMapper.update(new BudgetExtractPersonalityPayDetail(),new LambdaUpdateWrapper<BudgetExtractPersonalityPayDetail>().eq(BudgetExtractPersonalityPayDetail::getExtractMonth,extractBatch).set(BudgetExtractPersonalityPayDetail::getOperateTime,null));
+
+		try{
+			Map<Long, BudgetBillingUnit> unitMap = this.billingUnitMapper.selectList(null).stream().collect(Collectors.toMap(BudgetBillingUnit::getId, Function.identity()));
+			String accountants = accountTasks.stream().flatMap(e -> {
+				BudgetBillingUnit budgetBillingUnit = unitMap.get(e.getBillingUnitId());
+				if(StringUtils.isNotBlank(budgetBillingUnit.getAccountants())){
+					return Arrays.stream(budgetBillingUnit.getAccountants().split(","));
+				}
+				return null;
+			}).filter(StringUtils::isNotBlank).map(e-> UserCache.getUserByUserId(e).getUserName()).distinct().collect(Collectors.joining("|"));
+
+			if(extractsumService.isTest()){
+				accountants = extractsumService.getTestNotice();
+			}
+			List<BudgetExtractsum> list = extractsumService.list(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getExtractmonth, extractBatch));
+			BudgetYearPeriod budgetYearPeriod = yearPeriodMapper.selectById(list.get(0).getYearid());
+			if(StringUtils.isNotBlank(accountants))sender.sendQywxMsg(new QywxTextMsg(accountants, null, null, 0, budgetYearPeriod.getPeriod()+Integer.parseInt(extractBatch.substring(4,6))+"月"+Integer.parseInt(extractBatch.substring(6,8))+"批提成已出纳退回，请尽快删除对应凭证！", null));
+		}catch (Exception e){}
 	}
 }
