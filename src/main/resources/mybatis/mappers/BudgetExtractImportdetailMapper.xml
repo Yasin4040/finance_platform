@@ -70,7 +70,7 @@
 
 	<sql id="searchQuery">
 		<if test="employeeName != null and employeeName !=''">
-			and (bei.empno like concat('%',#{employeeName},'%') or bei.enpname like concat('%',#{employeeName},'%'))
+			and (bei.empno like concat('%',#{employeeName},'%') or bei.empname like concat('%',#{employeeName},'%'))
 		</if>
 <!--		<if test="departmentName != null and departmentName !=''">-->
 <!--			and be.deptname like concat('%',#{departmentName},'%')-->
@@ -79,7 +79,7 @@
 			and be.yearid = #{yearId}
 		</if>
 		<if test="monthId != null and monthId !=''">
-			and substr(be.extractmonth,5,2)  = #{monthId}
+			and substr(be.extractmonth,5,2)+0  = #{monthId}
 		</if>
 		<if test="extractMonth != null and extractMonth !=''">
 			and be.extractmonth like concat('%',#{extractMonth},'%')

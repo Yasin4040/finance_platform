@@ -40,7 +40,7 @@
             and (bbpc.emp_no like concat('%',#{employeeName},'%') or bbpc.emp_name like concat('%',#{employeeName},'%'))
         </if>
         <if test="departmentName != null and departmentName !=''">
-            and bbpc.dept_fulle_name like concat('%',#{departmentName},'%')
+            and bbpc.dept_full_name like concat('%',#{departmentName},'%')
         </if>
         <if test="yearId != null and yearId !=''">
             and bbpc.`year` = #{yearId}
@@ -66,7 +66,7 @@
                     #{deptId}
                 </foreach>
             </when>
-            <otherwise>  and 1 = 1 </otherwise>
+            <otherwise>  and 1 != 1 </otherwise>
         </choose>
         <include refid="searchQuery"></include>
         union
@@ -79,7 +79,7 @@
                 #{deptId}
             </foreach>
         </when>
-        <otherwise>  and 1 = 1 </otherwise>
+            <otherwise>  and 1 != 1 </otherwise>
         </choose>
         <include refid="searchQuery"></include>
         ) temp order by temp.create_time desc

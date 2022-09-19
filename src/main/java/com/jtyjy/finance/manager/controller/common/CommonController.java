@@ -8,15 +8,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.alibaba.fastjson.JSON;
 import com.jtyjy.api.OAServiceProxy;
 import com.jtyjy.core.auth.anno.NoLoginAnno;
-import com.jtyjy.finance.manager.bean.BudgetCommonAttachment;
+import com.jtyjy.finance.manager.bean.*;
 import com.jtyjy.finance.manager.enmus.*;
+import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.query.UploadQuery;
+import com.jtyjy.finance.manager.utils.HttpUtil;
 import io.swagger.annotations.*;
 import org.apache.commons.fileupload.FileUpload;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -25,9 +29,6 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.result.ResponseEntity;
-import com.jtyjy.finance.manager.bean.BudgetYearPeriod;
-import com.jtyjy.finance.manager.bean.WbBanks;
-import com.jtyjy.finance.manager.bean.WbDept;
 import com.jtyjy.finance.manager.controller.BaseController;
 import com.jtyjy.finance.manager.mapper.BudgetYearPeriodMapper;
 import com.jtyjy.finance.manager.mapper.WbBanksMapper;
@@ -62,6 +63,10 @@ public class CommonController extends BaseController {
     
     @Autowired
     private WbBanksMapper bankMapper;
+    @Value("${hit.flush.uesr.role.url}")
+    private String userRoleUrl;
+    @Value("${app.id}")
+    private String serverId;
     /*
      * Author: ldw
      * Description: 获取系统内所有的银行类型，如：中国银行，招商银行等
@@ -293,5 +298,13 @@ public class CommonController extends BaseController {
             e.printStackTrace();
             return ResponseEntity.error(e.getMessage());
         }
+    }
+
+    @ApiOperation(value = "获取角色list",httpMethod="GET")
+    @GetMapping(value = "/getRoleList")
+    public ResponseEntity getRoleList() {
+        String result = HttpUtil.doGet(this.userRoleUrl + UserThreadLocal.getEmpNo()+"&serverId="+serverId);
+        List<String> roles = JSON.parseArray(result, String.class);
+        return ResponseEntity.ok(roles);
     }
 }

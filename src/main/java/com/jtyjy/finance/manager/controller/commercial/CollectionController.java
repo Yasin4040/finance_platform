@@ -207,7 +207,7 @@ public class CollectionController {
     /**
      * 批量 修改是否允许
      */
-    @ApiOperation(value = "批量 修改是否允许", httpMethod = "GET")
+    @ApiOperation(value = "批量 修改是否允许", httpMethod = "POST")
     @PostMapping("/updateView")
     public ResponseEntity updateView(@RequestBody UpdateViewRequest request) throws Exception {
         try {
