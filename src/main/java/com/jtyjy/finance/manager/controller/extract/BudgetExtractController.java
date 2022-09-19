@@ -23,6 +23,10 @@ import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.service.*;
 import com.jtyjy.finance.manager.utils.EasyExcelUtil;
 import com.jtyjy.finance.manager.vo.*;
+import com.jtyjy.weixin.message.MessageSender;
+import com.jtyjy.weixin.message.QywxMarkDownMessage;
+import com.jtyjy.weixin.message.QywxTextMsg;
+import com.jtyjy.weixin.message.component.WxKVBean;
 import com.klcwqy.easy.lock.impl.ZookeeperShareLock;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -119,6 +123,9 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 
 	@Autowired
 	private RedisClient redis;
+
+	@Autowired
+	private MessageSender sender;
 
 	@Value("${file.shareDir}")
 	private String fileShareDir;

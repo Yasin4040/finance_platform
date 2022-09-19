@@ -1625,6 +1625,12 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				}
 				taxHandleRecordService.updateById(handleRecord);
 			}
+
+			BudgetExtractTaxHandleRecord extractTaxHandleRecord = getExtractTaxHandleRecord(extractBatch);
+			if(extractTaxHandleRecord!=null && extractTaxHandleRecord.getIsCalComplete() && extractTaxHandleRecord.getIsPersonalityComplete() && extractTaxHandleRecord.getIsSetExcessComplete()){
+				generateExtractStepLog(curExtractSumIdList, OperationNodeEnum.TAX_PREPARATION_CALCULATION_EMP, "【"+OperationNodeEnum.TAX_PREPARATION_CALCULATION_EMP.getValue() + "】完成", LogStatusEnum.COMPLETE.getCode());
+				taxGroupSuccess(extractBatch);
+			}
 		}
 	}
 
@@ -4381,15 +4387,17 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		return this.budgetExtractsumMapper.selectList(new LambdaQueryWrapper<BudgetExtractsum>().ge(BudgetExtractsum::getExtractmonth, extractBatch).eq(BudgetExtractsum::getDeleteflag, 0).ne(BudgetExtractsum::getStatus, ExtractStatusEnum.REJECT.getType()));
 	}
 
-	private List<BudgetExtractdetail> getExtractDetailBySumIds(List<Long> sumIds,boolean isPersonlity,Long personalityId){
+	public List<BudgetExtractdetail> getExtractDetailBySumIds(List<Long> sumIds,Boolean isPersonlity,Long personalityId){
 		LambdaQueryWrapper<BudgetExtractdetail> qw = new LambdaQueryWrapper<>();
 		if(!CollectionUtils.isEmpty(sumIds)){
 			qw.in(BudgetExtractdetail::getExtractsumid, sumIds);
 		}
-		if(isPersonlity){
-			qw.eq(BudgetExtractdetail::getBusinessType,ExtractUserTypeEnum.SELF_EMPLOYED_EMPLOYEES.getCode());
-		}else{
-			qw.ne(BudgetExtractdetail::getBusinessType,ExtractUserTypeEnum.SELF_EMPLOYED_EMPLOYEES.getCode());
+		if(isPersonlity!=null){
+			if(isPersonlity){
+				qw.eq(BudgetExtractdetail::getBusinessType,ExtractUserTypeEnum.SELF_EMPLOYED_EMPLOYEES.getCode());
+			}else{
+				qw.ne(BudgetExtractdetail::getBusinessType,ExtractUserTypeEnum.SELF_EMPLOYED_EMPLOYEES.getCode());
+			}
 		}
 		if(personalityId!=null){
 			IndividualEmployeeFiles individualEmployeeFiles = individualEmployeeFilesMapper.selectById(personalityId);
@@ -4878,6 +4886,11 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 						}).reduce(BigDecimal.ZERO, BigDecimal::add);
 						annualQuota = annualQuota.subtract(receiptInfoMoney).subtract(initReceiptTemp);
 					}
+					BigDecimal annualQuotaTemp = annualQuota;
+					detailList.forEach(payDetail->{
+						payDetail.setRemainingInvoices(subtract);
+						payDetail.setRemainingPayLimitMoney(annualQuotaTemp);
+					});
 				}
 
 			});
