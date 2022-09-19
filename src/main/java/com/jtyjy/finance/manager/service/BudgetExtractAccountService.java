@@ -9,6 +9,7 @@ import com.jtyjy.core.anno.JdbcSelector;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.core.service.DefaultBaseService;
 import com.jtyjy.finance.manager.bean.*;
+import com.jtyjy.finance.manager.cache.UserCache;
 import com.jtyjy.finance.manager.dto.ExtractAccountDTO;
 import com.jtyjy.finance.manager.enmus.*;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
@@ -17,6 +18,7 @@ import com.jtyjy.finance.manager.vo.*;
 import com.jtyjy.weixin.message.MessageSender;
 import com.jtyjy.weixin.message.QywxTextMsg;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -327,13 +329,35 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 			}
 
 		});
+		List<BudgetExtractAccountTask> accountTasks = accountTaskMapper.selectList(new LambdaQueryWrapper<BudgetExtractAccountTask>().eq(BudgetExtractAccountTask::getExtractMonth, extractBatch));
 		List<Long> sumIds = batchExtractSums.stream().filter(e -> e.getExtractmonth().equals(extractBatch)).map(BudgetExtractsum::getId).collect(Collectors.toList());
 		extractsumService.update(new LambdaUpdateWrapper<BudgetExtractsum>().set(BudgetExtractsum::getStatus,ExtractStatusEnum.APPROVED.type).in(BudgetExtractsum::getId,sumIds));
+		Map<Long, BudgetBillingUnit> unitMap = this.billingUnitMapper.selectList(null).stream().collect(Collectors.toMap(BudgetBillingUnit::getId, Function.identity()));
 		delayApplicationMapper.delete(new LambdaUpdateWrapper<BudgetExtractDelayApplication>().eq(BudgetExtractDelayApplication::getExtractMonth,extractBatch));
 		accountTaskMapper.delete(new LambdaQueryWrapper<BudgetExtractAccountTask>().eq(BudgetExtractAccountTask::getExtractMonth,extractBatch));
 		extractsumService.generateExtractStepLog(sumIds, OperationNodeEnum.ACCOUNTING,"【"+OperationNodeEnum.getValue(OperationNodeEnum.ACCOUNTING.getType()) + "】退回",LogStatusEnum.REJECT.getCode());
 		taxHandleRecordMapper.update(new BudgetExtractTaxHandleRecord(),new LambdaUpdateWrapper<BudgetExtractTaxHandleRecord>().eq(BudgetExtractTaxHandleRecord::getExtractMonth,extractBatch).set(BudgetExtractTaxHandleRecord::getIsPersonalityComplete,0));
 		perPayDetailMapper.delete(new LambdaQueryWrapper<BudgetExtractPerPayDetail>().eq(BudgetExtractPerPayDetail::getExtractMonth,extractBatch));
 		personalityPayDetailMapper.update(new BudgetExtractPersonalityPayDetail(),new LambdaUpdateWrapper<BudgetExtractPersonalityPayDetail>().eq(BudgetExtractPersonalityPayDetail::getExtractMonth,extractBatch).set(BudgetExtractPersonalityPayDetail::getOperateTime,null));
+
+
+		try{
+			String accountants = accountTasks.stream().flatMap(e -> {
+				BudgetBillingUnit budgetBillingUnit = unitMap.get(e.getBillingUnitId());
+				if(StringUtils.isNotBlank(budgetBillingUnit.getAccountants())){
+					return Arrays.stream(budgetBillingUnit.getAccountants().split(","));
+				}
+				return null;
+			}).filter(StringUtils::isNotBlank).map(e-> UserCache.getUserByUserId(e).getUserName()).distinct().collect(Collectors.joining("|"));
+
+			if(extractsumService.isTest()){
+				accountants = extractsumService.getTestNotice();
+			}
+			List<BudgetExtractsum> list = extractsumService.list(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getExtractmonth, extractBatch));
+			BudgetYearPeriod budgetYearPeriod = yearPeriodMapper.selectById(list.get(0).getYearid());
+			if(StringUtils.isNotBlank(accountants))sender.sendQywxMsg(new QywxTextMsg(accountants, null, null, 0, budgetYearPeriod.getPeriod()+Integer.parseInt(extractBatch.substring(4,6))+"月"+Integer.parseInt(extractBatch.substring(6,8))+"批提成已账务退回，请尽快删除对应凭证！", null));
+		}catch (Exception e){}
+
+
 	}
 }

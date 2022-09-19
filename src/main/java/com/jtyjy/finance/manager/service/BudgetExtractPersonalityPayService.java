@@ -7,6 +7,7 @@ import com.google.common.collect.Lists;
 import com.jtyjy.core.anno.JdbcSelector;
 import com.jtyjy.core.result.PageResult;
 import com.jtyjy.finance.manager.bean.*;
+import com.jtyjy.finance.manager.cache.UserCache;
 import com.jtyjy.finance.manager.easyexcel.ExtractInitPersonlityDetailExcelData;
 import com.jtyjy.finance.manager.easyexcel.ExtractPersonalityPayDetailExcelData;
 import com.jtyjy.finance.manager.easyexcel.ExtractPersonlityDetailExcelData;
@@ -174,16 +175,10 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 		IndividualEmployeeFiles individualEmployeeFiles = individualEmployeeFilesMapper.selectById(entity.getPersonalityId());
 		List<BudgetExtractPersonalityPayDetail> extractPersonalityPayDetails =  personalityPayDetailMapper.getDbMoney(individualEmployeeFiles.getEmployeeJobNum(),individualEmployeeFiles.getEmployeeName(),entity.getId(),entity.getExtractBatch());
 
-		if(entity.getId()==null){
-			long count = extractPersonalityPayDetails.stream().filter(e -> e.getPersonalityId().equals(entity.getPersonalityId())).count();
-			if (count > 0) {
-				throw new RuntimeException("此员工个体户已有发放明细。");
-			}
+		long count = extractPersonalityPayDetails.stream().filter(e -> e.getPersonalityId().equals(entity.getPersonalityId()) && e.getBillingUnitId().equals(entity.getBillingUnitId())).count();
+		if (count > 0) {
+			throw new RuntimeException("此员工个体户已有此发放单位的发放明细。");
 		}
-//		long count1 = extractPersonalityPayDetails.stream().filter(e -> !e.getPayStatus().equals(entity.getPayStatus())).count();
-//		if (count1 > 0) {
-//			throw new RuntimeException("此员工个体户存在发放状态不是【" + ExtractPersonalityPayStatusEnum.getValue(entity.getPayStatus()) + "】的发放明细。");
-//		}
 
 		if( (entity.getCurExtract()==null || entity.getCurExtract().compareTo(BigDecimal.ZERO) == 0) &&
 				(entity.getCurSalary()==null || entity.getCurSalary().compareTo(BigDecimal.ZERO) == 0) &&
@@ -265,7 +260,7 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 				if (test) {
 					empNo = testNotice;
 				}
-				sender.sendQywxMsgSyn(new QywxTextMsg(empNo, null, null, 0, "个体户【"+individualEmployeeFiles.getAccountName()+"】缺少【"+list.get(0).getRemainingInvoices().abs()+"】发票，请尽快提交发票！", null));
+				sender.sendQywxMsgSyn(new QywxTextMsg(empNo, null, null, 0, UserCache.getUserByEmpNo(empNo.split("\\|")[0]).getDisplayName()+"，你好！"+individualEmployeeFiles.getAccountName()+"缺少【"+list.stream().map(e1->e1.getRemainingInvoices().abs()).reduce(BigDecimal.ZERO,BigDecimal::add)+"】发票，请尽快提供发票，以免影响提成发放。", null));
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}

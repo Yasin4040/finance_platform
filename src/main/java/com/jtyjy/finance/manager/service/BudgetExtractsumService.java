@@ -38,6 +38,7 @@ import com.jtyjy.finance.manager.vo.*;
 import com.jtyjy.weixin.message.MessageSender;
 import com.jtyjy.weixin.message.QywxTextMsg;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -4840,67 +4841,50 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		Map<Long, IndividualEmployeeFiles> individualEmployeeFilesMap = individualEmployeeFilesMapper.selectBatchIds(individualEmployeeIdList).stream().collect(Collectors.toMap(e -> e.getId(), Function.identity()));
 		Map<Long, List<IndividualEmployeeTicketReceiptInfo>> receiptInfoMap = getIndividualEmployeeTicketReceiptInfoList(individualEmployeeIdList).stream().collect(Collectors.groupingBy(e -> e.getIndividualEmployeeInfoId()));
 
+		Map<Long, BigDecimal> receiptSum = getReceiptSum(individualEmployeeIdList, extractBatch);
 		Map<Long, BigDecimal> initReceiptMap = personalityPayDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractPersonalityPayDetail>().eq(BudgetExtractPersonalityPayDetail::getIsInitData, 1).in(BudgetExtractPersonalityPayDetail::getPersonalityId, individualEmployeeIdList)).stream().collect(Collectors.toMap(e -> e.getPersonalityId(), e -> e.getReceiptSum(),(e1,e2)->e1));
 		extractPersonalityPayDetails.stream().collect(Collectors.groupingBy(BudgetExtractPersonalityPayDetail::getPersonalityId)).forEach((personalityId,list)->{
 			IndividualEmployeeFiles individualEmployeeFiles = individualEmployeeFilesMap.get(personalityId);
-
-			list.stream().filter(e->{
-				BudgetBillingUnit budgetBillingUnit = billingUnitMap.get(e.getBillingUnitId());
-				return (budgetBillingUnit.getCorporation() == 0 || (budgetBillingUnit.getCorporation() == 1 && individualEmployeeFiles.getAccountType() == 1));
-			}).forEach(payDetail->{
-				payDetail.setRemainingInvoices(BigDecimal.ZERO);
-				payDetail.setRemainingPayLimitMoney(BigDecimal.ZERO);
-			});
-
-			List<BudgetExtractPersonalityPayDetail> effectList = list.stream().filter(e -> {
-				BudgetBillingUnit budgetBillingUnit = billingUnitMap.get(e.getBillingUnitId());
-				return !(budgetBillingUnit.getCorporation() == 0 || (budgetBillingUnit.getCorporation() == 1 && individualEmployeeFiles.getAccountType() == 1));
-			}).collect(Collectors.toList());
-
-			if(!CollectionUtils.isEmpty(effectList)){
-				BigDecimal initReceipt = BigDecimal.ZERO;
-				if(initReceiptMap.get(personalityId)!=null){
-					initReceipt = initReceiptMap.get(personalityId);
-				}
-				BigDecimal total = effectList.stream().map(e->{
-					return e.getExtractSum().add(e.getSalarySum()).add(e.getWelfareSum()).add(e.getCurSalary()).add(e.getCurRealExtract()).add(e.getCurWelfare());
-				}).reduce(BigDecimal.ZERO,BigDecimal::add);
-				BigDecimal subtract = list.get(0).getReceiptSum().subtract(total);
-				BigDecimal annualQuota = individualEmployeeFiles.getAnnualQuota() == null ? BigDecimal.ZERO : individualEmployeeFiles.getAnnualQuota();
-				List<IndividualEmployeeTicketReceiptInfo> individualEmployeeTicketReceiptInfos = receiptInfoMap.get(personalityId);
-				if (!CollectionUtils.isEmpty(individualEmployeeTicketReceiptInfos)) {
-					List<IndividualEmployeeTicketReceiptInfo> sortedReceiptInfoList = individualEmployeeTicketReceiptInfos.stream().sorted(Comparator.comparing(IndividualEmployeeTicketReceiptInfo::getYear)).sorted(Comparator.comparing(IndividualEmployeeTicketReceiptInfo::getMonth)).collect(Collectors.toList());
-					IndividualEmployeeTicketReceiptInfo individualEmployeeTicketReceiptInfo = sortedReceiptInfoList.get(0);
-					String yearMonth = calNextYearMonth(individualEmployeeTicketReceiptInfo.getYear(), individualEmployeeTicketReceiptInfo.getMonth());
-					BigDecimal receiptInfoMoney = sortedReceiptInfoList.stream().filter(e -> {
-						Integer year = e.getYear();
-						Integer month = e.getMonth();
-						String yearmonth = year + (month<10?("0"+month):month+"");
-						return Integer.parseInt(yearmonth)<Integer.parseInt(yearMonth);
-					}).map(e -> {
-						return e.getInvoiceAmount() == null ? BigDecimal.ZERO : e.getInvoiceAmount();
-					}).reduce(BigDecimal.ZERO, BigDecimal::add);
-					annualQuota = annualQuota.subtract(receiptInfoMoney).subtract(initReceipt);
-				}
-				for (int i = 0; i < effectList.size(); i++) {
-					BudgetExtractPersonalityPayDetail payDetail = effectList.get(i);
-					if(i!=0){
-						payDetail.setReceiptSum(BigDecimal.ZERO);
-						payDetail.setRemainingPayLimitMoney(BigDecimal.ZERO);
+			BigDecimal initReceipt = BigDecimal.ZERO;
+			if(initReceiptMap.get(personalityId)!=null){
+				initReceipt = initReceiptMap.get(personalityId);
+			}
+			BigDecimal initReceiptTemp = initReceipt;
+			list.stream().collect(Collectors.groupingBy(e->e.getBillingUnitId())).forEach((billingUnitId,detailList)->{
+				BudgetBillingUnit budgetBillingUnit = billingUnitMap.get(billingUnitId);
+				if((budgetBillingUnit.getCorporation() == 0 || (budgetBillingUnit.getCorporation() == 1 && individualEmployeeFiles.getAccountType() == 1))){
+					detailList.forEach(payDetail->{
 						payDetail.setRemainingInvoices(BigDecimal.ZERO);
-					}else{
-						payDetail.setRemainingPayLimitMoney(annualQuota);
-						payDetail.setRemainingInvoices(subtract);
+						payDetail.setRemainingPayLimitMoney(BigDecimal.ZERO);
+					});
+				}else{
+					BigDecimal total = detailList.stream().map(e->{
+						return e.getExtractSum().add(e.getSalarySum()).add(e.getWelfareSum()).add(e.getCurSalary()).add(e.getCurRealExtract()).add(e.getCurWelfare());
+					}).reduce(BigDecimal.ZERO,BigDecimal::add);
+					BigDecimal subtract = (receiptSum.get(personalityId)==null?BigDecimal.ZERO:receiptSum.get(personalityId)).subtract(total);
+					BigDecimal annualQuota = individualEmployeeFiles.getAnnualQuota() == null ? BigDecimal.ZERO : individualEmployeeFiles.getAnnualQuota();
+					List<IndividualEmployeeTicketReceiptInfo> individualEmployeeTicketReceiptInfos = receiptInfoMap.get(personalityId);
+					if (!CollectionUtils.isEmpty(individualEmployeeTicketReceiptInfos)) {
+						List<IndividualEmployeeTicketReceiptInfo> sortedReceiptInfoList = individualEmployeeTicketReceiptInfos.stream().sorted(Comparator.comparing(IndividualEmployeeTicketReceiptInfo::getYear)).sorted(Comparator.comparing(IndividualEmployeeTicketReceiptInfo::getMonth)).collect(Collectors.toList());
+						IndividualEmployeeTicketReceiptInfo individualEmployeeTicketReceiptInfo = sortedReceiptInfoList.get(0);
+						String yearMonth = calNextYearMonth(individualEmployeeTicketReceiptInfo.getYear(), individualEmployeeTicketReceiptInfo.getMonth());
+						BigDecimal receiptInfoMoney = sortedReceiptInfoList.stream().filter(e -> {
+							Integer year = e.getYear();
+							Integer month = e.getMonth();
+							String yearmonth = year + (month<10?("0"+month):month+"");
+							return Integer.parseInt(yearmonth)<Integer.parseInt(yearMonth);
+						}).map(e -> {
+							return e.getInvoiceAmount() == null ? BigDecimal.ZERO : e.getInvoiceAmount();
+						}).reduce(BigDecimal.ZERO, BigDecimal::add);
+						annualQuota = annualQuota.subtract(receiptInfoMoney).subtract(initReceiptTemp);
 					}
 				}
-				List<Long> ids = effectList.stream().map(e -> e.getId()).collect(Collectors.toList());
-				list.stream().filter(e->!ids.contains(e.getId())).forEach(e->e.setReceiptSum(BigDecimal.ZERO));
-			}else{
-				for (int i = 0; i < list.size(); i++) {
-					BudgetExtractPersonalityPayDetail payDetail = list.get(i);
-					if(i!=0){
-						payDetail.setReceiptSum(BigDecimal.ZERO);
-					}
+
+			});
+			for (int i = 0; i < list.size(); i++) {
+				BudgetExtractPersonalityPayDetail payDetail = list.get(i);
+				if(i!=0){
+					payDetail.setReceiptSum(BigDecimal.ZERO);
 				}
 			}
 		});
@@ -5031,8 +5015,8 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			List<BudgetExtractsum> curBatchExtractSum = getCurBatchExtractSum(extractBatch);
 			List<Long> sumIds = curBatchExtractSum.stream().map(BudgetExtractsum::getId).collect(Collectors.toList());
 			List<BudgetExtractdetail> extractDetailBySumIds = getExtractDetailBySumIds(sumIds, true, null);
-			Map<Long, List<ExtractPersonalityPayDetailVO>> personalityMap = list.stream().collect(Collectors.groupingBy(e -> e.getPersonalityId()));
-			ExtractPersonalityPayDetailVO extractPersonalityPayDetailVO = list.get(0);
+			//Map<Long, List<ExtractPersonalityPayDetailVO>> personalityMap = list.stream().collect(Collectors.groupingBy(e -> e.getPersonalityId()));
+			//ExtractPersonalityPayDetailVO extractPersonalityPayDetailVO = list.get(0);
 			Map<Long, List<List<BigDecimal>>> map = new HashMap<>();
 			Map<Long, List<BigDecimal>> map1 = new HashMap<>();
 			Map<Integer, Map<Long,List<BigDecimal>>> result = new HashMap<>();
@@ -5520,7 +5504,13 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		});
 
 		if(!accountTasks.isEmpty()) {
-			String accountants = accountTasks.stream().flatMap(e -> Arrays.stream(e.getPlanAccountantEmpNos().split(","))).distinct().collect(Collectors.joining("|"));
+			String accountants = accountTasks.stream().flatMap(e -> {
+				BudgetBillingUnit budgetBillingUnit = unitMap.get(e.getBillingUnitId());
+				if(StringUtils.isNotBlank(budgetBillingUnit.getAccountants())){
+					return Arrays.stream(budgetBillingUnit.getAccountants().split(","));
+				}
+				return null;
+			}).filter(StringUtils::isNotBlank).map(e->UserCache.getUserByUserId(e).getUserName()).distinct().collect(Collectors.joining("|"));
 			if(test){
 				accountants = testNotice;
 			}
