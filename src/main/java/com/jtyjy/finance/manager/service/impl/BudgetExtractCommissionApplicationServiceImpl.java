@@ -535,7 +535,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         //预算单位
         String deptName = extractSum.getDeptname();
         String oaDeptId = oaMapper.getDeptId(deptName);
-        if(StringUtils.isNotBlank(oaDeptId)){
+        if(StringUtils.isBlank(oaDeptId)){
             throw new RuntimeException("没有找到oa中对应的预算单位！");
         }
         WbUser user = UserThreadLocal.get();
@@ -608,20 +608,29 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         List<BudgetExtractImportdetail> importDetailList = extractImportDetailMapper.selectList
                 (new LambdaQueryWrapper<BudgetExtractImportdetail>().eq(BudgetExtractImportdetail::getExtractsumid,extractSumId));
         List<OAApplicationDetailDTO> oaDetailList = new ArrayList<>();
-        for (BudgetExtractImportdetail detail : importDetailList) {
-            OAApplicationDetailDTO dto = new OAApplicationDetailDTO();
-            dto.setTclx(detail.getExtractType());
-            //归属届别
-            String yearName = yearMapper.getNameById(detail.getYearid());
-            dto.setGslx(yearName);
-
-            dto.setSqtc(String.valueOf(detail.getShouldSendExtract()));
-
-
-            dto.setSfje(String.valueOf(detail.getCopeextract()));
-            dto.setKkje(String.valueOf(detail.getCopeextract().subtract(detail.getShouldSendExtract())));
-            dto.setWfid(tcWorkFlowId);
-            oaDetailList.add(dto);
+        if (CollectionUtils.isNotEmpty(importDetailList)) {
+            //提成类型+届别
+            Map<String, List<BudgetExtractImportdetail>> typeList = importDetailList.stream().collect(Collectors.groupingBy(x -> x.getExtractType()+"-"+x.getYearid()));
+            for (Map.Entry<String, List<BudgetExtractImportdetail>> entry : typeList.entrySet()) {
+                BudgetExtractImportdetail detail = entry.getValue().get(0);
+                OAApplicationDetailDTO dto = new OAApplicationDetailDTO();
+                dto.setTclx(detail.getExtractType());
+                //归属届别
+                String yearName = yearMapper.getNameById(detail.getYearid());
+                dto.setGslx(yearName);
+                //                detailsVO.setYearId(importDetail.getYearid().toString()+"届");
+                BigDecimal applyAmount = BigDecimal.ZERO;
+                BigDecimal actualAmount = BigDecimal.ZERO;
+                for (BudgetExtractImportdetail temp : entry.getValue()) {
+                    applyAmount = applyAmount.add(temp.getShouldSendExtract());
+                    actualAmount = actualAmount.add(temp.getCopeextract());
+                }
+                dto.setSqtc(String.valueOf(applyAmount));
+                dto.setSfje(String.valueOf(actualAmount));
+                dto.setKkje(String.valueOf(actualAmount.subtract(applyAmount)));
+                dto.setWfid(tcWorkFlowId);
+                oaDetailList.add(dto);
+            }
         }
         String oldRequestId = application.getRequestId();
         if (oldRequestId != null) {

@@ -1197,9 +1197,6 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				application.setStatus(ExtractStatusEnum.VERIFYING.getType());
 				application.setUpdateTime(new Date());
 				application.setUpdateBy(UserThreadLocal.getEmpNo());
-
-
-
 				//日志记录
 
 				applicationLogService.saveLog(application.getId(),OperationNodeEnum.SUBMITTED, LogStatusEnum.COMPLETE);

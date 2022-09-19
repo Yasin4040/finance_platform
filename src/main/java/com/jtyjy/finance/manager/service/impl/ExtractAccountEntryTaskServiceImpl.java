@@ -134,7 +134,7 @@ public class ExtractAccountEntryTaskServiceImpl extends ServiceImpl<ExtractAccou
 
     private void getSingleEntryTask(String extractMonth, List<ExtractAccountEntryTask> taskList, String nowCode, BudgetExtractsum extractSum) {
         ExtractAccountEntryTask entryTask = new ExtractAccountEntryTask();
-        entryTask.setExtractCode(extractSum.getCode());
+        entryTask.setExtractCode(nowCode);
         entryTask.setExtractMonth(extractSum.getExtractmonth());
 
         entryTask.setYearId(String.valueOf(extractSum.getYearid()));
