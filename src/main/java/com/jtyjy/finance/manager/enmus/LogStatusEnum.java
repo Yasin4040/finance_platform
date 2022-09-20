@@ -9,7 +9,9 @@ public enum LogStatusEnum {
 
 	COMPLETE(0,"已完成"),
 	PASS(1,"通过"),
-	REJECT(2,"退回");
+	REJECT(2,"退回"),
+	OA_PASS(0,"批准"),
+	OA_REJECT(3,"退回");
 
 	private Integer code;
 	private String msg;

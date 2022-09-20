@@ -15,4 +15,6 @@ public interface OAMapper extends BaseMapper<OaUser> {
     String getOaUserId(@Param("empNo") String empNo);
     String getDeptId(@Param("deptName") String deptName);
     String getNodeName(int nodeId);
+
+    String getLogStatus(@Param("requestId") String requestId,@Param("nodeId") int nodeId);
 }

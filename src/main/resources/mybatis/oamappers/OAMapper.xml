@@ -31,4 +31,7 @@
 	<select id="getNodeName" resultType="java.lang.String">
 		SELECT NODENAME AS name FROM ECOLOGY2.WORKFLOW_NODEBASE wn where wn.ID = #{nodeId}
 	</select>
+    <select id="getLogStatus" resultType="java.lang.String">
+		SELECT wr.LOGTYPE FROM ECOLOGY2.WORKFLOW_REQUESTLOG wr WHERE wr.NODEID = #{nodeId} AND wr.REQUESTID = #{requestId}
+	</select>
 </mapper>

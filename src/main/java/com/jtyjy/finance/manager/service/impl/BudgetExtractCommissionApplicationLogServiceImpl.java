@@ -19,6 +19,7 @@ import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationLogSe
 import com.jtyjy.finance.manager.mapper.BudgetExtractCommissionApplicationLogMapper;
 import com.jtyjy.finance.manager.service.BudgetExtractTaxHandleRecordService;
 import com.jtyjy.finance.manager.service.BudgetReimbursementorderService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,7 @@ import java.util.*;
 * @createDate 2022-08-26 11:08:05
 */
 @Service
+@Slf4j
 public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImpl<BudgetExtractCommissionApplicationLogMapper, BudgetExtractCommissionApplicationLog>
     implements BudgetExtractCommissionApplicationLogService{
 
@@ -108,17 +110,20 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
         extractLog.setCreateBy(empNo);
         extractLog.setCreatorName(username);
         extractLog.setCreateTime(new Date());
+
+        //获取oa中日志的 状态。日志中  0 同意  3拒绝。
         // 财务       0完成。 1 同意 2退回
         //oa中    0批准    1拒绝。 1 保存。 退回
-        Integer.valueOf(nodeType);
-        //3未知 todo
-        Integer logStatus=3;
-        if(nodeType.equals("0")){
+        String oaLogStatus =  oaMapper.getLogStatus(requestId,nodeId);
+        Integer logStatus =  Integer.valueOf(oaLogStatus);
+        if(LogStatusEnum.OA_PASS.getCode().equals(logStatus)){
             logStatus = LogStatusEnum.PASS.getCode();
-        }else if (nodeType.equals("1")){
+        }else if (LogStatusEnum.OA_REJECT.getCode().equals(logStatus)){
             logStatus = LogStatusEnum.REJECT.getCode();
-        }else {
-            logStatus = -1;
+        }else{
+            log.info(oaLogStatus+JSONObject.toJSONString(params));
+            System.out.println("oa审批log日志");
+            return;
         }
         extractLog.setStatus(logStatus);
         extractLog.setRemarks(remark);
@@ -127,7 +132,7 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
 
         //如果拒绝了  就是删除报销单。退回申请单。
         //删除报销表
-        if(nodeType.equals("1")) {
+        if(Objects.equals(logStatus, LogStatusEnum.REJECT.getCode())) {
             if (application.getReimbursementId() != null) {
                 BudgetReimbursementorder reimbursementOrder = reimburseService.getById(application.getReimbursementId());
                 reimburseService.removeById(reimbursementOrder);
