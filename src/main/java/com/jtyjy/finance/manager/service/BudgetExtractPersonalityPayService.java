@@ -454,4 +454,30 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 		extractsumService.generateDelayApplyOrder(extractBatch,ids,curBatchExtractSum);
 
 	}
+
+	/**
+	 * <p>初始化老数据提成</p>
+	 * @author minzhq
+	 * @date 2022/9/20 8:30
+	 * @param
+	 */
+	public void initAgoExtract() {
+		List<BudgetExtractsum> list = extractsumService.list(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getStatus, ExtractStatusEnum.CALCULATION_COMPLETE.type));
+		list.stream().collect(Collectors.groupingBy(BudgetExtractsum::getExtractmonth)).forEach((em,details)->{
+			BudgetExtractTaxHandleRecord extractTaxHandleRecord = extractsumService.getExtractTaxHandleRecord(em);
+			if(extractTaxHandleRecord==null){
+				extractTaxHandleRecord = new BudgetExtractTaxHandleRecord();
+				extractTaxHandleRecord.setExtractMonth(em);
+				extractTaxHandleRecord.setIsPersonalityComplete(true);
+				extractTaxHandleRecord.setIsCalComplete(true);
+				extractTaxHandleRecord.setIsSetExcessComplete(true);
+				taxHandleRecordMapper.insert(extractTaxHandleRecord);
+			}else{
+				extractTaxHandleRecord.setIsPersonalityComplete(true);
+				extractTaxHandleRecord.setIsCalComplete(true);
+				extractTaxHandleRecord.setIsSetExcessComplete(true);
+				taxHandleRecordMapper.updateById(extractTaxHandleRecord);
+			}
+		});
+	}
 }
