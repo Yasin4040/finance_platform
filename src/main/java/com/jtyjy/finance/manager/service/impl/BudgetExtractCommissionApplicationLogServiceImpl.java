@@ -2,6 +2,7 @@ package com.jtyjy.finance.manager.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jtyjy.ecology.EcologyParams;
 import com.jtyjy.ecology.EcologyRequestManager;
@@ -9,20 +10,19 @@ import com.jtyjy.finance.manager.bean.*;
 import com.jtyjy.finance.manager.enmus.ExtractStatusEnum;
 import com.jtyjy.finance.manager.enmus.LogStatusEnum;
 import com.jtyjy.finance.manager.enmus.OperationNodeEnum;
+import com.jtyjy.finance.manager.enmus.RoleNameEnum;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
-import com.jtyjy.finance.manager.mapper.BudgetExtractCommissionApplicationMapper;
-import com.jtyjy.finance.manager.mapper.BudgetExtractImportdetailMapper;
-import com.jtyjy.finance.manager.mapper.BudgetExtractsumMapper;
+import com.jtyjy.finance.manager.mapper.*;
 import com.jtyjy.finance.manager.oadao.OAMapper;
-import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationLogService;
-import com.jtyjy.finance.manager.mapper.BudgetExtractCommissionApplicationLogMapper;
-import com.jtyjy.finance.manager.service.BudgetExtractTaxHandleRecordService;
-import com.jtyjy.finance.manager.service.BudgetExtractsumService;
-import com.jtyjy.finance.manager.service.BudgetReimbursementorderService;
+import com.jtyjy.finance.manager.service.*;
+import com.jtyjy.weixin.message.MessageSender;
+import com.jtyjy.weixin.message.QywxTextMsg;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.MessageFormat;
 import java.util.*;
 
 /**
@@ -41,16 +41,23 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
     private final OAMapper oaMapper;
     private final BudgetReimbursementorderService reimburseService;
     private final BudgetExtractTaxHandleRecordService taxHandleRecordService;
-    private final BudgetExtractsumService extractSumService;
 
-    public BudgetExtractCommissionApplicationLogServiceImpl(BudgetExtractCommissionApplicationMapper applicationMapper, BudgetExtractsumMapper extractSumMapper, BudgetExtractImportdetailMapper importDetailMapper, OAMapper oaMapper, BudgetReimbursementorderService reimburseService, BudgetExtractTaxHandleRecordService taxHandleRecordService, BudgetExtractsumService extractSumService) {
+    private final CommonService commonService;
+    private final BudgetYearPeriodMapper yearMapper;
+    private final TabDmMapper dmMapper;
+    private final MessageSender sender;
+
+    public BudgetExtractCommissionApplicationLogServiceImpl(BudgetExtractCommissionApplicationMapper applicationMapper, BudgetExtractsumMapper extractSumMapper, BudgetExtractImportdetailMapper importDetailMapper, OAMapper oaMapper, BudgetReimbursementorderService reimburseService, BudgetExtractTaxHandleRecordService taxHandleRecordService, CommonService commonService, BudgetYearPeriodMapper yearMapper, TabDmMapper dmMapper, MessageSender sender) {
         this.applicationMapper = applicationMapper;
         this.extractSumMapper = extractSumMapper;
         this.importDetailMapper = importDetailMapper;
         this.oaMapper = oaMapper;
         this.reimburseService = reimburseService;
         this.taxHandleRecordService = taxHandleRecordService;
-        this.extractSumService = extractSumService;
+        this.commonService = commonService;
+        this.yearMapper = yearMapper;
+        this.dmMapper = dmMapper;
+        this.sender = sender;
     }
 
     @Override
@@ -149,11 +156,49 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
                 budgetExtractsum.setStatus(ExtractStatusEnum.APPROVED.getType());
                 extractSumMapper.updateById(budgetExtractsum);
 //                dealHandleRecord(sumId);
-                extractSumService.doMsgTask(budgetExtractsum.getExtractmonth(),ExtractStatusEnum.APPROVED, String.valueOf(sumId));
+                this.doMsgTask(budgetExtractsum.getExtractmonth(),ExtractStatusEnum.APPROVED, String.valueOf(sumId));
             }
         }
     }
-
+    public void doMsgTask(String extractMonth,  ExtractStatusEnum statusEnum,String sumId) {
+        BudgetExtractsum extractSum = extractSumMapper.selectById(sumId);
+        List<BudgetExtractsum> extractSumList = extractSumMapper.selectList(new QueryWrapper<BudgetExtractsum>().eq("extractmonth", extractMonth).eq("deleteflag", 0));
+        //不为本订单，存在不为审核通过的数量。
+        long count = extractSumList.stream().filter(x->!x.getId().toString().equals(sumId)).filter(x -> !Objects.equals(x.getStatus(), statusEnum.getType())).count();
+        if(count>0){
+            return;
+        }
+        String yearName = yearMapper.getNameById(extractSum.getYearid());
+        Integer month = Integer.valueOf(extractMonth.substring(4, 6));
+        Integer batchNo = Integer.valueOf(extractMonth.substring(6));
+        String code =  MessageFormat.format("{0}届{1}月第{2}批{3}单",yearName,month,batchNo,extractSum.getCode());
+        switch (statusEnum){
+            case APPROVED:
+                String toUsers = "";
+                if (count==0) {
+                    //XX届XX月XX批
+                    if (this.isTest()) {
+                        toUsers = this.getTestNotice();
+                    }else{
+                        List<String> empNoList = commonService.getEmpNoListByRoleNames(RoleNameEnum.TAX.getValue());
+                        toUsers=String.join("|", empNoList);
+                    }
+                    if(StringUtils.isNotBlank(toUsers))
+                        sender.sendQywxMsg(new QywxTextMsg(toUsers, null, null, 0,code+"提成支付申请单已审核通过，可进行提成发放操作！" ,null));
+                }
+                break;
+            default:
+                break;
+        }
+    }
+    public boolean isTest(){
+        TabDm dm = this.dmMapper.selectOne(new QueryWrapper<TabDm>().eq("dm_type", "EXTRACTCAL").eq("dm", "is_test"));
+        return dm != null && StringUtils.isNotBlank(dm.getDmValue()) && "1".equals(dm.getDmValue());
+    }
+    public String getTestNotice(){
+        TabDm dm1 = this.dmMapper.selectOne(new QueryWrapper<TabDm>().eq("dm_type", "EXTRACTCAL").eq("dm", "test_notice"));
+        return dm1.getDmValue();
+    }
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void dealHandleRecord(Long sumId) {

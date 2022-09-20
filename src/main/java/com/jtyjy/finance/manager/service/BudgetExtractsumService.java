@@ -1293,39 +1293,6 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	}
 
 
-	public void doMsgTask(String extractMonth,  ExtractStatusEnum statusEnum,String sumId) {
-		BudgetExtractsum extractSum = this.baseMapper.selectById(sumId);
-		List<BudgetExtractsum> extractSumList = this.baseMapper.selectList(new QueryWrapper<BudgetExtractsum>().eq("extractmonth", extractMonth).eq("deleteflag", 0));
-		//不为本订单，存在不为审核通过的数量。
-		long count = extractSumList.stream().filter(x->!x.getId().toString().equals(sumId)).filter(x -> !Objects.equals(x.getStatus(), statusEnum.getType())).count();
-		if(count>0){
-			return;
-		}
-		String yearName = yearMapper.getNameById(extractSum.getYearid());
-		Integer month = Integer.valueOf(extractMonth.substring(4, 6));
-		Integer batchNo = Integer.valueOf(extractMonth.substring(6));
-		String code =  MessageFormat.format("{0}届{1}月第{2}批{3}单",yearName,month,batchNo,extractSum.getCode());
-		switch (statusEnum){
-			case APPROVED:
-				String toUsers = "";
-				if (count==0) {
-					//XX届XX月XX批
-					if (this.isTest()) {
-						toUsers = this.getTestNotice();
-					}else{
-						List<String> empNoList = commonService.getEmpNoListByRoleNames(RoleNameEnum.TAX.getValue());
-						toUsers=String.join("|", empNoList);
-					}
-					if(StringUtils.isNotBlank(toUsers))
-						sender.sendQywxMsg(new QywxTextMsg(toUsers, null, null, 0,code+"提成支付申请单已审核通过，可进行提成发放操作！" ,null));
-				}
-				break;
-			default:
-				break;
-		}
-	}
-
-
 	/**
 	 * 删除
 	 *
@@ -1588,8 +1555,6 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		 * 当前批次所有单据都审批通过	有税筹计算角色权限的员工	XX届XX月XX批提成支付申请单已审核通过，可进行提成发放操作！
 		 */
 
-
-
 //
 //		List<BudgetExtractsum> totalExtractSums = budgetExtractsumMapper.selectList(new QueryWrapper<BudgetExtractsum>().eq("extractmonth", budgetExtractsums.get(0).getExtractmonth()));
 //		long approvedcount = totalExtractSums.stream().filter(e -> ExtractStatusEnum.APPROVED.getType() == e.getStatus().intValue()).count();
@@ -1601,7 +1566,37 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 //			}
 //		}
 	}
-
+	public void doMsgTask(String extractMonth,  ExtractStatusEnum statusEnum,String sumId) {
+		BudgetExtractsum extractSum =  this.baseMapper.selectById(sumId);
+		List<BudgetExtractsum> extractSumList =  this.baseMapper.selectList(new QueryWrapper<BudgetExtractsum>().eq("extractmonth", extractMonth).eq("deleteflag", 0));
+		//不为本订单，存在不为审核通过的数量。
+		long count = extractSumList.stream().filter(x->!x.getId().toString().equals(sumId)).filter(x -> !Objects.equals(x.getStatus(), statusEnum.getType())).count();
+		if(count>0){
+			return;
+		}
+		String yearName = yearMapper.getNameById(extractSum.getYearid());
+		Integer month = Integer.valueOf(extractMonth.substring(4, 6));
+		Integer batchNo = Integer.valueOf(extractMonth.substring(6));
+		String code =  MessageFormat.format("{0}届{1}月第{2}批{3}单",yearName,month,batchNo,extractSum.getCode());
+		switch (statusEnum){
+			case APPROVED:
+				String toUsers = "";
+				if (count==0) {
+					//XX届XX月XX批
+					if (this.isTest()) {
+						toUsers = this.getTestNotice();
+					}else{
+						List<String> empNoList = commonService.getEmpNoListByRoleNames(RoleNameEnum.TAX.getValue());
+						toUsers=String.join("|", empNoList);
+					}
+					if(StringUtils.isNotBlank(toUsers))
+						sender.sendQywxMsg(new QywxTextMsg(toUsers, null, null, 0,code+"提成支付申请单已审核通过，可进行提成发放操作！" ,null));
+				}
+				break;
+			default:
+				break;
+		}
+	}
 	/**
 	 * 退回
 	 *
