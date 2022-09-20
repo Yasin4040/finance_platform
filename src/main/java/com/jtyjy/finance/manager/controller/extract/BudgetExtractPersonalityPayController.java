@@ -403,6 +403,18 @@ public class BudgetExtractPersonalityPayController {
 		return ResponseEntity.ok();
 	}
 
+
+	@ApiIgnore
+	@GetMapping("/initAgoExtract")
+	public ResponseEntity initAgoExtract() throws Exception {
+		try{
+			this.personalityPayService.initAgoExtract();
+		}catch (Exception e){
+			e.printStackTrace();
+		}
+		return ResponseEntity.ok();
+	}
+
 	@ApiIgnore
 	@PostMapping("/importInitPersonalityPayDetail")
 	public ResponseEntity importInitPersonalityPayDetail(@RequestParam(name = "file") MultipartFile file, HttpServletResponse response, HttpServletRequest request) throws Exception {
