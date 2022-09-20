@@ -322,9 +322,11 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 			throw new RuntimeException(error.toString());
 		}
 		List<Long> billingUnitIdList = extractPersonalityPayDetails.stream().map(e -> e.getBillingUnitId()).distinct().collect(Collectors.toList());
-		List<BudgetBillingUnit> stopUnitList = billingUnitMapper.selectList(new LambdaQueryWrapper<BudgetBillingUnit>().in(BudgetBillingUnit::getId, billingUnitIdList).eq(BudgetBillingUnit::getStopFlag, 1));
-		if(!CollectionUtils.isEmpty(stopUnitList)){
-			throw new RuntimeException("发放单位【"+stopUnitList.stream().map(BudgetBillingUnit::getName).collect(Collectors.joining(","))+"】已被禁用。");
+		if(!CollectionUtils.isEmpty(billingUnitIdList)){
+			List<BudgetBillingUnit> stopUnitList = billingUnitMapper.selectList(new LambdaQueryWrapper<BudgetBillingUnit>().in(BudgetBillingUnit::getId, billingUnitIdList).eq(BudgetBillingUnit::getStopFlag, 1));
+			if(!CollectionUtils.isEmpty(stopUnitList)){
+				throw new RuntimeException("发放单位【"+stopUnitList.stream().map(BudgetBillingUnit::getName).collect(Collectors.joining(","))+"】已被禁用。");
+			}
 		}
 		BudgetExtractTaxHandleRecord extractTaxHandleRecord = extractsumService.getExtractTaxHandleRecord(extractBatch);
 		if(extractTaxHandleRecord==null){
@@ -367,7 +369,7 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 	public void cancelEnsureComplete(String extractBatch) {
 		extractsumService.validateExtractIsAllPass(extractBatch);
 		BudgetExtractTaxHandleRecord extractTaxHandleRecord = extractsumService.getExtractTaxHandleRecord(extractBatch);
-		if (extractTaxHandleRecord!=null && !extractTaxHandleRecord.getIsPersonalityComplete()) {
+		if (extractTaxHandleRecord ==null || (extractTaxHandleRecord!=null && !extractTaxHandleRecord.getIsPersonalityComplete())) {
 			throw new RuntimeException("取消失败！您还未完成员工个体户发放。");
 		}
 		extractsumService.validateFuturePersonality(extractBatch);
@@ -376,8 +378,10 @@ public class BudgetExtractPersonalityPayService extends ServiceImpl<BudgetExtrac
 		updateWrapper.set(BudgetExtractPersonalityPayDetail::getOperateTime,null);
 		this.update(updateWrapper);
 
-		extractTaxHandleRecord.setIsPersonalityComplete(false);
-		taxHandleRecordMapper.updateById(extractTaxHandleRecord);
+		if(extractTaxHandleRecord!=null){
+			extractTaxHandleRecord.setIsPersonalityComplete(false);
+			taxHandleRecordMapper.updateById(extractTaxHandleRecord);
+		}
 	}
 	/**
 	 * <p>导入初始化数据</p>

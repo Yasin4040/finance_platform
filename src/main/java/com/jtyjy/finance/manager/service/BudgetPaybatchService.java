@@ -175,7 +175,7 @@ public class BudgetPaybatchService extends DefaultBaseService<BudgetPaybatchMapp
             Map<String, StringJoiner> unitEmpNoMap = new HashMap<String, StringJoiner>();
             //获取所有银行账户对应的工号
             Set<String> bankAccounts = list.stream().filter(ele -> StringUtils.isNotBlank(ele.getBankaccount())).map(ele -> ele.getBankaccount()).collect(Collectors.toSet());
-            List<BudgetBankAccount> bankAccountList = this.bankAccountService.getByAccounts(bankAccounts);
+            List<BudgetBankAccount> bankAccountList = this.bankAccountService.getAccounts(bankAccounts);
             Map<String, BudgetBankAccount> bankAccountMap = new HashMap<String, BudgetBankAccount>();
             bankAccountList.forEach(ele -> bankAccountMap.put(ele.getBankaccount(), ele));
             //付款单主键-报销单缓存
@@ -217,6 +217,10 @@ public class BudgetPaybatchService extends DefaultBaseService<BudgetPaybatchMapp
             Set<String> reimcodeSet = new TreeSet<>();
             int messageType = -1;
             for (BudgetPaymoney bean : list) {
+                BudgetBankAccount budgetBankAccount = bankAccountMap.get(bean.getBankaccount());
+                if(budgetBankAccount == null || budgetBankAccount.getStopflag()){
+                    throw new RuntimeException("账号【"+bean.getBankaccount()+"】不存在或者已被停用。");
+                }
                 messageType = this.ensureMessageType(bean, payIdOrderMap, bankAccountMap, payIdTcDetailMap);
                 switch (messageType) {
                     //报销单-稿费
