@@ -5311,7 +5311,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		Integer batch = dbTasks.isEmpty()?1:dbTasks.get(0).getBatch()+1;
 		Date date = new Date();
 		perPayDetails.stream().collect(Collectors.groupingBy(e->e.getExtractCode())).forEach((code,list)->{
-
+			String extractDelayNum = distributedNumber.getExtractDelayNum();
 			list.stream().collect(Collectors.groupingBy(e->e.getBillingUnitId())).forEach((billingUnitId,sameBillingUnitList)->{
 				String personalityIds = sameBillingUnitList.stream().map(e -> e.getPersonalityId().toString()).collect(Collectors.joining(","));
 				BudgetBillingUnit budgetBillingUnit = unitMap.get(billingUnitId);
@@ -5334,7 +5334,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 					task.setAccountantStatus(1);
 					task.setIsShouldAccount(false);
 				}
-				task.setExtractCode(distributedNumber.getExtractDelayNum());
+				task.setExtractCode(extractDelayNum);
 				task.setTaskType(ExtractTaskTypeEnum.DELAY.type);
 				sameBillingUnitList.forEach(e->{
 					e.setExtractCode(task.getExtractCode());
