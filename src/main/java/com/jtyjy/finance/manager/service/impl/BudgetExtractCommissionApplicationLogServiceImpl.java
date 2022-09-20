@@ -7,7 +7,6 @@ import com.jtyjy.ecology.EcologyParams;
 import com.jtyjy.ecology.EcologyRequestManager;
 import com.jtyjy.finance.manager.bean.*;
 import com.jtyjy.finance.manager.enmus.ExtractStatusEnum;
-import com.jtyjy.finance.manager.enmus.ExtractUserTypeEnum;
 import com.jtyjy.finance.manager.enmus.LogStatusEnum;
 import com.jtyjy.finance.manager.enmus.OperationNodeEnum;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
@@ -18,12 +17,11 @@ import com.jtyjy.finance.manager.oadao.OAMapper;
 import com.jtyjy.finance.manager.service.BudgetExtractCommissionApplicationLogService;
 import com.jtyjy.finance.manager.mapper.BudgetExtractCommissionApplicationLogMapper;
 import com.jtyjy.finance.manager.service.BudgetExtractTaxHandleRecordService;
+import com.jtyjy.finance.manager.service.BudgetExtractsumService;
 import com.jtyjy.finance.manager.service.BudgetReimbursementorderService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 
@@ -43,14 +41,16 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
     private final OAMapper oaMapper;
     private final BudgetReimbursementorderService reimburseService;
     private final BudgetExtractTaxHandleRecordService taxHandleRecordService;
+    private final BudgetExtractsumService extractSumService;
 
-    public BudgetExtractCommissionApplicationLogServiceImpl(BudgetExtractCommissionApplicationMapper applicationMapper, BudgetExtractsumMapper extractSumMapper, BudgetExtractImportdetailMapper importDetailMapper, OAMapper oaMapper, BudgetReimbursementorderService reimburseService, BudgetExtractTaxHandleRecordService taxHandleRecordService) {
+    public BudgetExtractCommissionApplicationLogServiceImpl(BudgetExtractCommissionApplicationMapper applicationMapper, BudgetExtractsumMapper extractSumMapper, BudgetExtractImportdetailMapper importDetailMapper, OAMapper oaMapper, BudgetReimbursementorderService reimburseService, BudgetExtractTaxHandleRecordService taxHandleRecordService, BudgetExtractsumService extractSumService) {
         this.applicationMapper = applicationMapper;
         this.extractSumMapper = extractSumMapper;
         this.importDetailMapper = importDetailMapper;
         this.oaMapper = oaMapper;
         this.reimburseService = reimburseService;
         this.taxHandleRecordService = taxHandleRecordService;
+        this.extractSumService = extractSumService;
     }
 
     @Override
@@ -149,6 +149,7 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
                 budgetExtractsum.setStatus(ExtractStatusEnum.APPROVED.getType());
                 extractSumMapper.updateById(budgetExtractsum);
 //                dealHandleRecord(sumId);
+                extractSumService.doMsgTask(budgetExtractsum.getExtractmonth(),ExtractStatusEnum.APPROVED, String.valueOf(sumId));
             }
         }
     }

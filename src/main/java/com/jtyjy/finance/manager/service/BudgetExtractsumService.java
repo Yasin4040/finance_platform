@@ -19,6 +19,7 @@ import com.jtyjy.core.service.DefaultBaseService;
 import com.jtyjy.core.tools.HttpClientTool;
 import com.jtyjy.finance.manager.bean.*;
 import com.jtyjy.finance.manager.cache.BankCache;
+import com.jtyjy.finance.manager.cache.UnitCache;
 import com.jtyjy.finance.manager.cache.UserCache;
 import com.jtyjy.finance.manager.constants.Constants;
 import com.jtyjy.finance.manager.controller.BaseController;
@@ -52,6 +53,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -92,6 +94,8 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 	private BudgetExtractsumMapper budgetExtractsumMapper;
 	@Autowired
 	private IndividualEmployeeFilesService individualService;
+	@Autowired
+	private CommonService commonService;
 	@Autowired
 	private BudgetExtractCommissionApplicationService applicationService;
 	@Autowired
@@ -1215,9 +1219,35 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		this.updateBatchById(budgetExtractsums);
 		budgetExtractsums.forEach(extractsum -> {
 			try {
-				TabDm dm = dmMapper.selectOne(new QueryWrapper<TabDm>().eq("dm_type", EXTRACTVERIFY).eq("dm", extractsum.getDeptname()));
-				if (dm != null && StringUtils.isNotBlank(dm.getDmValue())) {
-					sender.sendQywxMsgSyn(new QywxTextMsg(dm.getDmValue(), null, null, 0, "提成单号【" + extractsum.getCode() + "】已提交，请尽快到财务管理系统中审核。", null));
+//				TabDm dm = dmMapper.selectOne(new QueryWrapper<TabDm>().eq("dm_type", EXTRACTVERIFY).eq("dm", extractsum.getDeptname()));
+//				if (dm != null && StringUtils.isNotBlank(dm.getDmValue())) {
+//					sender.sendQywxMsgSyn(new QywxTextMsg(dm.getDmValue(), null, null, 0, "提成单号【" + extractsum.getCode() + "】已提交，请尽快到财务管理系统中审核。", null));
+//				}
+				//发送消息
+				//单张单据状态更新为已提交	该单据所在预算单位的收入会计
+				String deptId = extractsum.getDeptid();
+				BudgetUnit budgetUnit = unitMapper.selectById(deptId);
+				String accounting = budgetUnit.getAccounting();
+				//userId,转换工号。且转换 符号
+				String[] userIdSplit = accounting.split(",");
+				List<String> userNos = new ArrayList<>();
+				for (int i = 0; i < userIdSplit.length; i++) {
+					String empNo = UserCache.getUserByUserId(userIdSplit[0]).getUserName();
+					userNos.add(empNo);
+				}
+				String toUsers = "";
+				if (this.isTest()) {
+					toUsers = this.getTestNotice();
+				}else{
+					toUsers=String.join("|", userNos);
+				}
+				if (StringUtils.isNotBlank(toUsers)) {
+					String yearName = yearMapper.getNameById(extractsum.getYearid());
+					Integer month = Integer.valueOf(extractsum.getExtractmonth().substring(4, 6));
+					Integer batchNo = Integer.valueOf(extractsum.getExtractmonth().substring(6));
+
+					String codeMsg = MessageFormat.format("{0}届{1}月第{2}批{3}单已提交，可查看提成明细！", yearName, month, batchNo, extractsum.getCode());
+					sender.sendQywxMsgSyn(new QywxTextMsg(toUsers, null, null, 0, codeMsg, null));
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -1261,6 +1291,40 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			throw new RuntimeException("提交失败！该批次没有提成，请将其删除");
 		}
 	}
+
+
+	public void doMsgTask(String extractMonth,  ExtractStatusEnum statusEnum,String sumId) {
+		BudgetExtractsum extractSum = this.baseMapper.selectById(sumId);
+		List<BudgetExtractsum> extractSumList = this.baseMapper.selectList(new QueryWrapper<BudgetExtractsum>().eq("extractmonth", extractMonth).eq("deleteflag", 0));
+		//不为本订单，存在不为审核通过的数量。
+		long count = extractSumList.stream().filter(x->!x.getId().toString().equals(sumId)).filter(x -> !Objects.equals(x.getStatus(), statusEnum.getType())).count();
+		if(count>0){
+			return;
+		}
+		String yearName = yearMapper.getNameById(extractSum.getYearid());
+		Integer month = Integer.valueOf(extractMonth.substring(4, 6));
+		Integer batchNo = Integer.valueOf(extractMonth.substring(6));
+		String code =  MessageFormat.format("{0}届{1}月第{2}批{3}单",yearName,month,batchNo,extractSum.getCode());
+		switch (statusEnum){
+			case APPROVED:
+				String toUsers = "";
+				if (count==0) {
+					//XX届XX月XX批
+					if (this.isTest()) {
+						toUsers = this.getTestNotice();
+					}else{
+						List<String> empNoList = commonService.getEmpNoListByRoleNames(RoleNameEnum.TAX.getValue());
+						toUsers=String.join("|", empNoList);
+					}
+					if(StringUtils.isNotBlank(toUsers))
+						sender.sendQywxMsg(new QywxTextMsg(toUsers, null, null, 0,code+"提成支付申请单已审核通过，可进行提成发放操作！" ,null));
+				}
+				break;
+			default:
+				break;
+		}
+	}
+
 
 	/**
 	 * 删除
@@ -1515,20 +1579,27 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			WbUser curUser = UserThreadLocal.get();
 			extractsum.setVerifyorname(curUser.getDisplayName());
 			extractsum.setVerifyorid(curUser.getUserId());
+			this.updateById(extractsum);
+			this.doMsgTask(extractsum.getExtractmonth(),ExtractStatusEnum.APPROVED, String.valueOf(extractsum.getId()));
 		});
 		this.updateBatchById(budgetExtractsums);
 		/**
 		 * 如果全部审核通过通知相关人员
+		 * 当前批次所有单据都审批通过	有税筹计算角色权限的员工	XX届XX月XX批提成支付申请单已审核通过，可进行提成发放操作！
 		 */
-		List<BudgetExtractsum> totalExtractSums = budgetExtractsumMapper.selectList(new QueryWrapper<BudgetExtractsum>().eq("extractmonth", budgetExtractsums.get(0).getExtractmonth()));
-		long approvedcount = totalExtractSums.stream().filter(e -> ExtractStatusEnum.APPROVED.getType() == e.getStatus().intValue()).count();
-		if (totalExtractSums.size() == approvedcount) {
-			try {
-				TabDm dm = this.dmMapper.selectOne(new QueryWrapper<TabDm>().eq("dm_type", EXTRACT_CAL_DM_TYPE).eq("dm", EXTRACT_ALL_VERIFY));
-				sender.sendQywxMsgSyn(new QywxTextMsg(dm.getDmValue(), null, null, 0, "提成批次【" + budgetExtractsums.get(0).getExtractmonth() + "】已全部审核通过，请及时在财务管理系统中处理。", null));
-			} catch (Exception e) {
-			}
-		}
+
+
+
+//
+//		List<BudgetExtractsum> totalExtractSums = budgetExtractsumMapper.selectList(new QueryWrapper<BudgetExtractsum>().eq("extractmonth", budgetExtractsums.get(0).getExtractmonth()));
+//		long approvedcount = totalExtractSums.stream().filter(e -> ExtractStatusEnum.APPROVED.getType() == e.getStatus().intValue()).count();
+//		if (totalExtractSums.size() == approvedcount) {
+//			try {
+//				TabDm dm = this.dmMapper.selectOne(new QueryWrapper<TabDm>().eq("dm_type", EXTRACT_CAL_DM_TYPE).eq("dm", EXTRACT_ALL_VERIFY));
+//				sender.sendQywxMsgSyn(new QywxTextMsg(dm.getDmValue(), null, null, 0, "提成批次【" + budgetExtractsums.get(0).getExtractmonth() + "】已全部审核通过，请及时在财务管理系统中处理。", null));
+//			} catch (Exception e) {
+//			}
+//		}
 	}
 
 	/**

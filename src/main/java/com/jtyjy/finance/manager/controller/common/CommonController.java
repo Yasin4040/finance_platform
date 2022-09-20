@@ -12,6 +12,9 @@ import com.alibaba.fastjson.JSON;
 import com.jtyjy.api.OAServiceProxy;
 import com.jtyjy.core.auth.anno.NoLoginAnno;
 import com.jtyjy.finance.manager.bean.*;
+import com.jtyjy.finance.manager.cache.DeptCache;
+import com.jtyjy.finance.manager.cache.PersonCache;
+import com.jtyjy.finance.manager.dto.common.UserBaseDTO;
 import com.jtyjy.finance.manager.enmus.*;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.query.UploadQuery;
@@ -301,10 +304,25 @@ public class CommonController extends BaseController {
     }
 
     @ApiOperation(value = "获取角色list",httpMethod="GET")
-    @GetMapping(value = "/getRoleList")
+    @GetMapping(value = "getRoleList")
     public ResponseEntity getRoleList() {
+        UserBaseDTO baseDTO = new UserBaseDTO();
         String result = HttpUtil.doGet(this.userRoleUrl + UserThreadLocal.getEmpNo()+"&serverId="+serverId);
         List<String> roles = JSON.parseArray(result, String.class);
-        return ResponseEntity.ok(roles);
+        String mainRole = "";
+        //有商务就是商务，其次就是大区经理，最后就是业务经理
+        if (roles.contains(RoleNameEnum.COMMERCIAL_COMMISSION.getValue())) {
+            mainRole = RoleNameEnum.COMMERCIAL_COMMISSION.getValue();
+        }else if(roles.contains(RoleNameEnum.BIG_MANAGER.getValue())){
+            mainRole = RoleNameEnum.BIG_MANAGER.getValue();
+        }else if(roles.contains(RoleNameEnum.MANAGER.getValue())){
+            mainRole = RoleNameEnum.MANAGER.getValue();
+        }
+        baseDTO.setRoleName(mainRole);
+        WbPerson person = PersonCache.getPersonByEmpNo(UserThreadLocal.getEmpNo());
+        baseDTO.setDeptId(person.getDeptId());
+        WbDept dept = DeptCache.getByDeptId(person.getDeptId());
+        baseDTO.setDeptName(dept.getDeptFullname());
+        return ResponseEntity.ok(baseDTO);
     }
 }

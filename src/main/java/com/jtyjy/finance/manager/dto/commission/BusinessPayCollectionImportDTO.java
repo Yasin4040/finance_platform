@@ -22,6 +22,13 @@ import java.util.Date;
 @Data
 public class BusinessPayCollectionImportDTO implements Serializable {
     /**
+     * 预算单位
+     */
+    @TableField(value = "budget_unit_name")
+    @ApiModelProperty(value = "预算单位")
+    @ExcelProperty(value = "预算单位")
+    private String budgetUnitName;
+    /**
      * 提成类型
      */
     @TableField(value = "extract_type")
@@ -53,13 +60,7 @@ public class BusinessPayCollectionImportDTO implements Serializable {
     @ExcelProperty(value = "批次")
     private String batchNo;
 
-    /**
-     * 预算单位
-     */
-    @TableField(value = "budget_unit_name")
-    @ApiModelProperty(value = "预算单位")
-    @ExcelProperty(value = "预算单位")
-    private String budgetUnitName;
+
     /**
      * 回款工号
      */

@@ -98,7 +98,7 @@ public class CommissionApplicationDetailsServiceImpl extends ServiceImpl<BudgetE
             if(dept!=null) {
                 record.setEmpDeptFullName(dept.getDeptFullname());
             }
-            record.setYearName(yearPeriodMapper.getNameById(Long.valueOf(record.getYearId())));
+            record.setYearName(yearPeriodMapper.getNameById(Long.valueOf(record.getMainYearId())));
             record.setMonthName(Integer.parseInt(record.getExtractMonth().substring(4, 6)) + "月");
             record.setIfBigManagerView(!record.getIfBigManager().equals(-1)?"允许":"关闭");
             record.setIfManagerView(!record.getIfManager().equals(-1)?"允许":"关闭");
@@ -142,6 +142,10 @@ public class CommissionApplicationDetailsServiceImpl extends ServiceImpl<BudgetE
             }else{
                 list.forEach(x->x.setIfManager(-1));
             }
+        }
+        for (BudgetExtractImportdetail entity : list) {
+            entity.setUpdateBy(UserThreadLocal.getEmpNo());
+            entity.setUpdateBy(UserThreadLocal.getEmpName());
         }
         this.saveOrUpdateBatch(list);
     }

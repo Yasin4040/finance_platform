@@ -31,6 +31,8 @@ import com.jtyjy.finance.manager.query.commission.FeeQuery;
 import com.jtyjy.finance.manager.service.*;
 import com.jtyjy.finance.manager.utils.FileUtils;
 import com.jtyjy.finance.manager.vo.application.*;
+import com.jtyjy.weixin.message.MessageSender;
+import com.jtyjy.weixin.message.QywxTextMsg;
 import lombok.SneakyThrows;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.BeanUtilsBean;
@@ -81,10 +83,11 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     private final TabDmMapper tabDmMapper;
     private final OAMapper oaMapper;
     private final BudgetExtractCommissionApplicationLogService logService;
-
+    private final CommonService commonService;
+    private final MessageSender sender;
     @Value("${commission.application.workflowid}")
     private  String tcWorkFlowId;
-    public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractTaxHandleRecordService taxHandleRecordService, BudgetExtractsumMapper extractSumMapper, BudgetExtractOuterpersonMapper outPersonMapper, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, BudgetCommonAttachmentService attachmentService, StorageClient storageClient, ReimbursementWorker reimbursementWorker, BudgetReimbursementorderService reimbursementorderService, BudgetExtractFeePayDetailMapper feePayDetailMapper, HrService hrService, OaService oaService, TabDmMapper tabDmMapper, OAMapper oaMapper, BudgetExtractCommissionApplicationLogService logService) {
+    public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractTaxHandleRecordService taxHandleRecordService, BudgetExtractsumMapper extractSumMapper, BudgetExtractOuterpersonMapper outPersonMapper, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, BudgetCommonAttachmentService attachmentService, StorageClient storageClient, ReimbursementWorker reimbursementWorker, BudgetReimbursementorderService reimbursementorderService, BudgetExtractFeePayDetailMapper feePayDetailMapper, HrService hrService, OaService oaService, TabDmMapper tabDmMapper, OAMapper oaMapper, BudgetExtractCommissionApplicationLogService logService, CommonService commonService, MessageSender sender) {
         this.taxHandleRecordService = taxHandleRecordService;
         this.extractSumMapper = extractSumMapper;
         this.outPersonMapper = outPersonMapper;
@@ -103,6 +106,8 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         this.oaMapper = oaMapper;
 
         this.logService = logService;
+        this.commonService = commonService;
+        this.sender = sender;
     }
 
     @Override
@@ -1146,6 +1151,14 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         //69,74,76
         String[] split = dmValue.split(",");
         return split[0];
+    }
+    public boolean isTest(){
+        TabDm dm = this.tabDmMapper.selectOne(new QueryWrapper<TabDm>().eq("dm_type", "EXTRACTCAL").eq("dm", "is_test"));
+        return dm != null && StringUtils.isNotBlank(dm.getDmValue()) && "1".equals(dm.getDmValue());
+    }
+    public String getTestNotice(){
+        TabDm dm1 = this.tabDmMapper.selectOne(new QueryWrapper<TabDm>().eq("dm_type", "EXTRACTCAL").eq("dm", "test_notice"));
+        return dm1.getDmValue();
     }
 }
 

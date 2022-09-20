@@ -8,6 +8,7 @@ import com.jtyjy.finance.manager.bean.BudgetExtractFeePayDetailBeforeCal;
 import com.jtyjy.finance.manager.bean.BudgetExtractsum;
 import com.jtyjy.finance.manager.dto.commission.FeeImportErrorDTO;
 import com.jtyjy.finance.manager.dto.commission.IndividualIssueExportDTO;
+import com.jtyjy.finance.manager.enmus.ExtractStatusEnum;
 import com.jtyjy.finance.manager.query.commission.FeeQuery;
 import com.jtyjy.finance.manager.vo.application.BudgetSubjectVO;
 import com.jtyjy.finance.manager.vo.application.CommissionApplicationInfoUpdateVO;
@@ -56,4 +57,6 @@ public interface BudgetExtractCommissionApplicationService extends IService<Budg
     void uploadOA(BudgetExtractCommissionApplication application) throws IOException;
 
     void validateExtractMonth(String extractMonth);
+
+//    void doMsgTask(String extractMonth,  ExtractStatusEnum statusEnum,String sumId);
 }
