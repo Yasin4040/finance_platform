@@ -61,7 +61,13 @@ public class BusinessPayCollectionErrorDTO extends ImportErrorDTO {
     @ApiModelProperty(value = "批次号")
     @ExcelProperty(value = "批次")
     private String batchNo;
-
+    /**
+     * 预算单位
+     */
+    @TableField(value = "budget_unit_name")
+    @ApiModelProperty(value = "预算单位")
+    @ExcelProperty(value = "预算单位")
+    private String budgetUnitName;
     /**
      * 回款工号
      */

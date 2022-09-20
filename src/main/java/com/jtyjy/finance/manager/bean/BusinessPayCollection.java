@@ -62,6 +62,14 @@ public class BusinessPayCollection implements Serializable {
     private String batchNo;
 
     /**
+     * 预算单位
+     */
+    @TableField(value = "budget_unit_name")
+    @ApiModelProperty(value = "预算单位")
+    @ExcelProperty(value = "预算单位")
+    private String budgetUnitName;
+
+    /**
      * 员工工号
      */
     @TableField(value = "emp_no")
@@ -197,18 +205,18 @@ public class BusinessPayCollection implements Serializable {
     private BigDecimal earlyCommission;
 
     /**
-     * 是否大区经理  0  1  2
+     * 是否大区经理  -1 0  1
      */
     @TableField(value = "if_big_manager")
-    @ApiModelProperty(value = "是否大区经理  0  1  2")
+    @ApiModelProperty(value = "是否大区经理  -1 0  1")
     @ExcelIgnore
     private Integer ifBigManager;
 
     /**
-     * 是否业务经理查看 0 1 2
+     * 是否业务经理查看 -1 0  1
      */
     @TableField(value = "if_manager")
-    @ApiModelProperty(value = "是否业务经理查看 0  1  2")
+    @ApiModelProperty(value = "是否业务经理查看 -1 0  1")
     @ExcelIgnore
     private Integer ifManager;
 
@@ -216,7 +224,7 @@ public class BusinessPayCollection implements Serializable {
     /**
      * 是否大区经理  0  1  2
      */
-    @TableField(value = "if_big_manager")
+//    @TableField(value = "if_big_manager")
     @ApiModelProperty(value = "是否大区经理  允许,关闭")
     @ExcelProperty("大区经理查看状态")
     private String ifBigManagerView;
@@ -224,7 +232,7 @@ public class BusinessPayCollection implements Serializable {
     /**
      * 是否业务经理查看 0 1 2
      */
-    @TableField(value = "if_manager")
+//    @TableField(value = "if_manager")
     @ApiModelProperty(value = "是否业务经理查看  允许,关闭")
     @ExcelProperty("业务经理查看状态")
     private String ifManagerView;

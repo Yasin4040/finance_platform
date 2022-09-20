@@ -23,11 +23,11 @@ public interface BudgetExtractImportdetailMapper extends BaseMapper<BudgetExtrac
 	List<ExtractImportDetailVO> getExtractImportDetails(Page<ExtractImportDetailVO> pageCond, @Param("params")Map<String, Object> params);
 
     IPage<CommissionImportDetailPowerVO> selectCommissionPageForCommercialCommission(Page<Object> objectPage, @Param("employeeName") String employeeName, @Param("departmentName") String departmentName
-			, @Param("yearId") String yearId, @Param("monthId") String monthId, @Param("extractMonth") String extractMonth, @Param("empNoList") List<String> empNoList);
+			, @Param("yearId") String yearId, @Param("monthId") String monthId, @Param("extractMonth") String extractMonth, @Param("budgetUnitName") String budgetUnitName, @Param("empNoList") List<String> empNoList);
 	IPage<CommissionImportDetailPowerVO> selectCommissionPageForManager(Page<Object> objectPage,@Param("employeeName") String employeeName,@Param("departmentName") String departmentName
-			,@Param("yearId") String yearId,@Param("monthId") String monthId,@Param("extractMonth") String extractMonth,@Param("empNoList") List<String> empNoList);
+			,@Param("yearId") String yearId,@Param("monthId") String monthId,@Param("extractMonth") String extractMonth, @Param("budgetUnitName") String budgetUnitName,@Param("empNoList") List<String> empNoList);
 	IPage<CommissionImportDetailPowerVO> selectCommissionPageForBigManager(Page<Object> objectPage,@Param("employeeName") String employeeName,@Param("departmentName") String departmentName
-			,@Param("yearId") String yearId,@Param("monthId") String monthId,@Param("extractMonth") String extractMonth,@Param("empNoList") List<String> empNoList);
+			,@Param("yearId") String yearId,@Param("monthId") String monthId,@Param("extractMonth") String extractMonth, @Param("budgetUnitName") String budgetUnitName, @Param("empNoList") List<String> empNoList);
 
     List<BudgetExtractImportdetail> getAllByExtractMonth(String extractMonth);
 }

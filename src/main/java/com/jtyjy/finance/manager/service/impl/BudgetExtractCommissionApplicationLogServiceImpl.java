@@ -109,9 +109,9 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
         extractLog.setCreatorName(username);
         extractLog.setCreateTime(new Date());
         // 财务       0完成。 1 同意 2退回
-        //oa中    0批准   3和1 哪个是拒绝 5 删除
+        //oa中    0批准    1拒绝。 1 保存。 退回
         Integer.valueOf(nodeType);
-        //3未知
+        //3未知 todo
         Integer logStatus=3;
         if(nodeType.equals("0")){
             logStatus = LogStatusEnum.PASS.getCode();

@@ -1,6 +1,7 @@
 package com.jtyjy.finance.manager.service.impl;
 
 import com.alibaba.excel.EasyExcel;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -21,6 +22,7 @@ import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.lang.reflect.InvocationTargetException;
@@ -79,7 +81,7 @@ public class BusinessPayCollectionServiceImpl extends ServiceImpl<BusinessPayCol
         switch (mainRole){
             case COMMERCIAL_COMMISSION:
                 page  = this.baseMapper.selectPageForCommercialCommission(new Page<>(query.getPage(),query.getRows())
-                        ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth());
+                        ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth(),query.getBudgetUnitName());
                 break;
             case BIG_MANAGER:
                 WbPerson person = PersonCache.getPersonByEmpNo(loginUser.getUserName());
@@ -91,13 +93,13 @@ public class BusinessPayCollectionServiceImpl extends ServiceImpl<BusinessPayCol
                 List<String> deptIdList = DeptCache.getAllDept().stream().filter(x -> x.getParentIds().contains(parentFullCode)).map(WbDept::getDeptId).collect(Collectors.toList());
 
                 page  = this.baseMapper.selectPageForBigManager(new Page<>(query.getPage(),query.getRows())
-                        ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth(),deptIdList);
+                        ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth(),query.getBudgetUnitName(),deptIdList);
 
                 break;
             case MANAGER:
                 empNo = loginUser.getUserName();
                 page  = this.baseMapper.selectPageForManager(new Page<>(query.getPage(),query.getRows())
-                        ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth(),empNo);
+                        ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth(),query.getBudgetUnitName(),empNo);
                 break;
             default:
                 break;
@@ -191,6 +193,7 @@ public class BusinessPayCollectionServiceImpl extends ServiceImpl<BusinessPayCol
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateView(UpdateViewRequest request) {
         List<BusinessPayCollection> list = this.lambdaQuery().in(BusinessPayCollection::getId,request.getIds()).list();
         Boolean ifBig = request.getIfBig();
@@ -206,6 +209,10 @@ public class BusinessPayCollectionServiceImpl extends ServiceImpl<BusinessPayCol
             }else{
                 list.forEach(x->x.setIfManager(-1));
             }
+        }
+        for (BusinessPayCollection entity : list) {
+            entity.setUpdateBy(UserThreadLocal.getEmpNo());
+            entity.setUpdateTime(new Date());
         }
         this.saveOrUpdateBatch(list);
     }

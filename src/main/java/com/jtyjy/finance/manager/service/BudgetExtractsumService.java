@@ -1299,6 +1299,8 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			if (reuqeststatus == ExtractStatusEnum.APPROVED.getType()) {
 				throw new RuntimeException("报销单已经审核通过，该单据不允许删除");
 			}
+			//4、删除报销表
+			reimbursementorderService.removeById(reimbursementorder.getId());
 		}
 		//1、导入明细
 //		if (extractsum.getStatus() > ExtractStatusEnum.VERIFYING.getType())
@@ -1308,8 +1310,6 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		extractDetailMapper.delete(new QueryWrapper<BudgetExtractdetail>().eq("extractsumid", sumId));
 		//3、提成主表
 		budgetExtractsumMapper.deleteById(sumId);
-		//4、删除报销表
-		reimbursementorderService.removeById(reimbursementorder.getId());
 			//0草稿（-1 退回 不能 -2 作废）
 		//application.getStatus()== ExtractStatusEnum.RETURN.getType()
 			if (application.getStatus()== ExtractStatusEnum.DRAFT.getType()) {

@@ -20,6 +20,8 @@ public class CommissionImportDetailPowerVO {
     private Long id;
     @ApiModelProperty(value = "*业务类型 提成类型")
     private String businessType;
+    @ApiModelProperty(value = "*预算单位")
+    private String budgetUnitName;
     @ApiModelProperty(value = "*工号")
     private String empno;
     @ApiModelProperty(value = "*姓名")

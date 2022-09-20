@@ -18,11 +18,11 @@ import java.util.List;
 public interface BusinessPayCollectionMapper extends BaseMapper<BusinessPayCollection> {
 
     IPage<BusinessPayCollection> selectPageForCommercialCommission(Page<Object> objectPage, @Param("employeeName") String employeeName, @Param("departmentName") String departmentName
-            , @Param("yearId") String yearId, @Param("monthId") String monthId, @Param("extractMonth") String extractMonth);
+            , @Param("yearId") String yearId, @Param("monthId") String monthId, @Param("extractMonth") String extractMonth, @Param("budgetUnitName") String budgetUnitName);
     IPage<BusinessPayCollection> selectPageForManager(Page<Object> objectPage,@Param("employeeName") String employeeName,@Param("departmentName") String departmentName
-            ,@Param("yearId") String yearId,@Param("monthId") String monthId,@Param("extractMonth") String extractMonth,@Param("empNo") String empNo);
+            ,@Param("yearId") String yearId,@Param("monthId") String monthId,@Param("extractMonth") String extractMonth, @Param("budgetUnitName") String budgetUnitName,@Param("empNo") String empNo);
     IPage<BusinessPayCollection> selectPageForBigManager(Page<Object> objectPage,@Param("employeeName") String employeeName,@Param("departmentName") String departmentName
-            ,@Param("yearId") String yearId,@Param("monthId") String monthId,@Param("extractMonth") String extractMonth,@Param("deptIdList") List<String> deptIdList);
+            ,@Param("yearId") String yearId,@Param("monthId") String monthId,@Param("extractMonth") String extractMonth, @Param("budgetUnitName") String budgetUnitName,@Param("deptIdList") List<String> deptIdList);
 
 }
 

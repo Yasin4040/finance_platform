@@ -74,20 +74,20 @@ public class CommissionApplicationDetailsServiceImpl extends ServiceImpl<BudgetE
                     empNoList = PersonCache.EMP_NO_USER_MAP.values().stream().filter(x -> allDeptIds.contains(x.getDeptId())).map(WbPerson::getPersonCode).collect(Collectors.toList());
                 }
                 page  = this.baseMapper.selectCommissionPageForCommercialCommission(new Page<>(query.getPage(),query.getRows())
-                        ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth(),empNoList);
+                        ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth(),query.getBudgetUnitName(),empNoList);
                 break;
             case BIG_MANAGER:
                 //当前工号的 大区下的工号。
                 empNoList = getViewEmpNoByLoginUser(loginUser.getUserName());
                 page  = this.baseMapper.selectCommissionPageForBigManager(new Page<>(query.getPage(),query.getRows())
-                        ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth(),empNoList);
+                        ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth(),query.getBudgetUnitName(),empNoList);
 
                 break;
             case MANAGER:
                 //自己工号
                 empNoList.add(loginUser.getUserName());
                 page  = this.baseMapper.selectCommissionPageForManager(new Page<>(query.getPage(),query.getRows())
-                        ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth(),empNoList);
+                        ,query.getEmployeeName(),query.getDepartmentName(),query.getYearId(),query.getMonthId(),query.getExtractMonth(),query.getBudgetUnitName(),empNoList);
                 break;
             default:
                 break;

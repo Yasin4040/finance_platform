@@ -39,6 +39,10 @@
         <if test="employeeName != null and employeeName !=''">
             and (bbpc.emp_no like concat('%',#{employeeName},'%') or bbpc.emp_name like concat('%',#{employeeName},'%'))
         </if>
+
+        <if test="budgetUnitName != null and budgetUnitName !=''">
+            and be.budget_unit_name like concat('%',#{budgetUnitName},'%')
+        </if>
         <if test="departmentName != null and departmentName !=''">
             and bbpc.dept_full_name like concat('%',#{departmentName},'%')
         </if>
@@ -49,7 +53,7 @@
             and bbpc.`month`  = #{monthId}
         </if>
         <if test="extractMonth != null and extractMonth !=''">
-            and bbpc.extractmonth like concat('%',#{extractMonth},'%')
+            and bbpc.batch_no like concat('%',#{extractMonth},'%')
         </if>
     </sql>
 
@@ -101,7 +105,7 @@
     <select id="selectPageForCommercialCommission"
             resultType="com.jtyjy.finance.manager.bean.BusinessPayCollection">
         select * from (
-        select * from db_budget.budget_business_pay_collection bbpc
+        select * from db_budget.budget_business_pay_collection bbpc where 1=1
         <include refid="searchQuery"></include>
         ) temp order by temp.create_time desc
     </select>

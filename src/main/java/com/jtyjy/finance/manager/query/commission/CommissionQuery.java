@@ -15,6 +15,8 @@ public class CommissionQuery extends PageQuery {
     private String employeeName;
     @ApiModelProperty(value = "部门name(客户类型)")
     private String departmentName;
+    @ApiModelProperty(value = "预算单位")
+    private String budgetUnitName;
     @ApiModelProperty(value = "届别id")
     private String yearId;
     @ApiModelProperty(value = "月份id")
