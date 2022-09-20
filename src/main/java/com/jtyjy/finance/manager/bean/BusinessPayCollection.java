@@ -22,6 +22,13 @@ import lombok.Data;
 @Data
 public class BusinessPayCollection implements Serializable {
     /**
+     * 预算单位
+     */
+    @TableField(value = "budget_unit_name")
+    @ApiModelProperty(value = "预算单位")
+    @ExcelProperty(value = "预算单位")
+    private String budgetUnitName;
+    /**
      * id
      */
     @TableId(value = "id", type = IdType.AUTO)
@@ -60,14 +67,6 @@ public class BusinessPayCollection implements Serializable {
     @ApiModelProperty(value = "批次号")
     @ExcelProperty(value = "批次")
     private String batchNo;
-
-    /**
-     * 预算单位
-     */
-    @TableField(value = "budget_unit_name")
-    @ApiModelProperty(value = "预算单位")
-    @ExcelProperty(value = "预算单位")
-    private String budgetUnitName;
 
     /**
      * 员工工号
@@ -224,17 +223,18 @@ public class BusinessPayCollection implements Serializable {
     /**
      * 是否大区经理  0  1  2
      */
-//    @TableField(value = "if_big_manager")
     @ApiModelProperty(value = "是否大区经理  允许,关闭")
     @ExcelProperty("大区经理查看状态")
+    @TableField(exist = false)
     private String ifBigManagerView;
 
     /**
      * 是否业务经理查看 0 1 2
      */
-//    @TableField(value = "if_manager")
+
     @ApiModelProperty(value = "是否业务经理查看  允许,关闭")
     @ExcelProperty("业务经理查看状态")
+    @TableField(exist = false)
     private String ifManagerView;
 
 

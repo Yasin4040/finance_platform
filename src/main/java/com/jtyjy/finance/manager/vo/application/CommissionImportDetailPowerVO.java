@@ -38,7 +38,8 @@ public class CommissionImportDetailPowerVO {
     private String yearName;
     @ApiModelProperty(value = "*提成届别Id")
     private String yearId;
-
+    @ApiModelProperty(value = "*主表提成届别Id")
+    private String mainYearId;
     @ApiModelProperty(value = "码洋")
     private BigDecimal totalPrice;
     @ApiModelProperty(value = "实洋")
