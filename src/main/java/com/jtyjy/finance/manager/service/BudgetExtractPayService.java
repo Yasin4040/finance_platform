@@ -358,7 +358,6 @@ public class BudgetExtractPayService {
 						if (StringUtils.isNotBlank(accounts)) {
 							sender.sendQywxMsg(new QywxTextMsg(accounts, null, null, 0, budgetYearPeriod.getPeriod() + Integer.parseInt(extractBatch.substring(4, 6)) + "月" + Integer.parseInt(extractBatch.substring(6, 8)) + "批提成已支付完成，可进行入账操作！", null));
 						}
-						;
 					} catch (Exception ignored) {
 
 					}
@@ -377,10 +376,14 @@ public class BudgetExtractPayService {
 					if (!CollectionUtils.isEmpty(empNoList)) {
 						sender.sendQywxMsg(new QywxTextMsg(String.join("|", empNoList), null, null, 0, "提成明细发布通知：<br>" + budgetYearPeriod.getPeriod() + Integer.parseInt(extractBatch.substring(4, 6)) + "月第" + Integer.parseInt(extractBatch.substring(6, 8)) + "批提成明细数据已发布，请登录http://ys.jtyjy.com查看。", null));
 					}
-					//List<BudgetExtractdetail> extractDetails = extractsumService.getExtractDetailBySumIds(list.stream().map(e -> e.getId()).collect(Collectors.toList()), null, null);
-					List<String> empNoList1 = commonService.getEmpNoListByRoleNames(RoleNameEnum.MANAGER.value);
+					List<BudgetExtractdetail> extractDetails = extractsumService.getExtractDetailBySumIds(list.stream().map(e -> e.getId()).collect(Collectors.toList()), null, null);
+					List<String> empNoList1 = extractDetails.stream().map(e -> e.getEmpno()).distinct().collect(Collectors.toList());
 					if (!CollectionUtils.isEmpty(empNoList1)) {
-						sender.sendQywxMsg(new QywxTextMsg(String.join("|", empNoList1), null, null, 0, "提成明细发布通知：<br>" + budgetYearPeriod.getPeriod() + Integer.parseInt(extractBatch.substring(4, 6)) + "月第" + Integer.parseInt(extractBatch.substring(6, 8)) + "批提成明细数据已发布，请登录http://ys.jtyjy.com查看。", null));
+						String messageNotice = empNoList1.stream().collect(Collectors.joining("|"));
+						if (test) {
+							messageNotice = testNotice;
+						}
+						sender.sendQywxMsg(new QywxTextMsg(messageNotice, null, null, 0, "提成明细发布通知：<br>" + budgetYearPeriod.getPeriod() + Integer.parseInt(extractBatch.substring(4, 6)) + "月第" + Integer.parseInt(extractBatch.substring(6, 8)) + "批提成明细数据已发布，请登录http://ys.jtyjy.com查看。", null));
 					}
 				} catch (Exception e) {
 
