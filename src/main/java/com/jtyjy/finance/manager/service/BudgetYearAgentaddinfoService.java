@@ -911,11 +911,11 @@ public class BudgetYearAgentaddinfoService extends DefaultBaseService<BudgetYear
 			list.forEach(e -> {
 				String id = e.get("sjid");
 				String mfjg = e.get("mfjg");
-				String mflysmi = e.get("mflysmi");
+				String fkyy = e.get("fkyy");
 
 				BudgetYearAgentadd budgetYearAgentadd = budgetYearAgentaddMapper.selectById(id);
 				budgetYearAgentadd.setIsExemptFine(!"0".equals(mfjg));
-				budgetYearAgentadd.setFineRemark(mflysmi);
+				budgetYearAgentadd.setFineRemark(fkyy);
 				budgetYearAgentaddMapper.updateById(budgetYearAgentadd);
 			});
 		});

@@ -267,6 +267,15 @@ public class BudgetBankAccountService extends DefaultBaseService<BudgetBankAccou
 		wrapper.eq("stopflag", 0);
 		return this.list(wrapper);
 	}
+
+	public List<BudgetBankAccount> getAccounts(Set<String> bankAccounts) {
+		if (null == bankAccounts || bankAccounts.isEmpty()) {
+			return new ArrayList<>();
+		}
+		QueryWrapper<BudgetBankAccount> wrapper = new QueryWrapper<BudgetBankAccount>();
+		wrapper.in("bankaccount", bankAccounts);
+		return this.list(wrapper);
+	}
 	
 	public BankAccountVO getBankAccountByAccount(String bankaccount, String accountname) {
 	    List<BankAccountVO> voList = this.bbaMapper.getBankAccountByAccount(bankaccount, accountname);
