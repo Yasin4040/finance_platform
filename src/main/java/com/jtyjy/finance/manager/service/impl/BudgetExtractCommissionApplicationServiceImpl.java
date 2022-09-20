@@ -733,10 +733,12 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                     //计算任务
                     BudgetExtractTaxHandleRecord recordServiceOne = taxHandleRecordService.getOne(new LambdaQueryWrapper<BudgetExtractTaxHandleRecord>().eq(BudgetExtractTaxHandleRecord::getExtractMonth, extractMonth));
                     //如果个体户结果
+                    if(recordServiceOne!=null) {
 //                    List<BudgetExtractImportdetail> importDetailList = extractImportDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractImportdetail>().eq(BudgetExtractImportdetail::getExtractsumid, sumId));
 //                    long selfCount = importDetailList.stream().filter(x -> x.getBusinessType().equals(ExtractUserTypeEnum.SELF_EMPLOYED_EMPLOYEES)).count();
-                    if(recordServiceOne.getIsCalComplete()||recordServiceOne.getIsSetExcessComplete()||recordServiceOne.getIsPersonalityComplete()){
-                        throw new BusinessException("退回失败！任务已计算！");
+                        if (recordServiceOne.getIsCalComplete() || recordServiceOne.getIsSetExcessComplete() || recordServiceOne.getIsPersonalityComplete()) {
+                            throw new BusinessException("退回失败！任务已计算！");
+                        }
                     }
                     applicationLogService.saveLog(application.getId(),OperationNodeEnum.TAX_RETURN, LogStatusEnum.REJECT);
                     break;
@@ -768,7 +770,9 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             //删除报销表
             if (application.getReimbursementId()!=null) {
                 BudgetReimbursementorder reimbursementorder = reimbursementorderService.getById(application.getReimbursementId());
-                reimbursementorderService.removeById(reimbursementorder.getId());
+                if(reimbursementorder!=null) {
+                    reimbursementorderService.removeById(reimbursementorder.getId());
+                }
             }
             this.lambdaUpdate().eq(BudgetExtractCommissionApplication::getExtractSumId,sumId).set(BudgetExtractCommissionApplication::getStatus,status);
             budgetExtractsum.setStatus(status);
