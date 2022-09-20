@@ -312,6 +312,10 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 		List<BudgetExtractsum> batchExtractSums = extractsumService.getFutureBatchExtractSumContainSelf(extractBatch);
 		batchExtractSums.stream().collect(Collectors.groupingBy(BudgetExtractsum::getExtractmonth)).forEach((batch,curBatchExtractSums)->{
 			if(extractBatch.equals(batch)){
+				long unCalCount = curBatchExtractSums.stream().filter(e -> e.getStatus() < ExtractStatusEnum.CALCULATION_COMPLETE.type).count();
+				if(unCalCount>0){
+					throw new RuntimeException("提成批次"+batch+"还未计算完成！");
+				}
 				long accountFinishCount = curBatchExtractSums.stream().filter(e -> e.getStatus() >= ExtractStatusEnum.ACCOUNT.type).count();
 				if(accountFinishCount>0){
 					throw new RuntimeException("提成批次"+batch+"已有提成支付申请单流转至后续环节！");
