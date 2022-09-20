@@ -114,14 +114,15 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
         //获取oa中日志的 状态。日志中  0 同意  3拒绝。
         // 财务       0完成。 1 同意 2退回
         //oa中    0批准    1拒绝。 1 保存。 退回
-        String oaLogStatus =  oaMapper.getLogStatus(requestId,nodeId);
-        Integer logStatus =  Integer.valueOf(oaLogStatus);
-        if(LogStatusEnum.OA_PASS.getCode().equals(logStatus)){
+//        String oaLogStatus =  oaMapper.getLogStatus(requestId,nodeId);
+        //获取src  reject  拒绝  submit 同意      "src": "submit", "src": "reject",
+        String operSrc = requestManager.getSrc();
+        Integer logStatus = -3;//未知
+        if(operSrc.equals("submit")){
             logStatus = LogStatusEnum.PASS.getCode();
-        }else if (LogStatusEnum.OA_REJECT.getCode().equals(logStatus)){
+        }else if(operSrc.equals("reject")){
             logStatus = LogStatusEnum.REJECT.getCode();
-        }else{
-            log.info(oaLogStatus+JSONObject.toJSONString(params));
+       }else{
             System.out.println("oa审批log日志");
             return;
         }
@@ -129,7 +130,6 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
         extractLog.setRemarks(remark);
         this.save(extractLog);
         //如果节点通过
-
         //如果拒绝了  就是删除报销单。退回申请单。
         //删除报销表
         if(Objects.equals(logStatus, LogStatusEnum.REJECT.getCode())) {
