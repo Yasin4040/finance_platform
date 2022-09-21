@@ -502,8 +502,8 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
         extractImportdetail.setOtherTypesDeduction(getBigDecimal(otherTypesDeduction));
         extractImportdetail.setSubtotalOfDeduction(getBigDecimal(subtotalOfDeduction));
         extractImportdetail.setCopeextract(getBigDecimal(copeextract));
-
-        extractImportdetail.setErrMsg( data.get(44)!=null?data.get(44).toString():"");
+        String errMsg= data.get(44)!=null?data.get(44): data.get(43)!=null?data.get(43):"";
+        extractImportdetail.setErrMsg(errMsg);
         return extractImportdetail;
     }
     private BigDecimal getBigDecimal(String object){
