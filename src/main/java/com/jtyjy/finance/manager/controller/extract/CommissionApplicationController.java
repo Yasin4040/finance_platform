@@ -577,6 +577,7 @@ public ResponseEntity<PageResult<ExtractImportDetailVO>> getExtractImportDetails
             if(StringUtils.isNotBlank(extractMonth)) {
                 extractMonth = extractMonth.split("-")[2];
             }
+            applicationService.validStatusIsAllVerify(extractMonth);
             List<IndividualIssueExportDTO> exportDTOList  =  applicationService.exportIssuedTemplate(extractMonth);
             EasyExcelUtil.writeExcel(response,exportDTOList,"发放明细信息","发放明细信息",IndividualIssueExportDTO.class);
         } catch (Exception e) {

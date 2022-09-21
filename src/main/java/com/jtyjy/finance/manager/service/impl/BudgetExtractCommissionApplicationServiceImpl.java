@@ -663,12 +663,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     @Override
     public void validateExtractMonth(String extractMonth) {
         //全部都得是已经审核。
-        List<BudgetExtractsum> nowSums = extractSumMapper.selectList(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getExtractmonth, extractMonth));
-
-        long count = nowSums.stream().filter(x -> !x.getStatus().equals(ExtractStatusEnum.APPROVED.getType())).count();
-        if(count!=0){
-            throw new BusinessException("批次需要全部审核通过，才能进行导入费用");
-        }
+        validStatusIsAllVerify(extractMonth);
         //是否计算。
         BudgetExtractTaxHandleRecord recordServiceOne =
                 taxHandleRecordService.getOne(new LambdaQueryWrapper<BudgetExtractTaxHandleRecord>().eq(BudgetExtractTaxHandleRecord::getExtractMonth, extractMonth));
@@ -687,6 +682,15 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             }
         }
     }
+    @Override
+    public void validStatusIsAllVerify(String extractMonth) {
+        List<BudgetExtractsum> nowSums = extractSumMapper.selectList(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getExtractmonth, extractMonth));
+
+        long count = nowSums.stream().filter(x -> !x.getStatus().equals(ExtractStatusEnum.APPROVED.getType())).count();
+        if(count!=0){
+            throw new BusinessException("批次需要全部审核通过，才能进行导入导出费用");
+        }
+    }
 
     private void validData(IndividualIssueExportDTO dto) {
         //发放单位验证
@@ -697,11 +701,16 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         }
         //工号姓名验证
         WbUser user = getUserByEmpno(String.valueOf(dto.getEmployeeJobNum()));
-        if (user == null) {
-            throw new RuntimeException("工号【" + dto.getEmployeeJobNum() + "】不存在!");
-        } else {
+        BudgetExtractOuterperson outerperson = getOuterPersonByEmpNo(dto.getEmployeeJobNum());
+        if (user == null && outerperson==null) {
+            throw new RuntimeException("工号或外部人员【" + dto.getEmployeeJobNum() + "】不存在!");
+        } else if(user != null){
             if (!dto.getEmployeeName().equals(user.getDisplayName())) {
                 throw new RuntimeException("工号与姓名不匹配!正确姓名为【" + user.getDisplayName() + "】");
+            }
+        }else if (outerperson != null){
+            if (!dto.getEmployeeName().equals(outerperson.getName())) {
+                throw new RuntimeException("外部人员工号与姓名不匹配!正确姓名为【" + outerperson.getName() + "】");
             }
         }
     }
@@ -1147,6 +1156,11 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     private BudgetYearPeriod getPeriodByName(String name) {
         BudgetYearPeriod yearPeriod = yearMapper.selectOne(new QueryWrapper<BudgetYearPeriod>().eq("period", name));
         return yearPeriod;
+    }
+
+    private BudgetExtractOuterperson getOuterPersonByEmpNo(String empNo) {
+        return outPersonMapper.selectOne(new LambdaQueryWrapper<BudgetExtractOuterperson>()
+                .eq(BudgetExtractOuterperson::getEmpno, empNo).last("limit 1"));
     }
     private String getOuterPayUnit() {
         //EXTRACTPAY,OUTER_PAYUNIT,提成外部人员发放单位,1,,"69,74,76"

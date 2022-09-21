@@ -36,6 +36,8 @@ public interface BudgetExtractCommissionApplicationService extends IService<Budg
 
     CommissionApplicationInfoVO getApplicationInfo(String sumId);
 
+    void validStatusIsAllVerify(String extractMonth);
+
     void updateStatusBySumId(String sumId, Integer status);
 
     void generateReimbursement(Long sumId,BudgetExtractsum extractsum);
