@@ -19,6 +19,8 @@ import com.jtyjy.weixin.message.MessageSender;
 import com.jtyjy.weixin.message.QywxTextMsg;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -134,6 +136,16 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
             return;
         }
         extractLog.setStatus(logStatus);
+
+        //Document parse = Jsoup.parse(html);
+        //        String p1 = parse.getElementsByTag("p").text();
+        //解析html
+        if(StringUtils.isNotBlank(remark)){
+            if (remark.contains("p")){
+                Document parse = Jsoup.parse(remark);
+                remark = parse.getElementsByTag("p").text();
+            }
+        }
         extractLog.setRemarks(remark);
         this.save(extractLog);
         //如果节点通过
