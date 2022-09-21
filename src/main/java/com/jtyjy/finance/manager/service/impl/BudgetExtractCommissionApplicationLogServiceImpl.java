@@ -1,5 +1,6 @@
 package com.jtyjy.finance.manager.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -15,12 +16,14 @@ import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.mapper.*;
 import com.jtyjy.finance.manager.oadao.OAMapper;
 import com.jtyjy.finance.manager.service.*;
+import com.jtyjy.finance.manager.utils.HttpUtil;
 import com.jtyjy.weixin.message.MessageSender;
 import com.jtyjy.weixin.message.QywxTextMsg;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,24 +42,20 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
 
     private final BudgetExtractCommissionApplicationMapper applicationMapper;
     private final BudgetExtractsumMapper extractSumMapper;
-    private final BudgetExtractImportdetailMapper importDetailMapper;
     private final OAMapper oaMapper;
     private final BudgetReimbursementorderService reimburseService;
-    private final BudgetExtractTaxHandleRecordService taxHandleRecordService;
 
-    private final CommonService commonService;
     private final BudgetYearPeriodMapper yearMapper;
     private final TabDmMapper dmMapper;
     private final MessageSender sender;
+    @Value("${auth.role.user.url}")
+    private String authRoleUserUrl;
 
     public BudgetExtractCommissionApplicationLogServiceImpl(BudgetExtractCommissionApplicationMapper applicationMapper, BudgetExtractsumMapper extractSumMapper, BudgetExtractImportdetailMapper importDetailMapper, OAMapper oaMapper, BudgetReimbursementorderService reimburseService, BudgetExtractTaxHandleRecordService taxHandleRecordService, CommonService commonService, BudgetYearPeriodMapper yearMapper, TabDmMapper dmMapper, MessageSender sender) {
         this.applicationMapper = applicationMapper;
         this.extractSumMapper = extractSumMapper;
-        this.importDetailMapper = importDetailMapper;
         this.oaMapper = oaMapper;
         this.reimburseService = reimburseService;
-        this.taxHandleRecordService = taxHandleRecordService;
-        this.commonService = commonService;
         this.yearMapper = yearMapper;
         this.dmMapper = dmMapper;
         this.sender = sender;
@@ -194,7 +193,7 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
                     if (this.isTest()) {
                         toUsers = this.getTestNotice();
                     }else{
-                        List<String> empNoList = commonService.getEmpNoListByRoleNames(RoleNameEnum.TAX.getValue());
+                        List<String> empNoList = this.getEmpNoListByRoleNames(RoleNameEnum.TAX.getValue());
                         toUsers=String.join("|", empNoList);
                     }
                     if(StringUtils.isNotBlank(toUsers))
@@ -204,6 +203,16 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
             default:
                 break;
         }
+    }
+    /**
+     * <p>通过角色名获取工号列表</p>
+     * @author minzhq
+     * @date 2022/9/19 9:39
+     * @param roleName
+     */
+    public List<String> getEmpNoListByRoleNames(String roleName){
+        String result = HttpUtil.doGet(this.authRoleUserUrl + roleName);
+        return JSON.parseArray(result, String.class);
     }
     public boolean isTest(){
         TabDm dm = this.dmMapper.selectOne(new QueryWrapper<TabDm>().eq("dm_type", "EXTRACTCAL").eq("dm", "is_test"));
