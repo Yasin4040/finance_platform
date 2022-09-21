@@ -3956,14 +3956,17 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		if (!CollectionUtils.isEmpty(budgetExtractsums)) {
 			List<Long> sumIds = budgetExtractsums.stream().map(BudgetExtractsum::getId).collect(Collectors.toList());
 			Integer status = budgetExtractsums.get(0).getStatus();
-			//todo
 			if (status >= ExtractStatusEnum.CALCULATION_COMPLETE.getType()) {
 				throw new RuntimeException("撤回失败！单据已流转至后续环节！");
 			}
-			BudgetExtractTaxHandleRecord extractTaxHandleRecord = getExtractTaxHandleRecord(extractBatch);
-			if(extractTaxHandleRecord==null || !extractTaxHandleRecord.getIsCalComplete()){
-				throw new RuntimeException("撤回失败！单据还未计算发放");
+			long count = budgetExtractsums.stream().filter(e -> e.getStatus() < ExtractStatusEnum.APPROVED.type).count();
+			if(count > 0){
+				throw new RuntimeException("只有当前批次全部审批通过才可以撤回计算！");
 			}
+//			BudgetExtractTaxHandleRecord extractTaxHandleRecord = getExtractTaxHandleRecord(extractBatch);
+//			if(extractTaxHandleRecord==null || !extractTaxHandleRecord.getIsCalComplete()){
+//				throw new RuntimeException("撤回失败！单据还未计算发放");
+//			}
 			clearaCalculatedData(extractBatch, null);
 			extractFeePayDetailMapper.delete(new LambdaQueryWrapper<BudgetExtractFeePayDetailBeforeCal>().eq(BudgetExtractFeePayDetailBeforeCal::getExtractMonth, extractBatch));
 //			generateExtractStepLog(sumIds, OperationNodeEnum.TAX_PREPARATION_CALCULATION_SELF, "【" + OperationNodeEnum.TAX_PREPARATION_CALCULATION_SELF.getValue() + "】撤回计算", LogStatusEnum.REJECT.getCode());
