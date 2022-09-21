@@ -23,10 +23,12 @@ public enum OperationNodeEnum {
     CASHIER_PAYMENT(10,"出纳付款"),
     VOUCHER_ENTRY(11,"凭证录入"),
 
+    SYSTEM_APPROVED(12,"系统审核通过"),
+
     TAX_RETURN(-1,"税务退回"),
     ACCOUNTING_RETURN(-2,"做账退回"),
-    CASHIER_RETURN(-3,"出纳退回");
-
+    CASHIER_RETURN(-3,"出纳退回"),
+    SYSTEM_RETURN(-4,"系统操作审核退回");
 
     private final String value;
     private final int type;

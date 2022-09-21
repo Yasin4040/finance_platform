@@ -1547,6 +1547,14 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			extractsum.setVerifyorname(curUser.getDisplayName());
 			extractsum.setVerifyorid(curUser.getUserId());
 			this.updateById(extractsum);
+			Optional<BudgetExtractCommissionApplication> applicationOptional = applicationService.getApplicationBySumId(String.valueOf(extractsum.getId()));
+			if (applicationOptional.isPresent()) {
+				applicationLogService.saveLog(applicationOptional.get().getId(), OperationNodeEnum.SYSTEM_APPROVED, LogStatusEnum.COMPLETE);
+			}
+			/**
+			 * 如果全部审核通过通知相关人员
+			 * 当前批次所有单据都审批通过	有税筹计算角色权限的员工	XX届XX月XX批提成支付申请单已审核通过，可进行提成发放操作！
+			 */
 			this.doMsgTask(extractsum.getExtractmonth(),ExtractStatusEnum.APPROVED, String.valueOf(extractsum.getId()));
 		});
 		this.updateBatchById(budgetExtractsums);
@@ -1614,11 +1622,14 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		extractsum.setVerifyorid(curUser.getUserName());
 		extractsum.setRemark(remark);
 		this.budgetExtractsumMapper.updateById(extractsum);
-		//删除报销单 TODO
+		//删除报销单 TODO 增加日志
+
 		Optional<BudgetExtractCommissionApplication> applicationOptional = applicationService.getApplicationBySumId(String.valueOf(sumId));
 		if (applicationOptional.isPresent()) {
-			if (applicationOptional.get().getReimbursementId()!=null) {
-				BudgetReimbursementorder reimbursementorder = reimbursementorderService.getById(applicationOptional.get().getReimbursementId());
+			BudgetExtractCommissionApplication application = applicationOptional.get();
+			applicationLogService.saveLog(application.getId(),OperationNodeEnum.SYSTEM_RETURN,LogStatusEnum.REJECT);
+			if (application.getReimbursementId()!=null) {
+				BudgetReimbursementorder reimbursementorder = reimbursementorderService.getById(application.getReimbursementId());
 				reimbursementorderService.removeById(reimbursementorder.getId());
 			}
 		}
