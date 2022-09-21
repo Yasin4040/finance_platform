@@ -20,6 +20,7 @@ import com.jtyjy.finance.manager.enmus.ExtractStatusEnum;
 import com.jtyjy.finance.manager.enmus.ExtractTypeEnum;
 import com.jtyjy.finance.manager.hrbean.HrSalaryYearTaxUser;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
+import com.jtyjy.finance.manager.lock.JedisLock;
 import com.jtyjy.finance.manager.service.*;
 import com.jtyjy.finance.manager.utils.EasyExcelUtil;
 import com.jtyjy.finance.manager.vo.*;
@@ -444,15 +445,19 @@ public class BudgetExtractController extends BaseController<BudgetExtractsum> {
 	public ResponseEntity submit(@RequestParam(name = "ids", required = true) String ids) throws Exception {
 		try {
 			String lockKey = "/finance-platform/extract/submit/" + ids;
-			ZookeeperShareLock zookeeperShareLock = new ZookeeperShareLock(this.curatorFramework, lockKey, null);
+			JedisLock jLock = new JedisLock(lockKey);
+			// 加锁处理
 			try {
-//				zookeeperShareLock.unLock();
-				zookeeperShareLock.tryLock();
-				this.extractsumService.submit(ids);
-			} catch (Exception e) {
+				if (jLock.lock(10)) {
+					this.extractsumService.submit(ids);
+				}else{
+					throw new RuntimeException("正在更新，请稍后！！！");
+				}
+			}
+			catch (Exception e) {
 				throw e;
 			} finally {
-				zookeeperShareLock.unLock();
+				jLock.unlock();
 			}
 			return ResponseEntity.ok();
 		} catch (Exception e) {

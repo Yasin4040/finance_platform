@@ -243,6 +243,9 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
             if(budgetId != null){
                 oldList.removeIf(x->x.getId().equals(budgetId));
                 budgetDetail = budgetDetailsService.getById(budgetId);
+                if (budgetDetail == null) {
+                    break;
+                }
                 budgetDetail.setUpdateBy(UserThreadLocal.getEmpNo());
                 budgetDetail.setUpdateTime(new Date());
 //                budgetDetail.setu
