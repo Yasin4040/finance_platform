@@ -456,9 +456,25 @@ public class BudgetExtractPayService {
 		List<BudgetExtractsum> batchExtractSums = extractsumService.getFutureBatchExtractSumContainSelf(extractBatch);
 		batchExtractSums.stream().collect(Collectors.groupingBy(BudgetExtractsum::getExtractmonth)).forEach((batch, curBatchExtractSums) -> {
 			if (extractBatch.equals(batch)) {
+				//提成支付申请单未做账的次数
 				long unAccountCount = curBatchExtractSums.stream().filter(e -> e.getStatus() < ExtractStatusEnum.ACCOUNT.type).count();
-				if(unAccountCount>0){
-					throw new RuntimeException("提成批次"+batch+"还未做账完成！");
+				//延期支付申请单是否有做账
+				boolean isDelayAccount = false;
+				Map<Integer, List<BudgetExtractDelayApplication>> delayApplicationMap = delayApplicationMapper.selectList(new LambdaQueryWrapper<BudgetExtractDelayApplication>()
+						.in(BudgetExtractDelayApplication::getExtractMonth, extractBatch))
+						.stream().collect(Collectors.groupingBy(e -> e.getBatch()));
+				Set<Map.Entry<Integer, List<BudgetExtractDelayApplication>>> entries = delayApplicationMap.entrySet();
+				for (Map.Entry<Integer, List<BudgetExtractDelayApplication>> entry : entries) {
+					Integer delayBatch = entry.getKey();
+					List<BudgetExtractDelayApplication> list = entry.getValue();
+					long count = list.stream().filter(e -> e.getStatus() >= ExtractDelayStatusEnum.ACCOUNT.type).count();
+					if(count == list.size()){
+						isDelayAccount = true;
+						break;
+					}
+				}
+				if(unAccountCount>0 && !isDelayAccount){
+					throw new RuntimeException("提成批次"+batch+"无单据流转至此环节！");
 				}
 				long payFinishCount = curBatchExtractSums.stream().filter(e -> e.getStatus() >= ExtractStatusEnum.PAY.type).count();
 				if (payFinishCount > 0) {
