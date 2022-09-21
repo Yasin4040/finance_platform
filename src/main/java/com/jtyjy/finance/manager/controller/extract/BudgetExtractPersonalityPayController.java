@@ -247,8 +247,8 @@ public class BudgetExtractPersonalityPayController {
 		 */
 		this.extractsumService.validateIsCanOperatePersonalityPayDetail(extractBatch);
 		InputStream inputStream = file.getInputStream();
+		List<ExtractPersonlityDetailExcelData> extractPersonlityDetail = this.extractsumService.importPersonalityPayDetail(inputStream, extractBatch);
 		try {
-			List<ExtractPersonlityDetailExcelData> extractPersonlityDetail = this.extractsumService.importPersonalityPayDetail(inputStream, extractBatch);
 			List<ExtractPersonlityDetailExcelData> errorDetails = extractPersonlityDetail.stream().filter(e -> StringUtils.isNotBlank(e.getErrMsg())).collect(Collectors.toList());
 			if(!CollectionUtils.isEmpty(errorDetails)){
 				InputStream iss = null;

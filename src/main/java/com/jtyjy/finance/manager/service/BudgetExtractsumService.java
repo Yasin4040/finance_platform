@@ -4806,6 +4806,23 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 					});
 					return;
 				}
+
+				list.stream().collect(Collectors.groupingBy(e->{
+					return employeeFilesMap.get(e.getEmpNo() + "&&" + e.getPersonlityName()).getId();
+				})).forEach((id,list1)->{
+					list1.stream().collect(Collectors.groupingBy(ExtractPersonlityDetailExcelData::getBillingUnitName)).forEach((unitName,list2)->{
+						if(list2.size()>1){
+							list2.forEach(e->{
+								e.setErrMsg("同一个体户不能设置重复的发放单位。");
+							});
+							return;
+						}
+					});
+
+				});
+				if(list.stream().anyMatch(e->StringUtils.isNotBlank(e.getErrMsg()))){
+					return;
+				}
 				int size = list.stream().collect(Collectors.groupingBy(ExtractPersonlityDetailExcelData::getPayStatus)).size();
 				if(size>1){
 					list.forEach(e->{
