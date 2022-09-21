@@ -150,13 +150,15 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
 //            applicationMapper.updateById(application);
         }else{
             //财务负责人同意  同意
-            if(nodeEnum.getType()==OperationNodeEnum.FINANCIAL_DIRECTOR.getType()){
-                //处理计算记录
-                BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
-                budgetExtractsum.setStatus(ExtractStatusEnum.APPROVED.getType());
-                extractSumMapper.updateById(budgetExtractsum);
+            if (nodeEnum != null) {
+                if(Objects.equals((nodeEnum).getType(),OperationNodeEnum.FINANCIAL_DIRECTOR.getType())){
+                    //处理计算记录
+                    BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
+                    budgetExtractsum.setStatus(ExtractStatusEnum.APPROVED.getType());
+                    extractSumMapper.updateById(budgetExtractsum);
 //                dealHandleRecord(sumId);
-                this.doMsgTask(budgetExtractsum.getExtractmonth(),ExtractStatusEnum.APPROVED, String.valueOf(sumId));
+                    this.doMsgTask(budgetExtractsum.getExtractmonth(),ExtractStatusEnum.APPROVED, String.valueOf(sumId));
+                }
             }
         }
     }
