@@ -51,7 +51,7 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
     @Value("${auth.role.user.url}")
     private String authRoleUserUrl;
 
-    public BudgetExtractCommissionApplicationLogServiceImpl(BudgetExtractCommissionApplicationMapper applicationMapper, BudgetExtractsumMapper extractSumMapper, BudgetExtractImportdetailMapper importDetailMapper, OAMapper oaMapper, BudgetReimbursementorderService reimburseService, BudgetExtractTaxHandleRecordService taxHandleRecordService, CommonService commonService, BudgetYearPeriodMapper yearMapper, TabDmMapper dmMapper, MessageSender sender) {
+    public BudgetExtractCommissionApplicationLogServiceImpl(BudgetExtractCommissionApplicationMapper applicationMapper, BudgetExtractsumMapper extractSumMapper, OAMapper oaMapper, BudgetReimbursementorderService reimburseService, BudgetYearPeriodMapper yearMapper, TabDmMapper dmMapper, MessageSender sender) {
         this.applicationMapper = applicationMapper;
         this.extractSumMapper = extractSumMapper;
         this.oaMapper = oaMapper;
