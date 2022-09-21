@@ -752,22 +752,24 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                     break;
                 case DRAFT:
                     //撤回  申请单必须没有人审批过
-                    if (budgetExtractsum.getStatus().equals(1)) {
+                    if (Objects.equals(ExtractStatusEnum.VERIFYING.type,budgetExtractsum.getStatus())) {
                         //1 已提交
-                        Integer draftCount = applicationLogService.lambdaQuery()
+                        BudgetExtractCommissionApplicationLog log = applicationLogService.lambdaQuery()
                                 .eq(BudgetExtractCommissionApplicationLog::getApplicationId, application.getId())
-                                .eq(BudgetExtractCommissionApplicationLog::getStatus, 1).count();
-                        if (draftCount>0) {
-                            throw new BusinessException("撤回失败,申请单已审批！");
-                        }else{
-                            String requestId = application.getRequestId();
-                            String oaCreatorId = application.getOaCreatorId();
-                            if (requestId != null) {
-                                this.oaService.deleteRequest(requestId, oaCreatorId);
+                                .orderByDesc(BudgetExtractCommissionApplicationLog::getCreateTime).last("limit 1").one();
+                        if(log != null) {
+                            //最新日志 已完成/拒绝 可以撤回 。 通过就不能撤回
+                            if (Objects.equals(LogStatusEnum.PASS.getCode(), log.getStatus())) {
+                                throw new BusinessException("撤回失败,申请单已审批！");
+                            } else{
+                                // 已完成/拒绝  都需要删除流
+                                String requestId = application.getRequestId();
+                                String oaCreatorId = application.getOaCreatorId();
+                                if (requestId != null) {
+                                    this.oaService.deleteRequest(requestId, oaCreatorId);
+                                }
                             }
                         }
-
-
                     }else{
                         throw new BusinessException("撤回失败,申请单不是提交状态！");
                     }
@@ -782,7 +784,8 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                     reimbursementorderService.removeById(reimbursementorder.getId());
                 }
             }
-            this.lambdaUpdate().eq(BudgetExtractCommissionApplication::getExtractSumId,sumId).set(BudgetExtractCommissionApplication::getStatus,status);
+            //不需要application的状态
+//            this.lambdaUpdate().eq(BudgetExtractCommissionApplication::getExtractSumId,sumId).set(BudgetExtractCommissionApplication::getStatus,status);
             budgetExtractsum.setStatus(status);
             extractSumMapper.updateById(budgetExtractsum);
         }else {

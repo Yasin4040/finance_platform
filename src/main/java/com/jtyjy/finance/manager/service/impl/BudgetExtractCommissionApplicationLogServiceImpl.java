@@ -153,7 +153,7 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
         if(Objects.equals(logStatus, LogStatusEnum.REJECT.getCode())) {
             if (application.getReimbursementId() != null) {
                 BudgetReimbursementorder reimbursementOrder = reimburseService.getById(application.getReimbursementId());
-                reimburseService.removeById(reimbursementOrder);
+                reimburseService.removeById(reimbursementOrder.getId());
             }
             BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
             budgetExtractsum.setStatus(ExtractStatusEnum.RETURN.getType());

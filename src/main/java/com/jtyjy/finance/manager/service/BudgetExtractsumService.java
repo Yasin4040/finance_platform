@@ -1619,7 +1619,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 		if (applicationOptional.isPresent()) {
 			if (applicationOptional.get().getReimbursementId()!=null) {
 				BudgetReimbursementorder reimbursementorder = reimbursementorderService.getById(applicationOptional.get().getReimbursementId());
-				reimbursementorderService.removeById(reimbursementorder);
+				reimbursementorderService.removeById(reimbursementorder.getId());
 			}
 		}
 
