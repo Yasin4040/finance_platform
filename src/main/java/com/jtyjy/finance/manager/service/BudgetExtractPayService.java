@@ -22,7 +22,6 @@ import com.jtyjy.finance.manager.vo.BudgetExtractPayQueryVO;
 import com.jtyjy.finance.manager.vo.BudgetExtractPayResponseVO;
 import com.jtyjy.weixin.message.MessageSender;
 import com.jtyjy.weixin.message.QywxTextMsg;
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,8 +48,6 @@ public class BudgetExtractPayService {
 	private BudgetPaymoneyMapper paymoneyMapper;
 	@Autowired
 	private  BudgetPaybatchMapper paybatchMapper;
-	@Autowired
-	private  BankCache bankCache;
 	@Autowired
 	private  BudgetPaymoneyService paymoneyService;
 	@Autowired
@@ -84,38 +81,30 @@ public class BudgetExtractPayService {
 	@Autowired
 	private BudgetBillingUnitMapper billingUnitMapper;
 	@Autowired
-	private BudgetReimbursementorderService reimbursementorderService;
+	private BudgetReimbursementorderService bursementOrderService;
 	@Value("${tc.redis.key}")
 	private String TC_REDIS_KEY;
 
 	/**
 	 * <p>获取提成付款单</p>
-	 *
-	 * @param params
-	 * @param page
-	 * @param rows
 	 * @author minzhq
 	 * @date 2022/9/14 10:51
 	 */
 	public PageResult<BudgetExtractPayResponseVO> getExtractPayMoneyList(BudgetExtractPayQueryVO params, Integer page, Integer rows) {
 		Page<BudgetExtractPayResponseVO> pageCond = new Page<>(page, rows);
 		List<BudgetExtractPayResponseVO> resultList = paymoneyMapper.getExtractPayMoneyList(pageCond, params);
-		resultList.forEach(e -> {
-			e.setIsDelay(e.getExtractCode().startsWith(Constants.EXTRACT_DELAY_ORDER_PREFIX));
-		});
+		resultList.forEach(e -> e.setIsDelay(e.getExtractCode().startsWith(Constants.EXTRACT_DELAY_ORDER_PREFIX)));
 		return PageResult.apply(pageCond.getTotal(), resultList);
 	}
 
 	/**
 	 * <p>提成准备付款</p>
-	 *
-	 * @param extractPreparePayDTO
 	 * @author minzhq
 	 * @date 2022/9/15 10:22
 	 */
 	public void extractPreparePay(ExtractPreparePayDTO extractPreparePayDTO) {
-		List<BudgetPaymoney> budgetPaymonies = paymoneyMapper.selectBatchIds(extractPreparePayDTO.getPayMoneyIds());
-		long count = budgetPaymonies.stream().filter(e -> e.getPaymoneystatus() != PaymoneyStatusEnum.RECEIVE_PAY.type).count();
+		List<BudgetPaymoney> budgetPayMonies = paymoneyMapper.selectBatchIds(extractPreparePayDTO.getPayMoneyIds());
+		long count = budgetPayMonies.stream().filter(e -> e.getPaymoneystatus() != PaymoneyStatusEnum.RECEIVE_PAY.type).count();
 		if (count > 0) {
 			throw new RuntimeException("请选择待支付的付款单！");
 		}
@@ -123,11 +112,11 @@ public class BudgetExtractPayService {
 		BudgetPaybatch budgetPaybatch = new BudgetPaybatch();
 		budgetPaybatch.setCreatetime(new Date());
 		budgetPaybatch.setPaybatchtype(PayBatchTypeEnum.EXTRACT.type);
-		budgetPaybatch.setPaymoneyids(budgetPaymonies.stream().map(e -> e.getId().toString()).collect(Collectors.joining(",")));
+		budgetPaybatch.setPaymoneyids(budgetPayMonies.stream().map(e -> e.getId().toString()).collect(Collectors.joining(",")));
 		budgetPaybatch.setCreator(UserThreadLocal.getEmpNo());
 		budgetPaybatch.setCreatorname(UserThreadLocal.getEmpName());
-		budgetPaybatch.setPaytotalje(budgetPaymonies.stream().map(BudgetPaymoney::getPaymoney).reduce(BigDecimal.ZERO, BigDecimal::add));
-		budgetPaybatch.setPaytotalnum(budgetPaymonies.size());
+		budgetPaybatch.setPaytotalje(budgetPayMonies.stream().map(BudgetPaymoney::getPaymoney).reduce(BigDecimal.ZERO, BigDecimal::add));
+		budgetPaybatch.setPaytotalnum(budgetPayMonies.size());
 		budgetPaybatch.setRemark("提成付款");
 		budgetPaybatch.setPaybatchcode(System.currentTimeMillis() + "");
 		paybatchMapper.insert(budgetPaybatch);
@@ -142,8 +131,6 @@ public class BudgetExtractPayService {
 
 	/**
 	 * <p>提成付款明细</p>
-	 *
-	 * @param payMoneyIds
 	 * @author minzhq
 	 * @date 2022/9/15 11:23
 	 */
@@ -156,69 +143,56 @@ public class BudgetExtractPayService {
 		map.put("付款明细汇总表", excelDatas);
 		resultList.add(map);
 		if (type == ExtractPayTemplateEnum.ZS_BATCH.type) {
-			budgetPaymonies.stream().collect(Collectors.groupingBy(BudgetPaymoney::getBunitname)).forEach((bunitname, list) -> {
+			budgetPaymonies.stream().collect(Collectors.groupingBy(BudgetPaymoney::getBunitname)).forEach((bUnitName, list) -> {
 				Map<String, Object> sheetMap = new LinkedHashMap<>();
-				List<BudgetExtractZhBatchPayExcelData> bUnitNameList = list.stream().map(pm -> {
-					return setBudgetExtractZhBatchPayExcelData(pm);
-				}).collect(Collectors.toList());
+				List<BudgetExtractZhBatchPayExcelData> bUnitNameList = list.stream().map(this::setBudgetExtractZhBatchPayExcelData).collect(Collectors.toList());
 
 				//合计行
 				BudgetExtractZhBatchPayExcelData hj = new BudgetExtractZhBatchPayExcelData(false);
 				hj.setYt("合计：");
-				hj.setPayMoney(bUnitNameList.stream().map(e -> e.getPayMoney()).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, BigDecimal.ROUND_HALF_UP));
+				hj.setPayMoney(bUnitNameList.stream().map(BudgetExtractZhBatchPayExcelData::getPayMoney).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, BigDecimal.ROUND_HALF_UP));
 				bUnitNameList.add(hj);
-				sheetMap.put(bunitname, bUnitNameList);
+				sheetMap.put(bUnitName, bUnitNameList);
 				resultList.add(sheetMap);
-				list.stream().collect(Collectors.groupingBy(e -> {
-					return e.getBankaccountbranchname();
-				})).forEach((key, list1) -> {
-					BudgetPayTotalExcelData excelData = new BudgetPayTotalExcelData(bunitname, key, list1.stream().map(BudgetPaymoney::getPaymoney).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, BigDecimal.ROUND_HALF_UP));
+				list.stream().collect(Collectors.groupingBy(BudgetPaymoney::getBankaccountbranchname)).forEach((key, list1) -> {
+					BudgetPayTotalExcelData excelData = new BudgetPayTotalExcelData(bUnitName, key, list1.stream().map(BudgetPaymoney::getPaymoney).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, BigDecimal.ROUND_HALF_UP));
 					excelDatas.add(excelData);
-					List<BudgetExtractZhBatchPayExcelData> bunitBankList = list1.stream().map(pm -> {
-						return setBudgetExtractZhBatchPayExcelData(pm);
-					}).collect(Collectors.toList());
-
+					List<BudgetExtractZhBatchPayExcelData> bunitBankList = list1.stream().map(this::setBudgetExtractZhBatchPayExcelData).collect(Collectors.toList());
 					//合计行
 					BudgetExtractZhBatchPayExcelData hj1 = new BudgetExtractZhBatchPayExcelData(false);
 					hj1.setYt("合计：");
-					hj1.setPayMoney(bunitBankList.stream().map(e -> e.getPayMoney()).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, BigDecimal.ROUND_HALF_UP));
+					hj1.setPayMoney(bunitBankList.stream().map(BudgetExtractZhBatchPayExcelData::getPayMoney).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, BigDecimal.ROUND_HALF_UP));
 					bunitBankList.add(hj1);
 					Map<String, Object> sheetMap1 = new LinkedHashMap<>();
-					sheetMap1.put(bunitname + "-" + key, bunitBankList);
+					sheetMap1.put(bUnitName + "-" + key, bunitBankList);
 					resultList.add(sheetMap1);
 				});
 
 			});
 
 		} else if (type == ExtractPayTemplateEnum.ZS_DF.type) {
-			budgetPaymonies.stream().collect(Collectors.groupingBy(BudgetPaymoney::getBunitname)).forEach((bunitname, list) -> {
+			budgetPaymonies.stream().collect(Collectors.groupingBy(BudgetPaymoney::getBunitname)).forEach((bUnitName, list) -> {
 				Map<String, Object> sheetMap = new LinkedHashMap<>();
-				List<BudgetExtractZhDfPayExcelData> bUnitNameList = list.stream().map(pm -> {
-					return setBudgetExtractZhDfPayExcelData(pm);
-				}).collect(Collectors.toList());
+				List<BudgetExtractZhDfPayExcelData> bUnitNameList = list.stream().map(this::setBudgetExtractZhDfPayExcelData).collect(Collectors.toList());
 				//合计行
 				BudgetExtractZhDfPayExcelData hj = new BudgetExtractZhDfPayExcelData(false);
 				hj.setBankAccountName("合计：");
-				hj.setPayMoney(bUnitNameList.stream().map(e -> e.getPayMoney()).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, BigDecimal.ROUND_HALF_UP));
+				hj.setPayMoney(bUnitNameList.stream().map(BudgetExtractZhDfPayExcelData::getPayMoney).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, BigDecimal.ROUND_HALF_UP));
 				bUnitNameList.add(hj);
-				sheetMap.put(bunitname, bUnitNameList);
+				sheetMap.put(bUnitName, bUnitNameList);
 				resultList.add(sheetMap);
-				list.stream().collect(Collectors.groupingBy(e -> {
-					return e.getBankaccountbranchname();
-				})).forEach((key, list1) -> {
-					BudgetPayTotalExcelData excelData = new BudgetPayTotalExcelData(bunitname, key, list1.stream().map(BudgetPaymoney::getPaymoney).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, BigDecimal.ROUND_HALF_UP));
+				list.stream().collect(Collectors.groupingBy(BudgetPaymoney::getBankaccountbranchname)).forEach((key, list1) -> {
+					BudgetPayTotalExcelData excelData = new BudgetPayTotalExcelData(bUnitName, key, list1.stream().map(BudgetPaymoney::getPaymoney).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, BigDecimal.ROUND_HALF_UP));
 					excelDatas.add(excelData);
-					List<BudgetExtractZhDfPayExcelData> bunitBankList = list1.stream().map(pm -> {
-						return setBudgetExtractZhDfPayExcelData(pm);
-					}).collect(Collectors.toList());
+					List<BudgetExtractZhDfPayExcelData> bUnitBankList = list1.stream().map(this::setBudgetExtractZhDfPayExcelData).collect(Collectors.toList());
 
 					//合计行
 					BudgetExtractZhDfPayExcelData hj1 = new BudgetExtractZhDfPayExcelData(false);
 					hj1.setBankAccountName("合计：");
-					hj1.setPayMoney(bunitBankList.stream().map(e -> e.getPayMoney()).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, BigDecimal.ROUND_HALF_UP));
-					bunitBankList.add(hj1);
+					hj1.setPayMoney(bUnitBankList.stream().map(BudgetExtractZhDfPayExcelData::getPayMoney).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, BigDecimal.ROUND_HALF_UP));
+					bUnitBankList.add(hj1);
 					Map<String, Object> sheetMap1 = new LinkedHashMap<>();
-					sheetMap1.put(bunitname + "-" + key, bunitBankList);
+					sheetMap1.put(bUnitName + "-" + key, bUnitBankList);
 					resultList.add(sheetMap1);
 				});
 			});
@@ -231,7 +205,7 @@ public class BudgetExtractPayService {
 		excelData.setBankAccount(pm.getBankaccount());
 		excelData.setBankAccountName(pm.getBankaccountname());
 		excelData.setOpenBank(pm.getOpenbank());
-		WbBanks bank = bankCache.getBankByBranchCode(pm.getBankaccountbranchcode());
+		WbBanks bank = BankCache.getBankByBranchCode(pm.getBankaccountbranchcode());
 		excelData.setProvince(bank.getProvince());
 		excelData.setCity(bank.getCity());
 		excelData.setBunitAccount(pm.getBunitbankaccount());
@@ -246,7 +220,7 @@ public class BudgetExtractPayService {
 		excelData.setBankAccount(pm.getBankaccount());
 		excelData.setBankAccountName(pm.getBankaccountname());
 		excelData.setOpenBank(pm.getOpenbank());
-		WbBanks bank = bankCache.getBankByBranchCode(pm.getBankaccountbranchcode());
+		WbBanks bank = BankCache.getBankByBranchCode(pm.getBankaccountbranchcode());
 		excelData.setCity(bank.getCity());
 		excelData.setPayMoney(pm.getPaymoney().setScale(2, BigDecimal.ROUND_HALF_UP));
 		return excelData;
@@ -255,26 +229,25 @@ public class BudgetExtractPayService {
 	/**
 	 * <p>提成付款完成</p>
 	 *
-	 * @param extractPayCompleteDTO
 	 * @author minzhq
 	 * @date 2022/9/16 9:58
 	 */
 	public void paySuccess(ExtractPayCompleteDTO extractPayCompleteDTO) {
-		List<BudgetPaymoney> budgetPaymonies = paymoneyMapper.selectBatchIds(extractPayCompleteDTO.getPayMoneyIds());
-		long count = budgetPaymonies.stream().filter(e -> e.getPaymoneystatus() != PaymoneyStatusEnum.PAYING.type).count();
+		List<BudgetPaymoney> budgetPayMonies = paymoneyMapper.selectBatchIds(extractPayCompleteDTO.getPayMoneyIds());
+		long count = budgetPayMonies.stream().filter(e -> e.getPaymoneystatus() != PaymoneyStatusEnum.PAYING.type).count();
 		if (count > 0) {
 			throw new RuntimeException("请选择支付中的付款单！");
 		}
-		budgetPaymonies.forEach(e -> {
+		budgetPayMonies.forEach(e -> {
 			e.setPaymoneystatus(PaymoneyStatusEnum.PAYED.type);
 			e.setPaytime(new Date());
 		});
-		paymoneyService.updateBatchById(budgetPaymonies);
+		paymoneyService.updateBatchById(budgetPayMonies);
 
-		List<Long> perPayDetailIds = budgetPaymonies.stream().map(e -> e.getPaymoneyobjectid()).collect(Collectors.toList());
+		List<Long> perPayDetailIds = budgetPayMonies.stream().map(BudgetPaymoney::getPaymoneyobjectid).collect(Collectors.toList());
 		List<BudgetExtractPerPayDetail> perPayDetails = perPayDetailService.listByIds(perPayDetailIds);
 
-		List<Long> personalityPayIds = perPayDetails.stream().filter(e -> e.getExtractCode().startsWith(Constants.EXTRACT_DELAY_ORDER_PREFIX) && e.getSourceId() != null).map(e -> e.getSourceId()).collect(Collectors.toList());
+		List<Long> personalityPayIds = perPayDetails.stream().filter(e -> e.getExtractCode().startsWith(Constants.EXTRACT_DELAY_ORDER_PREFIX) && e.getSourceId() != null).map(BudgetExtractPerPayDetail::getSourceId).collect(Collectors.toList());
 		if (!CollectionUtils.isEmpty(personalityPayIds)) {
 			LambdaUpdateWrapper<BudgetExtractPersonalityPayDetail> updateWrapper = new LambdaUpdateWrapper<>();
 			updateWrapper.set(BudgetExtractPersonalityPayDetail::getIsSend, 1);
@@ -283,14 +256,14 @@ public class BudgetExtractPayService {
 		}
 		boolean test = extractsumService.isTest();
 		String testNotice = extractsumService.getTestNotice();
-		Map<String, Boolean> extratBatchPayMap = new HashMap<>();
+		Map<String, Boolean> extractBatchPayMap = new HashMap<>();
 		perPayDetails.stream().collect(Collectors.groupingBy(e -> e.getExtractCode().substring(0, 2))).forEach((orderPrefix, orderDetailList) -> {
 
 			if (orderPrefix.equals(Constants.EXTRACT_DELAY_ORDER_PREFIX)) {
 				//延期
 				orderDetailList.stream().collect(Collectors.groupingBy(BudgetExtractPerPayDetail::getExtractMonth)).forEach((extractBatch, batchDetailList) -> {
-					setIsPayFlag(extractBatch, extratBatchPayMap);
-					/**
+					setIsPayFlag(extractBatch, extractBatchPayMap);
+					/*
 					 * 一个提成批次下，一批的延期全部付款
 					 */
 					batchDetailList.stream().collect(Collectors.groupingBy(e -> {
@@ -298,8 +271,8 @@ public class BudgetExtractPayService {
 						return delayApplication.getBatch() == null ? 1 : delayApplication.getBatch();
 					})).forEach((batch, delayBatchList) -> {
 
-						List<Long> delayPayDetails = delayBatchList.stream().map(e -> e.getId()).collect(Collectors.toList());
-						List<String> codeList = delayBatchList.stream().map(e -> e.getExtractCode()).collect(Collectors.toList());
+						List<Long> delayPayDetails = delayBatchList.stream().map(BudgetExtractPerPayDetail::getId).collect(Collectors.toList());
+						List<String> codeList = delayBatchList.stream().map(BudgetExtractPerPayDetail::getExtractCode).collect(Collectors.toList());
 						int unPaySuccessCount = paymoneyService.count(new LambdaQueryWrapper<BudgetPaymoney>().eq(BudgetPaymoney::getPaymoneytype, PaymoneyTypeEnum.EXTRACT_PAY.type).in(BudgetPaymoney::getPaymoneyobjectcode, codeList).in(BudgetPaymoney::getPaymoneyobjectid, delayPayDetails).ne(BudgetPaymoney::getPaymoneystatus, PaymoneyStatusEnum.PAYED.type));
 						if (unPaySuccessCount == 0) {
 							//该批次全部支付成功
@@ -311,17 +284,17 @@ public class BudgetExtractPayService {
 
 
 							try {
-								List<String> extractSumCodeList = delayApplicationMapper.selectList(new LambdaQueryWrapper<BudgetExtractDelayApplication>().in(BudgetExtractDelayApplication::getDelayCode, codeList)).stream().map(e -> e.getRelationExtractCode()).collect(Collectors.toList());
+								List<String> extractSumCodeList = delayApplicationMapper.selectList(new LambdaQueryWrapper<BudgetExtractDelayApplication>().in(BudgetExtractDelayApplication::getDelayCode, codeList)).stream().map(BudgetExtractDelayApplication::getRelationExtractCode).collect(Collectors.toList());
 								List<BudgetExtractsum> sumList = extractsumService.list(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getCode, extractSumCodeList));
 								String accounts = sumList.stream().map(e -> {
-									String deptid = e.getDeptid();
-									BudgetUnit budgetUnit = unitMapper.selectById(deptid);
+									String deptId = e.getDeptid();
+									BudgetUnit budgetUnit = unitMapper.selectById(deptId);
 									String accounting = budgetUnit.getAccounting();
 									if (StringUtils.isNotBlank(accounting)) {
 										return UserCache.getUserByUserId(accounting).getUserName();
 									}
 									return null;
-								}).filter(e -> StringUtils.isNotBlank(e)).collect(Collectors.joining("|"));
+								}).filter(StringUtils::isNotBlank).collect(Collectors.joining("|"));
 								BudgetYearPeriod budgetYearPeriod = yearPeriodMapper.selectById(sumList.get(0).getYearid());
 								if (test) {
 									accounts = testNotice;
@@ -329,22 +302,19 @@ public class BudgetExtractPayService {
 								if (StringUtils.isNotBlank(accounts)) {
 									sender.sendQywxMsg(new QywxTextMsg(accounts, null, null, 0, "【延期】" + budgetYearPeriod.getPeriod() + Integer.parseInt(extractBatch.substring(4, 6)) + "月" + Integer.parseInt(extractBatch.substring(6, 8)) + "批提成已支付完成，可进行入账操作！", null));
 								}
-								;
-							} catch (Exception ignored) {
-
-							}
+							} catch (Exception ignored) { }
 						}
 					});
 				});
 
 			} else if (orderPrefix.equals(TC_REDIS_KEY)) {
 				orderDetailList.stream().collect(Collectors.groupingBy(BudgetExtractPerPayDetail::getExtractMonth)).forEach((extractBatch, batchDetailList) -> {
-					setIsPayFlag(extractBatch, extratBatchPayMap);
+					setIsPayFlag(extractBatch, extractBatchPayMap);
 					List<BudgetExtractPerPayDetail> list = perPayDetailService.list(new LambdaQueryWrapper<BudgetExtractPerPayDetail>().eq(BudgetExtractPerPayDetail::getExtractMonth, extractBatch));
 					List<BudgetExtractsum> sumList = extractsumService.getCurBatchExtractSum(extractBatch);
 					if (!CollectionUtils.isEmpty(list)) {
-						List<String> codeList = list.stream().map(e -> e.getExtractCode()).collect(Collectors.toList());
-						int unPaySuccessCount = paymoneyService.count(new LambdaQueryWrapper<BudgetPaymoney>().eq(BudgetPaymoney::getPaymoneytype, PaymoneyTypeEnum.EXTRACT_PAY.type).in(BudgetPaymoney::getPaymoneyobjectcode, codeList).in(BudgetPaymoney::getPaymoneyobjectid, list.stream().map(e -> e.getId()).collect(Collectors.toList())).ne(BudgetPaymoney::getPaymoneystatus, PaymoneyStatusEnum.PAYED.type));
+						List<String> codeList = list.stream().map(BudgetExtractPerPayDetail::getExtractCode).collect(Collectors.toList());
+						int unPaySuccessCount = paymoneyService.count(new LambdaQueryWrapper<BudgetPaymoney>().eq(BudgetPaymoney::getPaymoneytype, PaymoneyTypeEnum.EXTRACT_PAY.type).in(BudgetPaymoney::getPaymoneyobjectcode, codeList).in(BudgetPaymoney::getPaymoneyobjectid, list.stream().map(BudgetExtractPerPayDetail::getId).collect(Collectors.toList())).ne(BudgetPaymoney::getPaymoneystatus, PaymoneyStatusEnum.PAYED.type));
 						if (unPaySuccessCount == 0) {
 							//该批次全部支付成功
 							LambdaUpdateWrapper<BudgetExtractsum> updateWrapper = new LambdaUpdateWrapper<>();
@@ -352,7 +322,7 @@ public class BudgetExtractPayService {
 							updateWrapper.eq(BudgetExtractsum::getExtractmonth, extractBatch);
 							updateWrapper.ne(BudgetExtractsum::getStatus, ExtractStatusEnum.REJECT.type);
 							extractsumMapper.update(new BudgetExtractsum(), updateWrapper);
-							extractsumService.generateExtractStepLog(extractsumService.getCurBatchExtractSum(extractBatch).stream().map(e -> e.getId()).collect(Collectors.toList()), OperationNodeEnum.CASHIER_PAYMENT, "【" + OperationNodeEnum.CASHIER_PAYMENT.getValue(OperationNodeEnum.CASHIER_PAYMENT.getType()) + "】完成", LogStatusEnum.COMPLETE.getCode());
+							extractsumService.generateExtractStepLog(extractsumService.getCurBatchExtractSum(extractBatch).stream().map(BudgetExtractsum::getId).collect(Collectors.toList()), OperationNodeEnum.CASHIER_PAYMENT, "【" + OperationNodeEnum.getValue(OperationNodeEnum.CASHIER_PAYMENT.getType()) + "】完成", LogStatusEnum.COMPLETE.getCode());
 							accountEntryTaskService.addEntryTask(false, null, extractBatch);
 							setReimbursementEffect(extractBatch, sumList);
 						}
@@ -360,14 +330,14 @@ public class BudgetExtractPayService {
 
 					try {
 						String accounts = sumList.stream().map(e -> {
-							String deptid = e.getDeptid();
-							BudgetUnit budgetUnit = unitMapper.selectById(deptid);
+							String deptId = e.getDeptid();
+							BudgetUnit budgetUnit = unitMapper.selectById(deptId);
 							String accounting = budgetUnit.getAccounting();
 							if (StringUtils.isNotBlank(accounting)) {
 								return UserCache.getUserByUserId(accounting).getUserName();
 							}
 							return null;
-						}).filter(e -> StringUtils.isNotBlank(e)).collect(Collectors.joining("|"));
+						}).filter(StringUtils::isNotBlank).collect(Collectors.joining("|"));
 						BudgetYearPeriod budgetYearPeriod = yearPeriodMapper.selectById(sumList.get(0).getYearid());
 						if (test) {
 							accounts = testNotice;
@@ -382,7 +352,7 @@ public class BudgetExtractPayService {
 				});
 			}
 		});
-		extratBatchPayMap.forEach((extractBatch, isEverPay) -> {
+		extractBatchPayMap.forEach((extractBatch, isEverPay) -> {
 			if (!isEverPay) {
 				//从来没有付款成功过
 				try {
@@ -393,18 +363,16 @@ public class BudgetExtractPayService {
 					if (!CollectionUtils.isEmpty(empNoList)) {
 						sender.sendQywxMsg(new QywxTextMsg(String.join("|", empNoList), null, null, 0, "提成明细发布通知：<br>" + budgetYearPeriod.getPeriod() + Integer.parseInt(extractBatch.substring(4, 6)) + "月第" + Integer.parseInt(extractBatch.substring(6, 8)) + "批提成明细数据已发布，请登录http://ys.jtyjy.com查看。", null));
 					}
-					List<BudgetExtractdetail> extractDetails = extractsumService.getExtractDetailBySumIds(list.stream().map(e -> e.getId()).collect(Collectors.toList()), null, null);
-					List<String> empNoList1 = extractDetails.stream().map(e -> e.getEmpno()).distinct().collect(Collectors.toList());
+					List<BudgetExtractdetail> extractDetails = extractsumService.getExtractDetailBySumIds(list.stream().map(BudgetExtractsum::getId).collect(Collectors.toList()), null, null);
+					List<String> empNoList1 = extractDetails.stream().map(BudgetExtractdetail::getEmpno).distinct().collect(Collectors.toList());
 					if (!CollectionUtils.isEmpty(empNoList1)) {
-						String messageNotice = empNoList1.stream().collect(Collectors.joining("|"));
+						String messageNotice = String.join("|", empNoList1);
 						if (test) {
 							messageNotice = testNotice;
 						}
 						sender.sendQywxMsg(new QywxTextMsg(messageNotice, null, null, 0, "提成明细发布通知：<br>" + budgetYearPeriod.getPeriod() + Integer.parseInt(extractBatch.substring(4, 6)) + "月第" + Integer.parseInt(extractBatch.substring(6, 8)) + "批提成明细数据已发布，请登录http://ys.jtyjy.com查看。", null));
 					}
-				} catch (Exception e) {
-
-				}
+				} catch (Exception ignored) { }
 			}
 		});
 	}
@@ -412,19 +380,17 @@ public class BudgetExtractPayService {
 	 * <p>设置报销生效</p>
 	 * @author minzhq
 	 * @date 2022/9/19 16:08
-	 * @param extractBatch
-	 * @param sumList
 	 */
 	private void setReimbursementEffect(String extractBatch, List<BudgetExtractsum> sumList) {
 		List<BudgetExtractCommissionApplication> budgetExtractCommissionApplications = commissionApplicationMapper.selectList(new LambdaQueryWrapper<BudgetExtractCommissionApplication>()
-				.in(BudgetExtractCommissionApplication::getExtractSumId, sumList.stream().map(e -> e.getId()).collect(Collectors.toList()))
+				.in(BudgetExtractCommissionApplication::getExtractSumId, sumList.stream().map(BudgetExtractsum::getId).collect(Collectors.toList()))
 				.isNotNull(BudgetExtractCommissionApplication::getReimbursementId));
 		budgetExtractCommissionApplications.forEach(budgetExtractCommissionApplication -> {
-			BudgetReimbursementorder order = reimbursementorderService.getById(budgetExtractCommissionApplication.getReimbursementId());
+			BudgetReimbursementorder order = bursementOrderService.getById(budgetExtractCommissionApplication.getReimbursementId());
 			if(order!=null){
 				boolean isSuccess = true;
 				try {
-					reimbursementorderService.syncagnentexecute(order);
+					bursementOrderService.syncagnentexecute(order);
 				} catch (Exception e) {
 					e.printStackTrace();
 					isSuccess = false;
@@ -435,37 +401,28 @@ public class BudgetExtractPayService {
 				order.setReuqeststatus(StatusConstants.BX_PASS);
 				order.setUpdatetime(new Date());
 				order.setVerifytime(new Date());
-				reimbursementorderService.updateById(order);
+				bursementOrderService.updateById(order);
 			}
 		});
 	}
 
 	/**
 	 * <p>获取当前批次有没有付款成功</p>
-	 *
-	 * @param extractBatch
-	 * @param extratBatchPayMap
 	 * @author minzhq
 	 * @date 2022/9/19 15:04
 	 */
-	private void setIsPayFlag(String extractBatch, Map<String, Boolean> extratBatchPayMap) {
-		List<String> codeList = extractsumService.getCurBatchExtractSum(extractBatch).stream().map(e -> e.getCode()).collect(Collectors.toList());
-		List<String> delayCodeList = delayApplicationMapper.selectList(new LambdaQueryWrapper<BudgetExtractDelayApplication>().in(BudgetExtractDelayApplication::getRelationExtractCode, codeList)).stream().map(e -> e.getDelayCode()).collect(Collectors.toList());
+	private void setIsPayFlag(String extractBatch, Map<String, Boolean> extractBatchPayMap) {
+		List<String> codeList = extractsumService.getCurBatchExtractSum(extractBatch).stream().map(BudgetExtractsum::getCode).collect(Collectors.toList());
+		List<String> delayCodeList = delayApplicationMapper.selectList(new LambdaQueryWrapper<BudgetExtractDelayApplication>().in(BudgetExtractDelayApplication::getRelationExtractCode, codeList)).stream().map(BudgetExtractDelayApplication::getDelayCode).collect(Collectors.toList());
 		codeList.addAll(delayCodeList);
 		if (!CollectionUtils.isEmpty(codeList)) {
 			int count = paymoneyService.count(new LambdaQueryWrapper<BudgetPaymoney>().in(BudgetPaymoney::getPaymoneyobjectcode, codeList).eq(BudgetPaymoney::getPaymoneytype, PaymoneyTypeEnum.EXTRACT_PAY.type).eq(BudgetPaymoney::getPaymoneystatus, PaymoneyStatusEnum.PAYED.type));
-			if (count > 0) {
-				extratBatchPayMap.put(extractBatch, true);
-			} else {
-				extratBatchPayMap.put(extractBatch, false);
-			}
+			extractBatchPayMap.put(extractBatch, count > 0);
 		}
 	}
 
 	/**
 	 * <p>出纳退回</p>
-	 *
-	 * @param extractBatch
 	 * @author minzhq
 	 * @date 2022/9/17 14:19
 	 */
@@ -479,7 +436,7 @@ public class BudgetExtractPayService {
 				boolean isDelayAccount = false;
 				Map<Integer, List<BudgetExtractDelayApplication>> delayApplicationMap = delayApplicationMapper.selectList(new LambdaQueryWrapper<BudgetExtractDelayApplication>()
 						.in(BudgetExtractDelayApplication::getExtractMonth, extractBatch))
-						.stream().collect(Collectors.groupingBy(e -> e.getBatch()));
+						.stream().collect(Collectors.groupingBy(BudgetExtractDelayApplication::getBatch));
 				Set<Map.Entry<Integer, List<BudgetExtractDelayApplication>>> entries = delayApplicationMap.entrySet();
 				for (Map.Entry<Integer, List<BudgetExtractDelayApplication>> entry : entries) {
 					Integer delayBatch = entry.getKey();
