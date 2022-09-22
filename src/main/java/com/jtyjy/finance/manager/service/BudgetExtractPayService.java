@@ -262,7 +262,7 @@ public class BudgetExtractPayService {
 			if (orderPrefix.equals(Constants.EXTRACT_DELAY_ORDER_PREFIX)) {
 				//延期
 				orderDetailList.stream().collect(Collectors.groupingBy(BudgetExtractPerPayDetail::getExtractMonth)).forEach((extractBatch, batchDetailList) -> {
-					setIsPayFlag(extractBatch, extractBatchPayMap);
+					setIsPayFlag(extractBatch, extractBatchPayMap,extractPayCompleteDTO.getPayMoneyIds());
 					/*
 					 * 一个提成批次下，一批的延期全部付款
 					 */
@@ -286,12 +286,14 @@ public class BudgetExtractPayService {
 							try {
 								List<String> extractSumCodeList = delayApplicationMapper.selectList(new LambdaQueryWrapper<BudgetExtractDelayApplication>().in(BudgetExtractDelayApplication::getDelayCode, codeList)).stream().map(BudgetExtractDelayApplication::getRelationExtractCode).collect(Collectors.toList());
 								List<BudgetExtractsum> sumList = extractsumService.list(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getCode, extractSumCodeList));
-								String accounts = sumList.stream().map(e -> {
+								String accounts = sumList.stream().flatMap(e -> {
 									String deptId = e.getDeptid();
 									BudgetUnit budgetUnit = unitMapper.selectById(deptId);
 									String accounting = budgetUnit.getAccounting();
 									if (StringUtils.isNotBlank(accounting)) {
-										return UserCache.getUserByUserId(accounting).getUserName();
+										return Arrays.stream(accounting.split(",")).map(e1->{
+											return UserCache.getUserByUserId(e1).getUserName();
+										});
 									}
 									return null;
 								}).filter(StringUtils::isNotBlank).collect(Collectors.joining("|"));
@@ -302,18 +304,18 @@ public class BudgetExtractPayService {
 								if (StringUtils.isNotBlank(accounts)) {
 									sender.sendQywxMsg(new QywxTextMsg(accounts, null, null, 0, "【延期】" + budgetYearPeriod.getPeriod() + Integer.parseInt(extractBatch.substring(4, 6)) + "月" + Integer.parseInt(extractBatch.substring(6, 8)) + "批提成已支付完成，可进行入账操作！", null));
 								}
-							} catch (Exception ignored) { }
+							} catch (Exception e) { e.printStackTrace();}
 						}
 					});
 				});
 
 			} else if (orderPrefix.equals(TC_REDIS_KEY)) {
 				orderDetailList.stream().collect(Collectors.groupingBy(BudgetExtractPerPayDetail::getExtractMonth)).forEach((extractBatch, batchDetailList) -> {
-					setIsPayFlag(extractBatch, extractBatchPayMap);
+					setIsPayFlag(extractBatch, extractBatchPayMap,extractPayCompleteDTO.getPayMoneyIds());
 					List<BudgetExtractPerPayDetail> list = perPayDetailService.list(new LambdaQueryWrapper<BudgetExtractPerPayDetail>().eq(BudgetExtractPerPayDetail::getExtractMonth, extractBatch));
 					List<BudgetExtractsum> sumList = extractsumService.getCurBatchExtractSum(extractBatch);
-					if (!CollectionUtils.isEmpty(list)) {
-						List<String> codeList = list.stream().map(BudgetExtractPerPayDetail::getExtractCode).collect(Collectors.toList());
+					if (!CollectionUtils.isEmpty(sumList)) {
+						List<String> codeList = sumList.stream().map(BudgetExtractsum::getCode).collect(Collectors.toList());
 						int unPaySuccessCount = paymoneyService.count(new LambdaQueryWrapper<BudgetPaymoney>().eq(BudgetPaymoney::getPaymoneytype, PaymoneyTypeEnum.EXTRACT_PAY.type).in(BudgetPaymoney::getPaymoneyobjectcode, codeList).in(BudgetPaymoney::getPaymoneyobjectid, list.stream().map(BudgetExtractPerPayDetail::getId).collect(Collectors.toList())).ne(BudgetPaymoney::getPaymoneystatus, PaymoneyStatusEnum.PAYED.type));
 						if (unPaySuccessCount == 0) {
 							//该批次全部支付成功
@@ -329,12 +331,14 @@ public class BudgetExtractPayService {
 					}
 
 					try {
-						String accounts = sumList.stream().map(e -> {
+						String accounts = sumList.stream().flatMap(e -> {
 							String deptId = e.getDeptid();
 							BudgetUnit budgetUnit = unitMapper.selectById(deptId);
 							String accounting = budgetUnit.getAccounting();
 							if (StringUtils.isNotBlank(accounting)) {
-								return UserCache.getUserByUserId(accounting).getUserName();
+								return Arrays.stream(accounting.split(",")).map(e1->{
+									return UserCache.getUserByUserId(e1).getUserName();
+								});
 							}
 							return null;
 						}).filter(StringUtils::isNotBlank).collect(Collectors.joining("|"));
@@ -345,8 +349,8 @@ public class BudgetExtractPayService {
 						if (StringUtils.isNotBlank(accounts)) {
 							sender.sendQywxMsg(new QywxTextMsg(accounts, null, null, 0, budgetYearPeriod.getPeriod() + Integer.parseInt(extractBatch.substring(4, 6)) + "月" + Integer.parseInt(extractBatch.substring(6, 8)) + "批提成已支付完成，可进行入账操作！", null));
 						}
-					} catch (Exception ignored) {
-
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
 
 				});
@@ -411,12 +415,12 @@ public class BudgetExtractPayService {
 	 * @author minzhq
 	 * @date 2022/9/19 15:04
 	 */
-	private void setIsPayFlag(String extractBatch, Map<String, Boolean> extractBatchPayMap) {
+	private void setIsPayFlag(String extractBatch, Map<String, Boolean> extractBatchPayMap,List<Long> payMoneyIds) {
 		List<String> codeList = extractsumService.getCurBatchExtractSum(extractBatch).stream().map(BudgetExtractsum::getCode).collect(Collectors.toList());
 		List<String> delayCodeList = delayApplicationMapper.selectList(new LambdaQueryWrapper<BudgetExtractDelayApplication>().in(BudgetExtractDelayApplication::getRelationExtractCode, codeList)).stream().map(BudgetExtractDelayApplication::getDelayCode).collect(Collectors.toList());
 		codeList.addAll(delayCodeList);
 		if (!CollectionUtils.isEmpty(codeList)) {
-			int count = paymoneyService.count(new LambdaQueryWrapper<BudgetPaymoney>().in(BudgetPaymoney::getPaymoneyobjectcode, codeList).eq(BudgetPaymoney::getPaymoneytype, PaymoneyTypeEnum.EXTRACT_PAY.type).eq(BudgetPaymoney::getPaymoneystatus, PaymoneyStatusEnum.PAYED.type));
+			int count = paymoneyService.count(new LambdaQueryWrapper<BudgetPaymoney>().notIn(BudgetPaymoney::getId,payMoneyIds).in(BudgetPaymoney::getPaymoneyobjectcode, codeList).eq(BudgetPaymoney::getPaymoneytype, PaymoneyTypeEnum.EXTRACT_PAY.type).eq(BudgetPaymoney::getPaymoneystatus, PaymoneyStatusEnum.PAYED.type));
 			extractBatchPayMap.put(extractBatch, count > 0);
 		}
 	}

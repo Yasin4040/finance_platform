@@ -33,6 +33,8 @@ import com.jtyjy.finance.manager.utils.FileUtils;
 import com.jtyjy.finance.manager.vo.application.*;
 import com.jtyjy.weixin.message.MessageSender;
 import com.jtyjy.weixin.message.QywxTextMsg;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.BeanUtilsBean;
@@ -46,6 +48,7 @@ import org.csource.fastdfs.StorageClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -64,6 +67,7 @@ import java.util.stream.Collectors;
 * @createDate 2022-08-26 11:08:05
 */
 @Service
+@RequiredArgsConstructor
 public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<BudgetExtractCommissionApplicationMapper, BudgetExtractCommissionApplication>
     implements BudgetExtractCommissionApplicationService{
     private final BudgetExtractTaxHandleRecordService taxHandleRecordService;
@@ -83,28 +87,9 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     private final TabDmMapper tabDmMapper;
     private final OAMapper oaMapper;
     private final BudgetExtractCommissionApplicationLogService logService;
+    private final BudgetMonthAgentMapper monthAgentMapper;
     @Value("${commission.application.workflowid}")
     private  String tcWorkFlowId;
-    public BudgetExtractCommissionApplicationServiceImpl(BudgetExtractTaxHandleRecordService taxHandleRecordService, BudgetExtractsumMapper extractSumMapper, BudgetExtractOuterpersonMapper outPersonMapper, BudgetExtractImportdetailMapper extractImportDetailMapper, BudgetYearPeriodMapper yearMapper, BudgetExtractCommissionApplicationBudgetDetailsService budgetDetailsService, BudgetExtractCommissionApplicationLogService applicationLogService, BudgetCommonAttachmentService attachmentService, StorageClient storageClient, ReimbursementWorker reimbursementWorker, BudgetReimbursementorderService reimbursementorderService, BudgetExtractFeePayDetailMapper feePayDetailMapper, HrService hrService, OaService oaService, TabDmMapper tabDmMapper, OAMapper oaMapper, BudgetExtractCommissionApplicationLogService logService) {
-        this.taxHandleRecordService = taxHandleRecordService;
-        this.extractSumMapper = extractSumMapper;
-        this.outPersonMapper = outPersonMapper;
-        this.extractImportDetailMapper = extractImportDetailMapper;
-        this.yearMapper = yearMapper;
-        this.budgetDetailsService = budgetDetailsService;
-        this.applicationLogService = applicationLogService;
-        this.attachmentService = attachmentService;
-        this.storageClient = storageClient;
-        this.reimbursementWorker = reimbursementWorker;
-        this.reimbursementorderService = reimbursementorderService;
-        this.feePayDetailMapper = feePayDetailMapper;
-        this.hrService = hrService;
-        this.oaService = oaService;
-        this.tabDmMapper = tabDmMapper;
-        this.oaMapper = oaMapper;
-
-        this.logService = logService;
-    }
 
     @Override
     public CommissionApplicationInfoVO getApplicationInfo(String sumId) {
@@ -817,6 +802,9 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
         Boolean ifExistsCommission = importDetails.stream().anyMatch(x -> {
             return ExtractTypeEnum.PERFORMANCE_AWARD_COMMISSION.value.equals(x.getExtractType()) || ExtractTypeEnum.ACCRUED_PERFORMANCE_AWARD.value.equals(x.getExtractType());
         });
+        TabDm tabDm = tabDmMapper.selectOne(new LambdaQueryWrapper<TabDm>().eq(TabDm::getDmType, "extract").eq(TabDm::getDm, "reimbursementDefalutBillingUnitId"));
+        if(Objects.isNull(tabDm))throw new RuntimeException("请联系系统管理员配置提成报销单默认发放单位");
+
         if (ifExistsCommission) {
             List<BudgetExtractCommissionApplicationBudgetDetails> budgetDetailsList =
                     budgetDetailsService.lambdaQuery().eq(BudgetExtractCommissionApplicationBudgetDetails::getApplicationId, applicationId).list();
@@ -837,11 +825,15 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                 reimbursement.setMonthagentname(budgetDetails.getMotivationName());
                 reimbursement.setMonthagentid(budgetDetails.getMotivationId());
                 //U0068,陈彩莲(无票) 默认
-                reimbursement.setBunitid(68L);
-                reimbursement.setBunitname("陈彩莲(无票)");
+                reimbursement.setBunitid(Long.valueOf(tabDm.getDmValue()));
+                reimbursement.setBunitname( UnitCache.get(reimbursement.getBunitid().toString()).getName());
                 //默认执行
                 reimbursement.setReimflag(true);
-
+                BudgetMonthAgent budgetMonthAgent = monthAgentMapper.selectById(budgetDetails.getMotivationId());
+                reimbursement.setMonthagentmoney(budgetMonthAgent.getTotal());
+                reimbursement.setMonthagentunmoney(budgetMonthAgent.getTotal().add(budgetMonthAgent.getAddmoney()).subtract(budgetMonthAgent.getExecutemoney()));
+                reimbursement.setYearagentmoney(budgetMonthAgent.getYearagentmoney());
+                reimbursement.setYearagentunmoney(budgetMonthAgent.getYearagentmoney().add(budgetMonthAgent.getAddmoney()).add(budgetMonthAgent.getLendinmoney()).subtract(budgetMonthAgent.getLendoutmoney()).subtract(budgetMonthAgent.getExecutemoney()));
                 reimbursement.setReimmoney(budgetDetails.getBudgetAmount());
                 otherTotalMoney = otherTotalMoney.add(budgetDetails.getBudgetAmount());
                 orderDetailList.add(reimbursement);
