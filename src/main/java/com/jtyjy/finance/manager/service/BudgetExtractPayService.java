@@ -285,7 +285,7 @@ public class BudgetExtractPayService {
 
 							try {
 								List<String> extractSumCodeList = delayApplicationMapper.selectList(new LambdaQueryWrapper<BudgetExtractDelayApplication>().in(BudgetExtractDelayApplication::getDelayCode, codeList)).stream().map(BudgetExtractDelayApplication::getRelationExtractCode).collect(Collectors.toList());
-								List<BudgetExtractsum> sumList = extractsumService.list(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getCode, extractSumCodeList));
+								List<BudgetExtractsum> sumList = extractsumService.list(new LambdaQueryWrapper<BudgetExtractsum>().in(BudgetExtractsum::getCode, extractSumCodeList));
 								String accounts = sumList.stream().flatMap(e -> {
 									String deptId = e.getDeptid();
 									BudgetUnit budgetUnit = unitMapper.selectById(deptId);
