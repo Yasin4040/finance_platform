@@ -50,7 +50,6 @@ import java.util.stream.Collectors;
 @Service
 @JdbcSelector(value = "defaultJdbcTemplateService")
 @Transactional(transactionManager = "defaultTransactionManager", rollbackFor = Exception.class)
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class CommonService extends DefaultBaseService<WbBanksMapper, WbBanks> {
 
     @Autowired
