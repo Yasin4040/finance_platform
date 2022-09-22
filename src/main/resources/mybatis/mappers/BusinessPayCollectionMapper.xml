@@ -8,7 +8,6 @@
             <id property="id" column="id" jdbcType="BIGINT"/>
             <result property="extractType" column="extract_type" jdbcType="VARCHAR"/>
             <result property="year" column="year" jdbcType="VARCHAR"/>
-            <result property="month" column="month" jdbcType="VARCHAR"/>
             <result property="batchNo" column="batch_no" jdbcType="VARCHAR"/>
             <result property="empName" column="emp_name" jdbcType="VARCHAR"/>
             <result property="empNo" column="emp_no" jdbcType="VARCHAR"/>
@@ -49,9 +48,9 @@
         <if test="yearId != null and yearId !=''">
             and bbpc.`year` = #{yearId}
         </if>
-        <if test="monthId != null and monthId !=''">
-            and bbpc.`month`  = #{monthId}
-        </if>
+<!--        <if test="monthId != null and monthId !=''">-->
+<!--            and bbpc.`month`  = #{monthId}-->
+<!--        </if>-->
         <if test="extractMonth != null and extractMonth !=''">
             and bbpc.batch_no like concat('%',#{extractMonth},'%')
         </if>

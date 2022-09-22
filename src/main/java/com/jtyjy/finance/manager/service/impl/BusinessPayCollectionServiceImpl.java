@@ -1,6 +1,7 @@
 package com.jtyjy.finance.manager.service.impl;
 
 import com.alibaba.excel.EasyExcel;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -113,14 +114,16 @@ public class BusinessPayCollectionServiceImpl extends ServiceImpl<BusinessPayCol
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<BusinessPayCollectionErrorDTO> importCollection(MultipartFile multipartFile) {
         List<BusinessPayCollectionErrorDTO> errList = new ArrayList<>();
         List<Map> errorMap = new ArrayList<>();
+//        BusinessPayCollection entity;
         try {
             EasyExcel.read(multipartFile.getInputStream(), BusinessPayCollection.class,
                     new PageReadListener<BusinessPayCollection>(dataList -> {
-
-                        for (BusinessPayCollection entity : dataList) {
+                        for (int i = 0; i < dataList.size(); i++) {
+                            BusinessPayCollection entity = dataList.get(i);
                             try {
                                 String empNo = entity.getEmpNo();
                                 WbPerson thisPerson = PersonCache.getPersonByEmpNo(empNo);
@@ -142,6 +145,13 @@ public class BusinessPayCollectionServiceImpl extends ServiceImpl<BusinessPayCol
 //                                entity.setIfManager(entity.getIfManagerView());
 
                                 try {
+                                    if(i==0) {
+                                        //获取第一个的时候 删除历史 然后新增
+                                        String batchNo = entity.getBatchNo();
+                                        String budgetUnitName = entity.getBudgetUnitName();
+                                        //删除历史
+                                        remove(this.lambdaQuery().eq(BusinessPayCollection::getBatchNo, batchNo).eq(BusinessPayCollection::getBudgetUnitName, budgetUnitName));
+                                    }
                                     this.save(entity);
                                 } catch (Exception e) {
                                     throw new RuntimeException("保存失败");
