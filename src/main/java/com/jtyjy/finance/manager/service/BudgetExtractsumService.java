@@ -5697,7 +5697,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 					money.add(extractPayDetailVO.getBeforeCalFee());
 				}
 				list.forEach(l->{
-					setUnitPayDetail(unitMap,unitPayDetailMap,l.getOutUnitId(),l.getOutUnitPayMoney(),innerPayMoney,outPayMoney,"3");
+					setUnitPayDetail(unitMap,unitPayDetailMap,l.getOutUnitId(),l.getOutUnitPayMoney(),innerPayMoney,outPayMoney,"1");
 				});
 			});
 		}
@@ -5746,6 +5746,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				if(map.get("4")!=null){
 					d.setPersonalityPayMoney2(map.get("4").stream().reduce(BigDecimal.ZERO,BigDecimal::add));
 				}
+
 			}
 			d.setTotal(d.getPayMoney().add(d.getFee()).add(d.getPersonalityPayMoney1()).add(d.getPersonalityPayMoney2()));
 			if(d.getTotal().compareTo(BigDecimal.ZERO) != 0){
