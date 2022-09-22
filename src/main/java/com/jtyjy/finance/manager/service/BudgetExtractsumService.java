@@ -1197,7 +1197,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			if (applicationOptional.isPresent()) {
 				BudgetExtractCommissionApplication application = applicationOptional.get();
 				//根据预算明细。生成报销单。
-				applicationService.generateReimbursement(application.getExtractSumId(),extractsum);
+				applicationService.generateReimbursement(application,extractsum);
 				//更新时间  1 已提交
 				application.setStatus(ExtractStatusEnum.VERIFYING.getType());
 				application.setUpdateTime(new Date());
