@@ -659,7 +659,12 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     @Override
     public void validateExtractMonth(String extractMonth) {
         //全部都得是已经审核。
-        validStatusIsAllVerify(extractMonth);
+        List<BudgetExtractsum> nowSums = extractSumMapper.selectList(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getExtractmonth, extractMonth));
+
+        long count = nowSums.stream().filter(x -> !x.getStatus().equals(ExtractStatusEnum.APPROVED.getType())).count();
+        if(count!=0){
+            throw new BusinessException("操作失败！该["+extractMonth+"]提成批次只有全部审核通过时才可操作");
+        }
         //是否计算。
         BudgetExtractTaxHandleRecord recordServiceOne =
                 taxHandleRecordService.getOne(new LambdaQueryWrapper<BudgetExtractTaxHandleRecord>().eq(BudgetExtractTaxHandleRecord::getExtractMonth, extractMonth));
@@ -684,7 +689,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
 
         long count = nowSums.stream().filter(x -> !x.getStatus().equals(ExtractStatusEnum.APPROVED.getType())).count();
         if(count!=0){
-            throw new BusinessException("批次需要全部审核通过，才能进行导入导出费用");
+            throw new BusinessException("操作失败！该["+extractMonth+"]提成批次状态不支持导出");
         }
     }
 

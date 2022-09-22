@@ -151,16 +151,27 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
         //如果拒绝了  就是删除报销单。退回申请单。
         //删除报销表
         if(Objects.equals(logStatus, LogStatusEnum.REJECT.getCode())) {
-            if (application.getReimbursementId() != null) {
-                BudgetReimbursementorder reimbursementOrder = reimburseService.getById(application.getReimbursementId());
-                if (reimbursementOrder!=null) {
-                    reimburseService.removeById(reimbursementOrder.getId());
-                }
+            //下一个节点是 申请人。
+            //7111 申请
+            //通过ia获取
+            String nextNodeName = oaMapper.getNodeName(requestManager.getNextNodeid());
+            //先找到相应的nodeId  flowType 对应的 节点信息。
+            OperationNodeEnum nextNodeEnum = OperationNodeEnum.getTypeEnumByDesc(nextNodeName);
+            if (nextNodeEnum == null) {
+                return;
             }
-            BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
-            budgetExtractsum.setStatus(ExtractStatusEnum.RETURN.getType());
-            extractSumMapper.updateById(budgetExtractsum);
-//            applicationMapper.updateById(application);
+            //下一个节点 打回到申请 节点。 修改状态等。
+            if(Objects.equals(nextNodeEnum.getValue(),OperationNodeEnum.OA_APPLY.getValue())){
+                if (application.getReimbursementId() != null) {
+                    BudgetReimbursementorder reimbursementOrder = reimburseService.getById(application.getReimbursementId());
+                    if (reimbursementOrder!=null) {
+                        reimburseService.removeById(reimbursementOrder.getId());
+                    }
+                }
+                BudgetExtractsum budgetExtractsum = extractSumMapper.selectById(sumId);
+                budgetExtractsum.setStatus(ExtractStatusEnum.RETURN.getType());
+                extractSumMapper.updateById(budgetExtractsum);
+            }
         }else{
             //财务负责人同意  同意
             if (nodeEnum != null) {

@@ -24,6 +24,8 @@ public enum OperationNodeEnum {
     VOUCHER_ENTRY(11,"凭证录入"),
 
     SYSTEM_APPROVED(12,"系统审核通过"),
+    //OA申请 记录一下  暂时用不了，只是为了用这个value
+    OA_APPLY(13,"申请"),
 
     TAX_RETURN(-1,"税务退回"),
     ACCOUNTING_RETURN(-2,"做账退回"),

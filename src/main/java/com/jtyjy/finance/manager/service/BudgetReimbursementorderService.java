@@ -29,10 +29,7 @@ import com.jtyjy.finance.manager.dto.ReimbursementRequest;
 import com.jtyjy.finance.manager.dto.bxExcel.*;
 import com.jtyjy.finance.manager.easyexcel.PayUnitBankSumExcelData;
 import com.jtyjy.finance.manager.easyexcel.PayeeDetailExcelData;
-import com.jtyjy.finance.manager.enmus.ExtractPayTemplateEnum;
-import com.jtyjy.finance.manager.enmus.LendTypeEnum;
-import com.jtyjy.finance.manager.enmus.PaymoneyTypeEnum;
-import com.jtyjy.finance.manager.enmus.ReimbursementTypeEnmu;
+import com.jtyjy.finance.manager.enmus.*;
 import com.jtyjy.finance.manager.event.bx.BxCodeRequest;
 import com.jtyjy.finance.manager.interceptor.UserThreadLocal;
 import com.jtyjy.finance.manager.mapper.*;
@@ -1759,8 +1756,12 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
     public String withDraw(Long id) {
         BudgetReimbursementorder order = this.getById(id);
         if (null != order) {
+            //0：普通报销单（预算员手动填写的）1：稿费 2：提成 3：工资 4:项目预领
             if (1 == order.getOrderscrtype()) {
                 return "稿费报销单不能撤回";
+            }
+            if (Objects.equals(ReimbursementFromEnmu.COMMISSION.getCode(),order.getOrderscrtype())) {
+                return "提成报销单不能撤回";
             }
             if (order.getReuqeststatus() < StatusConstants.BX_PASS && order.getReceivestatus() <= 0) {
                 if (UserThreadLocal.get().getUserId().equals(order.getApplicantid())) {
