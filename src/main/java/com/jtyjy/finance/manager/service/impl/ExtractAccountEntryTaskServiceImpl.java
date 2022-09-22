@@ -63,6 +63,11 @@ public class ExtractAccountEntryTaskServiceImpl extends ServiceImpl<ExtractAccou
         entryTask.setVoucherNo(dto.getVoucherNo());
         this.saveOrUpdate(entryTask);
 
+        String extractCode = entryTask.getExtractCode();
+        BudgetExtractsum budgetExtractsum = extractSumMapper.selectOne(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getCode, extractCode));
+        budgetExtractsum.setStatus(ExtractStatusEnum.VOUCHER_ENTRY.getType());
+        budgetExtractsum.setUpdatetime(new Date());
+        extractSumMapper.updateById(budgetExtractsum);
     }
 
     @Override
