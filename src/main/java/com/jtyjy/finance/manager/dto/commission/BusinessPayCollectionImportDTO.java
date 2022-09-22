@@ -40,17 +40,17 @@ public class BusinessPayCollectionImportDTO implements Serializable {
      * 届别Id
      */
     @TableField(value = "year")
-    @ApiModelProperty(value = "届别 中文传参")
-    @ExcelProperty(value = "届别")
+    @ApiModelProperty(value = "提成届别 中文传参")
+    @ExcelProperty(value = "提成届别")
     private String year;
-
-    /**
-     * 月份Id
-     */
-    @TableField(value = "month")
-    @ApiModelProperty(value = "月份 传数字")
-    @ExcelProperty(value = "月份")
-    private String month;
+//
+//    /**
+//     * 月份Id
+//     */
+//    @TableField(value = "month")
+//    @ApiModelProperty(value = "月份 传数字")
+//    @ExcelProperty(value = "月份")
+//    private String month;
 
     /**
      * 批次号
