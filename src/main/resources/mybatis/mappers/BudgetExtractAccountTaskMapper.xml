@@ -6,27 +6,30 @@
         <!--bbu.accountants like concat('%',#{params.empNo},'%') and -->
     <select id="getExtractAccountTaskHistoryList"
             resultType="com.jtyjy.finance.manager.vo.ExtractAccountTaskResponseVO">
+        select * from (
         SELECT
-            beat.id,
-            bes.`status`,
-            bes.id sumId,
-            beat.extract_code 'code',
-            byp.period yearPeriod,
-            concat( substr( bes.extractmonth, 5, 2 )+ 0, '月' ) monthPeriod,
-            bes.extractmonth extractBatch,
-            bes.deptname unitName,
-            beat.create_time createTime,
-            CONCAT( wu.DISPLAY_NAME, '(', wu.USER_NAME, ')' ) accountant,
-            beat.accountant_time accountantTime,
-            ( SELECT sum( pay_money ) FROM budget_extract_per_pay_detail WHERE extract_code = beat.extract_code AND pay_status = beat.task_type and billing_unit_id=bbu.id) payMoney,
-            beat.task_type taskType,
-            bbu.`name` billingUnitName
+        beat.id,
+        if(beat.task_type=3,beda.`status`,bes.`status`) `status`,
+        bes.id sumId,
+        beat.extract_code 'code',
+        byp.period yearPeriod,
+        concat( substr( bes.extractmonth, 5, 2 )+ 0, '月' ) monthPeriod,
+        bes.extractmonth extractBatch,
+        bes.deptname unitName,
+        beat.create_time createTime,
+        CONCAT( wu.DISPLAY_NAME, '(', wu.USER_NAME, ')' ) accountant,
+        beat.accountant_time accountantTime,
+        ( SELECT sum( pay_money ) FROM budget_extract_per_pay_detail WHERE extract_code = beat.extract_code AND
+        pay_status = beat.task_type and billing_unit_id=bbu.id) payMoney,
+        beat.task_type taskType,
+        bbu.`name` billingUnitName
         FROM
-            budget_extract_account_task beat
-            LEFT JOIN budget_extractsum bes ON ifnull(beat.relation_extract_code,beat.extract_code) = bes.`code`
-            LEFT JOIN budget_year_period byp ON byp.id = bes.yearid
-            LEFT JOIN wb_user wu ON beat.accountant_emp_no = wu.USER_NAME
-            LEFT JOIN budget_billing_unit bbu ON bbu.id = beat.billing_unit_id
+        budget_extract_account_task beat
+        LEFT JOIN budget_extractsum bes ON beat.relation_extract_code = bes.`code`
+        left join budget_extract_delay_application beda on beat.extract_code = beda.delay_code
+        LEFT JOIN budget_year_period byp ON byp.id = bes.yearid
+        LEFT JOIN wb_user wu ON beat.accountant_emp_no = wu.USER_NAME
+        LEFT JOIN budget_billing_unit bbu ON bbu.id = beat.billing_unit_id
         <where>
             beat.is_should_account = 1
             and beat.accountant_status = 1
@@ -48,11 +51,14 @@
             <if test="params.billingUnitName !=null and params.billingUnitName !=''">
                 and bbu.`name` like concat('%',#{params.billingUnitName},'%')
             </if>
-            <if test="params.status !=null">
-                and bes.status = #{params.status}
-            </if>
+
         </where>
-        order by beat.create_time desc
+        ) a
+        where 1 =1
+        <if test="params.status !=null">
+            and a.status = #{params.status}
+        </if>
+        order by a.createTime desc
     </select>
     <select id="getExtractAccountTaskDetail"
             resultType="com.jtyjy.finance.manager.vo.ExtractAccountTaskDetailVO">
