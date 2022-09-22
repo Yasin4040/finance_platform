@@ -512,7 +512,9 @@ public class BudgetExtractPayService {
 		extractsumService.update(new LambdaUpdateWrapper<BudgetExtractsum>().set(BudgetExtractsum::getStatus, ExtractStatusEnum.APPROVED.type).in(BudgetExtractsum::getId, sumIds));
 		delayApplicationMapper.delete(new LambdaUpdateWrapper<BudgetExtractDelayApplication>().eq(BudgetExtractDelayApplication::getExtractMonth, extractBatch));
 		accountTaskMapper.delete(new LambdaQueryWrapper<BudgetExtractAccountTask>().eq(BudgetExtractAccountTask::getExtractMonth, extractBatch));
-		extractsumService.generateExtractStepLog(sumIds, OperationNodeEnum.CASHIER_PAYMENT, "【" + OperationNodeEnum.getValue(OperationNodeEnum.CASHIER_PAYMENT.getType()) + "】退回", LogStatusEnum.REJECT.getCode());
+
+//		extractsumService.generateExtractStepLog(sumIds, OperationNodeEnum.CASHIER_PAYMENT, "【" + OperationNodeEnum.getValue(OperationNodeEnum.CASHIER_PAYMENT.getType()) + "】退回", LogStatusEnum.REJECT.getCode());
+		extractsumService.generateExtractStepLog(sumIds, OperationNodeEnum.CASHIER_RETURN,OperationNodeEnum.CASHIER_RETURN.getValue(),LogStatusEnum.REJECT.getCode());
 		taxHandleRecordMapper.update(new BudgetExtractTaxHandleRecord(), new LambdaUpdateWrapper<BudgetExtractTaxHandleRecord>().eq(BudgetExtractTaxHandleRecord::getExtractMonth, extractBatch).set(BudgetExtractTaxHandleRecord::getIsPersonalityComplete, 0));
 		perPayDetailService.remove(new LambdaQueryWrapper<BudgetExtractPerPayDetail>().eq(BudgetExtractPerPayDetail::getExtractMonth, extractBatch));
 		personalityPayDetailMapper.update(new BudgetExtractPersonalityPayDetail(), new LambdaUpdateWrapper<BudgetExtractPersonalityPayDetail>().eq(BudgetExtractPersonalityPayDetail::getExtractMonth, extractBatch).set(BudgetExtractPersonalityPayDetail::getOperateTime, null));
