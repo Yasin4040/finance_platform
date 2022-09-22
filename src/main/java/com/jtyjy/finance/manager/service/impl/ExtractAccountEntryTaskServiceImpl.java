@@ -83,9 +83,9 @@ public class ExtractAccountEntryTaskServiceImpl extends ServiceImpl<ExtractAccou
         }else {
             List<BudgetExtractsum> curBatchExtractSum =
                     extractSumMapper.selectList(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getExtractmonth, extractMonth).eq(BudgetExtractsum::getDeleteflag, 0).ne(BudgetExtractsum::getStatus, ExtractStatusEnum.REJECT.getType()));
-            long count = curBatchExtractSum.stream().filter(x -> !x.getStatus().equals(ExtractStatusEnum.ACCOUNT.type)).count();
+            long count = curBatchExtractSum.stream().filter(x -> !x.getStatus().equals(ExtractStatusEnum.PAY.type)).count();
             if (count>0) {
-                throw new BusinessException("存在没有做账完成的订单。");
+                throw new BusinessException("存在没有付款完成的订单。");
             }
             //是否维护了 预算会计
             List<String> deptIdList = curBatchExtractSum.stream().map(BudgetExtractsum::getDeptid).collect(Collectors.toList());
