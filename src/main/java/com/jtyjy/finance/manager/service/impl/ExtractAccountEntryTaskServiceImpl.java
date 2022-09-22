@@ -124,7 +124,7 @@ public class ExtractAccountEntryTaskServiceImpl extends ServiceImpl<ExtractAccou
                 .in(CollectionUtils.isNotEmpty(deptIds),ExtractAccountEntryTask::getDeptId, deptIds)
                 .like(StringUtils.isNotBlank( query.getExtractCode()),ExtractAccountEntryTask::getExtractCode, query.getExtractCode())
                 .like(StringUtils.isNotBlank( query.getExtractMonth()),ExtractAccountEntryTask::getExtractMonth, query.getExtractMonth())
-                .like(StringUtils.isNotBlank( query.getDeptName()),ExtractAccountEntryTask::getDeptName, query.getDeptName()));
+                .like(StringUtils.isNotBlank( query.getDeptName()),ExtractAccountEntryTask::getDeptName, query.getDeptName()).orderByDesc(ExtractAccountEntryTask::getCreateTime));
         List<ExtractAccountEntryTask> records = page.getRecords();
         for (ExtractAccountEntryTask record : records) {
             record.setStatusName(record.getStatus()==0?"核算中":"入账完成");
