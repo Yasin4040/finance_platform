@@ -801,72 +801,65 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
 
     @SneakyThrows
     @Override
-    public void generateReimbursement(Long sumId,BudgetExtractsum extractsum) {
-        Optional<BudgetExtractCommissionApplication> applicationBySumId = this.getApplicationBySumId(String.valueOf(sumId));
-        if (applicationBySumId.isPresent()) {
-            BudgetExtractCommissionApplication application = applicationBySumId.get();
-            Long applicationId = application.getId();
-            //todo 清空报销单
+    public void generateReimbursement(BudgetExtractCommissionApplication application, BudgetExtractsum extractsum) {
+        Long applicationId = application.getId();
+        //todo 清空报销单
 //            BudgetExtractImportdetail
+        List<BudgetExtractImportdetail> importDetails = extractImportDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractImportdetail>()
+                .eq(BudgetExtractImportdetail::getExtractsumid, extractsum.getId()));
 
-
-            List<BudgetExtractImportdetail> importDetails = extractImportDetailMapper.selectList(new LambdaQueryWrapper<BudgetExtractImportdetail>()
-                    .eq(BudgetExtractImportdetail::getExtractsumid, sumId));
-
-            //存在 提成。
-            Boolean ifExistsCommission = importDetails.stream().anyMatch(x-> {
-                return ExtractTypeEnum.PERFORMANCE_AWARD_COMMISSION.value.equals(x.getExtractType()) || ExtractTypeEnum.ACCRUED_PERFORMANCE_AWARD.value.equals(x.getExtractType());
-            });
-            if(ifExistsCommission){
-                List<BudgetExtractCommissionApplicationBudgetDetails> budgetDetailsList =
-                        budgetDetailsService.lambdaQuery().eq(BudgetExtractCommissionApplicationBudgetDetails::getApplicationId, applicationId).list();
-                if (CollectionUtils.isEmpty(budgetDetailsList)) {
-                    return;
-                }
-                //报销单 生成
-                ReimbursementRequest reimbursementRequest = new ReimbursementRequest();
-                List<BudgetReimbursementorderDetail> orderDetailList = new ArrayList<>();
-
-                BigDecimal otherTotalMoney = BigDecimal.ZERO;
-                for (BudgetExtractCommissionApplicationBudgetDetails budgetDetails : budgetDetailsList) {
-                    BudgetReimbursementorderDetail reimbursement = new BudgetReimbursementorderDetail();
-                    reimbursement.setSubjectid(budgetDetails.getSubjectId());
-                    reimbursement.setSubjectCode(budgetDetails.getSubjectCode());
-                    reimbursement.setSubjectname(budgetDetails.getSubjectName());
-                    //动因
-                    reimbursement.setMonthagentname(budgetDetails.getMotivationName());
-                    reimbursement.setMonthagentid(budgetDetails.getMotivationId());
-                    //U0068,陈彩莲(无票) 默认
-                    reimbursement.setBunitid(68l);
-                    reimbursement.setBunitname("陈彩莲(无票)");
-                    //默认执行
-                    reimbursement.setReimflag(true);
-
-                    reimbursement.setReimmoney(budgetDetails.getBudgetAmount());
-                    otherTotalMoney =  otherTotalMoney.add(budgetDetails.getBudgetAmount());
-                    orderDetailList.add(reimbursement);
-                }
-                BudgetReimbursementorder order = getTestBean(extractsum);
-                order.setOthermoney(otherTotalMoney);
-                order.setReimmoney(otherTotalMoney);
-                order.setLackBill(false);
-                reimbursementRequest.setSubmit(String.valueOf(1));
-                reimbursementRequest.setOrder(order);
-                reimbursementRequest.setOrderDetail(orderDetailList);
-
-                try {
-                    //报销id
-                    String returnId = reimbursementWorker.saveReturnId(reimbursementRequest, true);
-                    if (StringUtils.isNotBlank(returnId)) {
-                        application.setReimbursementId(Long.valueOf(returnId));
-                        this.saveOrUpdate(application);
-                    }
-//                    reimbursementController.opt(reimbursementRequest);
-                } catch (Exception e) {
-                    throw new RuntimeException(e.getMessage()==null?e.toString():e.getMessage());
-                }
+        //存在 提成。
+        Boolean ifExistsCommission = importDetails.stream().anyMatch(x -> {
+            return ExtractTypeEnum.PERFORMANCE_AWARD_COMMISSION.value.equals(x.getExtractType()) || ExtractTypeEnum.ACCRUED_PERFORMANCE_AWARD.value.equals(x.getExtractType());
+        });
+        if (ifExistsCommission) {
+            List<BudgetExtractCommissionApplicationBudgetDetails> budgetDetailsList =
+                    budgetDetailsService.lambdaQuery().eq(BudgetExtractCommissionApplicationBudgetDetails::getApplicationId, applicationId).list();
+            if (CollectionUtils.isEmpty(budgetDetailsList)) {
+                return;
             }
+            //报销单 生成
+            ReimbursementRequest reimbursementRequest = new ReimbursementRequest();
+            List<BudgetReimbursementorderDetail> orderDetailList = new ArrayList<>();
 
+            BigDecimal otherTotalMoney = BigDecimal.ZERO;
+            for (BudgetExtractCommissionApplicationBudgetDetails budgetDetails : budgetDetailsList) {
+                BudgetReimbursementorderDetail reimbursement = new BudgetReimbursementorderDetail();
+                reimbursement.setSubjectid(budgetDetails.getSubjectId());
+                reimbursement.setSubjectCode(budgetDetails.getSubjectCode());
+                reimbursement.setSubjectname(budgetDetails.getSubjectName());
+                //动因
+                reimbursement.setMonthagentname(budgetDetails.getMotivationName());
+                reimbursement.setMonthagentid(budgetDetails.getMotivationId());
+                //U0068,陈彩莲(无票) 默认
+                reimbursement.setBunitid(68l);
+                reimbursement.setBunitname("陈彩莲(无票)");
+                //默认执行
+                reimbursement.setReimflag(true);
+
+                reimbursement.setReimmoney(budgetDetails.getBudgetAmount());
+                otherTotalMoney = otherTotalMoney.add(budgetDetails.getBudgetAmount());
+                orderDetailList.add(reimbursement);
+            }
+            BudgetReimbursementorder order = getTestBean(extractsum);
+            order.setOthermoney(otherTotalMoney);
+            order.setReimmoney(otherTotalMoney);
+            order.setLackBill(false);
+            reimbursementRequest.setSubmit(String.valueOf(1));
+            reimbursementRequest.setOrder(order);
+            reimbursementRequest.setOrderDetail(orderDetailList);
+
+            try {
+                //报销id
+                String returnId = reimbursementWorker.saveReturnId(reimbursementRequest, true);
+                if (StringUtils.isNotBlank(returnId)) {
+                    application.setReimbursementId(Long.valueOf(returnId));
+//                        this.saveOrUpdate(application);
+                }
+//                    reimbursementController.opt(reimbursementRequest);
+            } catch (Exception e) {
+                throw new RuntimeException(e.getMessage() == null ? e.toString() : e.getMessage());
+            }
         }
 
     }
