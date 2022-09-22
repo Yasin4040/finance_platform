@@ -5702,26 +5702,23 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 			});
 		}
 
-		ExtractPersonalityPayDetailQueryVO vo = new ExtractPersonalityPayDetailQueryVO();
-		vo.setSumId(extractSumId);
-		PageResult<ExtractPersonalityPayDetailVO> extractPersonalityPayDetailVO = this.getExtractPersonalityPayDetailVO(vo, null, null, extractsum.getExtractmonth());
-		List<ExtractPersonalityPayDetailVO> personalityPayDetailVOList = extractPersonalityPayDetailVO.getList();
-		personalityPayDetailVOList.stream().filter(e->e.getPayStatus() == ExtractPersonalityPayStatusEnum.COMMON.type).forEach(detail->{
-			IndividualEmployeeFiles individualEmployeeFiles = individualEmployeeFilesMapper.selectById(detail.getPersonalityId());
-			if(individualEmployeeFiles.getAccountType()==1){
-				setUnitPayDetail(unitMap,unitPayDetailMap,detail.getBillingUnitId(),detail.getCurExtract().add(detail.getCurSalary()).add(detail.getCurWelfare()),innerPayMoney,outPayMoney,"4");
-			}else if(individualEmployeeFiles.getAccountType()==2){
-				setUnitPayDetail(unitMap,unitPayDetailMap,detail.getBillingUnitId(),detail.getCurExtract().add(detail.getCurSalary()).add(detail.getCurWelfare()),innerPayMoney,outPayMoney,"5");
-			}
-		});
+
 		if(isShowPersonality){
+			ExtractPersonalityPayDetailQueryVO vo = new ExtractPersonalityPayDetailQueryVO();
+			vo.setSumId(extractSumId);
+			PageResult<ExtractPersonalityPayDetailVO> extractPersonalityPayDetailVO = this.getExtractPersonalityPayDetailVO(vo, null, null, extractsum.getExtractmonth());
+			List<ExtractPersonalityPayDetailVO> personalityPayDetailVOList = extractPersonalityPayDetailVO.getList();
+			personalityPayDetailVOList.stream().filter(e->e.getPayStatus() == ExtractPersonalityPayStatusEnum.COMMON.type).forEach(detail->{
+				IndividualEmployeeFiles individualEmployeeFiles = individualEmployeeFilesMapper.selectById(detail.getPersonalityId());
+				if(individualEmployeeFiles.getAccountType()==1){
+					setUnitPayDetail(unitMap,unitPayDetailMap,detail.getBillingUnitId(),detail.getCurExtract().add(detail.getCurSalary()).add(detail.getCurWelfare()),innerPayMoney,outPayMoney,"4");
+				}else if(individualEmployeeFiles.getAccountType()==2){
+					setUnitPayDetail(unitMap,unitPayDetailMap,detail.getBillingUnitId(),detail.getCurExtract().add(detail.getCurSalary()).add(detail.getCurWelfare()),innerPayMoney,outPayMoney,"5");
+				}
+			});
 			personalityPayDetailVOList.stream().filter(e->e.getPayStatus() != ExtractPersonalityPayStatusEnum.COMMON.type).forEach(detail->{
 				unPayMoney.add(detail.getCurExtract().add(detail.getCurSalary()).add(detail.getCurWelfare()));
 			});
-			outPayMoney.add(personalityPayDetailVOList.stream().filter(e->{
-				BudgetBillingUnit budgetBillingUnit = unitMap.get(e.getBillingUnitId());
-				return budgetBillingUnit.getOwnFlag() == 1;
-			}).map(detail -> detail.getCurExtract().add(detail.getCurSalary()).add(detail.getCurWelfare())).reduce(BigDecimal.ZERO, BigDecimal::add));
 		}
 
 		result.setInnerPayMoney(innerPayMoney.stream().reduce(BigDecimal.ZERO,BigDecimal::add));
