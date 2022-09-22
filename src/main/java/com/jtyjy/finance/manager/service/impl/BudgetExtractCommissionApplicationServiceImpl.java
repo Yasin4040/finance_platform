@@ -837,7 +837,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
                 reimbursement.setMonthagentname(budgetDetails.getMotivationName());
                 reimbursement.setMonthagentid(budgetDetails.getMotivationId());
                 //U0068,陈彩莲(无票) 默认
-                reimbursement.setBunitid(68l);
+                reimbursement.setBunitid(68L);
                 reimbursement.setBunitname("陈彩莲(无票)");
                 //默认执行
                 reimbursement.setReimflag(true);
