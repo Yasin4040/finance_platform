@@ -190,13 +190,10 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 		return accountTasks.stream().map(e -> {
 			BudgetBillingUnit budgetBillingUnit = billingUnitMapper.selectById(e.getBillingUnitId());
 			return new ExtractBillingUnitVO(budgetBillingUnit.getId(), budgetBillingUnit.getName());
-		}).filter(distinct(ExtractBillingUnitVO::getId)).collect(Collectors.toList());
+		}).filter(extractsumService.distinct(ExtractBillingUnitVO::getId)).collect(Collectors.toList());
 	}
 
-	private <T> Predicate<T> distinct(Function<? super T, Object> keyExtractor) {
-		Map<Object, Boolean> seen = new ConcurrentHashMap<>();
-		return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
-	}
+
 
 	/**
 	 * <p>做账完成</p>
@@ -260,7 +257,8 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 		String extractBatch = "";
 		String delayFlag = "";
 		if(isDelay){
-			BudgetExtractAccountTask budgetExtractAccountTask = accountTaskMapper.selectOne(new LambdaQueryWrapper<BudgetExtractAccountTask>().eq(BudgetExtractAccountTask::getExtractCode, accountDTO.getExtractCode()));
+			List<BudgetExtractAccountTask> budgetExtractAccountTasks = accountTaskMapper.selectList(new LambdaQueryWrapper<BudgetExtractAccountTask>().eq(BudgetExtractAccountTask::getExtractCode, accountDTO.getExtractCode()));
+			BudgetExtractAccountTask budgetExtractAccountTask = budgetExtractAccountTasks.get(0);
 			batchUnCompleteTaskCount = accountTaskMapper.selectCount(new LambdaQueryWrapper<BudgetExtractAccountTask>()
 					.eq(BudgetExtractAccountTask::getTaskType, ExtractTaskTypeEnum.DELAY.type)
 					.eq(BudgetExtractAccountTask::getExtractMonth, budgetExtractAccountTask.getExtractMonth())
@@ -295,7 +293,9 @@ public class BudgetExtractAccountService extends DefaultBaseService<BudgetExtrac
 				List<BudgetExtractsum> list = extractsumService.getCurBatchExtractSum(extractBatch);
 				BudgetYearPeriod budgetYearPeriod = yearPeriodMapper.selectById(list.get(0).getYearid());
 				List<String> empNo = commonService.getEmpNoListByRoleNames(RoleNameEnum.PAY.value);
-				if(!CollectionUtils.isEmpty(empNo))sender.sendQywxMsg(new QywxTextMsg(String.join("|", empNo), null, null, 0, delayFlag+budgetYearPeriod.getPeriod()+Integer.parseInt(extractBatch.substring(4,6))+"月"+Integer.parseInt(extractBatch.substring(6,8))+"批提成已做账完成，可进行付款操作！", null));
+				if(!CollectionUtils.isEmpty(empNo)) {
+					sender.sendQywxMsg(new QywxTextMsg(String.join("|", empNo), null, null, 0, delayFlag+budgetYearPeriod.getPeriod()+Integer.parseInt(extractBatch.substring(4,6))+"月"+Integer.parseInt(extractBatch.substring(6,8))+"批提成已做账完成，可进行付款操作！", null));
+				}
 			}catch (Exception ignored){
 
 			}

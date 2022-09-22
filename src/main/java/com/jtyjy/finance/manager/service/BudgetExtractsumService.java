@@ -19,7 +19,6 @@ import com.jtyjy.core.service.DefaultBaseService;
 import com.jtyjy.core.tools.HttpClientTool;
 import com.jtyjy.finance.manager.bean.*;
 import com.jtyjy.finance.manager.cache.BankCache;
-import com.jtyjy.finance.manager.cache.UnitCache;
 import com.jtyjy.finance.manager.cache.UserCache;
 import com.jtyjy.finance.manager.constants.Constants;
 import com.jtyjy.finance.manager.controller.BaseController;
@@ -39,7 +38,6 @@ import com.jtyjy.finance.manager.vo.*;
 import com.jtyjy.weixin.message.MessageSender;
 import com.jtyjy.weixin.message.QywxTextMsg;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -55,7 +53,9 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -5384,7 +5384,7 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				delayApplication.setBatch(e.getBatch());
 				delayApplication.setExtractMonth(e.getExtractMonth());
 				return delayApplication;
-			}).forEach(e->{
+			}).filter(distinct(BudgetExtractDelayApplication::getDelayCode)).forEach(e->{
 				delayApplicationMapper.insert(e);
 			});
 
@@ -5393,6 +5393,11 @@ public class BudgetExtractsumService extends DefaultBaseService<BudgetExtractsum
 				finishAccount(true,accountTasks.stream().map(e->e.getExtractCode()).collect(Collectors.toList()),extractBatch,unitMap);
 			}
 		}
+	}
+
+	public <T> Predicate<T> distinct(Function<? super T, Object> keyExtractor) {
+		Map<Object, Boolean> seen = new ConcurrentHashMap<>();
+		return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
 	}
 
 	/**
