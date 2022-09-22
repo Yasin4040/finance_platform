@@ -136,6 +136,8 @@ public class IndividualEmployeeController {
             query.setAccountName(name);
             query.setPage(1);
             query.setRows(-1);
+            //只需要 正常的 状态
+            query.setStatus(1);
         return this.selectPage(query);
     }
 
