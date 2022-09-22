@@ -43,31 +43,48 @@ import java.util.stream.Collectors;
  */
 @Service
 @Transactional(transactionManager = "defaultTransactionManager", rollbackFor = Exception.class)
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 @JdbcSelector(value = "defaultJdbcTemplateService")
-@SuppressWarnings("all")
 public class BudgetExtractPayService {
-
-	private final BudgetPaymoneyMapper paymoneyMapper;
-	private final BudgetPaybatchMapper paybatchMapper;
-	private final BankCache bankCache;
-	private final BudgetPaymoneyService paymoneyService;
-	private final BudgetExtractPerPayDetailService perPayDetailService;
-	private final ExtractAccountEntryTaskService accountEntryTaskService;
-	private final BudgetExtractPersonalityPayService extractPersonalityPayService;
-	private final BudgetExtractDelayApplicationMapper delayApplicationMapper;
-	private final BudgetExtractCommissionApplicationMapper commissionApplicationMapper;
-	private final BudgetExtractsumMapper extractsumMapper;
-	private final BudgetExtractsumService extractsumService;
-	private final BudgetExtractAccountTaskMapper accountTaskMapper;
-	private final BudgetExtractTaxHandleRecordMapper taxHandleRecordMapper;
-	private final BudgetExtractPersonalityPayDetailMapper personalityPayDetailMapper;
-	private final BudgetYearPeriodMapper yearPeriodMapper;
-	private final MessageSender sender;
-	private final CommonService commonService;
-	private final BudgetUnitMapper unitMapper;
-	private final BudgetBillingUnitMapper billingUnitMapper;
-	private final BudgetReimbursementorderService reimbursementorderService;
+	@Autowired
+	private BudgetPaymoneyMapper paymoneyMapper;
+	@Autowired
+	private  BudgetPaybatchMapper paybatchMapper;
+	@Autowired
+	private  BankCache bankCache;
+	@Autowired
+	private  BudgetPaymoneyService paymoneyService;
+	@Autowired
+	private  BudgetExtractPerPayDetailService perPayDetailService;
+	@Autowired
+	private  ExtractAccountEntryTaskService accountEntryTaskService;
+	@Autowired
+	private  BudgetExtractPersonalityPayService extractPersonalityPayService;
+	@Autowired
+	private  BudgetExtractDelayApplicationMapper delayApplicationMapper;
+	@Autowired
+	private  BudgetExtractCommissionApplicationMapper commissionApplicationMapper;
+	@Autowired
+	private  BudgetExtractsumMapper extractsumMapper;
+	@Autowired
+	private  BudgetExtractsumService extractsumService;
+	@Autowired
+	private  BudgetExtractAccountTaskMapper accountTaskMapper;
+	@Autowired
+	private  BudgetExtractTaxHandleRecordMapper taxHandleRecordMapper;
+	@Autowired
+	private  BudgetExtractPersonalityPayDetailMapper personalityPayDetailMapper;
+	@Autowired
+	private  BudgetYearPeriodMapper yearPeriodMapper;
+	@Autowired
+	private  MessageSender sender;
+	@Autowired
+	private  CommonService commonService;
+	@Autowired
+	private  BudgetUnitMapper unitMapper;
+	@Autowired
+	private BudgetBillingUnitMapper billingUnitMapper;
+	@Autowired
+	private BudgetReimbursementorderService reimbursementorderService;
 	@Value("${tc.redis.key}")
 	private String TC_REDIS_KEY;
 
