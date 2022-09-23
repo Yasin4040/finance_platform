@@ -154,7 +154,10 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
             //下一个节点是 申请人。
             //7111 申请
             //通过ia获取
-            Integer rejectToNodeId  = (Integer) params.getParams().get("RejectToNodeid");
+            Object o = params.getParams().get("RejectToNodeid");
+            System.out.println(o.toString());
+            System.out.println(JSONObject.toJSON(params.getParams()));
+            Integer rejectToNodeId  = Integer.parseInt((String) params.getParams().get("RejectToNodeid"));
             if(rejectToNodeId == null){
                 return;
             }
