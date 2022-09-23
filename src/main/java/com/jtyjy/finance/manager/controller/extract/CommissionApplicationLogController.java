@@ -46,6 +46,8 @@ public class CommissionApplicationLogController {
     @GetMapping("/getList")
     public ResponseEntity<PageResult<BudgetExtractCommissionApplicationLog>> getList(@RequestParam String sumId,@ModelAttribute PageQuery query) {
         try {
+            query.setPage(1);
+            query.setRows(-1);
             Optional<BudgetExtractCommissionApplication> applicationBySumId = applicationService.getApplicationBySumId(sumId);
             if (applicationBySumId.isPresent()) {
                 Page<BudgetExtractCommissionApplicationLog> page = logService.page(new Page<>(query.getPage(), query.getRows())

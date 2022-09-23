@@ -53,6 +53,7 @@ public class ExtractAccountEntryTaskServiceImpl extends ServiceImpl<ExtractAccou
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void entryCompleted(EntryCompletedDTO dto) {
         ExtractAccountEntryTask entryTask = this.getById(dto.getId());
         entryTask.setAccountantEmpNo(UserThreadLocal.getEmpNo());
@@ -64,10 +65,17 @@ public class ExtractAccountEntryTaskServiceImpl extends ServiceImpl<ExtractAccou
         this.saveOrUpdate(entryTask);
 
         String extractCode = entryTask.getExtractCode();
-        BudgetExtractsum budgetExtractsum = extractSumMapper.selectOne(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getCode, extractCode));
-        budgetExtractsum.setStatus(ExtractStatusEnum.VOUCHER_ENTRY.getType());
-        budgetExtractsum.setUpdatetime(new Date());
-        extractSumMapper.updateById(budgetExtractsum);
+        if (extractCode.contains("TC")) {
+            //除本单外 状态不为1的 数量
+            Integer count = this.lambdaQuery().eq(ExtractAccountEntryTask::getExtractCode, extractCode).ne(ExtractAccountEntryTask::getId, dto.getId()).ne(ExtractAccountEntryTask::getStatus, 1).count();
+            if(count==0){
+                BudgetExtractsum budgetExtractsum = extractSumMapper.selectOne(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getCode, extractCode));
+                budgetExtractsum.setStatus(ExtractStatusEnum.VOUCHER_ENTRY.getType());
+                budgetExtractsum.setUpdatetime(new Date());
+                extractSumMapper.updateById(budgetExtractsum);
+            }
+        }
+
     }
 
     @Override
