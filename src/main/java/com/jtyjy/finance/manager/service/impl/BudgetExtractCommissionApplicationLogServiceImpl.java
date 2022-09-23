@@ -154,7 +154,14 @@ public class BudgetExtractCommissionApplicationLogServiceImpl extends ServiceImp
             //下一个节点是 申请人。
             //7111 申请
             //通过ia获取
-            String nextNodeName = oaMapper.getNodeName(requestManager.getNextNodeid());
+            Integer rejectToNodeId  = (Integer) params.getParams().get("RejectToNodeid");
+            if(rejectToNodeId == null){
+                return;
+            }
+            String nextNodeName = oaMapper.getNodeName(rejectToNodeId);
+            if (StringUtils.isBlank(nextNodeName)) {
+                return;
+            }
             //先找到相应的nodeId  flowType 对应的 节点信息。
             OperationNodeEnum nextNodeEnum = OperationNodeEnum.getTypeEnumByDesc(nextNodeName);
             if (nextNodeEnum == null) {

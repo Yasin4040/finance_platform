@@ -646,7 +646,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     public void validateExtractMonth(String extractMonth) {
         //全部都得是已经审核。
         List<BudgetExtractsum> nowSums = extractSumMapper.selectList(new LambdaQueryWrapper<BudgetExtractsum>().eq(BudgetExtractsum::getExtractmonth, extractMonth).
-                ne(BudgetExtractsum::getStatus, ExtractStatusEnum.REJECT));
+                ne(BudgetExtractsum::getStatus, ExtractStatusEnum.REJECT.type));
 
         long count = nowSums.stream().filter(x -> !x.getStatus().equals(ExtractStatusEnum.APPROVED.getType())).count();
         if(count!=0){
@@ -674,7 +674,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
     public void validStatusIsAllVerify(String extractMonth) {
         List<BudgetExtractsum> nowSums = extractSumMapper.selectList(new LambdaQueryWrapper<BudgetExtractsum>()
                 .eq(BudgetExtractsum::getExtractmonth, extractMonth)
-                .ne(BudgetExtractsum::getStatus, ExtractStatusEnum.REJECT));
+                .ne(BudgetExtractsum::getStatus, ExtractStatusEnum.REJECT.type));
 
         long count = nowSums.stream().filter(x -> !x.getStatus().equals(ExtractStatusEnum.APPROVED.getType())).count();
         if(count!=0){

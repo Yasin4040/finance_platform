@@ -623,7 +623,7 @@ public class BudgetReimbursementorder implements Serializable {
             this.setOrderscrtype(ReimbursementFromEnmu.PROJECT.getCode());
         }else if(isFixAsset!=null && isFixAsset){
             this.setOrderscrtype(ReimbursementFromEnmu.FIXED_ASSET.getCode());
-        }else if(isFixAsset!=null && isCommission){
+        }else if(isFixAsset ==null && isCommission){
             this.setOrderscrtype(ReimbursementFromEnmu.COMMISSION.getCode());
         }
         //this.setOrderscrtype(isProjectBx==null ? ReimbursementFromEnmu.COMMON.getCode():isProjectBx ? ReimbursementFromEnmu.PROJECT.getCode() : ReimbursementFromEnmu.COMMON.getCode());
