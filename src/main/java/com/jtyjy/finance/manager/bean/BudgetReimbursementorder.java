@@ -610,7 +610,7 @@ public class BudgetReimbursementorder implements Serializable {
     @ApiModelProperty(value = "是否欠票（0：否 1：是）")
     private Boolean lackBill;
 
-    public void setBase(String reimcode, Boolean isProjectBx,Boolean isFixAsset,WbUser user) {
+    public void setBase(String reimcode, Boolean isProjectBx,Boolean isFixAsset,WbUser user,Boolean isCommission) {
         //设置主键为空
         this.setId(null);
         //设置报销单编号(13位 ，BX + 年月 + 5位流水)
@@ -623,6 +623,8 @@ public class BudgetReimbursementorder implements Serializable {
             this.setOrderscrtype(ReimbursementFromEnmu.PROJECT.getCode());
         }else if(isFixAsset!=null && isFixAsset){
             this.setOrderscrtype(ReimbursementFromEnmu.FIXED_ASSET.getCode());
+        }else if(isFixAsset!=null && isCommission){
+            this.setOrderscrtype(ReimbursementFromEnmu.COMMISSION.getCode());
         }
         //this.setOrderscrtype(isProjectBx==null ? ReimbursementFromEnmu.COMMON.getCode():isProjectBx ? ReimbursementFromEnmu.PROJECT.getCode() : ReimbursementFromEnmu.COMMON.getCode());
         //设置创建时间
@@ -640,8 +642,6 @@ public class BudgetReimbursementorder implements Serializable {
             this.setApplicantid(UserThreadLocal.get().getUserId());
             this.setApplicantame(UserThreadLocal.get().getDisplayName());
         }
-
-
         //设置申请时间
         this.setApplicanttime(this.getCreatetime());
         //设置版本号

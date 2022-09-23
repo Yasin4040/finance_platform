@@ -215,7 +215,7 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
                 user = this.userService.getByEmpNo(order.getReimperonsid());
             }
             //设置基本信息
-            order.setBase(bxdNum, request.getIsProjectBx(),request.getIsFixAsset(),user);
+            order.setBase(bxdNum, request.getIsProjectBx(),request.getIsFixAsset(),user,false);
         }
         order.setVersion(version);
         order.setUpdatetime(new Date());
@@ -252,7 +252,8 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
                 user = this.userService.getByEmpNo(order.getReimperonsid());
             }
             //设置基本信息
-            order.setBase(bxdNum, request.getIsProjectBx(),request.getIsFixAsset(),user);
+            //提成生成专用
+            order.setBase(bxdNum, request.getIsProjectBx(),request.getIsFixAsset(),user,true);
         }
         order.setVersion(version);
         order.setUpdatetime(new Date());
@@ -339,7 +340,7 @@ public class BudgetReimbursementorderService extends DefaultBaseService<BudgetRe
      */
     public String saveOrUpdateAndSubmitReturnId(ReimbursementRequest request, boolean isCommit) throws Exception {
         //保存或修改
-        this.saveOrUpdate(request);
+        this.saveOrUpdateReturnId(request);
         //提交
         if (isCommit) {
             this.submit(request);

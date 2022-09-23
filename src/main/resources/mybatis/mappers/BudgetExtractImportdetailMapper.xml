@@ -179,6 +179,6 @@
 
 
     <select id="getAllByExtractMonth" resultType="com.jtyjy.finance.manager.bean.BudgetExtractImportdetail">
-		select bei.* from budget_extractsum be left join budget_extract_importdetail bei on be.id =bei.extractsumid where be.extractmonth = #{extractMonth}
+		select bei.* from budget_extractsum be left join budget_extract_importdetail bei on be.id =bei.extractsumid where be.extractmonth = #{extractMonth} and be.status !=-2
 	</select>
 </mapper>
