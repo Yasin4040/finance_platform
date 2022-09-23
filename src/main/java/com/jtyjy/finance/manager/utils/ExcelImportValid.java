@@ -76,20 +76,22 @@ public class ExcelImportValid {
             //是否包含decimal类型注解
             boolean isExcelDecimalValid = field.isAnnotationPresent(ExcelDecimalValid.class);
             if (isExcelDecimalValid) {
-                if (isBigDecimal(fieldValue.toString())) {
-                    BigDecimal cellDecimal = new BigDecimal(fieldValue.toString());
-                    BigDecimal min = new BigDecimal(field.getAnnotation(ExcelDecimalValid.class).min());
-                    BigDecimal max = new BigDecimal(field.getAnnotation(ExcelDecimalValid.class).max());
-                    if (cellDecimal.compareTo(min) < 0 || cellDecimal.compareTo(max) > 0) {
-                        errMsg.append("||");
-                        errMsg.append(field.getAnnotation(ExcelDecimalValid.class).message());
+                if (fieldValue!=null){
+                    if(isBigDecimal(fieldValue.toString())) {
+                        BigDecimal cellDecimal = new BigDecimal(fieldValue.toString());
+                        BigDecimal min = new BigDecimal(field.getAnnotation(ExcelDecimalValid.class).min());
+                        BigDecimal max = new BigDecimal(field.getAnnotation(ExcelDecimalValid.class).max());
+                        if (cellDecimal.compareTo(min) < 0 || cellDecimal.compareTo(max) > 0) {
+                            errMsg.append("||");
+                            errMsg.append(field.getAnnotation(ExcelDecimalValid.class).message());
 //                        throw new BusinessException(field.getAnnotation(ExcelDecimalValid.class).message());
 
-                    }
-                } else {
-                    errMsg.append("||");
-                    errMsg.append("不是小数数字类型");
+                        }
+                    } else {
+                        errMsg.append("||");
+                        errMsg.append("不是小数数字类型");
 //                    throw new BusinessException("不是小数数字类型");
+                    }
                 }
             }
         }

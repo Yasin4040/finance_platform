@@ -391,6 +391,7 @@ public class BudgetExtractCommissionApplicationServiceImpl extends ServiceImpl<B
 
     @Override
     @SneakyThrows
+    @Transactional(rollbackFor = Exception.class)
     public List<FeeImportErrorDTO> importFeeTemplate(MultipartFile multipartFile,String extractMonth) {
         List<FeeImportErrorDTO> errList = new ArrayList<>();
         List<Map> errorMap = new ArrayList<>();
