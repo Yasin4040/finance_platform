@@ -515,6 +515,7 @@ public class BudgetExtractPayService {
 			if (StringUtils.isNotBlank(accountants))
 				sender.sendQywxMsg(new QywxTextMsg(accountants, null, null, 0, budgetYearPeriod.getPeriod() + Integer.parseInt(extractBatch.substring(4, 6)) + "月" + Integer.parseInt(extractBatch.substring(6, 8)) + "批提成已出纳退回，请尽快删除对应凭证！", null));
 		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 }
