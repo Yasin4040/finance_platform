@@ -79,12 +79,14 @@ public class IndividualEmployeeFilesVO {
      * 社保停发日期
      */
     @ApiModelProperty(value = "社保停发日期")
+    @JsonFormat(pattern = "yyyy-MM-dd",timezone = "GMT+8")
     private Date socialSecurityStopDate;
 
     /**
      * 离职日期
      */
     @ApiModelProperty(value = "离职日期")
+    @JsonFormat(pattern = "yyyy-MM-dd",timezone = "GMT+8")
     private Date leaveDate;
 
     /**
